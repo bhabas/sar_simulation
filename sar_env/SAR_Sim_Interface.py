@@ -93,14 +93,11 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         return True
         
-    def velLaunch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
-        """Launch crazyflie from the specified position/orientation with an imparted velocity.
-        NOTE: Due to controller dynamics, the actual velocity will NOT be exactly the desired velocity
-
+    def GZ_VelTraj(self,pos,vel): 
+        """
         Args:
-            pos_0 (list): Launch position [m]   | [x,y,z]
-            vel_d (list): Launch velocity [m/s] | [Vx,Vy,Vz]
-            quat_0 (list, optional): Orientation at launch. Defaults to [0,0,0,1].
+            pos (list): Launch position [m]   | [x,y,z]
+            vel (list): Launch velocity [m/s] | [Vx,Vy,Vz]
         """        
 
         ## CREATE SERVICE MESSAGE
@@ -108,19 +105,19 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         state_srv.model_name = self.SAR_Config
 
         ## INPUT POSITION AND ORIENTATION
-        state_srv.pose.position.x = pos_0[0]
-        state_srv.pose.position.y = pos_0[1]
-        state_srv.pose.position.z = pos_0[2]
+        state_srv.pose.position.x = pos[0]
+        state_srv.pose.position.y = pos[1]
+        state_srv.pose.position.z = pos[2]
 
-        state_srv.pose.orientation.x = quat_0[0]
-        state_srv.pose.orientation.y = quat_0[1]
-        state_srv.pose.orientation.z = quat_0[2]
-        state_srv.pose.orientation.w = quat_0[3]
+        state_srv.pose.orientation.x = 0
+        state_srv.pose.orientation.y = 0
+        state_srv.pose.orientation.z = 0
+        state_srv.pose.orientation.w = 1
 
         ## INPUT LINEAR AND ANGULAR VELOCITY
-        state_srv.twist.linear.x = vel_d[0]
-        state_srv.twist.linear.y = vel_d[1]
-        state_srv.twist.linear.z = vel_d[2]
+        state_srv.twist.linear.x = vel[0]
+        state_srv.twist.linear.y = vel[1]
+        state_srv.twist.linear.z = vel[2]
 
         state_srv.twist.angular.x = 0
         state_srv.twist.angular.y = 0
@@ -133,11 +130,11 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
 
         ## SET DESIRED VEL IN CONTROLLER
-        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[0],vel[0],0],cmd_flag=0)
         self.iterStep(2)
-        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[1],vel[1],0],cmd_flag=1)
         self.iterStep(2)
-        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[2],vel[2],0],cmd_flag=2)
         self.iterStep(2)
 
     def resetPose(self,z_0=0.4):           
@@ -221,6 +218,13 @@ class SAR_Sim_Interface(SAR_Base_Interface):
             Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_High - 0.1*Flight_Angle_range, high=Rel_Angle_High)
        
         return V_mag,Flight_Angle
+    
+    def _get_obs(self):
+    
+        ## OBSERVATION VECTOR
+        obs = np.array([self.Tau,self.Theta_x,self.D_perp,self.Plane_Angle_rad],dtype=np.float32)
+
+        return obs
 
     
 

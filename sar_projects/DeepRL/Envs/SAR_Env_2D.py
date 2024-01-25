@@ -59,12 +59,12 @@ class SAR_Env_2D(gym.Env):
 
         I_c = self.Iyy + self.M*self.L**2
         self.params = (np.deg2rad(self.gamma_deg),self.L,self.PD,self.M,self.Iyy,I_c)
-        self.collision_radius = max(self.L,self.PD)
+        self.Collision_Radius = max(self.L,self.PD)
 
         ## SAR CAPABILITY CONSTRAINTS
         My_max = abs(max(My_range,key=abs))
-        self.t_rot = np.sqrt((2*self.Iyy*np.radians(360))/(0.5*My_max + EPS)) ## Allow enough time for a full rotation
-        self.t_rot = 0.3
+        self.t_rot_max = np.sqrt((2*self.Iyy*np.radians(360))/(0.5*My_max + EPS)) ## Allow enough time for a full rotation
+        self.t_rot_max = 0.3
 
 
         ## PLANE PARAMETERS
@@ -113,7 +113,7 @@ class SAR_Env_2D(gym.Env):
         self.V_angle = np.nan
         self.MomentCutoff = False
         self.BodyContact_flag = False
-        self.pad_connections = 0
+        self.Pad_Connections = 0
 
 
         ## PHYSICS PARAMETERS
@@ -157,9 +157,9 @@ class SAR_Env_2D(gym.Env):
         self.state_trg = np.full(6,np.nan)
         self.impact_state = np.full(6,np.nan)
 
-        self.impact_flag = False
+        self.Impact_Flag = False
         self.BodyContact_flag = False
-        self.pad_connections = 0
+        self.Pad_Connections = 0
         self.MomentCutoff = False
 
         ## RESET/UPDATE TIME CONDITIONS
@@ -196,22 +196,20 @@ class SAR_Env_2D(gym.Env):
 
         ## RELATIVE VEL VECTORS
         V_tx = V_mag*np.cos(np.deg2rad(V_angle))
-        V_perp = V_mag*np.sin(np.deg2rad(V_angle))*COORD_FLIP
+        V_perp = V_mag*np.sin(np.deg2rad(V_angle))
         V_B_P = np.array([V_tx,V_perp]) # {t_x,n_p}
 
         ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
         V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad) # {X_W,Z_W}
 
         ## CALCULATE STARTING TAU VALUE
-        Tau_rot = self.t_rot    # TTC of collision radius allowing for full body rotation before any body part impacts
-        Tau_extra = 0.5*Tau_rot # Buffer time
-        self.Tau_Body = (Tau_rot + self.collision_radius/V_perp) # Tau read by body
-        self.Tau_min = self.collision_radius/V_perp
-        self.t_flight_max = self.Tau_Body*2   # [s]
+        self.Tau_CR_start = self.t_rot_max*2
+        self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
+
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         r_P_O = np.array(self.Plane_Pos)                                                    # Plane Position wrt to Origin - {X_W,Z_W}
-        r_P_B = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
+        r_P_B = np.array([self.Tau_CR_start*V_tx, (self.Tau_Body_start)*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
@@ -220,11 +218,13 @@ class SAR_Env_2D(gym.Env):
 
 
         ## CALC TAU OF COLLISION RADIUS
-        r_CR_B = np.array([0,self.collision_radius]) # {t_x,n_p}
+        r_CR_B = np.array([0,self.Collision_Radius]) # {t_x,n_p}
         r_CR_O = r_B_O + self.R_PW(r_CR_B,self.Plane_Angle_rad)
         r_P_CR = r_P_O - r_CR_O # {X_W,Z_W}
         _,D_perp_CR = self.R_WP(r_P_CR,self.Plane_Angle_rad) # Convert to plane coords
         self.Tau_CR = D_perp_CR/V_perp
+
+        self.t_flight_max = self.Tau_Body_start*2   # [s]
 
         ######################
         #   2D ENV CONFIGS
@@ -345,10 +345,10 @@ class SAR_Env_2D(gym.Env):
             ## CHECK FOR IMPACT
             x,z,Phi,vx,vz,dphi = self._get_state()
             gamma_rad,L,PD,M,Iyy,I_c = self.params
-            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,Phi)
+            self.Impact_Flag,self.impact_conditions = self._get_impact_conditions(x,z,Phi)
 
             ## NO IMPACT
-            if self.impact_flag == False:
+            if self.Impact_Flag == False:
 
                 ## UPDATE ROTATION FLIGHT STEP
                 self._iter_step_Rot(scaled_action)
@@ -362,7 +362,7 @@ class SAR_Env_2D(gym.Env):
                 if self.RENDER:
                     self.render()
 
-            if self.impact_flag == True:
+            if self.Impact_Flag == True:
 
                 ## START IMPACT TIMER
                 start_time_impact = self.t
@@ -375,7 +375,7 @@ class SAR_Env_2D(gym.Env):
                 ## BODY CONTACT
                 if BodyContact == True:
                     self.BodyContact_flag = True
-                    self.pad_connections = 0
+                    self.Pad_Connections = 0
                     self.Done = True
 
                 ## LEG 1 CONTACT
@@ -394,17 +394,17 @@ class SAR_Env_2D(gym.Env):
                         ## CHECK FOR END CONDITIONS
                         if Beta_1 <= -self._beta_landing(impact_leg=1):
                             self.BodyContact_flag = False
-                            self.pad_connections = 4
+                            self.Pad_Connections = 4
                             self.Done = True
 
                         elif Beta_1 >= -self._beta_prop(impact_leg=1):
                             self.BodyContact_flag = True
-                            self.pad_connections = 2
+                            self.Pad_Connections = 2
                             self.Done = True
 
                         elif self.t - start_time_impact >= self.t_impact_max:
                             self.BodyContact_flag = False
-                            self.pad_connections = 2
+                            self.Pad_Connections = 2
                             self.Done = True
 
                         ## CONVERT BODY BACK TO WORLD COORDS
@@ -440,17 +440,17 @@ class SAR_Env_2D(gym.Env):
                         ## CHECK FOR END CONDITIONS
                         if Beta_2 >= -self._beta_landing(impact_leg=2):
                             self.BodyContact_flag = False
-                            self.pad_connections = 4
+                            self.Pad_Connections = 4
                             self.Done = True
 
                         elif Beta_2 <= -self._beta_prop(impact_leg=2):
                             self.BodyContact_flag = True
-                            self.pad_connections = 2
+                            self.Pad_Connections = 2
                             self.Done = True
 
                         elif self.t - start_time_impact >= self.t_impact_max:
                             self.BodyContact_flag = False
-                            self.pad_connections = 2
+                            self.Pad_Connections = 2
                             self.Done = True
 
                         ## CONVERT BODY BACK TO WORLD COORDS
@@ -637,9 +637,9 @@ class SAR_Env_2D(gym.Env):
         R_tau_cr = 0
 
         ## REWARD: PAD CONNECTIONS
-        if self.pad_connections >= 3: 
+        if self.Pad_Connections >= 3: 
             R_Legs = 1.0
-        elif self.pad_connections == 2:
+        elif self.Pad_Connections == 2:
             R_Legs = 0.2
         else:
             R_Legs = 0.0
@@ -914,7 +914,7 @@ class SAR_Env_2D(gym.Env):
         Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
 
 
-        r_CR_B = np.array([0,self.collision_radius])                        # {t_x,n_p}
+        r_CR_B = np.array([0,self.Collision_Radius])                        # {t_x,n_p}
         r_P_CR = r_P_O - (r_B_O + self.R_PW((r_CR_B),self.Plane_Angle_rad)) # {X_W,Z_W}
         _,D_perp_CR = self.R_WP(r_P_CR,self.Plane_Angle_rad)                 # Convert to plane coords - {t_x,n_p}
         self.Tau_CR = np.clip(D_perp_CR/(V_perp + EPS),-5,5)
@@ -1080,7 +1080,7 @@ class SAR_Env_2D(gym.Env):
         pg.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
         pg.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
         pg.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
-        pg.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
+        pg.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.Collision_Radius*self.screen_width/self.world_width,width=2)
 
         ## BODY AXES
         pg.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
@@ -1174,7 +1174,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(60) # [Hz]
+        self.clock.tick(30) # [Hz]
         pg.display.flip()
 
     def close(self):
@@ -1291,14 +1291,14 @@ if __name__ == '__main__':
 
     for ep in range(50):
 
-        obs,_ = env.reset()
+        obs,_ = env.reset(V_mag=3.0,V_angle=20,Plane_Angle=90)
 
         Done = False
         truncated = False
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            action = np.array([0.6,0])
+            action = np.array([0.0,0])
             obs,reward,Done,truncated,_ = env.step(action)
 
         # print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
