@@ -254,7 +254,11 @@ struct vec stateAcc_trg = {0.0f,0.0f,0.0f};         // Linear Accel [m/s^2]
 struct quat stateQuat_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 struct vec state_dOmega_trg = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
-float D_perp_trg = 0.0f;     // [m/s]
+
+// RELATIVE STATES
+float D_perp_trg = 0.0f;                            // [m/s]
+struct vec V_rel_trg = {0.0f,0.0f,0.0f};            // Velocity relative to plane [m/s]
+
 
 // OPTICAL FLOW STATES
 float Tau_trg = 0.0f;        // [rad/s]
@@ -281,10 +285,7 @@ float Policy_Rot_Action_trg = 0.0f;
 // =================================
 
 // LANDING SURFACE PARAMETERS
-float Plane_Angle = 180.0f;
-struct vec t_x = {1.0f,0.0f,0.0f};     // Plane Unit Tangent Vector
-struct vec t_y = {0.0f,1.0f,0.0f};     // Plane Unit Tangent Vector
-struct vec n_hat = {0.0f,0.0f,1.0f};   // Plane Unit Normal Vector
+float Plane_Angle_deg = 180.0f;
 
 struct vec r_P_O = {0.0f,0.0f,2.0f};    // Plane Position Vector        [m]
 struct vec r_B_O = {0.0f,0.0f,0.0f};    // Quad Position Vector         [m]
@@ -294,9 +295,11 @@ struct vec V_B_O = {0.0f,0.0f,0.0f};    // Quad Velocity Vector         [m/s]
 
 // RELATIVE STATES
 float D_perp = 0.0f;                    // Distance perp to plane [m]
-float V_perp = 0.0f;                    // Velocity perp to plane [m/s]
-float V_tx = 0.0f;                      // Tangent_x velocity [m/s]
-float V_ty = 0.0f;                      // Tangent_y velocity [m/s]
+
+struct mat33 R_WP;                      // Rotation matrix from world to plane
+struct mat33 R_PW;                      // Rotation matrix from plane to world
+struct vec V_rel = {0.0f,0.0f,0.0f};    // Velocity relative to plane [m/s]
+
 
 float V_mag_rel = 0.0f;                   // Velocity magnitude relative [m/s]
 float V_angle_rel = 0.0f;                   // Velocity angle relative [deg]
@@ -513,9 +516,9 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             r_P_O.x = CTRL_Cmd->cmd_val1;
             r_P_O.y = CTRL_Cmd->cmd_val2;
             r_P_O.z = CTRL_Cmd->cmd_val3;
-            Plane_Angle = CTRL_Cmd->cmd_flag;
+            Plane_Angle_deg = CTRL_Cmd->cmd_flag;
 
-            updatePlaneNormal(Plane_Angle);
+            // updatePlaneNormal(Plane_Angle);
             
             break;
     }
@@ -665,23 +668,6 @@ uint16_t thrust2PWM(float f)
     return PWM;
 }
 
-void updatePlaneNormal(float Plane_Angle)
-{
-    // UPDATE LANDING SURFACE PARAMETERS
-    n_hat.x = sinf(Plane_Angle*Deg2Rad);
-    n_hat.y = 0;
-    n_hat.z = -cosf(Plane_Angle*Deg2Rad);
-
-    // DEFINE PLANE TANGENT UNIT-VECTOR
-    t_x.x = -cosf(Plane_Angle*Deg2Rad);
-    t_x.y = 0;
-    t_x.z = -sinf(Plane_Angle*Deg2Rad);
-
-    // DEFINE PLANE TANGENT UNIT-VECTOR
-    t_y.x = 0;
-    t_y.y = 1;
-    t_y.z = 0;
-}
 
 bool updateOpticalFlowEst()
 {
@@ -780,14 +766,14 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
     // CALC DISPLACEMENT FROM PLANE CENTER
     r_P_B = vsub(r_P_O,r_B_O); 
 
-    // CALC RELATIVE DISTANCE AND VEL
-    D_perp = vdot(r_P_B,n_hat) + 1e-6f;
-    V_perp = vdot(V_B_O,n_hat);
-    V_tx = vdot(V_B_O,t_x);
-    V_ty = vdot(V_B_O,t_y);
 
-    V_mag_rel = vmag(mkvec(V_tx,V_ty,V_perp));
-    V_angle_rel = atan2f(V_perp,V_tx)*Rad2Deg;
+    // CALC RELATIVE DISTANCE AND VEL
+    D_perp = mvmul(R_WP,r_P_B).z;
+    V_rel = mvmul(R_WP,V_B_O);
+
+
+    V_mag_rel = vmag(V_rel);
+    V_angle_rel = atan2f(V_rel.z,V_rel.x)*Rad2Deg;
 
     if (fabsf(D_perp) < 0.02f)
     {
@@ -795,9 +781,9 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
     }
 
     // CALC OPTICAL FLOW VALUES
-    Theta_x = clamp(V_tx/D_perp,-20.0f,20.0f);
-    Theta_y = clamp(V_ty/D_perp,-20.0f,20.0f);
-    Tau = clamp(D_perp/(V_perp + 1e-6f),0.0f,5.0f);
+    Theta_x = clamp(V_rel.x/D_perp,-20.0f,20.0f);
+    Theta_y = clamp(V_rel.y/D_perp,-20.0f,20.0f);
+    Tau = clamp(D_perp/(V_rel.z + 1e-6f),0.0f,5.0f);
 
     return true;
 }
@@ -806,4 +792,14 @@ float firstOrderFilter(float newValue, float prevValue, float alpha) {
     return alpha * newValue + (1 - alpha) * prevValue;
 }
 
+
+void updateRotationMatrices()
+{
+    struct vec temp_a = {cosf(radians(Plane_Angle_deg)),0.0f,-sinf(radians(Plane_Angle_deg))};
+    struct vec temp_b = {0.0f,1.0f,0.0f};
+    struct vec temp_c = {sinf(radians(Plane_Angle_deg)),0.0f, cosf(radians(Plane_Angle_deg))};
+
+    R_WP = mrows(temp_a,temp_b,temp_c);
+    R_PW = mtranspose(R_WP);
+}
 

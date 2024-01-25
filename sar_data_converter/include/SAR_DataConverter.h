@@ -114,7 +114,7 @@ class SAR_DataConverter {
         void activateStickyFeet();
         void checkSlowdown();
         void adjustSimSpeed(float speed_mult);
-        void Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle);
+        void Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle_deg);
 
         // =======================
         //     GAZEBO CALLBACKS
@@ -220,7 +220,7 @@ class SAR_DataConverter {
         // ============================
         std::string Plane_Config;
         geometry_msgs::Vector3 Plane_Pos; // Initial Plane Position
-        float Plane_Angle = 180.0; // Initial Plane Angle [Deg]
+        float Plane_Angle_deg = 180.0; // Initial Plane Angle [Deg]
 
 
 
@@ -478,7 +478,7 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
     if (isInit == false)
     {
-        ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
+        ros::param::get("/PLANE_SETTINGS/Plane_Angle_deg",Plane_Angle_deg);
         ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos.x);
         ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
         ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
@@ -630,7 +630,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             Plane_Pos.x = req.cmd_vals.x;
             Plane_Pos.y = req.cmd_vals.y;
             Plane_Pos.z = req.cmd_vals.z;
-            Plane_Angle = req.cmd_flag;
+            Plane_Angle_deg = req.cmd_flag;
             
             break;
 

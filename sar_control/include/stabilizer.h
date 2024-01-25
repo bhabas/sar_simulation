@@ -210,7 +210,7 @@ void Controller::loadParams()
 
 
     // UPDATE LANDING SURFACE PARAMETERS
-    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
+    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_deg);
     ros::param::get("/PLANE_SETTINGS/Pos_X",r_P_O.x);
     ros::param::get("/PLANE_SETTINGS/Pos_Y",r_P_O.y);
     ros::param::get("/PLANE_SETTINGS/Pos_Z",r_P_O.z);
@@ -306,10 +306,9 @@ void Controller::publishCtrlData()
 
     // PLANE RELATIVE STATES
     CtrlData_msg.D_perp = D_perp;
-    CtrlData_msg.V_perp = V_perp;
-    CtrlData_msg.V_tx = V_tx;
-    CtrlData_msg.V_ty = V_ty;
-
+    CtrlData_msg.V_rel.x = V_rel.x;
+    CtrlData_msg.V_rel.y = V_rel.y;
+    CtrlData_msg.V_rel.z = V_rel.z;
     CtrlData_msg.V_mag_rel = V_mag_rel;
     CtrlData_msg.V_angle_rel = V_angle_rel;
 
@@ -367,6 +366,10 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist_trg.angular.x = stateOmega_trg.x;
     CtrlData_msg.Twist_trg.angular.y = stateOmega_trg.y;
     CtrlData_msg.Twist_trg.angular.z = stateOmega_trg.z;
+
+    CtrlData_msg.V_rel_trg.x = V_rel_trg.x;
+    CtrlData_msg.V_rel_trg.y = V_rel_trg.y;
+    CtrlData_msg.V_rel_trg.z = V_rel_trg.z;
 
     CtrlData_msg.Accel_trg.linear.x = stateAcc_trg.x;
     CtrlData_msg.Accel_trg.linear.y = stateAcc_trg.y;

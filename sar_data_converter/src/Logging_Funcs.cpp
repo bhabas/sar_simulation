@@ -143,7 +143,7 @@ void SAR_DataConverter::append_CSV_misc()
 {
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",k_ep,k_run);  // k_ep,k_run
-    fprintf(fPtr,"% 6.2f,",Plane_Angle);                // --
+    fprintf(fPtr,"% 6.2f,",Plane_Angle_deg);                // --
     fprintf(fPtr,"%u,--,",n_rollouts);  // n_rollouts,--
     fprintf(fPtr,"[%.3f %.3f],[%.3f %.3f],[%.3f %.3f],",mu[0],mu[1],sigma[0],sigma[1],policy[0],policy[1]); // mu,sigma,policy
 

@@ -41,9 +41,9 @@ void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Conn
  * @param Pos_x X-position of surface
  * @param Pos_y Y-position of surface
  * @param Pos_z Z-position of surface
- * @param Plane_Angle 0 deg -> Horizontal Ground Surface | 90 deg -> Vertical Wall | 180 deg -> Ceiling Surface
+ * @param Plane_Angle_deg 0 deg -> Horizontal Ground Surface | 90 deg -> Vertical Wall | 180 deg -> Ceiling Surface
  */
-void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle)
+void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle_deg)
 {
 
     sar_msgs::Surface_Settings srv;
@@ -51,7 +51,7 @@ void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, fl
     srv.request.Pos.x = Pos_x;
     srv.request.Pos.y = Pos_y;
     srv.request.Pos.z = Pos_z;
-    srv.request.Plane_Angle = Plane_Angle;
+    srv.request.Plane_Angle = Plane_Angle_deg;
 
     Landing_Surface_Pose_Client.call(srv);
 }

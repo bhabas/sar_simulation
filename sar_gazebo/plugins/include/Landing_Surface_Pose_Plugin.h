@@ -64,7 +64,7 @@ namespace gazebo {
             double Pos_X;    // [m]
             double Pos_Y;    // [m]
             double Pos_Z;    // [m]
-            double Plane_Angle; // [deg]
+            double Plane_Angle_deg; // [deg]
 
             // FORCE TORQUE UPDATES
             ros::Publisher ForceTorque_Pub;

@@ -17,10 +17,7 @@ float64 Policy_Rot_Action
 
 ## PLANE RELATIVE STATES
 float64 D_perp
-float64 V_perp
-float64 V_tx
-float64 V_ty
-
+geometry_msgs/Vector3 V_rel
 float64 V_mag_rel
 float64 V_angle_rel
 
@@ -44,6 +41,7 @@ float64 Theta_x_trg
 float64 Theta_y_trg
 
 float64 D_perp_trg
+geometry_msgs/Vector3 V_rel_trg
 
 float64[4] FM_Rot
 

@@ -113,7 +113,10 @@ void controllerOutOfTreeReset() {
     Policy_Rot_Action_trg = 0.0f;
 
 
-    updatePlaneNormal(Plane_Angle);
+    updateRotationMatrices();
+    // printmat(R_WP);
+    // printmat(R_PW);
+
 
 }
 
@@ -263,7 +266,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
 
                     // EXECUTE POLICY
-                    if(Policy_Trg_Action >= Policy_Rot_threshold && onceFlag == false && V_perp > 0.1f){
+                    if(Policy_Trg_Action >= Policy_Rot_threshold && onceFlag == false && V_mag_rel > 0.1f){
 
                         onceFlag = true;
 

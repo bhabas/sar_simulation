@@ -38,7 +38,7 @@ namespace gazebo
         ros::param::get("/PLANE_SETTINGS/Pos_X",Pos_X);
         ros::param::get("/PLANE_SETTINGS/Pos_Y",Pos_Y);
         ros::param::get("/PLANE_SETTINGS/Pos_Z",Pos_Z);
-        ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
+        ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_deg);
 
 
         // UPDATE POSE
@@ -70,7 +70,7 @@ namespace gazebo
 
 
         // UPDATE PLANE POSITION AND ORIENTATION
-        Pose.Set(Pos_X,Pos_Y,Pos_Z, 0.0,(Plane_Angle)*Deg2Rad, 0.0);
+        Pose.Set(Pos_X,Pos_Y,Pos_Z, 0.0,(Plane_Angle_deg)*Deg2Rad, 0.0);
         Surface_Model_Ptr->SetWorldPose(Pose);
 
 
@@ -123,7 +123,7 @@ namespace gazebo
         Pos_X = req.Pos.x;
         Pos_Y = req.Pos.y;
         Pos_Z = req.Pos.z;
-        Plane_Angle = req.Plane_Angle;
+        Plane_Angle_deg = req.Plane_Angle;
 
         Landing_Surface_Pose::Update_Pose();
 

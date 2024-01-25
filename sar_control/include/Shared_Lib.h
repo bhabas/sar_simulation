@@ -256,7 +256,10 @@ extern struct vec stateAcc_trg;      // Linear Accel. [m/s^2]
 extern struct quat stateQuat_trg;    // Orientation
 extern struct vec stateOmega_trg;    // Angular Rate [rad/s]
 extern struct vec state_dOmega_trg;  // Angular Accel [rad/s^2]
+
+// RELATIVE STATES
 extern float D_perp_trg;             // [m/s]
+extern struct vec V_rel_trg;         // Velocity relative to plane [m/s]
 
 // OPTICAL FLOW STATES
 extern float Tau_trg;                // [rad/s]
@@ -283,10 +286,7 @@ extern float Policy_Rot_Action_trg;
 // =================================
 
 // LANDING SURFACE PARAMETERS
-extern float Plane_Angle;
-extern struct vec t_x;          // Plane Unit Tangent Vector
-extern struct vec t_y;          // Plane Unit Tangent Vector
-extern struct vec n_hat;        // Plane Unit Normal Vector
+extern float Plane_Angle_deg;
 
 extern struct vec r_P_O;         // Plane Position Vector        [m]
 extern struct vec r_B_O;         // Quad Position Vector         [m]
@@ -294,11 +294,13 @@ extern struct vec r_C_B;         // Camera Position Vector       [m]
 extern struct vec r_P_B;         // Quad-Plane Distance Vector   [m]
 extern struct vec V_B_O;         // Quad Velocity Vector         [m/s]
 
+extern struct mat33 R_WP;                      // Rotation matrix from world to plane
+extern struct mat33 R_PW;                      // Rotation matrix from plane to world
+
+
 // RELATIVE STATES
 extern float D_perp;            // Distance perp to plane [m]
-extern float V_perp;            // Velocity perp to plane [m/s]
-extern float V_tx;              // Tangent_x velocity [m/s]
-extern float V_ty;              // Tangent_y velocity [m/s]
+extern struct vec V_rel;    // Velocity relative to plane [m/s]
 
 extern float V_mag_rel;           // Velocity magnitude relative [m/s]
 extern float V_angle_rel;           // Velocity angle relative [deg]
@@ -322,7 +324,7 @@ extern struct CTRL_CmdPacket CTRL_Cmd;
 void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 uint16_t thrust2PWM(float f);
-void updatePlaneNormal(float Plane_Angle);
+void updateRotationMatrices();
 bool updateOpticalFlowEst();
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);
 float firstOrderFilter(float newValue, float prevValue, float alpha);
