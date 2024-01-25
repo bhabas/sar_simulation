@@ -120,6 +120,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
+        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
+
         r_P_O = np.array(self.Plane_Pos)                                        # Plane Position wrt to Origin - {X_W,Z_W}
         r_P_B = np.array([self.Tau_CR_start*V_tx,0,self.Tau_Body_start*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                   # Body Position wrt to Origin - {X_W,Z_W}
@@ -127,14 +129,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self.initial_state = (r_B_O,V_B_O)
         # self.resetPose(r_B_O[0],r_B_O[1],np.radians(-1),V_B_O[0],V_B_O[1],0)
-        self.GZ_VelTraj(pos=r_B_O,vel=V_B_O)
-
-
-
-        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
-        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
-
-        
+        self.GZ_VelTraj(pos=r_B_O,vel=V_B_O)        
 
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
@@ -322,7 +317,7 @@ if __name__ == "__main__":
         Tau_trg = 0.30
         Rot_acc = -50
         V_mag = 1.0
-        V_angle = 90
+        V_angle = 30
         Plane_Angle = 0
         env.ParamOptim_reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         # obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,Rot_acc,Vel_d,Phi_d)
