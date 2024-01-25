@@ -30,8 +30,10 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.abs(self.Ang_acc_range[0])) # Allow enough time for a full rotation [s]
-        self.t_trg_max = 1.0   # [s]
-        self.t_impact_max = 1.0   # [s]
+        self.t_trg_max = 1.0        # [s]
+        self.t_impact_max = 0.5     # [s]
+        self.t_run_max = 5.0        # [s]
+        self.t_real_max = 15.0      # [s]
 
         ## PLANE PARAMETERS
         self.Plane_Pos = [1,0,1]
@@ -55,7 +57,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         }
         self.W_max = sum(self.reward_weights.values())
 
-        self.D_min = np.inf
+        self.D_perp_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
@@ -74,7 +76,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.Pol_Trg_Flag = False
         self.reward = 0
 
-        self.D_min = np.inf
+        self.D_perp_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
@@ -82,6 +84,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.BodyContact_Flag = False
         self.Pad_Connections = 0
         self.MomentCutoff = False
+
+        self.start_time_real = time.time()
 
         self.resetPose()
 
@@ -139,98 +143,74 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
 
         ## RESET/UPDATE TIME CONDITIONS
-        self.start_time_episode = self._get_time()
+        self.start_time_run = self._getTime()
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2   # [s]
         
         return self._get_obs(), {}
 
-    def ParamOptim_Flight(self,Tau,Rot_acc,vel,phi):
-
-        ## RESET/UPDATE RUN CONDITIONS
-        start_time_rollout = self._get_time()
-        t_Rot_Action = np.nan
-        start_time_impact = np.nan
-
-        start_time_ep = time.time()
+    def ParamOptim_Flight(self,Tau_trg,Rot_acc):
 
         ## RESET LOGGING CONDITIONS 
         OnceFlag_Trg = False    # Ensures Rot data recorded only once
         OnceFlag_Impact = False   # Ensures impact data recorded only once 
+        self.sendCmd("Policy",cmd_vals=[Tau_trg,Rot_acc,0.0],cmd_flag=1)
+        self.pausePhysics(pause_flag=False)
 
-
-        vz = vel*np.sin(np.deg2rad(phi))
-        vx = vel*np.cos(np.deg2rad(phi))
-
-        # tau_0 = 0.5
-        # z_0 = 2.10 - tau_0*vz
-        z_0 = 0.5
-
-        self.GZ_VelTraj([0,0,z_0],[vx,0,vz])
-        self.pausePhysics(False)
-        self.sleep(0.05)
-        self.sendCmd("Policy",cmd_vals=[Tau,Rot_acc,0.0],cmd_flag=1)
-
-
-        
 
         while not self.Done: 
 
-            t_now = self._get_time()
+            t_now = self._getTime()
 
             ## RECORD LOWEST D_perp VALUE
-            if self.D_perp < self.D_min:
-                self.D_min = self.D_perp 
+            if self.D_perp < self.D_perp_min:
+                self.D_perp_min = self.D_perp 
 
             ## START TRIGGER AND IMPACT TERMINATION TIMERS
             if (self.Trg_flag == True and OnceFlag_Trg == False):
-                t_Rot_Action = t_now    # Starts countdown for when to reset run
-                OnceFlag_Trg = True        # Turns on to make sure this only runs once per rollout
+                self.start_time_trg = t_now     # Starts countdown for when to reset run
+                OnceFlag_Trg = True             # Turns on to make sure this only runs once per rollout
 
-            if ((self.Impact_flag or self.BodyContact_Flag) and OnceFlag_Impact == False):
-                start_time_impact = t_now
+            if (self.Impact_flag and OnceFlag_Impact == False):
+                self.start_time_impact = t_now
                 OnceFlag_Impact = True
 
             # ============================
             ##    Termination Criteria 
             # ============================
 
-            ## PITCH TIMEOUT  
-            if (t_now-t_Rot_Action) > 2.25:
-                self.error_str = "Rollout Completed: Pitch Timeout"
+            ## TRIGGER TIMEOUT  
+            if (t_now-self.start_time_trg) > self.t_trg_max:
+                self.error_str = "Run Completed: Pitch Timeout"
                 self.Done = True
                 # print(self.error_str)
 
 
             ## IMPACT TIMEOUT
-            elif (t_now-start_time_impact) > 0.5:
-                self.error_str = "Rollout Completed: Impact Timeout"
+            elif (t_now-self.start_time_impact) > self.t_impact_max:
+                self.error_str = "Run Completed: Impact Timeout"
                 self.Done = True
                 # print(self.error_str)
 
 
-
             ## ROLLOUT TIMEOUT
-            elif (t_now - start_time_rollout) > 5.0:
-                self.error_str = "Rollout Completed: Time Exceeded"
+            elif (t_now - self.start_time_run) > self.t_run_max:
+                self.error_str = "Run Completed: Time Exceeded"
                 self.Done = True
                 # print(self.error_str)
 
             ## FREE FALL TERMINATION
-            elif self.vel[2] <= -0.5 and self.pos[2] <= 1.5: 
-                self.error_str = "Rollout Completed: Falling Drone"
-                self.Done = True
-                # print(self.error_str)
+            # elif self.vel[2] <= -0.5 and self.pos[2] <= 1.5: 
+            #     self.error_str = "Run Completed: Falling Drone"
+            #     self.Done = True
+            #     # print(self.error_str)
 
 
-
-            if (time.time() - start_time_ep) > 15.0 and self.GZ_Timeout == True:
+            if (time.time() - self.start_time_real) > self.t_real_max and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-                self._restart_Sim()
                 self.Done = True
-
-
+                self._restart_Sim()
 
 
         reward = self._CalcReward()
@@ -241,7 +221,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         
 
-        self.reward_vals = [0,0,0,0,0]
+        self.reward_vals = [0,0,0,0,0,0]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
         print(f"R_t_norm: {R_t/self.W_max:.3f} ")
         print(np.round(self.reward_vals,2))
@@ -316,11 +296,11 @@ if __name__ == "__main__":
     for ii in range(1000):
         Tau_trg = 0.30
         Rot_acc = -50
-        V_mag = 1.0
-        V_angle = 30
+        V_mag = 2.5
+        V_angle = 60
         Plane_Angle = 0
         env.ParamOptim_reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-        # obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,Rot_acc,Vel_d,Phi_d)
+        obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,Rot_acc)
         # print(f"Ep: {ii} \t Reward: {reward:.02f} \t Reward_vec: ",end='')
         # print(' '.join(f"{val:.2f}" for val in env.reward_vals))
 

@@ -86,7 +86,7 @@ class SAR_Base_Interface():
         self.RL_History_Pub = rospy.Publisher('/RL/History',RL_History,queue_size=10)
 
 
-    def _get_time(self):
+    def _getTime(self):
         """Returns current known time.
 
         Returns:
