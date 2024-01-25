@@ -175,23 +175,23 @@ void SAR_DataConverter::checkSlowdown()
     if (LANDING_SLOWDOWN_FLAG == true)
     {
 
-        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+        // WHEN CLOSE TO THE LANDING SURFACE REDUCE SIM SPEED
         if (D_perp <= 0.5 && SLOWDOWN_TYPE == 0)
         {
-
+            // std::cout << D_perp << std::endl;
             SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
             SLOWDOWN_TYPE = 1;
         }
 
-        // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
+        // IF IMPACTED LANDING SURFACE OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
         if (Impact_flag == true && SLOWDOWN_TYPE == 1)
         {
             SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
             SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)
         }
-        else if (Twist.linear.z <= -0.5 && SLOWDOWN_TYPE == 1)
+        else if (V_rel.z <= -0.5 && SLOWDOWN_TYPE == 1)
         {
-            SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
+            SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
             SLOWDOWN_TYPE = 2;
         }
     }

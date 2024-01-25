@@ -49,9 +49,9 @@ void SAR_DataConverter::Publish_StateData()
 
     // PLANE RELATIVE STATES
     StateData_msg.D_perp = D_perp;
-    StateData_msg.V_perp = V_perp;
-    StateData_msg.V_tx = V_tx;
-    StateData_msg.V_ty = V_ty;
+    StateData_msg.V_tx = V_rel.x;
+    StateData_msg.V_ty = V_rel.y;
+    StateData_msg.V_perp = V_rel.z;
 
     StateData_msg.V_mag_rel = V_mag_rel;
     StateData_msg.V_angle_rel = V_angle_rel;

@@ -29,7 +29,7 @@ SIM_SETTINGS:
   Pause_Flag: False
   Sim_Speed: 0.5
   Sim_Slowdown_Speed: 0.1
-  Landing_Slowdown_Flag: True
+  Landing_Slowdown_Flag: False
 
 
 CAM_SETTINGS:

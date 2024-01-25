@@ -229,8 +229,8 @@ class SAR_DataConverter {
         // ====================
         int SLOWDOWN_TYPE = 0;
         bool LANDING_SLOWDOWN_FLAG;
-        float SIM_SPEED; 
-        float SIM_SLOWDOWN_SPEED;
+        float SIM_SPEED = 0.5; 
+        float SIM_SLOWDOWN_SPEED = 0.5;
 
 
         // =====================
@@ -301,10 +301,8 @@ class SAR_DataConverter {
         float Phi = 0.0;
         float Alpha = 0.0;
 
-        double D_perp = 0.0;
-        double V_perp = 0.0;
-        double V_tx = 0.0;
-        double V_ty = 0.0;
+        double D_perp = NAN;
+        geometry_msgs::Vector3 V_rel;
 
         double V_mag_rel = 0.0;
         double V_angle_rel = 0.0;

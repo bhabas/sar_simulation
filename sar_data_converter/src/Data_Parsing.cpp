@@ -31,9 +31,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // STATES RELATIVE TO LANDING SURFACE
     D_perp = ctrl_msg.D_perp;
-    // V_perp = ctrl_msg.V_perp;
-    // V_tx = ctrl_msg.V_tx;
-    // V_ty = ctrl_msg.V_ty;
+    V_rel = ctrl_msg.V_rel;
     
     V_mag_rel = ctrl_msg.V_mag_rel;
     V_angle_rel = ctrl_msg.V_angle_rel;
