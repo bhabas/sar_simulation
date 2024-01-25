@@ -288,11 +288,11 @@ extern struct vec t_x;          // Plane Unit Tangent Vector
 extern struct vec t_y;          // Plane Unit Tangent Vector
 extern struct vec n_hat;        // Plane Unit Normal Vector
 
-extern struct vec r_PO;         // Plane Position Vector        [m]
-extern struct vec r_BO;         // Quad Position Vector         [m]
-extern struct vec r_CB;         // Camera Position Vector       [m]
-extern struct vec r_PB;         // Quad-Plane Distance Vector   [m]
-extern struct vec V_BO;         // Quad Velocity Vector         [m/s]
+extern struct vec r_P_O;         // Plane Position Vector        [m]
+extern struct vec r_B_O;         // Quad Position Vector         [m]
+extern struct vec r_C_B;         // Camera Position Vector       [m]
+extern struct vec r_P_B;         // Quad-Plane Distance Vector   [m]
+extern struct vec V_B_O;         // Quad Velocity Vector         [m/s]
 
 // RELATIVE STATES
 extern float D_perp;            // Distance perp to plane [m]
@@ -300,8 +300,8 @@ extern float V_perp;            // Velocity perp to plane [m/s]
 extern float V_tx;              // Tangent_x velocity [m/s]
 extern float V_ty;              // Tangent_y velocity [m/s]
 
-extern float Vel_rel;           // Velocity magnitude relative [m/s]
-extern float Phi_rel;           // Velocity angle relative [deg]
+extern float V_mag_rel;           // Velocity magnitude relative [m/s]
+extern float V_angle_rel;           // Velocity angle relative [deg]
 
 
 // CTRL COMMAND PACKETS

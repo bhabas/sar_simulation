@@ -18,7 +18,7 @@ namespace gazebo
         double Sim_Speed;
         double Step_Size = 0.001;
         ros::param::get("/SIM_SETTINGS/Sim_Speed",Sim_Speed);
-        World_Ptr->Physics()->SetRealTimeUpdateRate(Sim_Speed/Step_Size);
+        // World_Ptr->Physics()->SetRealTimeUpdateRate(Sim_Speed/Step_Size);
 
 
 

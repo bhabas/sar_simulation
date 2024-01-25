@@ -306,8 +306,8 @@ class SAR_DataConverter {
         double V_tx = 0.0;
         double V_ty = 0.0;
 
-        double Vel_rel = 0.0;
-        double Phi_rel = 0.0;
+        double V_mag_rel = 0.0;
+        double V_angle_rel = 0.0;
 
         double Tau = 0.0;
         double Theta_x = 0.0;

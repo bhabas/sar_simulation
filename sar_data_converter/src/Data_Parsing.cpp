@@ -35,8 +35,8 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     V_tx = ctrl_msg.V_tx;
     V_ty = ctrl_msg.V_ty;
     
-    Vel_rel = ctrl_msg.Vel_rel;
-    Phi_rel = ctrl_msg.Phi_rel;
+    V_mag_rel = ctrl_msg.V_mag_rel;
+    V_angle_rel = ctrl_msg.V_angle_rel;
 
     // OPTICAL FLOW STATES
     Tau = ctrl_msg.Tau;

@@ -286,11 +286,11 @@ struct vec t_x = {1.0f,0.0f,0.0f};     // Plane Unit Tangent Vector
 struct vec t_y = {0.0f,1.0f,0.0f};     // Plane Unit Tangent Vector
 struct vec n_hat = {0.0f,0.0f,1.0f};   // Plane Unit Normal Vector
 
-struct vec r_PO = {0.0f,0.0f,2.0f};    // Plane Position Vector        [m]
-struct vec r_BO = {0.0f,0.0f,0.0f};    // Quad Position Vector         [m]
-struct vec r_CB = {0.0f,0.0f,0.0f};    // Camera Position Vector       [m]
-struct vec r_PB = {0.0f,0.0f,0.0f};    // Quad-Plane Distance Vector   [m]
-struct vec V_BO = {0.0f,0.0f,0.0f};    // Quad Velocity Vector         [m/s]
+struct vec r_P_O = {0.0f,0.0f,2.0f};    // Plane Position Vector        [m]
+struct vec r_B_O = {0.0f,0.0f,0.0f};    // Quad Position Vector         [m]
+struct vec r_C_B = {0.0f,0.0f,0.0f};    // Camera Position Vector       [m]
+struct vec r_P_B = {0.0f,0.0f,0.0f};    // Quad-Plane Distance Vector   [m]
+struct vec V_B_O = {0.0f,0.0f,0.0f};    // Quad Velocity Vector         [m/s]
 
 // RELATIVE STATES
 float D_perp = 0.0f;                    // Distance perp to plane [m]
@@ -298,10 +298,12 @@ float V_perp = 0.0f;                    // Velocity perp to plane [m/s]
 float V_tx = 0.0f;                      // Tangent_x velocity [m/s]
 float V_ty = 0.0f;                      // Tangent_y velocity [m/s]
 
-float Vel_rel = 0.0f;                   // Velocity magnitude relative [m/s]
-float Phi_rel = 0.0f;                   // Velocity angle relative [deg]
+float V_mag_rel = 0.0f;                   // Velocity magnitude relative [m/s]
+float V_angle_rel = 0.0f;                   // Velocity angle relative [deg]
 
-
+// =================================
+//         ROTATION MATRICES
+// =================================
 
 
 
@@ -508,9 +510,9 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
         case 93: // UPDATE PLANE POSITION
 
-            r_PO.x = CTRL_Cmd->cmd_val1;
-            r_PO.y = CTRL_Cmd->cmd_val2;
-            r_PO.z = CTRL_Cmd->cmd_val3;
+            r_P_O.x = CTRL_Cmd->cmd_val1;
+            r_P_O.y = CTRL_Cmd->cmd_val2;
+            r_P_O.z = CTRL_Cmd->cmd_val3;
             Plane_Angle = CTRL_Cmd->cmd_flag;
 
             updatePlaneNormal(Plane_Angle);
@@ -772,20 +774,20 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
 {
     // UPDATE POS AND VEL
     // TODO: ADD CAMERA OFFSETS SO THESE NUMBERS MATCH CAMERA ESTIMATION
-    r_BO = mkvec(state->position.x, state->position.y, state->position.z);
-    V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
+    r_B_O = mkvec(state->position.x, state->position.y, state->position.z);
+    V_B_O = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
 
     // CALC DISPLACEMENT FROM PLANE CENTER
-    r_PB = vsub(r_PO,vadd(r_CB,r_BO)); 
+    r_P_B = vsub(r_P_O,r_B_O); 
 
     // CALC RELATIVE DISTANCE AND VEL
-    D_perp = vdot(r_PB,n_hat) + 1e-6f;
-    V_perp = vdot(V_BO,n_hat);
-    V_tx = vdot(V_BO,t_x);
-    V_ty = vdot(V_BO,t_y);
+    D_perp = vdot(r_P_B,n_hat) + 1e-6f;
+    V_perp = vdot(V_B_O,n_hat);
+    V_tx = vdot(V_B_O,t_x);
+    V_ty = vdot(V_B_O,t_y);
 
-    Vel_rel = vmag(mkvec(V_tx,V_ty,V_perp));
-    Phi_rel = atan2f(V_perp,V_tx)*Rad2Deg;
+    V_mag_rel = vmag(mkvec(V_tx,V_ty,V_perp));
+    V_angle_rel = atan2f(V_perp,V_tx)*Rad2Deg;
 
     if (fabsf(D_perp) < 0.02f)
     {

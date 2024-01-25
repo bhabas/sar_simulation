@@ -180,9 +180,9 @@ void Controller::loadParams()
 
 
 
-    ros::param::get("/Cam_Config/" + Cam_Config + "/X_Offset",r_CB.x);
-    ros::param::get("/Cam_Config/" + Cam_Config + "/Y_Offset",r_CB.y);
-    ros::param::get("/Cam_Config/" + Cam_Config + "/Z_Offset",r_CB.z);
+    ros::param::get("/Cam_Config/" + Cam_Config + "/X_Offset",r_C_B.x);
+    ros::param::get("/Cam_Config/" + Cam_Config + "/Y_Offset",r_C_B.y);
+    ros::param::get("/Cam_Config/" + Cam_Config + "/Z_Offset",r_C_B.z);
 
 
     
@@ -211,9 +211,9 @@ void Controller::loadParams()
 
     // UPDATE LANDING SURFACE PARAMETERS
     ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
-    ros::param::get("/PLANE_SETTINGS/Pos_X",r_PO.x);
-    ros::param::get("/PLANE_SETTINGS/Pos_Y",r_PO.y);
-    ros::param::get("/PLANE_SETTINGS/Pos_Z",r_PO.z);
+    ros::param::get("/PLANE_SETTINGS/Pos_X",r_P_O.x);
+    ros::param::get("/PLANE_SETTINGS/Pos_Y",r_P_O.y);
+    ros::param::get("/PLANE_SETTINGS/Pos_Z",r_P_O.z);
 
 
 
@@ -310,8 +310,8 @@ void Controller::publishCtrlData()
     CtrlData_msg.V_tx = V_tx;
     CtrlData_msg.V_ty = V_ty;
 
-    CtrlData_msg.Vel_rel = Vel_rel;
-    CtrlData_msg.Phi_rel = Phi_rel;
+    CtrlData_msg.V_mag_rel = V_mag_rel;
+    CtrlData_msg.V_angle_rel = V_angle_rel;
 
     // OPTICAL FLOW DATA
     CtrlData_msg.Tau = Tau;

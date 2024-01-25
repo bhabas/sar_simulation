@@ -53,8 +53,8 @@ void SAR_DataConverter::Publish_StateData()
     StateData_msg.V_tx = V_tx;
     StateData_msg.V_ty = V_ty;
 
-    StateData_msg.Vel_rel = Vel_rel;
-    StateData_msg.Phi_rel = Phi_rel;
+    StateData_msg.V_mag_rel = V_mag_rel;
+    StateData_msg.V_angle_rel = V_angle_rel;
 
     // OPTICAL FLOW STATE ESTIMATES
     StateData_msg.Tau_est = Tau_est;
