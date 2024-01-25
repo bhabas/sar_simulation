@@ -218,7 +218,7 @@ if __name__ == '__main__':
     from sar_env import SAR_Sim_Interface
     ## INIT GAZEBO ENVIRONMENT
     env = SAR_Sim_Interface(GZ_Timeout=False)
-    env.pause_physics(False)
+    env.pausePhysics(False)
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24

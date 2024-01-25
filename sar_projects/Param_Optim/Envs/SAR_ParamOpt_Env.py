@@ -7,16 +7,33 @@ from sar_env import SAR_Sim_Interface
 
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
-    def __init__(self,GZ_Timeout=False):
+    def __init__(self,GZ_Timeout=False,Ang_acc_range=[-50,50],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
         SAR_Sim_Interface.__init__(self)        
 
+        ######################
+        #    GENERAL CONFIGS
+        ######################
+        
+        ## ENV CONFIG SETTINGS
         self.Env_Name = "SAR_ParamOptim_Env"
         self.GZ_Timeout = GZ_Timeout
 
+        ## TESTING CONDITIONS     
+        self.V_mag_range = V_mag_range  
+        self.V_angle_range = V_angle_range
+        self.Plane_Angle_range = Plane_Angle_range
+        self.Ang_acc_range = Ang_acc_range
+
 
         ## TIME CONSTRAINTS
+        self.t_rot_max = np.sqrt(np.radians(360)/np.abs(self.Ang_acc_range[0])) # Allow enough time for a full rotation [s]
         self.t_trg_max = 1.0   # [s]
         self.t_impact_max = 1.0   # [s]
+
+        ## PLANE PARAMETERS
+        self.Plane_Pos = [1,1]
+        self.Plane_Angle_deg = 0
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
 
     
         ## INITIAL LEARNING/REWARD CONFIGS
@@ -42,12 +59,11 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         
 
 
-    def ParamOptim_reset(self):
+    def ParamOptim_reset(self,V_mag=None,V_angle=None,Plane_Angle=None):
 
         ######################
         #    GENERAL CONFIGS
         ######################
-
 
         ## RESET LEARNING/REWARD CONDITIONS
         self.K_ep += 1
@@ -65,18 +81,34 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.MomentCutoff = False
 
 
+        ## SET PLANE POSE
+        if Plane_Angle == None:
 
+            Plane_Angle_Low = self.Plane_Angle_range[0]
+            Plane_Angle_High = self.Plane_Angle_range[1]
+            self.Plane_Angle_deg = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+            self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
 
+        else:
+            self.Plane_Angle_deg = Plane_Angle
+            self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
+
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
+        if V_mag == None or V_angle == None:
+            V_mag,V_angle = self._sampleFlightConditions()
+
+        else:
+            V_mag = V_mag       # Flight velocity
+            V_angle = V_angle   # Flight angle  
+
+        self.V_mag = V_mag
+        self.V_angle = V_angle
+        
+
+        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
+        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
         self.resetPose()
-
-        ## RESET/UPDATE TIME CONDITIONS
-        self.start_time_episode = self._get_time()
-        self.start_time_trg = np.nan
-        self.start_time_impact = np.nan
-        
-
-        
 
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
@@ -84,6 +116,11 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
         # self.setModelInertia()
 
+
+        ## RESET/UPDATE TIME CONDITIONS
+        self.start_time_episode = self._get_time()
+        self.start_time_trg = np.nan
+        self.start_time_impact = np.nan
         
 
         obs = None
@@ -110,8 +147,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         # z_0 = 2.10 - tau_0*vz
         z_0 = 0.5
 
-        self.Vel_Launch([0,0,z_0],[vx,0,vz])
-        self.pause_physics(False)
+        self.velLaunch([0,0,z_0],[vx,0,vz])
+        self.pausePhysics(False)
         self.sleep(0.05)
         self.sendCmd("Policy",cmd_vals=[Tau,Rot_acc,0.0],cmd_flag=1)
 
@@ -170,7 +207,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
             if (time.time() - start_time_ep) > 15.0 and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-                self.restart_Sim()
+                self._restart_Sim()
                 self.Done = True
 
 

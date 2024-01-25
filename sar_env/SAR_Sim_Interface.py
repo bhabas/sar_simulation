@@ -39,13 +39,13 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         ## START SIMULATION
         self.Clock_Check_Flag = Event() # Stops clock monitoring during launch process
-        self.restart_Sim()
+        self._restart_Sim()
 
 
         ## START MONITORING NODES
-        self.start_monitoring_subprocesses()
+        self._start_monitoring_subprocesses()
         if GZ_Timeout == True:
-            self.start_monitoring_clock_topic()
+            self._startMonitoringClockTopic()
 
         ## WAIT TILL TOPIC DATA STARTS COMING IN
         rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData)
@@ -59,7 +59,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     # =========================
     
 
-    def iter_step(self,n_steps:int = 10):
+    def iterStep(self,n_steps:int = 10):
         """Update simulation by n timesteps
 
         Args:
@@ -93,7 +93,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         return True
         
-    def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
+    def velLaunch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
         """Launch crazyflie from the specified position/orientation with an imparted velocity.
         NOTE: Due to controller dynamics, the actual velocity will NOT be exactly the desired velocity
 
@@ -127,18 +127,18 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         state_srv.twist.angular.z = 0
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
-        self.pause_physics()
+        self.pausePhysics()
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
-        self.iter_step(2)
+        self.iterStep(2)
 
 
         ## SET DESIRED VEL IN CONTROLLER
         self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
-        self.iter_step(2)
+        self.iterStep(2)
         self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
-        self.iter_step(2)
+        self.iterStep(2)
         self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
-        self.iter_step(2)
+        self.iterStep(2)
 
     def resetPose(self,z_0=0.4):           
 
@@ -146,20 +146,19 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.sendCmd('Tumble',cmd_flag=0)
         self.sendCmd('Ctrl_Reset')
-        self.setModelState(pos=[0,0,z_0])
+        self._setModelState(pos=[0,0,z_0])
         self.sleep(0.01)
 
         self.sendCmd('Tumble',cmd_flag=1)
         self.sendCmd('Ctrl_Reset')
-        self.setModelState(pos=[0,0,z_0])
+        self._setModelState(pos=[0,0,z_0])
         self.sleep(1.0) # Give time for drone to settle
 
         self.sendCmd('GZ_StickyPads',cmd_flag=1)
 
         
 
-    def setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
-
+    def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
         ## RESET POSITION AND VELOCITY
         state_srv = ModelState()
@@ -183,7 +182,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
 
-    def setModelInertia(self,Mass,Inertia):
+    def _setModelInertia(self,Mass,Inertia):
 
         ## CREATE SERVICE REQUEST MSG
         # srv = Inertia_ParamsRequest() 
@@ -200,6 +199,29 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         os.system("roslaunch sar_launch Load_Params.launch")
 
+    def _sampleFlightConditions(self,V_mag_range=[0.5,1.5],V_angle_range=[0,90]):
+
+        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
+        Vel_Low = V_mag_range[0]
+        Vel_High = V_mag_range[1]
+        V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
+
+        ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        Rel_Angle_Low = V_angle_range[0]
+        Rel_Angle_High = V_angle_range[1]
+        Flight_Angle_range = Rel_Angle_High-Rel_Angle_Low
+
+        Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
+
+        if Dist_Num == 0: # Low Range
+            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low, high=Rel_Angle_Low + 0.1*Flight_Angle_range)
+        elif Dist_Num == 1: # Medium Range
+            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low + 0.1*Flight_Angle_range, high=Rel_Angle_High - 0.1*Flight_Angle_range)
+        elif Dist_Num == 2: # High Range
+            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_High - 0.1*Flight_Angle_range, high=Rel_Angle_High)
+       
+        return V_mag,Flight_Angle
+
     
 
     
@@ -207,46 +229,46 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     ##     SIM MONITORING/LAUNCH
     # ================================
 
-    def launch_GZ_Sim(self):
+    def _launch_GZ_Sim(self):
         cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_launch launch_gazebo.bash"
         self.GZ_Sim_process = subprocess.Popen(cmd, shell=True)
 
-    def launch_SAR_DC(self):
+    def _launch_SAR_DC(self):
         cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_data_converter SAR_DataConverter"
         self.SAR_DC_process = subprocess.Popen(cmd, shell=True)
 
-    def launch_controller(self):
+    def _launch_Controller(self):
         cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_control SAR_Controller"
         self.SAR_Ctrl_process = subprocess.Popen(cmd, shell=True)
 
-    def start_monitoring_subprocesses(self):
-        monitor_thread = Thread(target=self.monitor_subprocesses)
+    def _start_monitoring_subprocesses(self):
+        monitor_thread = Thread(target=self._monitor_subprocesses)
         monitor_thread.daemon = True
         monitor_thread.start()
 
 
-    def monitor_subprocesses(self):
+    def _monitor_subprocesses(self):
 
         while True:
 
-            GZ_ping_ok = self.ping_subprocesses("/gazebo/get_loggers")
-            SAR_DC_ping_ok = self.ping_subprocesses("/SAR_DataConverter_Node/get_loggers")
-            SAR_Ctrl_ping_ok = self.ping_subprocesses("/SAR_Controller_Node/get_loggers")
+            GZ_ping_ok = self._ping_subprocesses("/gazebo/get_loggers")
+            SAR_DC_ping_ok = self._ping_subprocesses("/SAR_DataConverter_Node/get_loggers")
+            SAR_Ctrl_ping_ok = self._ping_subprocesses("/SAR_Controller_Node/get_loggers")
             NaN_check_ok = not np.isnan(self.vel[0])
 
             if not (GZ_ping_ok and SAR_DC_ping_ok and SAR_Ctrl_ping_ok):
                 print("One or more subprocesses not responding. Restarting all subprocesses...")
-                self.restart_Sim()
+                self._restart_Sim()
                 self.Done = True
 
             if not (NaN_check_ok):
                 print("NaN value detected. Restarting all subprocesses...")
-                self.restart_Sim()
+                self._restart_Sim()
                 self.Done = True
 
             time.sleep(0.5)
 
-    def ping_subprocesses(self, service_name,silence_errors=False):
+    def _ping_subprocesses(self, service_name,silence_errors=False):
         cmd = f"rosservice call {service_name}"
         stderr_option = subprocess.DEVNULL if silence_errors else None
 
@@ -257,7 +279,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
             return False
         
     
-    def restart_Sim(self):
+    def _restart_Sim(self):
 
         self.Clock_Check_Flag.clear()
 
@@ -271,27 +293,27 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         time.sleep(1.0)
 
         ## LAUNCH GAZEBO
-        self.launch_GZ_Sim()
-        self.wait_for_node(node_name="gazebo",timeout=10,interval=1)
+        self._launch_GZ_Sim()
+        self._wait_for_node(node_name="gazebo",timeout=10,interval=1)
 
         if rospy.get_param(f"/SIM_SETTINGS/GUI_Flag") == True:
-            self.wait_for_node(node_name="gazebo_gui",timeout=5,interval=0.25)
+            self._wait_for_node(node_name="gazebo_gui",timeout=5,interval=0.25)
 
         ## LAUNCH CONTROLLER
-        self.launch_controller()
-        self.wait_for_node(node_name="SAR_Controller_Node",timeout=5,interval=0.25)
+        self._launch_Controller()
+        self._wait_for_node(node_name="SAR_Controller_Node",timeout=5,interval=0.25)
 
         ## LAUNCH SAR_DC
-        self.launch_SAR_DC()
-        self.wait_for_node(node_name="SAR_DataConverter_Node",timeout=5,interval=0.25)
+        self._launch_SAR_DC()
+        self._wait_for_node(node_name="SAR_DataConverter_Node",timeout=5,interval=0.25)
 
         self.Clock_Check_Flag.set()
     
-    def wait_for_node(self,node_name,timeout=None,interval=1.0):
+    def _wait_for_node(self,node_name,timeout=None,interval=1.0):
 
         start_time = time.time()
 
-        while not self.ping_subprocesses(f"/{node_name}/get_loggers",silence_errors=True):
+        while not self._ping_subprocesses(f"/{node_name}/get_loggers",silence_errors=True):
 
             if timeout is not None and time.time() - start_time > timeout:
                 print(f"Timeout reached while waiting for {node_name} to launch.")
@@ -312,12 +334,12 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     ##      MONITOR CLOCK
     # ===========================
 
-    def start_monitoring_clock_topic(self):
-        monitor_clock_thread = Thread(target=self.monitor_clock_topic)
+    def _startMonitoringClockTopic(self):
+        monitor_clock_thread = Thread(target=self._monitorClockTopic)
         monitor_clock_thread.daemon = True
         monitor_clock_thread.start()
 
-    def monitor_clock_topic(self):
+    def _monitorClockTopic(self):
 
         while True:
             self.Clock_Check_Flag.wait()
@@ -326,9 +348,9 @@ class SAR_Sim_Interface(SAR_Base_Interface):
             except (rospy.ROSException, rospy.exceptions.ROSInterruptException):
                 
                 print("No message received on /clock topic within the timeout. Unpausing physics.")
-                self.pause_physics(False)
+                self.pausePhysics(False)
 
-    def pause_physics(self,pause_flag=True):
+    def pausePhysics(self,pause_flag=True):
 
         if pause_flag == True:
             service = '/gazebo/pause_physics'
