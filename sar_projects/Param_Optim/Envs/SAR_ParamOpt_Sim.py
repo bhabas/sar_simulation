@@ -11,36 +11,72 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         SAR_Sim_Interface.__init__(self)        
 
         self.Env_Name = "SAR_ParamOptim_Env"
-        self.k_ep = 0
+        self.GZ_Timeout = GZ_Timeout
+
+
+        ## TIME CONSTRAINTS
+        self.t_trg_max = 1.0   # [s]
+        self.t_impact_max = 1.0   # [s]
+
     
+        ## INITIAL LEARNING/REWARD CONFIGS
+        self.K_ep = 0
+        self.Pol_Trg_Flag = False
+        self.Done = False
+        self.reward = 0
+        self.reward_vals = np.array([0,0,0,0,0,0])
+        self.reward_weights = {
+            "W_Dist":0.2,
+            "W_tau_cr":0.0,
+            "W_LT":1.0,
+            "W_GM":0.0,
+            "W_Phi_rel":0.0,
+            "W_Legs":2.0
+        }
+        self.W_max = sum(self.reward_weights.values())
+
         self.D_min = np.inf
         self.Tau_trg = np.inf
-        self.done = False
+        self.Tau_CR_trg = np.inf
 
-        self.GZ_Timeout = GZ_Timeout
+        
 
 
     def ParamOptim_reset(self):
 
-        ## RESET REWARD CALC VALUES
-        self.done = False
-        self.D_min = np.inf  # Reset max from ceiling [m]
+        ######################
+        #    GENERAL CONFIGS
+        ######################
+
+
+        ## RESET LEARNING/REWARD CONDITIONS
+        self.K_ep += 1
+        self.Done = False
+        self.Pol_Trg_Flag = False
+        self.reward = 0
+
+        self.D_min = np.inf
         self.Tau_trg = np.inf
+        self.Tau_CR_trg = np.inf
+
+        self.Impact_Flag = False
+        self.BodyContact_Flag = False
+        self.Pad_Connections = 0
+        self.MomentCutoff = False
+
+
+
+
+
+        self.resetPose()
+
+        ## RESET/UPDATE TIME CONDITIONS
+        self.start_time_episode = self._get_time()
+        self.start_time_trg = np.nan
+        self.start_time_impact = np.nan
         
 
-        self.SendCmd('GZ_StickyPads',cmd_flag=0)
-
-        self.SendCmd('Tumble',cmd_flag=0)
-        self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(0.01)
-
-        self.SendCmd('Tumble',cmd_flag=1)
-        self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(1.0) # Give time for drone to settle
-
-        self.SendCmd('GZ_StickyPads',cmd_flag=1)
+        
 
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
@@ -56,7 +92,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     def ParamOptim_Flight(self,Tau,Rot_acc,vel,phi):
 
         ## RESET/UPDATE RUN CONDITIONS
-        start_time_rollout = self.getTime()
+        start_time_rollout = self._get_time()
         t_Rot_Action = np.nan
         start_time_impact = np.nan
 
@@ -77,14 +113,14 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
         self.pause_physics(False)
         self.sleep(0.05)
-        self.SendCmd("Policy",cmd_vals=[Tau,Rot_acc,0.0],cmd_flag=1)
+        self.sendCmd("Policy",cmd_vals=[Tau,Rot_acc,0.0],cmd_flag=1)
 
 
         
 
-        while not self.done: 
+        while not self.Done: 
 
-            t_now = self.getTime()
+            t_now = self._get_time()
 
             ## RECORD LOWEST D_perp VALUE
             if self.D_perp < self.D_min:
@@ -95,7 +131,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
                 t_Rot_Action = t_now    # Starts countdown for when to reset run
                 OnceFlag_Trg = True        # Turns on to make sure this only runs once per rollout
 
-            if ((self.Impact_flag or self.BodyContact_flag) and OnceFlag_Impact == False):
+            if ((self.Impact_flag or self.BodyContact_Flag) and OnceFlag_Impact == False):
                 start_time_impact = t_now
                 OnceFlag_Impact = True
 
@@ -106,14 +142,14 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             ## PITCH TIMEOUT  
             if (t_now-t_Rot_Action) > 2.25:
                 self.error_str = "Rollout Completed: Pitch Timeout"
-                self.done = True
+                self.Done = True
                 # print(self.error_str)
 
 
             ## IMPACT TIMEOUT
             elif (t_now-start_time_impact) > 0.5:
                 self.error_str = "Rollout Completed: Impact Timeout"
-                self.done = True
+                self.Done = True
                 # print(self.error_str)
 
 
@@ -121,13 +157,13 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             ## ROLLOUT TIMEOUT
             elif (t_now - start_time_rollout) > 5.0:
                 self.error_str = "Rollout Completed: Time Exceeded"
-                self.done = True
+                self.Done = True
                 # print(self.error_str)
 
             ## FREE FALL TERMINATION
             elif self.vel[2] <= -0.5 and self.pos[2] <= 1.5: 
                 self.error_str = "Rollout Completed: Falling Drone"
-                self.done = True
+                self.Done = True
                 # print(self.error_str)
 
 
@@ -135,57 +171,86 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             if (time.time() - start_time_ep) > 15.0 and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
                 self.restart_Sim()
-                self.done = True
+                self.Done = True
 
 
 
 
         reward = self._CalcReward()
 
-        return None,reward,self.done,None
+        return None,reward,self.Done,None
     
     def _CalcReward(self):
 
-        ## DISTANCE REWARD 
-        R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
         
-        ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.30),0,15)/15
 
+        self.reward_vals = [0,0,0,0,0]
+        R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
+        print(f"R_t_norm: {R_t/self.W_max:.3f} ")
+        print(np.round(self.reward_vals,2))
 
-        ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
-        Beta_d = 150 # Desired impact angle [= 180 deg - gamma [deg]] TODO: Change to live value?
-        Beta_rel = -180 + self.Rot_Sum_impact + self.Plane_Angle
-
-        if Beta_rel < -180:
-            R_angle = 0
-        elif -180 <= Beta_rel < 180:
-            R_angle = 0.5*(-np.cos(np.deg2rad(Beta_rel*180/Beta_d))+1)
-        elif Beta_rel > 180:
-            R_angle = 0
-
-        ## PAD CONTACT REWARD
-        if self.pad_connections >= 3: 
-            if self.BodyContact_flag == False:
-                R_legs = 1.0
-            else:
-                R_legs = 0.3
-
-        elif self.pad_connections == 2: 
-            if self.BodyContact_flag == False:
-                R_legs = 0.6
-            else:
-                R_legs = 0.1
-                
+        return R_t/self.W_max
+    
+    def Reward_Exp_Decay(self,x,threshold,k=5):
+        if -0.1 < x < threshold:
+            return 1
+        elif threshold <= x:
+            return np.exp(-k*(x-threshold))
         else:
-            R_legs = 0.0
+            return 0
+    
+    def Reward_RotationDirection(self,x,rot_dir):
 
-        self.reward_vals = [R_dist,R_tau,R_angle,R_legs,0]
-        self.reward = 0.05*R_dist + 0.1*R_tau + 0.2*R_angle + 0.65*R_legs
+        if rot_dir == +1:
+            return x if x < 0 else 1
+        elif rot_dir == -1:
+            return 1 if x < 0 else -x
+        
+    def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
 
-        return self.reward
+        if Impact_condition == -1:
+            Phi_deg = -Phi_deg
 
-5
+        ## NOTE: THESE ARE ALL RELATIVE ANGLES
+        Phi_TD = 180
+        Phi_w = Phi_TD - Phi_min
+        Phi_b = Phi_w/2
+
+        if Phi_deg <= -2*Phi_min:
+            return -1.0
+        elif -2*Phi_min < Phi_deg <= Phi_min:
+            return 0.5/(Phi_min - 0) * (Phi_deg - Phi_min) + 0.5
+        elif Phi_min < Phi_deg <= Phi_min + Phi_b:
+            return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
+        elif Phi_min + Phi_b < Phi_deg <= Phi_TD:
+            return -0.5/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.5
+        elif Phi_TD < Phi_deg <= Phi_TD + Phi_b:
+            return 0.5/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.5
+        elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
+            return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
+        elif (Phi_TD + Phi_w) < Phi_deg <= (360 + 2*Phi_min):
+            return -0.5/(360 - ((Phi_TD + Phi_w))) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
+        elif (360 + 2*Phi_min) <= Phi_deg:
+            return -1.0
+
+    def Reward_LT(self,CP_angle_deg,Leg_Num):
+
+        if Leg_Num == 2:
+            CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
+
+        if -180 <= CP_angle_deg <= 0:
+            return -np.sin(np.radians(CP_angle_deg))
+        elif 0 < CP_angle_deg <= 180:
+            return -1.0/180 * CP_angle_deg
+        
+    def Reward_GravityMoment(self,CP_angle_deg,Leg_Num):
+
+        if Leg_Num == 2:
+            CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
+
+        return -np.sin(np.radians(CP_angle_deg))
+
+
 
 if __name__ == "__main__":
 

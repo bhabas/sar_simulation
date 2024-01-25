@@ -133,41 +133,53 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
 
         ## SET DESIRED VEL IN CONTROLLER
-        self.SendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
         self.iter_step(2)
-        self.SendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
         self.iter_step(2)
-        self.SendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
         self.iter_step(2)
+
+    def resetPose(self,z_0=0.4):           
+
+        self.sendCmd('GZ_StickyPads',cmd_flag=0)
+
+        self.sendCmd('Tumble',cmd_flag=0)
+        self.sendCmd('Ctrl_Reset')
+        self.setModelState(pos=[0,0,z_0])
+        self.sleep(0.01)
+
+        self.sendCmd('Tumble',cmd_flag=1)
+        self.sendCmd('Ctrl_Reset')
+        self.setModelState(pos=[0,0,z_0])
+        self.sleep(1.0) # Give time for drone to settle
+
+        self.sendCmd('GZ_StickyPads',cmd_flag=1)
+
         
 
-    def reset_pos(self,z_0=0.35): # Disable sticky then places spawn_model at origin
-        """Reset pose/twist of simulated drone back to home position. 
-        As well as turning off stickyfeet
+    def setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
-        Args:
-            z_0 (float, optional): Starting height of crazyflie. Defaults to 0.35.
-        """        
-        
+
         ## RESET POSITION AND VELOCITY
         state_srv = ModelState()
         state_srv.model_name = self.SAR_Config
-        state_srv.pose.position.x = 0.0
-        state_srv.pose.position.y = 0.0
-        state_srv.pose.position.z = z_0
+        state_srv.pose.position.x = pos[0]
+        state_srv.pose.position.y = pos[1]
+        state_srv.pose.position.z = pos[2]
 
-        state_srv.pose.orientation.w = 1.0
-        state_srv.pose.orientation.x = 0.0
-        state_srv.pose.orientation.y = 0.0
-        state_srv.pose.orientation.z = 0.0
+        state_srv.pose.orientation.x = quat[0]
+        state_srv.pose.orientation.y = quat[1]
+        state_srv.pose.orientation.z = quat[2]
+        state_srv.pose.orientation.w = quat[3]
         
-        state_srv.twist.linear.x = 0.0
-        state_srv.twist.linear.y = 0.0
-        state_srv.twist.linear.z = 0.0
+        state_srv.twist.linear.x = vel[0]
+        state_srv.twist.linear.y = vel[1]
+        state_srv.twist.linear.z = vel[2]
 
-        state_srv.twist.angular.x = 0.0
-        state_srv.twist.angular.y = 0.0
-        state_srv.twist.angular.z = 0.0
+        state_srv.twist.angular.x = ang_vel[0]
+        state_srv.twist.angular.y = ang_vel[1]
+        state_srv.twist.angular.z = ang_vel[2]
 
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
 

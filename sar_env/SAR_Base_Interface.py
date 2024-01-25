@@ -30,59 +30,63 @@ class SAR_Base_Interface():
         self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
         self.preInit_Values()
+        self.Pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
 
 
+        ## GEOMETRIC PARAMETERS
+        self.Forward_Reach = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Forward_Reach")
         self.Leg_Length = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Length")
         self.Leg_Angle = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Angle")
 
-        self.Forward_Reach = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Forward_Reach")
-
+        ## EFFECTIVE-GEOEMTRIC PARAMETERS
         self.L_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/L_eff")
         self.Gamma_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Gamma_eff")
         self.Lx_eff = self.L_eff*np.sin(np.radians(self.Gamma_eff))
         self.Lz_eff = self.L_eff*np.cos(np.radians(self.Gamma_eff))
 
-        self.Beta_Min = self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff))
 
-        ## PLANE PARAMETERS
-        self.Plane_Type = rospy.get_param('/PLANE_SETTINGS/Plane_Type')
-        self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
+        self.Beta_Min = self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff))
+        self.Collision_Radius = max(self.L_eff,self.Forward_Reach)
+
+        
 
         ## CAM PARAMETERS
         self.Cam_Config = rospy.get_param('/CAM_SETTINGS/Cam_Config')
         self.Cam_Active = rospy.get_param('/CAM_SETTINGS/Cam_Active')
 
-        self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
+
+        ## TRAJECTORY PARAMETERS
         self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")
         
 
         ## PLANE PARAMETERS
+        self.Plane_Type = rospy.get_param('/PLANE_SETTINGS/Plane_Type')
         self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
         
 
-        ## INIT LOGGING VALUES
-        self.username = getpass.getuser()
-        self.logDir =  f"/home/{self.username}/catkin_ws/src/sar_simulation/sar_logging/local_logs"
-        self.logName = "TestLog.csv"
-        self.error_str = "No_Debug_Data"
+        ## LOGGING PARAMETERS
+        self.Username = getpass.getuser()
+        self.Log_Dir =  f"/home/{self.Username}/catkin_ws/src/sar_simulation/sar_logging/local_logs"
+        self.Log_Name = "TestLog.csv"
+        self.Error_Str = "No_Debug_Data"
 
 
 
-        ## CRAZYFLIE DATA SUBSCRIBERS 
+        ## SAR DATA SUBSCRIBERS 
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/TriggerData",SAR_TriggerData,self.SAR_TriggerDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/ImpactData",SAR_ImpactData,self.SAR_ImpactDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self.SAR_MiscDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self._SAR_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/TriggerData",SAR_TriggerData,self._SAR_TriggerDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/ImpactData",SAR_ImpactData,self._SAR_ImpactDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self._SAR_MiscDataCallback,queue_size=1)
 
         ## RL DATA PUBLISHERS
-        self.RL_Data_Publisher = rospy.Publisher('/RL/Data',RL_Data,queue_size=10)
-        self.RL_Convg_Publisher = rospy.Publisher('/RL/History',RL_History,queue_size=10)
+        self.RL_Data_Pub = rospy.Publisher('/RL/Data',RL_Data,queue_size=10)
+        self.RL_History_Pub = rospy.Publisher('/RL/History',RL_History,queue_size=10)
 
 
-    def getTime(self):
+    def _get_time(self):
         """Returns current known time.
 
         Returns:
@@ -91,7 +95,7 @@ class SAR_Base_Interface():
         
         return self.t
 
-    def SendCmd(self,action,cmd_vals=[0,0,0],cmd_flag=1):
+    def sendCmd(self,action,cmd_vals=[0,0,0],cmd_flag=1):
         """Sends commands to SAR_DC->Controller via rosservice call
 
         Args:
@@ -138,7 +142,6 @@ class SAR_Base_Interface():
 
         self.callService('/SAR_DC/CMD_Input',srv,CTRL_Cmd_srv)    
 
-    
     def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):
 
         ## CHECK THAT SERVICE IS AVAILABLE
@@ -166,7 +169,7 @@ class SAR_Base_Interface():
 
                 
 
-    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,Tau_0=0.5):
+    def startPos_VelTraj(self,x_impact,V_d,accel_d=None,Tau_0=0.5):
         """Returns the required start position (x_0,z_0) to intercept the 180 deg ceiling 
         at a specific x-location; while also achieving the desired velocity conditions 
         at by a certain distance from the ceiling.
@@ -191,7 +194,7 @@ class SAR_Base_Interface():
 
         ## DEFAULT TO CLASS VALUES
         if accel_d == None:
-            accel_d = self.accCF_max
+            accel_d = self.TrajAcc_Max
     
         a_x = accel_d[0]
         a_z = accel_d[2]
@@ -211,7 +214,7 @@ class SAR_Base_Interface():
     
     def setPlanePose(self,Position=[0,0,2.0],Plane_Angle=180):
         
-        self.SendCmd("GZ_Plane_Pose",Position,Plane_Angle)
+        self.sendCmd("GZ_Plane_Pose",Position,Plane_Angle)
 
     def _RL_Publish(self):
 
@@ -220,7 +223,7 @@ class SAR_Base_Interface():
         
         RL_msg.k_ep = self.k_ep
         RL_msg.k_run = self.k_run
-        RL_msg.error_string = self.error_str
+        RL_msg.error_string = self.Error_Str
         RL_msg.n_rollouts = self.n_rollouts
 
 
@@ -233,7 +236,7 @@ class SAR_Base_Interface():
         RL_msg.vel_d = self.vel_d
 
         RL_msg.trialComplete_flag = self.trialComplete_flag
-        self.RL_Data_Publisher.publish(RL_msg) ## Publish RL_Data message
+        self.RL_Data_Pub.publish(RL_msg) ## Publish RL_Data message
         
         ## CONVERGENCE HISTORY
         RL_convg_msg = RL_History()
@@ -252,7 +255,7 @@ class SAR_Base_Interface():
         RL_convg_msg.Kep_list_reward_avg = self.Kep_list_reward_avg
         RL_convg_msg.reward_avg_list = self.reward_avg_list
 
-        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RL_Data message
+        self.RL_History_Pub.publish(RL_convg_msg) ## Publish RL_Data message
 
         time.sleep(0.1)
 
@@ -357,7 +360,7 @@ class SAR_Base_Interface():
         ## PARAM OPTIM DATA
         self.k_ep = 0                   # Episode number
         self.k_run = 0                  # Run number
-        self.error_str = ""
+        self.Error_Str = ""
         self.n_rollouts = 0
 
         self.vel_d = [0.0,0.0,0.0]      # Desired velocity for trial
@@ -384,7 +387,7 @@ class SAR_Base_Interface():
 
         ## CREATE SERVICE REQUEST MSG
         srv = Logging_CMDRequest() 
-        srv.filePath = os.path.join(self.logDir,logName)
+        srv.filePath = os.path.join(self.Log_Dir,logName)
         srv.Logging_CMD = 0
 
         ## SEND LOGGING REQUEST VIA SERVICE
@@ -396,7 +399,7 @@ class SAR_Base_Interface():
 
         ## CREATE SERVICE REQUEST MSG
         srv = Logging_CMDRequest()
-        srv.filePath = os.path.join(self.logDir,logName)
+        srv.filePath = os.path.join(self.Log_Dir,logName)
         srv.Logging_CMD = 1
 
         ## SEND LOGGING REQUEST VIA SERVICE
@@ -408,9 +411,9 @@ class SAR_Base_Interface():
 
         ## CREATE SERVICE REQUEST MSG
         srv = Logging_CMDRequest()
-        srv.filePath = os.path.join(self.logDir,logName)
+        srv.filePath = os.path.join(self.Log_Dir,logName)
         srv.Logging_CMD = 2
-        srv.error_string = self.error_str # String for why logging was capped
+        srv.error_string = self.Error_Str # String for why logging was capped
         
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
@@ -424,7 +427,7 @@ class SAR_Base_Interface():
         if rospy.get_param('/DATA_TYPE') == "SIM":
             self.t = msg.clock.to_sec()
 
-    def SAR_StateDataCallback(self,StateData_msg):
+    def _SAR_StateDataCallback(self,StateData_msg):
 
         if rospy.get_param('/DATA_TYPE') == "EXP":
             self.t = StateData_msg.header.stamp.to_sec()
@@ -465,7 +468,7 @@ class SAR_Base_Interface():
        
         self.t_prev = self.t # Save t value for next callback iteration
 
-    def SAR_TriggerDataCallback(self,TriggerData_msg):
+    def _SAR_TriggerDataCallback(self,TriggerData_msg):
 
         ## TRIGGER FLAG
         self.Trg_flag = TriggerData_msg.Trg_flag
@@ -502,8 +505,7 @@ class SAR_Base_Interface():
             self.Policy_Trg_Action_trg = TriggerData_msg.Policy_Trg_Action_trg
             self.Policy_Rot_Action_trg = TriggerData_msg.Policy_Rot_Action_trg
 
-
-    def SAR_ImpactDataCallback(self,ImpactData_msg):
+    def _SAR_ImpactDataCallback(self,ImpactData_msg):
 
         if rospy.get_param('/DATA_TYPE') == "SIM": ## Impact values only good in simulation
 
@@ -533,8 +535,7 @@ class SAR_Base_Interface():
             
             self.Rot_Sum_impact = ImpactData_msg.Rot_Sum
 
-
-    def SAR_MiscDataCallback(self,MiscData_msg):        
+    def _SAR_MiscDataCallback(self,MiscData_msg):        
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
@@ -545,6 +546,7 @@ class SAR_Base_Interface():
             MiscData_msg.Plane_Pos.y,
             MiscData_msg.Plane_Pos.z,
         ]
+
 
 
     def userInput(self,input_string,dataType=float):
@@ -569,6 +571,90 @@ class SAR_Base_Interface():
                 return vals[0]
             else:
                 return vals
+
+    # ============================
+    ##   Rotation Matrices 
+    # ============================
+    def R_BW(self,vec,phi):
+
+        R_BW = np.array([
+            [ np.cos(phi), np.sin(phi)],
+            [-np.sin(phi), np.cos(phi)],
+        ])
+
+        return R_BW.dot(vec)
+    
+    def R_WP(self,vec,theta):
+
+        R_WP = np.array([
+            [ np.cos(theta),-np.sin(theta)],
+            [ np.sin(theta), np.cos(theta)]
+        ])
+
+        return R_WP.dot(vec)
+    
+    def R_PW(self,vec,theta):
+
+        R_PW = np.array([
+            [ np.cos(theta), np.sin(theta)],
+            [-np.sin(theta), np.cos(theta)]
+        ])
+
+        return R_PW.dot(vec)
+    
+    def R_PC1(self,vec,Beta1):
+
+        R_PC1 = np.array([
+            [ np.cos(Beta1),-np.sin(Beta1)],
+            [ np.sin(Beta1), np.cos(Beta1)]
+        ])
+
+        return R_PC1.dot(vec)
+    
+    def R_C1P(self,vec,Beta1):
+
+        R_C1P = np.array([
+            [ np.cos(Beta1), np.sin(Beta1)],
+            [-np.sin(Beta1), np.cos(Beta1)]
+        ])
+
+        return R_C1P.dot(vec)
+    
+    def R_C1B(self,vec,gamma_rad):
+
+        R_C1B = np.array([
+            [ np.sin(gamma_rad), np.cos(gamma_rad)],
+            [-np.cos(gamma_rad), np.sin(gamma_rad)],
+        ])
+
+        return R_C1B.dot(vec)
+
+    def R_PC2(self,vec,Beta2):
+
+        R_PC2 = np.array([
+            [ np.cos(Beta2), np.sin(Beta2)],
+            [-np.sin(Beta2), np.cos(Beta2)]
+        ])
+
+        return R_PC2.dot(vec)
+    
+    def R_C2P(self,vec,Beta2):
+
+        R_C2P = np.array([
+            [ np.cos(Beta2), np.sin(Beta2)],
+            [-np.sin(Beta2), np.cos(Beta2)],
+        ])
+
+        return R_C2P.dot(vec)
+
+    def R_C2B(self,vec,gamma_rad):
+
+        R_C2B = np.array([
+            [-np.sin(gamma_rad), np.cos(gamma_rad)],
+            [-np.cos(gamma_rad),-np.sin(gamma_rad)],
+        ])
+
+        return R_C2B.dot(vec)
 
 
 if __name__ == "__main__":
