@@ -70,7 +70,7 @@ namespace gazebo
 
 
         // UPDATE PLANE POSITION AND ORIENTATION
-        Pose.Set(Pos_X,Pos_Y,Pos_Z, 0.0,(180-Plane_Angle)*M_PI/180.0, 0.0);
+        Pose.Set(Pos_X,Pos_Y,Pos_Z, 0.0,(Plane_Angle)*Deg2Rad, 0.0);
         Surface_Model_Ptr->SetWorldPose(Pose);
 
 

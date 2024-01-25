@@ -16,6 +16,8 @@
 
 
 
+#define Deg2Rad M_PI/180
+#define Rad2Deg 180/M_PI
 
 namespace gazebo {
 
