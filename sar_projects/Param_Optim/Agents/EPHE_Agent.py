@@ -34,16 +34,18 @@ class EPHE_Agent():
         self.Kep_list_reward_avg = []
 
         ## PARAM OPTIM DATA
-        self.k_ep = 0                   # Episode number
-        self.k_run = 0                  # Run number
+        self.K_ep = 0                   # Episode number
+        self.K_run = 0                  # Run number
         self.error_str = ""
 
-        self.vel_d = [0.0,0.0,0.0]      # Desired velocity for trial
-        self.policy = [0.0,0.0,0.0]     # Policy sampled from Gaussian distribution
+        self.V_mag_rel = 0.0            # Relative velocity magnitude [m/s]
+        self.V_angle_rel = 0.0          # Relative velocity angle [deg]
+        self.Plane_Angle = 0.0          # Plane angle [deg]
+        self.policy = [0.0,0.0]         # Policy sampled from Gaussian distribution
 
         self.reward = 0.0               # Calculated reward from run
         self.reward_avg = 0.0           # Averaged rewards over episode
-        self.reward_vals = np.zeros(5)
+        self.reward_vals = np.zeros(6)
 
 
         self.trialComplete_flag = False
@@ -55,10 +57,10 @@ class EPHE_Agent():
         ## RL DATA
         RL_msg = RL_Data() ## Initialize RL_Data message
         
-        # RL_msg.n_rollouts = self.n_rollouts
+        RL_msg.n_rollouts = self.n_rollouts
 
-        RL_msg.k_ep = self.k_ep
-        RL_msg.k_run = self.k_run
+        RL_msg.K_ep = self.K_ep
+        RL_msg.K_run = self.K_run
         RL_msg.error_string = self.error_str
         RL_msg.n_rollouts = self.n_rollouts
 
@@ -70,7 +72,8 @@ class EPHE_Agent():
         RL_msg.reward_avg = self.reward_avg
         RL_msg.reward_vals = self.reward_vals
 
-        RL_msg.vel_d = self.vel_d
+        RL_msg.V_mag_rel = self.V_mag_rel
+        RL_msg.V_angle_rel = self.V_angle_rel
 
         RL_msg.trialComplete_flag = self.trialComplete_flag
         self.RL_Data_Publisher.publish(RL_msg) ## Publish RL_Data message

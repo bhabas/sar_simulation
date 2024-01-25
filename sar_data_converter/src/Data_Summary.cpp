@@ -3,18 +3,18 @@
 void SAR_DataConverter::RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg)
 {
 
-    k_ep = msg->k_ep;
-    k_run = msg->k_run;
+    K_ep = msg->K_ep;
+    K_run = msg->K_run;
     n_rollouts = msg->n_rollouts;
 
     mu = msg->mu;
     sigma = msg->sigma;
-    policy = msg->policy;
+    // policy = msg->policy;
 
     reward = msg->reward;
     reward_vals = msg->reward_vals;
 
-    vel_d = msg->vel_d;
+    // vel_d = msg->vel_d;
 
 
     if(msg->trialComplete_flag == true)

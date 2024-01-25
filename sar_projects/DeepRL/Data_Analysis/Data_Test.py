@@ -18,9 +18,9 @@ dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
 fileName = "EPHE--Vd_3.00--phi_65.00--trial_00--NL--DR.csv"
 trial = DataFile(dataPath,fileName,dataType='SIM')
 
-k_ep = 0
-k_run = 0
+K_ep = 0
+K_run = 0
 
-trial.plot_state(k_ep,k_run,['z'])
+trial.plot_state(K_ep,K_run,['z'])
 # trial.plot_convg(saveFig=True)
 

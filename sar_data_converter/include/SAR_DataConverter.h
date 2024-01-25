@@ -429,8 +429,8 @@ class SAR_DataConverter {
         //     RL DATA
         // ===================
         ros::Subscriber RL_Data_Sub;
-        uint8_t k_ep = 0;
-        uint8_t k_run = 0;
+        uint8_t K_ep = 0;
+        uint8_t K_run = 0;
         uint8_t n_rollouts = 8;
 
         boost::array<double,2> mu{0,0};

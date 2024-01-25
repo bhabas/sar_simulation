@@ -221,8 +221,8 @@ class SAR_Base_Interface():
         ## RL DATA
         RL_msg = RL_Data() ## Initialize RL_Data message
         
-        RL_msg.k_ep = self.k_ep
-        RL_msg.k_run = self.k_run
+        RL_msg.K_ep = self.K_ep
+        RL_msg.K_run = self.K_run
         RL_msg.error_string = self.Error_Str
         RL_msg.n_rollouts = self.n_rollouts
 
@@ -358,8 +358,8 @@ class SAR_Base_Interface():
         self.Kep_list_reward_avg = []
 
         ## PARAM OPTIM DATA
-        self.k_ep = 0                   # Episode number
-        self.k_run = 0                  # Run number
+        self.K_ep = 0                   # Episode number
+        self.K_run = 0                  # Run number
         self.Error_Str = ""
         self.n_rollouts = 0
 

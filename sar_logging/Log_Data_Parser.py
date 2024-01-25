@@ -41,7 +41,7 @@ class Data_Parser:
 
 
         ## CREATE BASIC DF OF K_EP,K_RUN, & REWARD
-        self.k_df = self.trial_df.iloc[:][['k_ep','k_run']]
+        self.k_df = self.trial_df.iloc[:][['K_ep','K_run']]
         self.k_df = self.k_df.drop_duplicates()
 
         if self.dataType=='EXP':
@@ -49,8 +49,8 @@ class Data_Parser:
 
         ## COLLECT BASIC TRIAL INFO
         self.n_rollouts = int(self.trial_df.iloc[-3]['Policy_Trg_Action'])
-        self.k_epMax = int(self.trial_df.iloc[-3]['k_ep'])
-        self.k_runMax = int(self.trial_df.iloc[-3]['k_run'])
+        self.k_epMax = int(self.trial_df.iloc[-3]['K_ep'])
+        self.k_runMax = int(self.trial_df.iloc[-3]['K_run'])
 
     def remove_FailedRuns(self):
         """Drop all rollouts in dataframe that were labelled as 'Failed Rollout'
@@ -69,15 +69,15 @@ class Data_Parser:
 
             self.trial_df.drop(np.arange(idx_start,idx_end,dtype='int'),inplace=True)
 
-        self.k_df = self.trial_df.iloc[:][['k_ep','k_run']].dropna()
+        self.k_df = self.trial_df.iloc[:][['K_ep','K_run']].dropna()
         self.k_df.reset_index(inplace=True)
 
-    def select_run(self,k_ep,k_run): ## Create run dataframe from k_ep and k_run
-        """Create run dataframe from selected k_ep and k_run
+    def select_run(self,K_ep,K_run): ## Create run dataframe from K_ep and K_run
+        """Create run dataframe from selected K_ep and K_run
 
         Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+            K_ep (int): Episode number
+            K_run (int): Run number
 
         Returns:
             Experiment:
@@ -87,7 +87,7 @@ class Data_Parser:
         """        
 
         ## CREATE RUN DATAFRAME
-        run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
+        run_df = self.trial_df[(self.trial_df['K_ep']==K_ep) & (self.trial_df['K_run']==K_run)]
 
         IC_df = run_df.iloc[[-3]]       # Create DF of initial conditions
         Rot_df = run_df.iloc[[-2]]     # Create DF of Rot conditions
@@ -111,16 +111,16 @@ class Data_Parser:
             rewards_avg: array of averaged rewards per episode (np.array)
         """        
         ## CREATE ARRAYS FOR REWARD, K_EP 
-        reward_df = self.trial_df.iloc[:][['k_ep','mu','Trg_flag']].dropna() # Create df from k_ep/rewards and drop blank reward rows
-        reward_df = reward_df.iloc[:][["k_ep","Trg_flag"]].astype('float')
+        reward_df = self.trial_df.iloc[:][['K_ep','mu','Trg_flag']].dropna() # Create df from K_ep/rewards and drop blank reward rows
+        reward_df = reward_df.iloc[:][["K_ep","Trg_flag"]].astype('float')
         rewards_arr = reward_df.to_numpy()
         rewards = rewards_arr[:,1]
         k_ep_r = rewards_arr[:,0]
 
         ## CREATE ARRAYS FOR REWARD_AVG, K_EP
-        rewardAvg_df = reward_df.groupby('k_ep').mean() # Group rows by k_ep value and take their mean 
+        rewardAvg_df = reward_df.groupby('K_ep').mean() # Group rows by K_ep value and take their mean 
         rewards_avg = rewardAvg_df.to_numpy()
-        k_ep_ravg = reward_df.k_ep.unique() # Drops duplicate values so it matches dimension of rewards_avg (1 avg per ep and n ep)
+        k_ep_ravg = reward_df.K_ep.unique() # Drops duplicate values so it matches dimension of rewards_avg (1 avg per ep and n ep)
 
         return k_ep_r,rewards,k_ep_ravg,rewards_avg
 
@@ -138,7 +138,7 @@ class Data_Parser:
         
 
         ax.set_ylabel("Reward")
-        ax.set_xlabel("k_ep")
+        ax.set_xlabel("K_ep")
         ax.set_xlim(-2,self.k_epMax+5)
         ax.set_ylim(-2,ymax)
         ax.set_title(f"Reward vs Episode | Rollouts per Episode: {self.n_rollouts}")
@@ -149,19 +149,19 @@ class Data_Parser:
         plt.show()
 
     ## POLICY FUNCTIONS
-    def grab_policy(self,k_ep=0,k_run=0):
+    def grab_policy(self,K_ep=0,K_run=0):
         """Returns policy from specific run
 
         Data Type: Sim/Exp
 
         Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+            K_ep (int): Episode number
+            K_run (int): Run number
 
         Returns:
             np.array: [RREV,G1,G2,...]
         """        
-        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
+        run_df,IC_df,_,_ = self.select_run(K_ep,K_run)
 
         ## SELECT POLICY
         policy = IC_df.iloc[0]['policy']
@@ -169,7 +169,7 @@ class Data_Parser:
 
         return policy
 
-    def grab_convg_data(self,k_ep=0,k_run=0):
+    def grab_convg_data(self,K_ep=0,K_run=0):
         """Returns series of arrays for episodes, mu values, and sigma values
 
         Data Type: Sim/Exp
@@ -182,9 +182,9 @@ class Data_Parser:
 
         """        
         ## CLEAN AND GRAB DATA FOR MU & SIGMA
-        policy_df = self.trial_df.iloc[:][['k_ep','mu','sigma']]
+        policy_df = self.trial_df.iloc[:][['K_ep','mu','sigma']]
         policy_df = policy_df.dropna().drop_duplicates()
-        k_ep_arr = policy_df.iloc[:]['k_ep'].to_numpy()
+        k_ep_arr = policy_df.iloc[:]['K_ep'].to_numpy()
 
         
 
@@ -254,9 +254,9 @@ class Data_Parser:
         """        
         
         ## FIND FINAL RUN DF
-        k_ep = self.trial_df.iloc[-1]['k_ep']
-        k_run = self.trial_df.iloc[-1]['k_run']
-        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
+        K_ep = self.trial_df.iloc[-1]['K_ep']
+        K_run = self.trial_df.iloc[-1]['K_run']
+        run_df,IC_df,_,_ = self.select_run(K_ep,K_run)
 
         ## SELECT MU & SIGMA
         mu = IC_df.iloc[0]['mu']
@@ -294,20 +294,20 @@ class Data_Parser:
 
 
     ## STATE FUNCTIONS 
-    def grab_stateData(self,k_ep,k_run,stateName: list):
+    def grab_stateData(self,K_ep,K_run,stateName: list):
         """Returns np.array of specified state
 
         Data Type: Sim/Exp
 
         Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+            K_ep (int): Episode number
+            K_run (int): Run number
             stateName (str): State name
 
         Returns:
             state [np.array]: Returned state values
         """        
-        run_df,_,_,_ = self.select_run(k_ep,k_run)
+        run_df,_,_,_ = self.select_run(K_ep,K_run)
 
         ## GRAB STATE DATA AND CONVERT TO NUMPY ARRAY
         state = run_df.iloc[:][stateName]
@@ -315,14 +315,14 @@ class Data_Parser:
 
         return state
 
-    def plot_state(self,k_ep,k_run,stateName: list): 
+    def plot_state(self,K_ep,K_run,stateName: list): 
         """Plot state data from run vs time
 
         Data Type: Sim/Exp
 
         Args:
-            k_ep (int): Ep. Num
-            k_run (int): Run. Num
+            K_ep (int): Ep. Num
+            K_run (int): Run. Num
             stateName list(str): State name from .csv
         """        
 
@@ -330,7 +330,7 @@ class Data_Parser:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        t = self.grab_stateData(k_ep,k_run,'t')
+        t = self.grab_stateData(K_ep,K_run,'t')
         t_norm = t - np.min(t) # Normalize time array
 
         ## GRAB STATE/TRIGGER DATA
@@ -339,22 +339,22 @@ class Data_Parser:
             color = next(ax._get_lines.prop_cycler)['color']
 
             ## PLOT STATE DATA
-            state_vals = self.grab_stateData(k_ep,k_run,state)
+            state_vals = self.grab_stateData(K_ep,K_run,state)
             ax.plot(t_norm,state_vals,label=f"{state}",zorder=1,color=color)
 
 
 
             # ## MARK STATE DATA AT TRIGGER TIME
-            # t_Rot,t_Rot_norm = self.grab_Rot_time(k_ep,k_run)
-            # state_Rot = self.grab_Rot_state(k_ep,k_run,state)
+            # t_Rot,t_Rot_norm = self.grab_Rot_time(K_ep,K_run)
+            # state_Rot = self.grab_Rot_state(K_ep,K_run,state)
             # ax.scatter(t_Rot_norm,state_Rot,label=f"{state}-Rot",zorder=2,
             #             marker='x',
             #             color=color,
             #             s=100)
 
             # # ## MARK STATE DATA AT IMPACT TIME
-            # t_impact,t_impact_norm = self.grab_impact_time(k_ep,k_run)
-            # state_Rot = self.grab_impact_state(k_ep,k_run,state)
+            # t_impact,t_impact_norm = self.grab_impact_time(K_ep,K_run)
+            # state_Rot = self.grab_impact_state(K_ep,K_run,state)
             # ax.scatter(t_impact_norm,state_Rot,label=f"{state}-Impact",zorder=2,
             #             marker='s',
             #             color=color,
@@ -362,8 +362,8 @@ class Data_Parser:
 
             ## MARK STATE DATA AT TRAJ START
             # if self.dataType == 'EXP':
-            #     t_traj,t_traj_norm = self.grab_traj_start(k_ep,k_run)
-            #     state_traj = self.grab_traj_state(k_ep,k_run,state)
+            #     t_traj,t_traj_norm = self.grab_traj_start(K_ep,K_run)
+            #     state_traj = self.grab_traj_state(K_ep,K_run,state)
             #     ax.scatter(t_traj_norm,state_traj,label=f"{state}-Traj",zorder=2,
             #                 marker='o',
             #                 color=color,
@@ -376,8 +376,8 @@ class Data_Parser:
 
         plt.show()
   
-    def grab_time(self,k_ep,k_run):
-        run_df,_,_,_ = self.select_run(k_ep,k_run)
+    def grab_time(self,K_ep,K_run):
+        run_df,_,_,_ = self.select_run(K_ep,K_run)
 
         ## GRAB STATE DATA AND CONVERT TO NUMPY ARRAY
         state = run_df.iloc[:]['t']
@@ -418,20 +418,20 @@ class Data_Parser:
         
 
     ## TRIGGER FUNCTIONS
-    def grab_Rot_time(self,k_ep,k_run):
+    def grab_Rot_time(self,K_ep,K_run):
         """Returns time of Rot
 
         Data Type: Sim/Exp
 
         Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+            K_ep (int): Episode number
+            K_run (int): Run number
 
         Returns:
             float: t_Rot,t_Rot_normalized
         """        
 
-        run_df,_,Rot_df,_ = self.select_run(k_ep,k_run)
+        run_df,_,Rot_df,_ = self.select_run(K_ep,K_run)
         if Rot_df.iloc[0]['Trg_flag'] == True: # If Impact Detected
             t_Rot = float(Rot_df.iloc[0]['t'])
             t_Rot_norm = t_Rot - float(run_df.iloc[0]['t']) # Normalize Rot time
@@ -442,21 +442,21 @@ class Data_Parser:
         return t_Rot,t_Rot_norm
 
 
-    def grab_Rot_state(self,k_ep,k_run,stateName: list):
+    def grab_Rot_state(self,K_ep,K_run,stateName: list):
         """Returns desired state at time of Rot
 
         Data Type: Sim/Exp
 
         Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+            K_ep (int): Episode number
+            K_run (int): Run number
             stateName (str): State name
 
         Returns:
             float: state_Rot
         """        
 
-        _,_,Rot_df,_ = self.select_run(k_ep,k_run)
+        _,_,Rot_df,_ = self.select_run(K_ep,K_run)
         if Rot_df.iloc[0]['Trg_flag'] == True: # If Impact Detected
 
             state_Rot = float(Rot_df.iloc[0][stateName])
@@ -469,12 +469,12 @@ class Data_Parser:
         
 
     ## IMPACT FUNCTIONS
-    def grab_impact_time(self,k_ep,k_run):
+    def grab_impact_time(self,K_ep,K_run):
         """Return time at impact
 
         Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+            K_ep (int): Episode number
+            K_run (int): Run number
             accel_threshold (float, optional): Threshold at which to declare impact. Defaults to -4.0.
 
         Returns:
@@ -484,7 +484,7 @@ class Data_Parser:
 
 
 
-        run_df,_,_,impact_df = self.select_run(k_ep,k_run)
+        run_df,_,_,impact_df = self.select_run(K_ep,K_run)
         if impact_df.iloc[0]['Impact_flag'] == True: # If Impact Detected
             t_impact = float(impact_df.iloc[0]['t'])
             t_impact_norm = t_impact - float(run_df.iloc[0]['t']) # Normalize Rot time
@@ -494,14 +494,14 @@ class Data_Parser:
 
         return t_impact,t_impact_norm
 
-    def grab_impact_state(self,k_ep,k_run,stateName):
+    def grab_impact_state(self,K_ep,K_run,stateName):
         """Returns desired state at time of impact
 
         Data Type: Sim/Exp
 
         Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+            K_ep (int): Episode number
+            K_run (int): Run number
             stateName (str): State Name
 
         Returns:
@@ -510,7 +510,7 @@ class Data_Parser:
 
 
 
-        _,_,_,impact_df = self.select_run(k_ep,k_run)
+        _,_,_,impact_df = self.select_run(K_ep,K_run)
         if impact_df.iloc[0]['Impact_flag'] == True: # If Impact Detected
 
             state_impact = float(impact_df.iloc[0][stateName])
@@ -521,27 +521,27 @@ class Data_Parser:
         return state_impact
 
 
-    def trigger2impact(self,k_ep,k_run):
-        t_Rot,_ = self.grab_Rot_time(k_ep,k_run)
-        t_impact,_ = self.grab_impact_time(k_ep,k_run)
+    def trigger2impact(self,K_ep,K_run):
+        t_Rot,_ = self.grab_Rot_time(K_ep,K_run)
+        t_impact,_ = self.grab_impact_time(K_ep,K_run)
 
         t_delta = t_impact-t_Rot
         return t_delta
 
 
-    def landing_conditions(self,k_ep,k_run):
+    def landing_conditions(self,K_ep,K_run):
         """Returns landing data for number of leg contacts, the impact leg, contact list, and if body impacted
 
         Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+            K_ep (int): Episode number
+            K_run (int): Run number
 
         Returns:
             leg_contacts (int): Number legs that joined to the ceiling
             contact_list (list): List of the order legs impacted the ceiling
             body_impact (bool): True if body impacted the ceiling
         """        
-        _,_,_,impact_df = self.select_run(k_ep,k_run)
+        _,_,_,impact_df = self.select_run(K_ep,K_run)
         body_impact = impact_df.iloc[0]['Trg_flag']
         leg_contacts = int(impact_df.iloc[0]['F_thrust'])
         contact_list = impact_df.iloc[0][['Theta_x','Theta_x_est','Theta_y','Theta_y_est']].to_numpy(dtype=np.int8)
@@ -566,7 +566,7 @@ class Data_Parser:
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
         # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','Trg_flag']].dropna().drop(columns='mu')
+        ep_df = self.trial_df.iloc[:][['K_ep','K_run','mu','Trg_flag']].dropna().drop(columns='mu')
         ep_df = ep_df.astype('float').query(f'Trg_flag >= {reward_cutoff}') 
         ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
@@ -577,10 +577,10 @@ class Data_Parser:
         failed_landing = 0
         contact_list = []
         
-        for k_ep,k_run in ep_arr[:,:2]:
+        for K_ep,K_run in ep_arr[:,:2]:
             
             ## RECORD LANDING CONDITIONS
-            leg_contacts,_,body_impact = self.landing_conditions(k_ep, k_run)
+            leg_contacts,_,body_impact = self.landing_conditions(K_ep, K_run)
 
             if leg_contacts >= 3 and not body_impact: 
                 four_leg_landing += 1
@@ -602,17 +602,17 @@ class Data_Parser:
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
         # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','Trg_flag']].dropna().drop(columns='mu')
+        ep_df = self.trial_df.iloc[:][['K_ep','K_run','mu','Trg_flag']].dropna().drop(columns='mu')
         ep_df = ep_df.astype('float').query(f'Trg_flag >= {reward_cutoff}') 
         ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
         ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
         var_list = []
-        for k_ep,k_run in ep_arr[:,:2]:
+        for K_ep,K_run in ep_arr[:,:2]:
 
-            leg_contacts,_,body_contact = self.landing_conditions(k_ep, k_run)
+            leg_contacts,_,body_contact = self.landing_conditions(K_ep, K_run)
             if leg_contacts >= landing_cutoff and body_contact == False: # IGNORE FAILED LANDINGS
-                var_list.append(func(k_ep,k_run,*args,**kwargs))
+                var_list.append(func(K_ep,K_run,*args,**kwargs))
 
         ## RETURN MEAN AND STD OF STATE
         trial_mean = np.nanmean(var_list)
