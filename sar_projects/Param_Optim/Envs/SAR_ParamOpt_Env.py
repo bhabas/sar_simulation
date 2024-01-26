@@ -11,7 +11,7 @@ COORD_FLIP = -1  # Swap sign to match proper coordinate notation
 
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
-    def __init__(self,GZ_Timeout=False,Ang_acc_range=[-250,250],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
+    def __init__(self,GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
         SAR_Sim_Interface.__init__(self)        
 
         ######################
@@ -26,7 +26,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.V_mag_range = V_mag_range  
         self.V_angle_range = V_angle_range
         self.Plane_Angle_range = Plane_Angle_range
-        self.setAngAcc_range(Ang_acc_range)
+        self.setAngAcc_range(Ang_Acc_range)
 
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.abs(self.Ang_Acc_range[0])) # Allow enough time for a full rotation [s]
@@ -35,12 +35,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.t_run_max = 5.0        # [s]
         self.t_real_max = 15.0      # [s]
 
-        ## PLANE PARAMETERS
-        self.Plane_Pos = [1,0,1]
-        self.Plane_Angle_deg = 0
-        self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
-
-    
+   
         ## INITIAL LEARNING/REWARD CONFIGS
         self.K_ep = 0
         self.Pol_Trg_Flag = False
@@ -95,12 +90,13 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
             Plane_Angle_Low = self.Plane_Angle_range[0]
             Plane_Angle_High = self.Plane_Angle_range[1]
-            self.Plane_Angle_deg = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-            self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
+            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+            self._setPlanePose(self.Plane_Pos,Plane_Angle)
+
 
         else:
-            self.Plane_Angle_deg = Plane_Angle
-            self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
+            self._setPlanePose(self.Plane_Pos,Plane_Angle)
+
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or V_angle == None:
@@ -219,6 +215,17 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     
     def _CalcReward(self):
 
+        ## CALC PHI BOUNDARY ANGLE
+        Phi_Impact_min_deg = self.Beta_Min + self.Gamma_eff + self.Plane_Angle_deg - 90
+
+        ## CALC RELATIVE BOUNDARY ANGLE
+        Phi_P_B_Impact_min_deg = self.Plane_Angle_deg - Phi_Impact_min_deg
+
+        # Phi_Impact
+        # V_B_O Impact
+        # V_hat Impact
+
+        # V_Angle_Body_0
         
 
         self.reward_vals = [0,0,0,0,0,0]

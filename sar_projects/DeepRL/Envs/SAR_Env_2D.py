@@ -48,14 +48,14 @@ class SAR_Env_2D(gym.Env):
         self.My_range = My_range
 
         ## SAR DIMENSIONAL CONSTRAINTS
-        self.gamma_deg = 45             # Leg Angle [m]
-        self.L = 105.0e-3           # Leg Length [m]
-        self.PD = 75e-3             # Prop Distance from COM [m]
-        self.M = 35.0e-3            # Body Mass [kg]
+        self.gamma_deg = 17             # Leg Angle [m]
+        self.L = 216.4e-3           # Leg Length [m]
+        self.PD = 150.0e-3             # Prop Distance from COM [m]
+        self.M = 781.1e-3            # Body Mass [kg]
 
-        self.Ixx = 15.8e-6          # Body Moment of Inertia [kg*m^2]
-        self.Iyy = 17.0e-6          # Body Moment of Inertia [kg*m^2]
-        self.Izz = 31.2e-6          # Body Moment of Inertia [kg*m^2]
+        self.Ixx = 5.75e-3          # Body Moment of Inertia [kg*m^2]
+        self.Iyy = 5.29e-3          # Body Moment of Inertia [kg*m^2]
+        self.Izz = 5.66e-3          # Body Moment of Inertia [kg*m^2]
 
         I_c = self.Iyy + self.M*self.L**2
         self.params = (np.deg2rad(self.gamma_deg),self.L,self.PD,self.M,self.Iyy,I_c)
@@ -1291,7 +1291,7 @@ if __name__ == '__main__':
 
     for ep in range(50):
 
-        obs,_ = env.reset(V_mag=3.0,V_angle=20,Plane_Angle=90)
+        obs,_ = env.reset(V_mag=3.0,V_angle=20,Plane_Angle=0)
 
         Done = False
         truncated = False

@@ -204,7 +204,7 @@ def cmd_send(env,logName):
                 cmd_flag = env.userInput("Set desired plane angle [deg]: ",float)
                 print()
 
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env._setPlanePose(cmd_vals,cmd_flag)
 
             else:
                 print("Please try another command")

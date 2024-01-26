@@ -117,7 +117,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
         r_PO = np.array(self.Plane_Pos)                             # Plane Position w/r to origin
-        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle)    # Plane direction vectors
+        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle_deg)    # Plane direction vectors
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or Phi_rel == None:
@@ -305,7 +305,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         pos = resp.pose.position
         vel = resp.twist.linear
-        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle)
+        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle_deg)
 
         ## UPDATE POS AND VEL
         r_BO = np.array([pos.x,pos.y,pos.z])
@@ -338,10 +338,10 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         Tau_norm = normalize(Tau,0,3)
         Theta_x_norm = normalize(Theta_x,-20,20)
         D_perp_norm = normalize(D_perp,0,4)
-        Plane_Angle_norm = normalize(self.Plane_Angle,0,180)
+        Plane_Angle_norm = normalize(self.Plane_Angle_deg,0,180)
 
 
-        return np.array([Tau,Theta_x,D_perp,self.Plane_Angle],dtype=np.float32)
+        return np.array([Tau,Theta_x,D_perp,self.Plane_Angle_deg],dtype=np.float32)
 
     def _sample_flight_conditions(self):
         """This function samples the flight velocity and angle from the supplied range.
@@ -411,7 +411,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
         Beta_d = 150 # Desired impact angle [= 180 deg - gamma [deg]] TODO: Change to live value?
-        Beta_rel = -180 + self.Rot_Sum_impact + self.Plane_Angle
+        Beta_rel = -180 + self.Rot_Sum_impact + self.Plane_Angle_deg
 
         if Beta_rel < -180:
             R_angle = 0

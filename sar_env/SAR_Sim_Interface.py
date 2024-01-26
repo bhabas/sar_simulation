@@ -179,6 +179,12 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
 
+    def _setPlanePose(self,Pos,Plane_Angle):
+            
+        ## SET PLANE POSE
+        self.sendCmd('GZ_Plane_Pose',cmd_vals=[Pos[0],Pos[1],Pos[2]],cmd_flag=Plane_Angle)
+    
+
     def _setModelInertia(self,Mass,Inertia):
 
         ## CREATE SERVICE REQUEST MSG
@@ -222,7 +228,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     def _get_obs(self):
     
         ## OBSERVATION VECTOR
-        obs = np.array([self.Tau,self.Theta_x,self.D_perp,self.Plane_Angle_rad],dtype=np.float32)
+        obs = np.array([self.Tau,self.Theta_x,self.D_perp,self.Plane_Angle_deg],dtype=np.float32)
 
         return obs
 

@@ -47,7 +47,7 @@ class SAR_Base_Interface():
         self.Lz_eff = self.L_eff*np.cos(np.radians(self.Gamma_eff))
 
 
-        self.Beta_Min = self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff))
+        self.Beta_Min = -(self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff)))
         self.Collision_Radius = max(self.L_eff,self.Forward_Reach)
 
         self.f_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/f_max")
@@ -572,8 +572,8 @@ class SAR_Base_Interface():
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
-        self.Plane_Angle = MiscData_msg.Plane_Angle
-        self.Plane_Angle_rad = np.deg2rad(self.Plane_Angle)
+        self.Plane_Angle_deg = MiscData_msg.Plane_Angle
+        self.Plane_Angle_rad = np.deg2rad(self.Plane_Angle_deg)
         self.Plane_Pos = [
             MiscData_msg.Plane_Pos.x,
             MiscData_msg.Plane_Pos.y,

@@ -66,11 +66,11 @@ class EPHE_Agent():
 
         RL_msg.mu = list(self.mu.flatten())
         RL_msg.sigma = list(self.sigma.flatten())
-        RL_msg.policy = self.policy
+        # RL_msg.policy = self.policy
 
         RL_msg.reward = self.reward
         RL_msg.reward_avg = self.reward_avg
-        RL_msg.reward_vals = self.reward_vals
+        # RL_msg.reward_vals = self.reward_vals
 
         RL_msg.V_mag_rel = self.V_mag_rel
         RL_msg.V_angle_rel = self.V_angle_rel
