@@ -85,22 +85,22 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
         {
             Impact_flag = true;
 
-            // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
-            Time_impact = ros::Time::now();
-            Pose_impact = Pose_impact_buff.front();
-            Twist_impact = Twist_impact_buff.front();
+            // // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
+            // Time_impact = ros::Time::now();
+            // Pose_impact = Pose_impact_buff.front();
+            // Twist_impact = Twist_impact_buff.front();
 
-            // PROCESS EULER ANGLES AT TIME OF IMPACT
-            float quat_impact[4] = {
-                (float)Pose_impact.orientation.x,
-                (float)Pose_impact.orientation.y,
-                (float)Pose_impact.orientation.z,
-                (float)Pose_impact.orientation.w};
-            float eul_impact[3];
-            quat2euler(quat_impact, eul_impact);
-            Eul_impact.x = eul_impact[0] * 180 / M_PI;
-            Eul_impact.y = eul_impact[1] * 180 / M_PI;
-            Eul_impact.z = eul_impact[2] * 180 / M_PI;
+            // // PROCESS EULER ANGLES AT TIME OF IMPACT
+            // float quat_impact[4] = {
+            //     (float)Pose_impact.orientation.x,
+            //     (float)Pose_impact.orientation.y,
+            //     (float)Pose_impact.orientation.z,
+            //     (float)Pose_impact.orientation.w};
+            // float eul_impact[3];
+            // quat2euler(quat_impact, eul_impact);
+            // Eul_impact.x = eul_impact[0] * 180 / M_PI;
+            // Eul_impact.y = eul_impact[1] * 180 / M_PI;
+            // Eul_impact.z = eul_impact[2] * 180 / M_PI;
         }
 
     }
@@ -175,24 +175,24 @@ void SAR_DataConverter::checkSlowdown()
     if (LANDING_SLOWDOWN_FLAG == true)
     {
 
-        // WHEN CLOSE TO THE LANDING SURFACE REDUCE SIM SPEED
-        if (D_perp <= 0.5 && SLOWDOWN_TYPE == 0)
-        {
-            // std::cout << D_perp << std::endl;
-            SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
-            SLOWDOWN_TYPE = 1;
-        }
+        // // WHEN CLOSE TO THE LANDING SURFACE REDUCE SIM SPEED
+        // if (D_perp <= 0.5 && SLOWDOWN_TYPE == 0)
+        // {
+        //     // std::cout << D_perp << std::endl;
+        //     SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
+        //     SLOWDOWN_TYPE = 1;
+        // }
 
-        // IF IMPACTED LANDING SURFACE OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
-        if (Impact_flag == true && SLOWDOWN_TYPE == 1)
-        {
-            SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
-            SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)
-        }
-        else if (V_rel.z <= -0.5 && SLOWDOWN_TYPE == 1)
-        {
-            SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
-            SLOWDOWN_TYPE = 2;
-        }
+        // // IF IMPACTED LANDING SURFACE OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
+        // if (Impact_flag == true && SLOWDOWN_TYPE == 1)
+        // {
+        //     SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+        //     SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)
+        // }
+        // else if (V_rel.z <= -0.5 && SLOWDOWN_TYPE == 1)
+        // {
+        //     SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+        //     SLOWDOWN_TYPE = 2;
+        // }
     }
 }

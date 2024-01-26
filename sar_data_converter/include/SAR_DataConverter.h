@@ -291,21 +291,16 @@ class SAR_DataConverter {
         ros::Time Time;
         ros::Time Time_prev;
 
-        geometry_msgs::Pose Pose;
-        geometry_msgs::Twist Twist;
-        geometry_msgs::Accel Accel;
-        geometry_msgs::Vector3 Eul;
+        geometry_msgs::Pose Pose_B_O;
+        geometry_msgs::Twist Twist_B_O;
+        geometry_msgs::Accel Accel_B_O;
 
-        float Acc_mag = 0.0;
-        float Vel_mag = 0.0;
-        float Phi = 0.0;
-        float Alpha = 0.0;
+        geometry_msgs::Pose Pose_P_B;
+        geometry_msgs::Twist Twist_P_B;
+        geometry_msgs::Accel Accel_P_B;
 
-        double D_perp = NAN;
-        geometry_msgs::Vector3 V_rel;
 
-        double V_mag_rel = 0.0;
-        double V_angle_rel = 0.0;
+
 
         double Tau = 0.0;
         double Theta_x = 0.0;
@@ -337,10 +332,13 @@ class SAR_DataConverter {
 
         ros::Time Time_trg;
 
-        geometry_msgs::Pose Pose_trg;
-        geometry_msgs::Twist Twist_trg;
-        geometry_msgs::Accel Accel_trg;
-        geometry_msgs::Vector3 Eul_trg;
+        geometry_msgs::Pose Pose_B_O_trg;
+        geometry_msgs::Twist Twist_B_O_trg;
+        geometry_msgs::Accel Accel_B_O_trg;
+
+        geometry_msgs::Pose Pose_P_B_trg;
+        geometry_msgs::Twist Twist_P_B_trg;
+        geometry_msgs::Accel Accel_P_B_trg;
 
 
         double Tau_trg = 0.0;
@@ -369,10 +367,14 @@ class SAR_DataConverter {
 
         ros::Time Time_impact;
         geometry_msgs::Vector3 Force_impact;
-        geometry_msgs::Pose Pose_impact;
-        geometry_msgs::Twist Twist_impact;
-        geometry_msgs::Accel Accel_impact;
-        geometry_msgs::Vector3 Eul_impact;
+        geometry_msgs::Pose Pose_B_O_impact;
+        geometry_msgs::Twist Twist_B_O_impact;
+        geometry_msgs::Accel Accel_B_O_impact;
+
+        geometry_msgs::Pose Pose_P_B_impact;
+        geometry_msgs::Twist Twist_P_B_impact;
+        geometry_msgs::Accel Accel_P_B_impact;
+
 
 
         double impact_force_x = 0.0; // Max impact force in X-direction [N]
@@ -549,35 +551,35 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             Time_impact.sec = 0.0;
             Time_impact.nsec = 0.0;
 
-            // RESET IMPACT VALUES
-            Pose_impact.position.x = 0.0;
-            Pose_impact.position.y = 0.0;
-            Pose_impact.position.z = 0.0;
+            // // RESET IMPACT VALUES
+            // Pose_impact.position.x = 0.0;
+            // Pose_impact.position.y = 0.0;
+            // Pose_impact.position.z = 0.0;
 
-            Pose_impact.orientation.x = 0.0;
-            Pose_impact.orientation.y = 0.0;
-            Pose_impact.orientation.z = 0.0;
-            Pose_impact.orientation.w = 0.0;
+            // Pose_impact.orientation.x = 0.0;
+            // Pose_impact.orientation.y = 0.0;
+            // Pose_impact.orientation.z = 0.0;
+            // Pose_impact.orientation.w = 0.0;
 
-            Twist_impact.linear.x = 0.0;
-            Twist_impact.linear.y = 0.0;
-            Twist_impact.linear.z = 0.0;
+            // Twist_impact.linear.x = 0.0;
+            // Twist_impact.linear.y = 0.0;
+            // Twist_impact.linear.z = 0.0;
 
-            Twist_impact.angular.x = 0.0;
-            Twist_impact.angular.y = 0.0;
-            Twist_impact.angular.z = 0.0;
+            // Twist_impact.angular.x = 0.0;
+            // Twist_impact.angular.y = 0.0;
+            // Twist_impact.angular.z = 0.0;
 
-            Accel_impact.linear.x = 0.0;
-            Accel_impact.linear.y = 0.0;
-            Accel_impact.linear.z = 0.0;
+            // Accel_impact.linear.x = 0.0;
+            // Accel_impact.linear.y = 0.0;
+            // Accel_impact.linear.z = 0.0;
 
-            Accel_impact.angular.x = 0.0;
-            Accel_impact.angular.y = 0.0;
-            Accel_impact.angular.z = 0.0;
+            // Accel_impact.angular.x = 0.0;
+            // Accel_impact.angular.y = 0.0;
+            // Accel_impact.angular.z = 0.0;
 
-            Eul_impact.x = 0.0;
-            Eul_impact.y = 0.0;
-            Eul_impact.z = 0.0;
+            // Eul_impact.x = 0.0;
+            // Eul_impact.y = 0.0;
+            // Eul_impact.z = 0.0;
 
             // RESET MAX IMPACT FORCE
             impact_force_x = 0.0;
