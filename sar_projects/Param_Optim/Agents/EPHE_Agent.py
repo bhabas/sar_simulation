@@ -105,8 +105,8 @@ class EPHE_Agent():
         theta = np.zeros((len(self.mu),self.n_rollouts))
         
         ## SET UPPER AND LOWER LIMITS FOR TAU AND My
-        lower_limit = [0.0,-10.0]     # Lower and Upper limits for truncated normal distribution 
-        upper_limit = [6.0,10.0]    # 9.10 N*mm is the upper limit for My_d
+        lower_limit = [-1.0, -1.0] # Lower and Upper limits for truncated normal distribution 
+        upper_limit = [1.0, 1.0]    
         eps = 1e-6 # Prevent divide by zero error
                                 
         ## SAMPLE VALUES FROM TRUNCATED NORMAL DISTRIBUTION

@@ -68,7 +68,7 @@ def runTraining(env,agent,V_mag_rel,V_angle_rel,Plane_Angle,logName,K_ep_max=15)
 
             Rot_acc_range = [-100,100]
 
-            Rot_acc = 0.5 * (Rot_acc + 1) * (Rot_acc_range[1] - Rot_acc_range[0]) + Rot_acc_range[0]
+            scaled_action = 0.5 * (Rot_acc + 1) * (Rot_acc_range[1] - Rot_acc_range[0]) + Rot_acc_range[0]
             obs,reward,done,info = env.ParamOptim_Flight(Tau_thr,Rot_acc)
             
             ## ADD VALID REWARD TO TRAINING ARRAY
@@ -208,6 +208,7 @@ if __name__ == '__main__':
     V_mag = 2.5     # [m/s]
     V_angle = 60    # [deg]
     Plane_angle = 0 # [deg]
+    env.setAngAcc_range([-100,100])
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25

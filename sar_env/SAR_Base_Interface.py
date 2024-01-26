@@ -4,6 +4,7 @@ import os
 import rospy
 import getpass
 import time
+import warnings 
 
 ## ROS MESSAGES AND SERVICES
 from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
@@ -16,7 +17,8 @@ from rosgraph_msgs.msg import Clock
 YELLOW = '\033[93m'
 RED = '\033[91m'
 GREEN = '\033[92m'
-ENDC = '\033[m'
+BLUE = "\033[34m"  # Blue text
+RESET = "\033[0m"  # Reset to default color
 
 class SAR_Base_Interface():
 
@@ -48,7 +50,13 @@ class SAR_Base_Interface():
         self.Beta_Min = self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff))
         self.Collision_Radius = max(self.L_eff,self.Forward_Reach)
 
-        
+        self.f_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/f_max")
+        self.Prop_Front = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Front")
+        self.Prop_Rear = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Rear")
+
+        self.Ang_Acc_max = (9.81*self.f_max*1e-3*self.Prop_Front[0])*2/self.Ref_Iyy
+        self.setAngAcc_range([-self.Ang_Acc_max, self.Ang_Acc_max])
+
 
         ## CAM PARAMETERS
         self.Cam_Config = rospy.get_param('/CAM_SETTINGS/Cam_Config')
@@ -70,6 +78,19 @@ class SAR_Base_Interface():
         self.Log_Name = "TestLog.csv"
         self.Error_Str = "No_Debug_Data"
 
+        print(f"{GREEN}")
+        print("=============================================")
+        print("       SAR Base Interface Initialized        ")
+        print("=============================================")
+
+        print(f"SAR Type: {self.SAR_Type} -- SAR Config: {self.SAR_Config}\n")
+        print(f"Leg Length: {self.Leg_Length:.3f} m \t Leg Angle: {self.Leg_Angle:.1f} deg")
+        print(f"L_eff: {self.L_eff:.3f} m \t\t Gamma_eff: {self.Gamma_eff:.1f} deg\n")
+        print(f"Ang_Acc_Max: {self.Ang_Acc_max:.0f} rad/s^2")
+        print(f"TrajAcc_Max: [{self.TrajAcc_Max[0]:.1f}, {self.TrajAcc_Max[1]:.1f}, {self.TrajAcc_Max[2]:.1f}]  m/s^2") 
+
+        print(f"{RESET}")
+
 
 
         ## SAR DATA SUBSCRIBERS 
@@ -84,7 +105,6 @@ class SAR_Base_Interface():
         ## RL DATA PUBLISHERS
         self.RL_Data_Pub = rospy.Publisher('/RL/Data',RL_Data,queue_size=10)
         self.RL_History_Pub = rospy.Publisher('/RL/History',RL_History,queue_size=10)
-
 
     def _getTime(self):
         """Returns current known time.
@@ -167,6 +187,19 @@ class SAR_Base_Interface():
         rospy.logerr(f"Service '{srv_addr}' call failed after {num_retries} attempts")
         return None
 
+    def setAngAcc_range(self,Ang_Acc_range):
+        """Sets the range of allowable angular accelerations for the model
+
+        Args:
+            Ang_Acc_range (list): List of min/max angular accelerations [min,max]
+        """        
+
+        if max(abs(i) for i in Ang_Acc_range) > self.Ang_Acc_max:
+            rospy.logwarn(f"Angular Acceleration range exceeds max value of {self.Ang_Acc_max:.0f} deg/s^2")
+            rospy.logwarn(f"Setting Angular Acceleration range to max value")
+            self.Ang_Acc_range = [-self.Ang_Acc_max,self.Ang_Acc_max]
+        else:
+            self.Ang_Acc_range = Ang_Acc_range
                 
 
     def startPos_VelTraj(self,x_impact,V_d,accel_d=None,Tau_0=0.5):

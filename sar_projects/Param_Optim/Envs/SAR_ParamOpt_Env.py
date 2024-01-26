@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import time
+import warnings
 
 from sar_env import SAR_Sim_Interface
 
@@ -10,7 +11,7 @@ COORD_FLIP = -1  # Swap sign to match proper coordinate notation
 
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
-    def __init__(self,GZ_Timeout=False,Ang_acc_range=[-50,50],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
+    def __init__(self,GZ_Timeout=False,Ang_acc_range=[-250,250],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
         SAR_Sim_Interface.__init__(self)        
 
         ######################
@@ -25,11 +26,10 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.V_mag_range = V_mag_range  
         self.V_angle_range = V_angle_range
         self.Plane_Angle_range = Plane_Angle_range
-        self.Ang_acc_range = Ang_acc_range
-
+        self.setAngAcc_range(Ang_acc_range)
 
         ## TIME CONSTRAINTS
-        self.t_rot_max = np.sqrt(np.radians(360)/np.abs(self.Ang_acc_range[0])) # Allow enough time for a full rotation [s]
+        self.t_rot_max = np.sqrt(np.radians(360)/np.abs(self.Ang_Acc_range[0])) # Allow enough time for a full rotation [s]
         self.t_trg_max = 1.0        # [s]
         self.t_impact_max = 0.5     # [s]
         self.t_run_max = 5.0        # [s]
