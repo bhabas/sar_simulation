@@ -97,15 +97,20 @@ void controllerOutOfTreeReset() {
 
 
     // RESET LOGGED TRIGGER VALUES
+    Trg_Flag = false;
     Pos_B_O_trg = vzero();
     Vel_B_O_trg = vzero();
     Quat_B_O_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
     Omega_B_O_trg = vzero();
 
-    Tau_trg = 0.0f;
+    Pos_P_B_trg = vzero();
+    Vel_B_P_trg = vzero();
+    Quat_P_B_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
+    Omega_B_P_trg = vzero();
+
     Theta_x_trg = 0.0f;
     Theta_y_trg = 0.0f;
-    D_perp_trg = 0.0f;
+    Tau_trg = 0.0f;
 
     Policy_Trg_Action_trg = 0.0f;
     Policy_Rot_Action_trg = 0.0f;
@@ -235,12 +240,19 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Quat_B_O_trg = Quat_B_O;
                         Omega_B_O_trg = Omega_B_O;
 
+                        Pos_P_B_trg = Pos_P_B;
+                        Vel_B_P_trg = Vel_B_P;
+                        Quat_P_B_trg = Quat_P_B;
+                        Omega_B_P_trg = Omega_B_P;
+
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
                         Theta_y_trg = Theta_y_trg;
                         D_perp_trg = D_perp;
 
-                    
+                        Policy_Trg_Action_trg = Policy_Trg_Action;
+                        Policy_Rot_Action_trg = Policy_Rot_Action;
+
                         M_d.x = 0.0f;
                         M_d.y = Policy_Rot_Action*Iyy;
                         M_d.z = 0.0f;
@@ -265,24 +277,53 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Policy_Rot_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
                         Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,ACTION_MIN,ACTION_MAX);
 
-                        // UPDATE AND RECORD TRIGGER VALUES
                         Trg_Flag = true;  
                         Pos_B_O_trg = Pos_B_O;
                         Vel_B_O_trg = Vel_B_O;
                         Quat_B_O_trg = Quat_B_O;
                         Omega_B_O_trg = Omega_B_O;
 
+                        Pos_P_B_trg = Pos_P_B;
+                        Vel_B_P_trg = Vel_B_P;
+                        Quat_P_B_trg = Quat_P_B;
+                        Omega_B_P_trg = Omega_B_P;
+
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
                         Theta_y_trg = Theta_y_trg;
                         D_perp_trg = D_perp;
 
-                    
+                        Policy_Trg_Action_trg = Policy_Trg_Action;
+                        Policy_Rot_Action_trg = Policy_Rot_Action;
+
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Rot_Action*1e-3f;
+                        M_d.y = Policy_Rot_Action*Iyy;
                         M_d.z = 0.0f;
                         }
                         
+                    break;
+
+                case DEEP_RL_SB3:
+
+                    Trg_Flag = true;  
+                    Pos_B_O_trg = Pos_B_O;
+                    Vel_B_O_trg = Vel_B_O;
+                    Quat_B_O_trg = Quat_B_O;
+                    Omega_B_O_trg = Omega_B_O;
+
+                    Pos_P_B_trg = Pos_P_B;
+                    Vel_B_P_trg = Vel_B_P;
+                    Quat_P_B_trg = Quat_P_B;
+                    Omega_B_P_trg = Omega_B_P;
+
+                    Tau_trg = Tau;
+                    Theta_x_trg = Theta_x_trg;
+                    Theta_y_trg = Theta_y_trg;
+                    D_perp_trg = D_perp;
+
+                    Policy_Trg_Action_trg = Policy_Trg_Action;
+                    Policy_Rot_Action_trg = Policy_Rot_Action;
+
                     break;
                     
             default:

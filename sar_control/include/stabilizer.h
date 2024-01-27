@@ -20,6 +20,8 @@
 #include "sar_msgs/CTRL_Cmd_srv.h"
 #include "sar_msgs/CTRL_Data.h"
 #include "sar_msgs/CTRL_Debug.h"
+#include "sar_msgs/SAR_MiscData.h"
+
 
 
 
@@ -43,6 +45,7 @@ class Controller
             CTRL_Data_Publisher = nh->advertise<sar_msgs::CTRL_Data>("/CTRL/data",1);
             CTRL_Debug_Publisher = nh->advertise<sar_msgs::CTRL_Debug>("CTRL/debug",1);
             CTRL_CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
+            SAR_DC_Subscriber = nh->subscribe("/SAR_DC/MiscData",1,&Controller::Plane_Pose_Callback,this,ros::TransportHints().tcpNoDelay());
 
 
 
@@ -62,6 +65,7 @@ class Controller
         ros::ServiceServer CTRL_CMD_Service;
         ros::Publisher CTRL_Data_Publisher;
         ros::Publisher CTRL_Debug_Publisher;
+        ros::Subscriber SAR_DC_Subscriber;
 
         // MESSAGES
         sar_msgs::CTRL_Data CtrlData_msg;
@@ -96,6 +100,7 @@ class Controller
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         bool CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
+        void Plane_Pose_Callback(const sar_msgs::SAR_MiscData::ConstPtr &msg);
 
 
         void appLoop();
@@ -108,6 +113,13 @@ class Controller
 
 };
 
+void Controller::Plane_Pose_Callback(sar_msgs::SAR_MiscData::ConstPtr const &msg)
+{
+    Plane_Angle_deg = msg->Plane_Angle;
+    r_P_O.x = msg->Plane_Pos.x;
+    r_P_O.y = msg->Plane_Pos.y;
+    r_P_O.z = msg->Plane_Pos.z;
+}
 
 bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res)
 {
@@ -200,14 +212,6 @@ void Controller::loadParams()
     ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
     Prop_23_x = Prop_Rear_Vec[0];
     Prop_23_y = Prop_Rear_Vec[1];
-
-
-    // UPDATE LANDING SURFACE PARAMETERS
-    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_deg);
-    ros::param::get("/PLANE_SETTINGS/Pos_X",r_P_O.x);
-    ros::param::get("/PLANE_SETTINGS/Pos_Y",r_P_O.y);
-    ros::param::get("/PLANE_SETTINGS/Pos_Z",r_P_O.z);
-
 
 
     // UPDATE CTRL GAINS
@@ -360,7 +364,7 @@ void Controller::publishCtrlData()
     //  STATES AT POLICY TRIGGER
     // ==========================
     CtrlData_msg.Trg_Flag = Trg_Flag;
-    // CtrlData_msg.Pose_trg.header.stamp = t_Rot;     
+    // CtrlData_msg.Pose_B_O_trg.header.stamp = t_Rot;     
 
 
     // STATE DATA WRT ORIGIN
@@ -414,6 +418,7 @@ void Controller::publishCtrlData()
     //      STATES AT IMPACT
     // ==========================
     CtrlData_msg.Impact_Flag_Onboard = Impact_Flag_Onboard;
+    // CtrlData_msg.Pose_B_O_impact.header.stamp = t_impact;     
     CtrlData_msg.Accel_B_O_Mag_impact = Accel_B_O_Mag_impact;
 
     CtrlData_msg.Pose_B_O_impact.position.x = Pos_B_O_impact.x;

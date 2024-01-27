@@ -59,36 +59,36 @@ if __name__ == '__main__':
         if t>=0 and OnceFlag1:
             OnceFlag1 = False
             thrust_d = 0.0
-            env.SendCmd('thrusts',[0,0,0],thrust_d)
+            env.sendCmd('thrusts',[0,0,0],thrust_d)
             print(f"Thrust[g] Cmd: {thrust_d:.3f}")
 
 
         if t >= 5 and OnceFlag2:
             OnceFlag2 = False
             thrust_d = 8.14
-            env.SendCmd('thrusts',[0,0,0],thrust_d)
+            env.sendCmd('thrusts',[0,0,0],thrust_d)
             print(f"Thrust[g] Cmd: {thrust_d:.3f}")
 
         if t >= 10 and OnceFlag3:
             OnceFlag3 = False
             thrust_d = 14.3
-            env.SendCmd('thrusts',[0,0,0],thrust_d)
+            env.sendCmd('thrusts',[0,0,0],thrust_d)
             print(f"Thrust[g] Cmd: {thrust_d:.3f}")
 
         if t >= 15 and OnceFlag4:
             OnceFlag4 = False
             thrust_d = 5.3
-            env.SendCmd('thrusts',[0,0,0],thrust_d)
+            env.sendCmd('thrusts',[0,0,0],thrust_d)
             print(f"Thrust[g] Cmd: {thrust_d:.3f}")
 
         if t >= 20 and OnceFlag5:
             OnceFlag5 = False
             thrust_d = 12.0
-            env.SendCmd('thrusts',[0,0,0],thrust_d)
+            env.sendCmd('thrusts',[0,0,0],thrust_d)
             print(f"Thrust[g] Cmd: {thrust_d:.3f}")
 
         if t>=25:
-            env.SendCmd('thrusts',[0,0,0],0)
+            env.sendCmd('thrusts',[0,0,0],0)
             break
 
     input("End Here")

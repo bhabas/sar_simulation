@@ -13,7 +13,7 @@ def cmd_send(env,logName):
             2:'Vel',
             3:'Yaw',
             5:'Stop',
-            7:'dOmega',
+            7:'Ang_Accel',
             8:'Policy',
 
             10:'P2P_traj',
@@ -40,6 +40,7 @@ def cmd_send(env,logName):
             val = env.userInput("\nCmd: ",int)
             print()
             action = cmd_dict[val]
+            
 
 
             if action=='Ctrl_Reset': # Execute Ctrl_Reset or Stop action
@@ -47,8 +48,8 @@ def cmd_send(env,logName):
                 cmd_flag = 1
                 print("Reset controller to default values\n")
 
-                env.SendCmd('GZ_StickyPads',cmd_vals,0)
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env.sendCmd('GZ_StickyPads',cmd_vals,0)
+                env.sendCmd(action,cmd_vals,cmd_flag)
             
             elif action=='Start_Logging':
                 env.startLogging(logName)
@@ -61,21 +62,21 @@ def cmd_send(env,logName):
                 cmd_flag = env.userInput("Pos control On/Off (1,0): ",int)
                 print()
 
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Vel':
                 cmd_vals = env.userInput("Set desired velocity values (x,y,z): ",float)
                 cmd_flag = env.userInput("Vel control On/Off (1,0): ",int)
                 print()
 
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Yaw':
                 yaw = env.userInput("Set desired yaw value: ",float)
                 cmd_vals = [yaw,0,0]
                 print()
 
-                env.SendCmd(action,cmd_vals)
+                env.sendCmd(action,cmd_vals)
 
             elif action=='Tumble': # Turn on Tumble detection
 
@@ -83,19 +84,19 @@ def cmd_send(env,logName):
                 cmd_flag = env.userInput("Tumble Detection On/Off (1,0): ",int)
                 print()
 
-                env.SendCmd('Tumble',cmd_vals,cmd_flag)
+                env.sendCmd('Tumble',cmd_vals,cmd_flag)
 
             if action=='Stop': # Execute Ctrl_Reset or Stop action
                 cmd_vals = [0,0,0]
                 cmd_flag = 1
                 print("Rotors turned off\n")
 
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='dOmega':
                 cmd_vals = env.userInput("Set desired dOmega values (x,y,z) rad/s^2: ",float)
                 cmd_flag = env.userInput("dOmega control On/Off (1,0): ",int)
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
 
             elif action=='Load_Params': # Updates gain values from config file
@@ -104,7 +105,7 @@ def cmd_send(env,logName):
                 print("Reset ROS Parameters\n")
 
                 env.setParams()
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Policy':
                 cmd_vals = env.userInput("Set desired (Tau,My_d) Policy: ",float)
@@ -112,7 +113,7 @@ def cmd_send(env,logName):
                 cmd_flag = 1
                 print()
 
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Vel_traj':
 
@@ -125,8 +126,8 @@ def cmd_send(env,logName):
                 Vx_d = V_d*np.cos(phi_rad)
                 Vz_d = V_d*np.sin(phi_rad)
 
-                env.SendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                env.SendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                env.sendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
+                env.sendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
 
             elif action=='Impact_traj':
 
@@ -147,14 +148,14 @@ def cmd_send(env,logName):
                 str_input = env.userInput("Approve start position (y/n): ",str)
 
                 if str_input == 'y':
-                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[0],x_0,env.accCF_max[0]],cmd_flag=0)
-                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[1],0.0,env.accCF_max[1]],cmd_flag=1)
-                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[2],z_0,env.accCF_max[2]],cmd_flag=2)
+                    env.sendCmd('P2P_traj',cmd_vals=[env.pos[0],x_0,env.TrajAcc_Max[0]],cmd_flag=0)
+                    env.sendCmd('P2P_traj',cmd_vals=[env.pos[1],0.0,env.TrajAcc_Max[1]],cmd_flag=1)
+                    env.sendCmd('P2P_traj',cmd_vals=[env.pos[2],z_0,env.TrajAcc_Max[2]],cmd_flag=2)
 
                     str_input = env.userInput("Approve flight (y/n): ",str)
                     if str_input == 'y':
-                        env.SendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                        env.SendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                        env.sendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
+                        env.sendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
 
                 else:
                     print(f"Try again")
@@ -163,9 +164,9 @@ def cmd_send(env,logName):
             elif action=='P2P_traj':
                 ## GET INPUT VALUES
                 x_d = env.userInput("Desired position (x,y,z):",float)
-                env.SendCmd('P2P_traj',cmd_vals=[env.pos[0],x_d[0],env.accCF_max[0]],cmd_flag=0)
-                env.SendCmd('P2P_traj',cmd_vals=[env.pos[1],x_d[1],env.accCF_max[1]],cmd_flag=1)
-                env.SendCmd('P2P_traj',cmd_vals=[env.pos[2],x_d[2],env.accCF_max[2]],cmd_flag=2)
+                env.sendCmd('P2P_traj',cmd_vals=[env.pos[0],x_d[0],env.TrajAcc_Max[0]],cmd_flag=0)
+                env.sendCmd('P2P_traj',cmd_vals=[env.pos[1],x_d[1],env.TrajAcc_Max[1]],cmd_flag=1)
+                env.sendCmd('P2P_traj',cmd_vals=[env.pos[2],x_d[2],env.TrajAcc_Max[2]],cmd_flag=2)
 
 
             elif action=='GZ_StickyPads':
@@ -173,7 +174,7 @@ def cmd_send(env,logName):
                 cmd_flag = env.userInput("Turn sticky pads On/Off (1,0): ",int)
                 print()
 
-                env.SendCmd(action,cmd_vals,cmd_flag)
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
 
 
@@ -190,13 +191,13 @@ def cmd_send(env,logName):
                 Vz_d = V_d*np.sin(phi_rad)
 
                 ## ESTIMATE IMPACT POINT
-                env.Vel_Launch(env.pos,[Vx_d,Vy_d,Vz_d])
-                env.pause_physics(False)
+                env.GZ_VelTraj(env.pos,[Vx_d,Vy_d,Vz_d])
+                env.pausePhysics(False)
                 
                     
             elif action == 'GZ_Pose_Reset':
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
-                env.reset_pos()
+                env.resetPose()
 
 
             elif action=='GZ_Plane_Pose':
@@ -210,6 +211,10 @@ def cmd_send(env,logName):
                 print("Please try another command")
 
         except ValueError:
+            print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
+            continue
+
+        except KeyError:
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
             continue
 

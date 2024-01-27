@@ -149,6 +149,7 @@ class SAR_Base_Interface():
             'GZ_StickyPads':92,
             'GZ_Plane_Pose':93,
         }
+        
 
         ## CREATE SERVICE REQUEST MSG
         srv = CTRL_Cmd_srvRequest() 
@@ -161,6 +162,8 @@ class SAR_Base_Interface():
         srv.cmd_rx = True
 
         self.callService('/SAR_DC/CMD_Input',srv,CTRL_Cmd_srv)    
+
+        
 
     def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):
 

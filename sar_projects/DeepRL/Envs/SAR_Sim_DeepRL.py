@@ -69,7 +69,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## DETACH ROBOT AND UNPAUSE PHYSICS
         self.pause_physics(False)
-        self.SendCmd('GZ_StickyPads',cmd_flag=0)
+        self.sendCmd('GZ_StickyPads',cmd_flag=0)
 
         ## SET PLANE POSE
         Plane_Angle_Low = self.Plane_Angle_range[0]
@@ -82,19 +82,19 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # self.setModelInertia(Mass=self.Mass,Inertia=[self.Ixx,self.Iyy,self.Izz])
 
         ## RESET ROBOT STATE
-        self.SendCmd('Tumble',cmd_flag=0)
-        self.SendCmd('Ctrl_Reset')
+        self.sendCmd('Tumble',cmd_flag=0)
+        self.sendCmd('Ctrl_Reset')
         self.reset_pos()
         self.sleep(0.1)
 
-        self.SendCmd('Tumble',cmd_flag=1)
-        self.SendCmd('Ctrl_Reset')
+        self.sendCmd('Tumble',cmd_flag=1)
+        self.sendCmd('Ctrl_Reset')
         self.reset_pos()
         self.sleep(1.0) # Give time for drone to settle
 
 
         ## ACTIVATE STICKY PADS AND PAUSE PHYSICS
-        self.SendCmd('GZ_StickyPads',cmd_flag=1)
+        self.sendCmd('GZ_StickyPads',cmd_flag=1)
         self.pause_physics(True)
 
         
@@ -270,7 +270,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## SEND TRIGGER ACTION TO CONTROLLER
         My = -scaled_action # Body rotational moment [N*mm]
-        self.SendCmd("Policy",[0,My,0],cmd_flag=1)
+        self.sendCmd("Policy",[0,My,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
         self.pause_physics(False)

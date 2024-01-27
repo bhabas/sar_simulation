@@ -28,19 +28,19 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.D_min = 50.0  # Reset max from ceiling [m]
         
 
-        self.SendCmd('GZ_StickyPads',cmd_flag=0)
+        self.sendCmd('GZ_StickyPads',cmd_flag=0)
 
-        self.SendCmd('Tumble',cmd_flag=0)
-        self.SendCmd('Ctrl_Reset')
+        self.sendCmd('Tumble',cmd_flag=0)
+        self.sendCmd('Ctrl_Reset')
         self.reset_pos()
         self.sleep(0.01)
 
-        self.SendCmd('Tumble',cmd_flag=1)
-        self.SendCmd('Ctrl_Reset')
+        self.sendCmd('Tumble',cmd_flag=1)
+        self.sendCmd('Ctrl_Reset')
         self.reset_pos()
         self.sleep(1.0) # Give time for drone to settle
 
-        self.SendCmd('GZ_StickyPads',cmd_flag=1)
+        self.sendCmd('GZ_StickyPads',cmd_flag=1)
 
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
@@ -77,7 +77,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
         self.pause_physics(False)
         self.sleep(0.05)
-        self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
+        self.sendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
 
 
         
