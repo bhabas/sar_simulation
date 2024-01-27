@@ -75,37 +75,32 @@ void SAR_DataConverter::Publish_StateData()
 void SAR_DataConverter::Publish_TriggerData()
 {
 
-    // ros::Duration Time_delta(Time_trg-Time_start);
-    // TriggerData_msg.header.stamp.sec = Time_delta.sec;
-    // TriggerData_msg.header.stamp.nsec = Time_delta.nsec;
-    // TriggerData_msg.Trg_Flag = Trg_Flag;
+    ros::Duration Time_delta(Time_trg-Time_start);
+    TriggerData_msg.header.stamp.sec = Time_delta.sec;
+    TriggerData_msg.header.stamp.nsec = Time_delta.nsec;
+
+    TriggerData_msg.Trg_Flag = Trg_Flag;
 
 
-    // // CARTESIAN SPACE DATA
-    // TriggerData_msg.Pose_trg = Pose_trg;
-    // TriggerData_msg.Twist_trg = Twist_trg;
-    // TriggerData_msg.Accel_trg = Accel_trg;
-    // TriggerData_msg.Eul_trg = Eul_trg;
+    // STATES WRT ORIGIN
+    TriggerData_msg.Pose_B_O_trg = Pose_B_O_trg;
+    TriggerData_msg.Twist_B_O_trg = Twist_B_O_trg;
+    TriggerData_msg.Eul_B_O_trg = Eul_B_O_trg;
+
+    // STATES WRT PLANE
+    TriggerData_msg.Pose_P_B_trg = Pose_P_B_trg;
+    TriggerData_msg.Twist_B_P_trg = Twist_B_P_trg;
+    TriggerData_msg.Eul_P_B_trg = Eul_P_B_trg;
+
+    // OPTICAL FLOW STATES
+    TriggerData_msg.Optical_Flow_trg = Optical_Flow_trg;
 
 
+    // POLICY ACTIONS
+    TriggerData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
+    TriggerData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
 
-    // // OPTICAL FLOW
-    // TriggerData_msg.Tau_trg = Tau_trg;
-    // TriggerData_msg.Theta_x_trg = Theta_x_trg;
-    // TriggerData_msg.Theta_y_trg = Theta_y_trg;
-    // TriggerData_msg.D_perp_trg = D_perp_trg;
-
-    // // CONTROL ACTIONS
-    // TriggerData_msg.FM_trg = FM_trg;
-
-    // // NEURAL NETWORK DATA
-    // TriggerData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    // TriggerData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
-
-
-    // // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
-    // TriggerData_Pub.publish(TriggerData_msg);
-
+    TriggerData_Pub.publish(TriggerData_msg);
 }
 
 void SAR_DataConverter::Publish_ImpactData()
