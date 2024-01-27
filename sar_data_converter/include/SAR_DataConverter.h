@@ -360,7 +360,7 @@ class SAR_DataConverter {
         // =======================
         bool Impact_Flag_OB = false;
         bool OnceFlag_Impact_OB = false;
-        ros::Time Time_Impact_OB;
+        ros::Time Time_impact_OB;
 
         geometry_msgs::Pose Pose_B_O_impact_OB;
         geometry_msgs::Twist Twist_B_P_impact_OB;
@@ -372,7 +372,7 @@ class SAR_DataConverter {
         //    EXTERNAL IMPACT DATA
         // ==========================
         bool Impact_Flag_Ext = false;
-        ros::Time Time_Impact_Ext;
+        ros::Time Time_impact_Ext;
 
         geometry_msgs::Pose Pose_B_O_impact_Ext;
         geometry_msgs::Twist Twist_B_P_impact_Ext;

@@ -1,4 +1,4 @@
-Header header
+std_msgs/Time Time
 
 ## STATES WRT ORIGIN
 geometry_msgs/Pose Pose_B_O

@@ -210,11 +210,7 @@ def cmd_send(env,logName):
             else:
                 print("Please try another command")
 
-        except ValueError:
-            print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
-            continue
-
-        except KeyError:
+        except (ValueError, KeyError):
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
             continue
 

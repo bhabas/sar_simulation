@@ -30,8 +30,8 @@ void SAR_DataConverter::Publish_StateData()
     //     FLIGHT DATA
     // ===================
     ros::Duration Time_delta(Time-Time_start);
-    StateData_msg.header.stamp.sec = Time_delta.sec;
-    StateData_msg.header.stamp.nsec = Time_delta.nsec;
+    StateData_msg.Time.data.sec = Time_delta.sec;
+    StateData_msg.Time.data.nsec = Time_delta.nsec;
 
     // STATES WRT ORIGIN
     StateData_msg.Pose_B_O = Pose_B_O;
@@ -76,8 +76,8 @@ void SAR_DataConverter::Publish_TriggerData()
 {
 
     ros::Duration Time_delta(Time_trg-Time_start);
-    TriggerData_msg.Trg_Time.data.sec = Time_delta.sec;
-    TriggerData_msg.Trg_Time.data.nsec = Time_delta.nsec;
+    TriggerData_msg.Time_Trg.data.sec = Time_delta.sec;
+    TriggerData_msg.Time_Trg.data.nsec = Time_delta.nsec;
 
     TriggerData_msg.Trg_Flag = Trg_Flag;
 
@@ -91,6 +91,7 @@ void SAR_DataConverter::Publish_TriggerData()
     TriggerData_msg.Pose_P_B_trg = Pose_P_B_trg;
     TriggerData_msg.Twist_B_P_trg = Twist_B_P_trg;
     TriggerData_msg.Eul_P_B_trg = Eul_P_B_trg;
+    TriggerData_msg.D_perp_trg = D_perp_trg;
 
     // OPTICAL FLOW STATES
     TriggerData_msg.Optical_Flow_trg = Optical_Flow_trg;
@@ -109,9 +110,9 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Impact_Flag = Impact_Flag;
 
     // ONBOARD IMPACT DATA
-    ros::Duration Time_delta_OB(Time_Impact_OB-Time_start);
-    ImpactData_msg.Time_Impact_OB.data.sec = Time_delta_OB.sec;
-    ImpactData_msg.Time_Impact_OB.data.nsec = Time_delta_OB.nsec;
+    ros::Duration Time_delta_OB(Time_impact_OB-Time_start);
+    ImpactData_msg.Time_impact_OB.data.sec = Time_delta_OB.sec;
+    ImpactData_msg.Time_impact_OB.data.nsec = Time_delta_OB.nsec;
 
     ImpactData_msg.Impact_Flag_OB = Impact_Flag_OB;
 
@@ -121,9 +122,9 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Accel_B_O_Mag_impact_OB = Accel_B_O_Mag_impact_OB;
 
     // EXTERNAL IMPACT DATA
-    ros::Duration Time_delta_Ext(Time_Impact_Ext-Time_start);
-    ImpactData_msg.Time_Impact_Ext.data.sec = Time_delta_Ext.sec;
-    ImpactData_msg.Time_Impact_Ext.data.nsec = Time_delta_Ext.nsec;
+    ros::Duration Time_delta_Ext(Time_impact_Ext-Time_start);
+    ImpactData_msg.Time_impact_Ext.data.sec = Time_delta_Ext.sec;
+    ImpactData_msg.Time_impact_Ext.data.nsec = Time_delta_Ext.nsec;
 
     ImpactData_msg.Impact_Flag_Ext = Impact_Flag_Ext;
     ImpactData_msg.BodyContact_Flag = BodyContact_flag;

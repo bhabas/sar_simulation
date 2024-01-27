@@ -141,7 +141,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     if(ctrl_msg.Impact_Flag_OB == true && OnceFlag_Impact_OB == false)
     {   
-        Time_Impact_OB = ros::Time::now();
+        Time_impact_OB = ros::Time::now();
         OnceFlag_Impact_OB = true;
 
     }

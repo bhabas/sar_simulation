@@ -1,6 +1,6 @@
 
 bool Trg_Flag
-std_msgs/Time Trg_Time
+std_msgs/Time Time_Trg
 
 
 ## STATES WRT ORIGIN
@@ -12,6 +12,7 @@ geometry_msgs/Vector3 Eul_B_O_trg
 geometry_msgs/Pose Pose_P_B_trg
 geometry_msgs/Twist Twist_B_P_trg
 geometry_msgs/Vector3 Eul_P_B_trg
+float64 D_perp_trg
 
 ## OPTICAL FLOW STATES
 geometry_msgs/Vector3 Optical_Flow_trg
