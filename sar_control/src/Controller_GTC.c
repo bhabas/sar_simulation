@@ -136,6 +136,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         Accel_B_O = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
         Accel_B_O_Mag = firstOrderFilter(vmag(Accel_B_O),Accel_B_O_Mag,0.5f);
 
+        
 
         Omega_B_O = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
 
@@ -158,6 +159,18 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         Vel_B_P = mvmul(R_WP,Vel_B_O);
         Vel_mag_B_P = vmag(Vel_B_P);
         Vel_angle_B_P = atan2f(Vel_B_P.z,Vel_B_P.x)*Rad2Deg;
+
+
+        if (Accel_B_O_Mag > 10.0f && Impact_Flag_Onboard == false)
+        {
+            Impact_Flag_Onboard = true;
+            Pos_B_O_impact = Pos_B_O;
+            Vel_B_P_impact = Vel_B_P;
+            Quat_B_O_impact = Quat_B_O;
+            Omega_B_P_impact = Omega_B_P;
+            Accel_B_O_Mag_impact = Accel_B_O_Mag;
+        }
+
 
         // SAVE PREVIOUS VALUES
         Omega_B_O_prev = Omega_B_O;
