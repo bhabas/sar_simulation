@@ -5,19 +5,19 @@
 // =================================
 //    INITIAL SYSTEM PARAMETERS
 // =================================
-float m = 34.3e-3f;         // [kg]
-float Ixx = 15.83e-6f;      // [kg*m^2]
-float Iyy = 17.00e-6f;      // [kg*m^2]
-float Izz = 31.19e-6f;      // [kg*m^2]
+float m = 0.0f;             // [kg]
+float Ixx = 0.0f;           // [kg*m^2]
+float Iyy = 0.0f;           // [kg*m^2]
+float Izz = 0.0f;           // [kg*m^2]
 struct mat33 J;             // Rotational Inertia Matrix [kg*m^2]
 
-float C_tf = 0.00618f;      // Moment Coeff [Nm/N]
-float f_max = 15.0f;        // Max thrust per motor [g]
+float C_tf = 0.0f;          // Moment Coeff [Nm/N]
+float f_max = 0.0f;         // Max thrust per motor [g]
 
-float Prop_14_x = 0.0325f;  // Front Prop Distance - x-axis [m]
-float Prop_14_y = 0.0325f;  // Front Prop Distance - y-axis [m]
-float Prop_23_x = 0.0325f;  // Rear  Prop Distance - x-axis [m]
-float Prop_23_y = 0.0325f;  // Rear  Prop Distance - y-axis [m]
+float Prop_14_x = 0.0f;     // Front Prop Distance - x-axis [m]
+float Prop_14_y = 0.0f;     // Front Prop Distance - y-axis [m]
+float Prop_23_x = 0.0f;     // Rear  Prop Distance - x-axis [m]
+float Prop_23_y = 0.0f;     // Rear  Prop Distance - y-axis [m]
 
 
 const float g = 9.81f;                        // Gravity [m/s^2]
@@ -30,86 +30,95 @@ struct CTRL_CmdPacket CTRL_Cmd;
 // =================================
 //    CONTROL GAIN INITIALIZATION
 // =================================
-// (INITIAL VALUES THAT ARE OVERWRITTEN BY Ctrl_Gains.yaml)
-
 // XY POSITION PID
-float P_kp_xy = 0.4f;
-float P_kd_xy = 0.35f;
-float P_ki_xy = 0.07f;
-float i_range_xy = 0.3f;
+float P_kp_xy = 0.0f;
+float P_kd_xy = 0.0f;
+float P_ki_xy = 0.0f;
+float i_range_xy = 0.0f;
 
 // Z POSITION PID
-float P_kp_z = 1.20f;
-float P_kd_z = 0.35f;
-float P_ki_z = 0.1f;
-float i_range_z = 0.25f;
+float P_kp_z = 0.0f;
+float P_kd_z = 0.0f;
+float P_ki_z = 0.0f;
+float i_range_z = 0.0f;
 
 // XY ATTITUDE PID
-float R_kp_xy = 0.004f;
-float R_kd_xy = 0.0017f;
+float R_kp_xy = 0.0f;
+float R_kd_xy = 0.0f;
 float R_ki_xy = 0.0f;
-float i_range_R_xy = 1.0f;
+float i_range_R_xy = 0.0f;
 
 // Z ATTITUDE PID
-float R_kp_z = 0.003f;
-float R_kd_z = 0.001f;
-float R_ki_z = 0.000f;
-float i_range_R_z = 0.5f;
+float R_kp_z = 0.0f;
+float R_kd_z = 0.0f;
+float R_ki_z = 0.0f;
+float i_range_R_z = 0.0f;
 
 
 // INIT CTRL GAIN VECTORS 
-struct vec Kp_p; // Pos. Proportional Gains 
-struct vec Kd_p; // Pos. Derivative Gains
-struct vec Ki_p; // Pos. Integral Gains  
+struct vec Kp_p;    // Pos. Proportional Gains 
+struct vec Kd_p;    // Pos. Derivative Gains
+struct vec Ki_p;    // Pos. Integral Gains  
 
-struct vec Kp_R; // Rot. Proportional Gains
-struct vec Kd_R; // Rot. Derivative Gains
-struct vec Ki_R; // Rot. Integral Gains
+struct vec Kp_R;    // Rot. Proportional Gains
+struct vec Kd_R;    // Rot. Derivative Gains
+struct vec Ki_R;    // Rot. Integral Gains
 
 
 // INIT GAIN FLAGS
-float kp_xf = 1; // Pos. Gain Flag
-float kd_xf = 1; // Pos. Derivative Gain Flag
+float kp_xf = 1;    // Pos. Gain Flag
+float kd_xf = 1;    // Pos. Derivative Gain Flag
 
 
 // =================================
-//     GTC CONTROLLER VARIABLES
+//     BODY WRT ORIGIN STATES
 // =================================
+struct vec Pos_B_O = {0.0f,0.0f,0.0f};         // Pos [m]
+struct vec Vel_B_O = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct vec Accel_B_O = {0.0f,0.0f,0.0f};         // Linear Accel. [m/s^2]
+float Accel_B_O_Mag = 0.0f;                                // Linear Acceleration Magnitude [m/s^2]
 
-// INIT STATE VALUES
-struct vec statePos = {0.0,0.0f,0.0f};          // Pos [m]
-struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
-struct vec stateAcc = {0.0f,0.0f,0.0f};         // Linear Accel. [m/s^2]
-float AccMag = 0.0f;                            // Linear Acceleration Magnitude [m/s^2]
+struct quat Quat_B_O = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+struct vec Omega_B_O = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+struct vec Omega_B_O_prev  = {0.0f,0.0f,0.0f}; // Prev Angular Rate [rad/s^2]
+struct vec dOmega_B_O = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
 
-struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
-struct vec stateEul = {0.0f,0.0f,0.0f};         // Orientation in Euler Angles [YZX Notation]
-struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
-struct vec state_dOmega = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
-struct vec stateOmega_prev  = {0.0f,0.0f,0.0f}; // Prev Angular Rate [rad/s^2]
+struct mat33 R;                                     // Orientation as rotation matrix
+struct vec b3 = {0.0f,0.0f,1.0f};                   // Current body z-axis in global coord.
 
+// =================================
+//     BODY WRT PLANE STATES
+// =================================
+struct vec Pos_B_P = {0.0f,0.0f,0.0f};         // Pos [m]
+struct vec Vel_B_P = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct quat Quat_B_P = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+struct vec Omega_B_P = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
+// RELATIVE STATES
+float D_perp = 0.0f;                                // Distance perp to plane [m]
+float Vel_mag_B_P = 0.0f;                             // Velocity magnitude relative [m/s]
+float Vel_angle_B_P = 0.0f;                           // Velocity angle relative [deg]
+                            
 
-struct mat33 R;                                 // Orientation as rotation matrix
-struct vec b3 = {0.0f,0.0f,1.0f};               // Current body z-axis in global coord.
+// =================================
+//         DESIRED STATES
+// =================================
+struct vec x_d = {0.0f,0.0f,0.0f};                  // Pos-desired [m]
+struct vec v_d = {0.0f,0.0f,0.0f};                  // Vel-desired [m/s]
+struct vec a_d = {0.0f,0.0f,0.0f};                  // Acc-desired [m/s^2]
 
-// INIT DESIRED STATES
-struct vec x_d = {0.0f,0.0f,0.4f};          // Pos-desired [m]
-struct vec v_d = {0.0f,0.0f,0.0f};          // Vel-desired [m/s]
-struct vec a_d = {0.0f,0.0f,0.0f};          // Acc-desired [m/s^2]
+struct vec b1_d = {1.0f,0.0f,0.0f};                 // Desired body x-axis in global coord. 
+struct vec b2_d = {0.0f,1.0f,0.0f};                 // Desired body y-axis in global coord.
+struct vec b3_d = {0.0f,0.0f,1.0f};                 // Desired body z-axis in global coord.
+struct mat33 R_d;                                   // Desired rotational matrix from b_d vectors
 
-struct quat quat_d = {0.0f,0.0f,0.0f,1.0f}; // Orientation-desired [qx,qy,qz,qw]
-struct vec eul_d = {0.0f,0.0f,0.0f};        // Euler Angle-desired [deg]
+struct quat quat_d = {0.0f,0.0f,0.0f,1.0f};         // Orientation-desired [qx,qy,qz,qw]
+struct vec omega_d = {0.0f,0.0f,0.0f};              // Omega-desired [rad/s]
+struct vec domega_d = {0.0f,0.0f,0.0f};             // Ang. Acc-desired [rad/s^2]
 
-struct vec b1_d = {1.0f,0.0f,0.0f};         // Desired body x-axis in global coord. 
-struct vec b2_d = {0.0f,1.0f,0.0f};         // Desired body y-axis in global coord.
-struct vec b3_d = {0.0f,0.0f,1.0f};         // Desired body z-axis in global coord.
-struct mat33 R_d;                           // Desired rotational matrix from b_d vectors
-
-struct vec omega_d = {0.0f,0.0f,0.0f};      // Omega-desired [rad/s]
-struct vec domega_d = {0.0f,0.0f,0.0f};     // Ang. Acc-desired [rad/s^2]
-
-// STATE ERRORS
+// =================================
+//         STATE ERRORS
+// =================================
 struct vec e_x;  // Pos-error [m]
 struct vec e_v;  // Vel-error [m/s]
 struct vec e_PI; // Pos. Integral-error [m*s]
@@ -118,21 +127,10 @@ struct vec e_R;  // Rotation-error [rad]
 struct vec e_w;  // Omega-error [rad/s]
 struct vec e_RI; // Rot. Integral-error [rad*s]
 
-// TEMPORARY CALC VECS/MATRICES
-static struct vec temp1_v; 
-static struct vec temp2_v;
-static struct vec temp3_v;
-static struct vec temp4_v;
-static struct mat33 temp1_m;  
 
-static struct vec P_effort; // Effort by positional PID
-static struct vec R_effort; // Effor by rotational PID
-
-static struct mat33 RdT_R;  // Rd' * R
-static struct mat33 RT_Rd;  // R' * Rd
-static struct vec Gyro_dyn;
-
-// CONTROLLER ACTUATIONS
+// =================================
+//       CONTROLLER ACTUATIONS
+// =================================
 struct vec F_thrust_ideal = {0.0f,0.0f,1.0f};   // Ideal thrust vector [N]
 float F_thrust = 0.0f;                          // Implemented body thrust [N]
 struct vec M = {0.0f,0.0f,0.0f};                // Implemented body moments [N*m]
@@ -161,11 +159,26 @@ uint16_t PWM_override[4] = {0,0,0,0};               // Motor PWM values
 float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f};   // Motor thrusts [g] 
 
 
+// =================================
+//   TEMPORARY CALC VECS/MATRICES
+// =================================
+static struct vec temp1_v; 
+static struct vec temp2_v;
+static struct vec temp3_v;
+static struct vec temp4_v;
+static struct mat33 temp1_m;  
+
+static struct vec P_effort; // Effort by positional PID
+static struct vec R_effort; // Effort by rotational PID
+
+static struct mat33 RdT_R;  // Rd' * R
+static struct mat33 RT_Rd;  // R' * Rd
+static struct vec Gyro_dyn;
 
 
 
 // =================================
-//     OPTICAL FLOW ESTIMATION
+//        OPTICAL FLOW STATES
 // =================================
 
 // OPTICAL FLOW STATES (GROUND TRUTH)
@@ -174,9 +187,9 @@ float Theta_x = 0.0f;   // [rad/s]
 float Theta_y = 0.0f;   // [rad/s]
 
 // OPTICAL FLOW STATES (CAMERA ESTIMATE)
-float Tau_est = 0.0f;       // [s]
-float Theta_x_est = 0.0f;   // [rad/s]
-float Theta_y_est = 0.0f;   // [rad/s]
+float Tau_Cam = 0.0f;       // [s]
+float Theta_x_Cam = 0.0f;   // [rad/s]
+float Theta_y_Cam = 0.0f;   // [rad/s]
 
 // CAMERA PARAMETERS
 float IW = 1.152e-3f;       // Image Width [m]
@@ -184,33 +197,28 @@ float IH = 1.152e-3f;       // Image Height [m]
 float focal_len = 0.66e-3f; // Focal Length [m]
 int32_t N_up = 160;         // Pixel Count Horizontal [m]
 int32_t N_vp = 160;         // Pixel Count Vertical [m]
-
 int32_t Cam_dt = 100;       // Time Between Images [ms]
 
 
 int32_t UART_arr[UART_ARR_SIZE] = {0};
 bool isOFUpdated = false;
 
-
-
-
 // =================================
 //  FLAGS AND SYSTEM INITIALIZATION
 // =================================
 
 // CONTROLLER FLAGS
-bool tumbled = false;
-bool tumble_detection = true;
-bool motorstop_flag = false;
-bool AngAccel_flag = false;
-bool attCtrlEnable = false;
-bool safeModeEnable = true;
-bool customThrust_flag = false;
-bool customPWM_flag = false;
+bool Tumbled_Flag = false;
+bool TumbleDetect_Flag = true;
+bool MotorStop_Flag = false;
+bool AngAccel_Flag = false;
+bool SafeMode_Flag = true;
+bool CustomThrust_Flag = false;
+bool CustomPWM_Flag = false;
 
 
 // SENSOR FLAGS
-bool CamActive = false;
+bool CamActive_Flag = false;
 
 
 // =================================
@@ -223,8 +231,8 @@ nml_mat* X_input;   // STATE MATRIX TO BE INPUT INTO POLICY
 nml_mat* Y_output;  // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
-bool policy_armed_flag = false;
-bool Trg_flag = false;
+bool Policy_Armed_Flag = false;
+bool Trg_Flag = false;
 bool onceFlag = false;
 
 // POLICY TRIGGER/ACTION VALUES
@@ -243,38 +251,34 @@ float Policy_Rot_threshold = 1.50f;
 
 
 
-// ======================================
-//  RECORD SYSTEM STATES AT TRIGGER TRIGGER
-// ======================================
+// ==========================================
+//  RECORD SYSTEM STATES AT POLICY TRIGGER
+// ==========================================
 
-// CARTESIAN STATES
-struct vec statePos_trg = {0.0f,0.0f,0.0f};         // Pos [m]
-struct vec stateVel_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
-struct vec stateAcc_trg = {0.0f,0.0f,0.0f};         // Linear Accel [m/s^2]
-struct quat stateQuat_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
-struct vec stateOmega_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
-struct vec state_dOmega_trg = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
+// BODY WRT ORIGIN STATES
+struct vec Pos_B_O_trg = {0.0f,0.0f,0.0f};         // Pos [m]
+struct vec Vel_B_O_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct quat Quat_B_O_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+struct vec Omega_B_O_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
-// RELATIVE STATES
-float D_perp_trg = 0.0f;                            // [m/s]
-struct vec V_rel_trg = {0.0f,0.0f,0.0f};            // Velocity relative to plane [m/s]
+
+// BODY WRT PLANE STATES
+struct vec Pos_B_P_trg = {0.0f,0.0f,0.0f};         // Pos [m]
+struct vec Vel_B_P_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct quat Quat_B_P_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+struct vec Omega_B_P_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+float D_perp_trg = 0.0f;                                // Distance perp to plane [m]
 
 
 // OPTICAL FLOW STATES
-float Tau_trg = 0.0f;        // [rad/s]
-float Theta_x_trg = 0.0f;    // [rad/s]
-float Theta_y_trg = 0.0f;    // [rad/s]
+float Tau_trg = 0.0f;               // [rad/s]
+float Theta_x_trg = 0.0f;           // [rad/s]
+float Theta_y_trg = 0.0f;           // [rad/s]
 
-// OPTICAL FLOW ESTIMATES
-float Tau_est_trg = 0.0f;        // [rad/s]
-float Theta_x_est_trg = 0.0f;    // [rad/s]
-float Theta_y_est_trg = 0.0f;    // [rad/s]
-
-// CONTROLLER STATES
-float F_thrust_Rot = 0.0f; // [N]
-float M_x_Rot = 0.0f;      // [N*m]
-float M_y_Rot = 0.0f;      // [N*m]
-float M_z_Rot = 0.0f;      // [N*m]
+// OPTICAL FLOW CAMERA ESTIMATES
+float Tau_Cam_trg = 0.0f;           // [rad/s]
+float Theta_x_Cam_trg = 0.0f;       // [rad/s]
+float Theta_y_Cam_trg = 0.0f;       // [rad/s]
 
 // POLICY TRIGGER/ACTION VALUES
 float Policy_Trg_Action_trg = 0.0f;    
@@ -283,30 +287,16 @@ float Policy_Rot_Action_trg = 0.0f;
 // =================================
 //    LANDING SURFACE PARAMETERS
 // =================================
-
-// LANDING SURFACE PARAMETERS
-float Plane_Angle_deg = 180.0f;
-
-struct vec r_P_O = {0.0f,0.0f,2.0f};    // Plane Position Vector        [m]
-struct vec r_B_O = {0.0f,0.0f,0.0f};    // Quad Position Vector         [m]
-struct vec r_C_B = {0.0f,0.0f,0.0f};    // Camera Position Vector       [m]
-struct vec r_P_B = {0.0f,0.0f,0.0f};    // Quad-Plane Distance Vector   [m]
-struct vec V_B_O = {0.0f,0.0f,0.0f};    // Quad Velocity Vector         [m/s]
-
-// RELATIVE STATES
-float D_perp = 0.0f;                    // Distance perp to plane [m]
-
-struct mat33 R_WP;                      // Rotation matrix from world to plane
-struct mat33 R_PW;                      // Rotation matrix from plane to world
-struct vec V_rel = {0.0f,0.0f,0.0f};    // Velocity relative to plane [m/s]
+float Plane_Angle_deg = 0.0f;           // Plane Angle [deg]
+struct vec r_P_O = {0.0f,0.0f,0.0f};    // Plane Position Vector        [m]
 
 
-float V_mag_rel = 0.0f;                   // Velocity magnitude relative [m/s]
-float V_angle_rel = 0.0f;                   // Velocity angle relative [deg]
 
 // =================================
 //         ROTATION MATRICES
 // =================================
+struct mat33 R_WP;                      // Rotation matrix from world to plane
+struct mat33 R_PW;                      // Rotation matrix from plane to world
 
 
 
@@ -344,7 +334,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             break;        
 
         case 5: // Hard Set All Motorspeeds to Zero
-            motorstop_flag = true;
+            MotorStop_Flag = true;
             break;
 
         case 7: // Execute Moment Corresponding to Angular Acceleration
@@ -353,14 +343,14 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             M_d.y = CTRL_Cmd->cmd_val2*Iyy;
             M_d.z = CTRL_Cmd->cmd_val3*Izz;
 
-            AngAccel_flag = (bool)CTRL_Cmd->cmd_flag;
+            AngAccel_Flag = (bool)CTRL_Cmd->cmd_flag;
             break;
 
         case 8: // Arm Policy Maneuver
             Policy_Trg_Action = CTRL_Cmd->cmd_val1;
             Policy_Rot_Action = CTRL_Cmd->cmd_val2;
 
-            policy_armed_flag = (bool)CTRL_Cmd->cmd_flag;
+            Policy_Armed_Flag = (bool)CTRL_Cmd->cmd_flag;
             break;
 
         case 10: // Point-to-Point Trajectory
@@ -486,12 +476,12 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
 
         case 20: // Tumble-Detection
-            tumble_detection = CTRL_Cmd->cmd_flag;
+            TumbleDetect_Flag = CTRL_Cmd->cmd_flag;
             break;
 
         case 30: // Custom Thrust Values
 
-            customThrust_flag = true;
+            CustomThrust_Flag = true;
             thrust_override[0] = CTRL_Cmd->cmd_val1;
             thrust_override[1] = CTRL_Cmd->cmd_val2;
             thrust_override[2] = CTRL_Cmd->cmd_val3;
@@ -501,7 +491,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
         case 31: // Custom PWM Values
 
-            customPWM_flag = true;
+            CustomPWM_Flag = true;
             PWM_override[0] = CTRL_Cmd->cmd_val1;
             PWM_override[1] = CTRL_Cmd->cmd_val2;
             PWM_override[2] = CTRL_Cmd->cmd_val3;
@@ -538,23 +528,21 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     Ki_R = mkvec(R_ki_xy,R_ki_xy,R_ki_z);
     
     // =========== STATE SETPOINTS =========== //
-    omega_d = mkvec(0.0f,0.0f,0.0f);    // Omega-desired [rad/s]
-    domega_d = mkvec(0.0f,0.0f,0.0f);   // Omega-Accl. [rad/s^2]
-
-    eul_d = mkvec(0.0f,0.0f,0.0f);
-    quat_d = rpy2quat(eul_d);           // Desired orientation from eul angles [ZYX NOTATION]
+    omega_d = mkvec(0.0f,0.0f,0.0f);        // Omega-desired [rad/s]
+    domega_d = mkvec(0.0f,0.0f,0.0f);       // Omega-Accl. [rad/s^2]
+    quat_d = mkquat(0.0f,0.0f,0.0f,1.0f);   // Desired orientation 
 
     // =========== ROTATION MATRIX =========== //
     // R changes Body axes to be in terms of Global axes
     // https://www.andre-gaschler.com/rotationconverter/
-    R = quat2rotmat(stateQuat); // Quaternion to Rotation Matrix Conversion
+    R = quat2rotmat(Quat_B_O); // Quaternion to Rotation Matrix Conversion
     b3 = mvmul(R, e_3);         // Current body vertical axis in terms of global axes | [b3 = R*e_3] 
         
 
 
     // =========== TRANSLATIONAL EFFORT =========== //
-    e_x = vsub(statePos, x_d); // [e_x = pos-x_d]
-    e_v = vsub(stateVel, v_d); // [e_v = vel-v_d]
+    e_x = vsub(Pos_B_O, x_d); // [e_x = pos-x_d]
+    e_v = vsub(Vel_B_O, v_d); // [e_v = vel-v_d]
 
     // POS. INTEGRAL ERROR
     e_PI.x += (e_x.x)*dt;
@@ -592,7 +580,7 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     e_R = vscl(0.5f, temp1_v);              // Rotation error | [eR = 0.5*dehat(R_d'*R - R'*R)]
 
     temp1_v = mvmul(RT_Rd, omega_d);        // [R'*R_d*omega_d]
-    e_w = vsub(stateOmega, temp1_v);        // Ang. vel error | [e_w = omega - R'*R_d*omega_d] 
+    e_w = vsub(Omega_B_O, temp1_v);        // Ang. vel error | [e_w = omega - R'*R_d*omega_d] 
 
     // ROT. INTEGRAL ERROR
     e_RI.x += (e_R.x)*dt;
@@ -613,10 +601,10 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     R_effort = vadd3(temp1_v,temp2_v,temp3_v);
 
     /* Gyro_dyn = [omega x (J*omega)] - [J*( hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d )] */
-    temp1_v = vcross(stateOmega, mvmul(J, stateOmega)); // [omega x J*omega]
+    temp1_v = vcross(Omega_B_O, mvmul(J, Omega_B_O)); // [omega x J*omega]
 
 
-    temp1_m = mmul(hat(stateOmega), RT_Rd); //  hat(omega)*R'*R_d
+    temp1_m = mmul(hat(Omega_B_O), RT_Rd); //  hat(omega)*R'*R_d
     temp2_v = mvmul(temp1_m, omega_d);      // (hat(omega)*R'*R_d)*omega_d
     temp3_v = mvmul(RT_Rd, domega_d);       // (R'*R_d*domega_d)
 
@@ -730,14 +718,14 @@ bool updateOpticalFlowEst()
         nml_mat* OF_vec = nml_ls_solve(LUP,b_vec);
 
         // CLAMP OPTICAL FLOW VALUES
-        // Theta_x_est = clamp(OF_vec->data[0][0],-20.0f,20.0f);
-        // Theta_y_est = clamp(OF_vec->data[1][0],-20.0f,20.0f);
-        // Tau_est = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
+        // Theta_x_Cam = clamp(OF_vec->data[0][0],-20.0f,20.0f);
+        // Theta_y_Cam = clamp(OF_vec->data[1][0],-20.0f,20.0f);
+        // Tau_Cam = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
 
-        Theta_x_est = OF_vec->data[0][0];
-        Theta_y_est = OF_vec->data[1][0];
-        Tau_est = 1/(OF_vec->data[2][0] + 1.0e-6);
-        // Tau_est = (float)UART_arr[0];
+        Theta_x_Cam = OF_vec->data[0][0];
+        Theta_y_Cam = OF_vec->data[1][0];
+        Tau_Cam = 1/(OF_vec->data[2][0] + 1.0e-6);
+        // Tau_Cam = (float)UART_arr[0];
 
 
         nml_mat_lup_free(LUP);
@@ -760,20 +748,16 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
 {
     // UPDATE POS AND VEL
     // TODO: ADD CAMERA OFFSETS SO THESE NUMBERS MATCH CAMERA ESTIMATION
-    r_B_O = mkvec(state->position.x, state->position.y, state->position.z);
-    V_B_O = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
+    Pos_B_O = mkvec(state->position.x, state->position.y, state->position.z);
+    Vel_B_O = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
 
     // CALC DISPLACEMENT FROM PLANE CENTER
-    r_P_B = vsub(r_P_O,r_B_O); 
+    Pos_B_P = mvmul(R_WP,vsub(r_P_O,Pos_B_O)); 
+    Vel_B_P = mvmul(R_WP,Vel_B_O);
+    D_perp = mvmul(R_WP,Pos_B_P).z;
 
-
-    // CALC RELATIVE DISTANCE AND VEL
-    D_perp = mvmul(R_WP,r_P_B).z;
-    V_rel = mvmul(R_WP,V_B_O);
-
-
-    V_mag_rel = vmag(V_rel);
-    V_angle_rel = atan2f(V_rel.z,V_rel.x)*Rad2Deg;
+    Vel_mag_B_P = vmag(Vel_B_P);
+    Vel_angle_B_P = atan2f(Vel_B_P.z,Vel_B_P.x)*Rad2Deg;
 
     if (fabsf(D_perp) < 0.02f)
     {
@@ -781,9 +765,9 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
     }
 
     // CALC OPTICAL FLOW VALUES
-    Theta_x = clamp(V_rel.x/D_perp,-20.0f,20.0f);
-    Theta_y = clamp(V_rel.y/D_perp,-20.0f,20.0f);
-    Tau = clamp(D_perp/(V_rel.z + 1e-6f),0.0f,5.0f);
+    Theta_x = clamp(Vel_B_P.x/D_perp,-20.0f,20.0f);
+    Theta_y = clamp(Vel_B_P.y/D_perp,-20.0f,20.0f);
+    Tau = clamp(D_perp/(Vel_B_P.z + 1e-6f),0.0f,5.0f);
 
     return true;
 }

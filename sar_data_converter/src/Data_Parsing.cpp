@@ -121,14 +121,14 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
 void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg)
 {
-    Motorstop_Flag = ctrl_msg.Motorstop_Flag;
-    Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl;
-    Vel_Ctrl_Flag = ctrl_msg.Vel_Ctrl;
-    Traj_Active_Flag = ctrl_msg.Traj_Active;
-    Tumble_Detection = ctrl_msg.Tumble_Detection;
-    Tumbled_Flag = ctrl_msg.Tumbled_Flag;
-    AngAccel_flag = ctrl_msg.AngAccel_flag;
-    Policy_Armed_Flag = ctrl_msg.Policy_Armed;
+    // Motorstop_Flag = ctrl_msg.Motorstop_Flag;
+    // Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl;
+    // Vel_Ctrl_Flag = ctrl_msg.Vel_Ctrl;
+    // Traj_Active_Flag = ctrl_msg.Traj_Active;
+    // Tumble_Detection = ctrl_msg.Tumble_Detection;
+    // Tumbled_Flag = ctrl_msg.Tumbled_Flag;
+    // AngAccel_flag = ctrl_msg.AngAccel_flag;
+    // Policy_Armed_Flag = ctrl_msg.Policy_Armed;
 }
 
 

@@ -1,9 +1,13 @@
-bool Motorstop_Flag
-bool Pos_Ctrl
-bool Vel_Ctrl
-bool Traj_Active
-bool Tumble_Detection
 bool Tumbled_Flag
-bool AngAccel_flag
-bool Policy_Armed
+bool TumbleDetect_Flag
+bool MotorStop_Flag
+bool AngAccel_Flag
+bool SafeMode_Flag
+bool CustomThrust_Flag
+bool CustomPWM_Flag
+
+bool Pos_Ctrl_Flag
+bool Vel_Ctrl_Flag
+bool Traj_Active_Flag
+bool Policy_Armed_Flag
 

@@ -1,8 +1,20 @@
+# =========================
 ## CONTROLLER STATES
-geometry_msgs/Pose Pose
-geometry_msgs/Twist Twist
-geometry_msgs/Accel Accel
-float64 AccMag
+# =========================
+geometry_msgs/Pose Pose_B_O
+geometry_msgs/Twist Twist_B_O
+geometry_msgs/Accel Accel_B_O
+float64 Accel_B_O_Mag
+
+geometry_msgs/Pose Pose_B_P
+geometry_msgs/Twist Twist_B_P
+float64 Vel_mag_B_P
+float64 Vel_angle_B_P
+float64 D_perp
+
+## OPTICAL FLOW STATES
+geometry_msgs/Vector3 Optical_Flow
+geometry_msgs/Vector3 Optical_Flow_Cam
 
 geometry_msgs/Vector3 x_d
 geometry_msgs/Vector3 v_d
@@ -15,37 +27,32 @@ uint32[4] MS_PWM
 float64 Policy_Trg_Action
 float64 Policy_Rot_Action
 
-## PLANE RELATIVE STATES
-float64 D_perp
-geometry_msgs/Vector3 V_rel
-float64 V_mag_rel
-float64 V_angle_rel
 
-## OPTICAL FLOW STATES
-float64 Tau
-float64 Theta_x
-float64 Theta_y
+# =========================
+# STATES AT POLICY TRIGGER
+# =========================
+bool Trg_Flag
 
-float64 Tau_est
-float64 Theta_x_est
-float64 Theta_y_est
+geometry_msgs/Pose Pose_B_O_trg
+geometry_msgs/Twist Twist_B_O_trg
 
+geometry_msgs/Pose Pose_B_P_trg
+geometry_msgs/Twist Twist_B_P_trg
 
-# STATES AT TRIGGER TRIGGER
-bool Trg_flag
-geometry_msgs/Pose Pose_trg
-geometry_msgs/Twist Twist_trg
-geometry_msgs/Accel Accel_trg
-float64 Tau_trg
-float64 Theta_x_trg
-float64 Theta_y_trg
-
-float64 D_perp_trg
-geometry_msgs/Vector3 V_rel_trg
-
-float64[4] FM_Rot
-
+geometry_msgs/Vector3 Optical_Flow_trg
 float64 Policy_Trg_Action_trg
 float64 Policy_Rot_Action_trg
+
+# =========================
+# STATES AT IMPACT
+# =========================
+
+bool Impact_Flag_Onboard
+
+geometry_msgs/Pose Pose_B_P_impact
+geometry_msgs/Twist Twist_B_P_impact
+
+
+
 
 

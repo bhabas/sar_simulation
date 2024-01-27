@@ -178,13 +178,6 @@ void Controller::loadParams()
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
     ros::param::get("/CAM_SETTINGS/Cam_Config",Cam_Config);
 
-
-
-    ros::param::get("/Cam_Config/" + Cam_Config + "/X_Offset",r_C_B.x);
-    ros::param::get("/Cam_Config/" + Cam_Config + "/Y_Offset",r_C_B.y);
-    ros::param::get("/Cam_Config/" + Cam_Config + "/Z_Offset",r_C_B.z);
-
-
     
     // UPDATE INERTIAL PARAMETERS
     ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Mass",m);
@@ -238,7 +231,7 @@ void Controller::loadParams()
     ros::param::get("/SAR_Type/" + SAR_Type + "/CtrlGains/R_ki_z",R_ki_z);
     ros::param::get("/SAR_Type/" + SAR_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
-    ros::param::get("/SAR_SETTINGS/Cam_Active",CamActive);
+    ros::param::get("/SAR_SETTINGS/Cam_Active",CamActive_Flag);
 
 
     // SIMULATION SETTINGS FROM CONFIG FILE
@@ -261,13 +254,13 @@ void Controller::loadParams()
 
 void Controller::publishCtrlDebug()
 {
-    CtrlDebug_msg.Pos_Ctrl = (bool)kp_xf;
-    CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
-    CtrlDebug_msg.Tumble_Detection = tumble_detection;
-    CtrlDebug_msg.Tumbled_Flag = tumbled;
-    CtrlDebug_msg.AngAccel_flag = AngAccel_flag; 
-    CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
-    CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
+    CtrlDebug_msg.Pos_Ctrl_Flag = (bool)kp_xf;
+    CtrlDebug_msg.Vel_Ctrl_Flag = (bool)kd_xf;
+    CtrlDebug_msg.TumbleDetect_Flag = TumbleDetect_Flag;
+    CtrlDebug_msg.Tumbled_Flag = Tumbled_Flag;
+    CtrlDebug_msg.AngAccel_Flag = AngAccel_Flag; 
+    CtrlDebug_msg.MotorStop_Flag = MotorStop_Flag;
+    CtrlDebug_msg.Policy_Armed_Flag = Policy_Armed_Flag; 
 
     CTRL_Debug_Publisher.publish(CtrlDebug_msg);
 }
@@ -275,55 +268,72 @@ void Controller::publishCtrlDebug()
 // PUBLISH CONTROLLER DATA ON ROS TOPIC
 void Controller::publishCtrlData()
 {
-    // STATE DATA
-    CtrlData_msg.Pose.position.x = statePos.x;
-    CtrlData_msg.Pose.position.y = statePos.y;
-    CtrlData_msg.Pose.position.z = statePos.z;
 
-    CtrlData_msg.Pose.orientation.x = stateQuat.x;
-    CtrlData_msg.Pose.orientation.y = stateQuat.y;
-    CtrlData_msg.Pose.orientation.z = stateQuat.z;
-    CtrlData_msg.Pose.orientation.w = stateQuat.w;
+    // STATE DATA WRT ORIGIN
+    CtrlData_msg.Pose_B_O.position.x = Pos_B_O.x;
+    CtrlData_msg.Pose_B_O.position.y = Pos_B_O.y;
+    CtrlData_msg.Pose_B_O.position.z = Pos_B_O.z;
 
-    CtrlData_msg.Twist.linear.x = stateVel.x;
-    CtrlData_msg.Twist.linear.y = stateVel.y;
-    CtrlData_msg.Twist.linear.z = stateVel.z;
+    CtrlData_msg.Pose_B_O.orientation.x = Quat_B_O.x;
+    CtrlData_msg.Pose_B_O.orientation.y = Quat_B_O.y;
+    CtrlData_msg.Pose_B_O.orientation.z = Quat_B_O.z;
+    CtrlData_msg.Pose_B_O.orientation.w = Quat_B_O.w;
 
-    CtrlData_msg.Twist.angular.x = stateOmega.x;
-    CtrlData_msg.Twist.angular.y = stateOmega.y;
-    CtrlData_msg.Twist.angular.z = stateOmega.z;
+    CtrlData_msg.Twist_B_O.linear.x = Vel_B_O.x;
+    CtrlData_msg.Twist_B_O.linear.y = Vel_B_O.y;
+    CtrlData_msg.Twist_B_O.linear.z = Vel_B_O.z;
 
-    CtrlData_msg.Accel.linear.x = stateAcc.x;
-    CtrlData_msg.Accel.linear.y = stateAcc.y;
-    CtrlData_msg.Accel.linear.z = stateAcc.z;
+    CtrlData_msg.Twist_B_O.angular.x = Omega_B_O.x;
+    CtrlData_msg.Twist_B_O.angular.y = Omega_B_O.y;
+    CtrlData_msg.Twist_B_O.angular.z = Omega_B_O.z;
 
-    CtrlData_msg.Accel.angular.x = state_dOmega.x;
-    CtrlData_msg.Accel.angular.y = state_dOmega.y;
-    CtrlData_msg.Accel.angular.z = state_dOmega.z;
+    CtrlData_msg.Accel_B_O.linear.x = Accel_B_O.x;
+    CtrlData_msg.Accel_B_O.linear.y = Accel_B_O.y;
+    CtrlData_msg.Accel_B_O.linear.z = Accel_B_O.z;
 
-    CtrlData_msg.AccMag = AccMag;
+    CtrlData_msg.Accel_B_O.angular.x = dOmega_B_O.x;
+    CtrlData_msg.Accel_B_O.angular.y = dOmega_B_O.y;
+    CtrlData_msg.Accel_B_O.angular.z = dOmega_B_O.z;
+
+    CtrlData_msg.Accel_B_O_Mag = Accel_B_O_Mag;
+
+
+    // STATE DATA WRT PLANE
+    CtrlData_msg.Pose_B_P.position.x = Pos_B_P.x;
+    CtrlData_msg.Pose_B_P.position.y = Pos_B_P.y;
+    CtrlData_msg.Pose_B_P.position.z = Pos_B_P.z;
+
+    CtrlData_msg.Pose_B_P.orientation.x = Quat_B_P.x;
+    CtrlData_msg.Pose_B_P.orientation.y = Quat_B_P.y;
+    CtrlData_msg.Pose_B_P.orientation.z = Quat_B_P.z;
+    CtrlData_msg.Pose_B_P.orientation.w = Quat_B_P.w;
+
+    CtrlData_msg.Twist_B_P.linear.x = Vel_B_P.x;
+    CtrlData_msg.Twist_B_P.linear.y = Vel_B_P.y;
+    CtrlData_msg.Twist_B_P.linear.z = Vel_B_P.z;
+
+    CtrlData_msg.Twist_B_P.angular.x = Omega_B_P.x;
+    CtrlData_msg.Twist_B_P.angular.y = Omega_B_P.y;
+    CtrlData_msg.Twist_B_P.angular.z = Omega_B_P.z;
 
 
     // PLANE RELATIVE STATES
     CtrlData_msg.D_perp = D_perp;
-    CtrlData_msg.V_rel.x = V_rel.x;
-    CtrlData_msg.V_rel.y = V_rel.y;
-    CtrlData_msg.V_rel.z = V_rel.z;
-    CtrlData_msg.V_mag_rel = V_mag_rel;
-    CtrlData_msg.V_angle_rel = V_angle_rel;
+    CtrlData_msg.Vel_mag_B_P = Vel_mag_B_P;
+    CtrlData_msg.Vel_angle_B_P = Vel_angle_B_P;
 
     // OPTICAL FLOW DATA
-    CtrlData_msg.Tau = Tau;
-    CtrlData_msg.Theta_x = Theta_x;
-    CtrlData_msg.Theta_y = Theta_y;
+    CtrlData_msg.Optical_Flow.x = Theta_x;
+    CtrlData_msg.Optical_Flow.y = Theta_y;
+    CtrlData_msg.Optical_Flow.z = Tau;
     
 
     // ESTIMATED OPTICAL FLOW DATA
-    CtrlData_msg.Tau_est = Tau_est;
-    CtrlData_msg.Theta_x_est = Theta_x_est;
-    CtrlData_msg.Theta_y_est = Theta_y_est;
+    CtrlData_msg.Optical_Flow_Cam.x = Theta_x_Cam;
+    CtrlData_msg.Optical_Flow_Cam.y = Theta_y_Cam;
+    CtrlData_msg.Optical_Flow_Cam.z = Tau_Cam;
 
-    // NEURAL NETWORK DATA
+    // POLICY ACTIONS
     CtrlData_msg.Policy_Trg_Action = Policy_Trg_Action;
     CtrlData_msg.Policy_Rot_Action = Policy_Rot_Action;
 
@@ -346,51 +356,49 @@ void Controller::publishCtrlData()
 
 
 
-    // STATE DATA (TRIGGER)
-    CtrlData_msg.Trg_flag = Trg_flag;
+    // ==========================
+    //  STATES AT POLICY TRIGGER
+    // ==========================
+    // // CtrlData_msg.Trg_Flag = Trg_Flag;
 
-    // CtrlData_msg.Pose_trg.header.stamp = t_Rot;             
-    CtrlData_msg.Pose_trg.position.x = statePos_trg.x;
-    CtrlData_msg.Pose_trg.position.y = statePos_trg.y;
-    CtrlData_msg.Pose_trg.position.z = statePos_trg.z;
+    // // // CtrlData_msg.Pose_trg.header.stamp = t_Rot;             
+    // // CtrlData_msg.Pose_trg.position.x = Pos_B_O_trg.x;
+    // // CtrlData_msg.Pose_trg.position.y = Pos_B_O_trg.y;
+    // // CtrlData_msg.Pose_trg.position.z = Pos_B_O_trg.z;
 
-    CtrlData_msg.Pose_trg.orientation.x = stateQuat_trg.x;
-    CtrlData_msg.Pose_trg.orientation.y = stateQuat_trg.y;
-    CtrlData_msg.Pose_trg.orientation.z = stateQuat_trg.z;
-    CtrlData_msg.Pose_trg.orientation.w = stateQuat_trg.w;
+    // // CtrlData_msg.Pose_trg.orientation.x = Quat_B_O_trg.x;
+    // // CtrlData_msg.Pose_trg.orientation.y = Quat_B_O_trg.y;
+    // // CtrlData_msg.Pose_trg.orientation.z = Quat_B_O_trg.z;
+    // // CtrlData_msg.Pose_trg.orientation.w = Quat_B_O_trg.w;
 
-    CtrlData_msg.Twist_trg.linear.x = stateVel_trg.x;
-    CtrlData_msg.Twist_trg.linear.y = stateVel_trg.y;
-    CtrlData_msg.Twist_trg.linear.z = stateVel_trg.z;
+    // // CtrlData_msg.Twist_trg.linear.x = Vel_B_O_trg.x;
+    // // CtrlData_msg.Twist_trg.linear.y = Vel_B_O_trg.y;
+    // // CtrlData_msg.Twist_trg.linear.z = Vel_B_O_trg.z;
 
-    CtrlData_msg.Twist_trg.angular.x = stateOmega_trg.x;
-    CtrlData_msg.Twist_trg.angular.y = stateOmega_trg.y;
-    CtrlData_msg.Twist_trg.angular.z = stateOmega_trg.z;
+    // // CtrlData_msg.Twist_trg.angular.x = Omega_B_O_trg.x;
+    // // CtrlData_msg.Twist_trg.angular.y = Omega_B_O_trg.y;
+    // // CtrlData_msg.Twist_trg.angular.z = Omega_B_O_trg.z;
 
-    CtrlData_msg.V_rel_trg.x = V_rel_trg.x;
-    CtrlData_msg.V_rel_trg.y = V_rel_trg.y;
-    CtrlData_msg.V_rel_trg.z = V_rel_trg.z;
 
-    CtrlData_msg.Accel_trg.linear.x = stateAcc_trg.x;
-    CtrlData_msg.Accel_trg.linear.y = stateAcc_trg.y;
-    CtrlData_msg.Accel_trg.linear.z = stateAcc_trg.z;
+    // // CtrlData_msg.Accel_trg.linear.x = stateAcc_B_O_trg.x;
+    // // CtrlData_msg.Accel_trg.linear.y = stateAcc_B_O_trg.y;
+    // // CtrlData_msg.Accel_trg.linear.z = stateAcc_B_O_trg.z;
 
-    CtrlData_msg.Accel_trg.angular.x = 0;
-    CtrlData_msg.Accel_trg.angular.y = 0;
-    CtrlData_msg.Accel_trg.angular.z = 0;
+    // // CtrlData_msg.Accel_trg.angular.x = 0;
+    // // CtrlData_msg.Accel_trg.angular.y = 0;
+    // // CtrlData_msg.Accel_trg.angular.z = 0;
 
-    // OPTICAL FLOW DATA (TRIGGER)
-    CtrlData_msg.Tau_trg = Tau_trg;
-    CtrlData_msg.Theta_x_trg = Theta_x_trg;
-    CtrlData_msg.Theta_y_trg = Theta_y_trg;
-    CtrlData_msg.D_perp_trg = D_perp_trg;
+    // // // OPTICAL FLOW DATA (TRIGGER)
+    // // CtrlData_msg.Tau_trg = Tau_trg;
+    // // CtrlData_msg.Theta_x_trg = Theta_x_trg;
+    // // CtrlData_msg.Theta_y_trg = Theta_y_trg;
+    // // CtrlData_msg.D_perp_trg = D_perp_trg;
 
-    // POLICY ACTIONS (TRIGGER)
-    CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
+    // // // POLICY ACTIONS (TRIGGER)
+    // // CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
+    // // CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
 
-    // CONTROL ACTIONS (TRIGGER)
-    CtrlData_msg.FM_Rot = {F_thrust_Rot,M_x_Rot,M_y_Rot,M_z_Rot};
+    // // // CONTROL ACTIONS (TRIGGER)
 
     
     CTRL_Data_Publisher.publish(CtrlData_msg);

@@ -81,28 +81,26 @@ void controllerOutOfTreeReset() {
     b1_d = mkvec(1.0f,0.0f,0.0f);
 
     // RESET SYSTEM FLAGS
-    tumbled = false;
-    motorstop_flag = false;
-    customThrust_flag = false;
-    customPWM_flag = false;
-    AngAccel_flag = false;
+    Tumbled_Flag = false;
+    MotorStop_Flag = false;
+    CustomThrust_Flag = false;
+    CustomPWM_Flag = false;
+    AngAccel_Flag = false;
 
     // RESET TRAJECTORY FLAGS
     Traj_Type = NONE;
 
     // RESET POLICY FLAGS
-    policy_armed_flag = false;
-    Trg_flag = false;
+    Policy_Armed_Flag = false;
+    Trg_Flag = false;
     onceFlag = false;
 
 
     // RESET LOGGED TRIGGER VALUES
-    statePos_trg = vzero();
-    stateVel_trg = vzero();
-    stateAcc_trg = vzero();
-    stateQuat_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
-    stateOmega_trg = vzero();
-    state_dOmega_trg = vzero();
+    Pos_B_O_trg = vzero();
+    Vel_B_O_trg = vzero();
+    Quat_B_O_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
+    Omega_B_O_trg = vzero();
 
     Tau_trg = 0.0f;
     Theta_x_trg = 0.0f;
@@ -114,10 +112,6 @@ void controllerOutOfTreeReset() {
 
 
     updateRotationMatrices();
-    // printmat(R_WP);
-    // printmat(R_PW);
-
-
 }
 
 
@@ -131,33 +125,27 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         float time_delta = (tick-prev_tick)/1000.0f;
 
-        statePos = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
-        stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
-        stateAcc = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
-        AccMag = firstOrderFilter(vmag(stateAcc),AccMag,0.5f);
+        Pos_B_O = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
+        Vel_B_O = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
+        Accel_B_O = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
+        Accel_B_O_Mag = firstOrderFilter(vmag(Accel_B_O),Accel_B_O_Mag,0.5f);
 
 
-        stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
+        Omega_B_O = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
 
         // CALC AND FILTER ANGULAR ACCELERATION
-        state_dOmega.x = firstOrderFilter((stateOmega.x - stateOmega_prev.x)/time_delta,state_dOmega.x,0.90f); // [rad/s^2]
-        state_dOmega.y = firstOrderFilter((stateOmega.y - stateOmega_prev.y)/time_delta,state_dOmega.y,0.90f); // [rad/s^2]
-        state_dOmega.z = firstOrderFilter((stateOmega.z - stateOmega_prev.z)/time_delta,state_dOmega.z,0.90f); // [rad/s^2]
+        dOmega_B_O.x = firstOrderFilter((Omega_B_O.x - Omega_B_O_prev.x)/time_delta,dOmega_B_O.x,0.90f); // [rad/s^2]
+        dOmega_B_O.y = firstOrderFilter((Omega_B_O.y - Omega_B_O_prev.y)/time_delta,dOmega_B_O.y,0.90f); // [rad/s^2]
+        dOmega_B_O.z = firstOrderFilter((Omega_B_O.z - Omega_B_O_prev.z)/time_delta,dOmega_B_O.z,0.90f); // [rad/s^2]
 
 
-        stateQuat = mkquat(state->attitudeQuaternion.x,
+        Quat_B_O = mkquat(state->attitudeQuaternion.x,
                         state->attitudeQuaternion.y,
                         state->attitudeQuaternion.z,
                         state->attitudeQuaternion.w);
 
-        // EULER ANGLES EXPRESSED IN YZX NOTATION
-        stateEul = quat2eul(stateQuat);
-        stateEul.x = degrees(stateEul.x);
-        stateEul.y = degrees(stateEul.y);
-        stateEul.z = degrees(stateEul.z);
-
         // SAVE PREVIOUS VALUES
-        stateOmega_prev = stateOmega;
+        Omega_B_O_prev = Omega_B_O;
         prev_tick = tick;
     }
 
@@ -191,14 +179,14 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         updateOpticalFlowAnalytic(state,sensors);
 
         // POLICY VECTOR UPDATE
-        if (CamActive == true)
+        if (CamActive_Flag == true)
         {
             // ONLY UPDATE WITH NEW OPTICAL FLOW DATA
             isOFUpdated = updateOpticalFlowEst();
 
             // UPDATE POLICY VECTOR
-            X_input->data[0][0] = Tau_est;
-            X_input->data[1][0] = Theta_x_est;
+            X_input->data[0][0] = Tau_Cam;
+            X_input->data[1][0] = Theta_x_Cam;
             X_input->data[2][0] = D_perp; 
 
         }
@@ -219,25 +207,23 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         isOFUpdated = false;
 
-        if(policy_armed_flag == true){
+        if(Policy_Armed_Flag == true){
 
             switch (Policy)
             {
                 case PARAM_OPTIM:
 
                     // EXECUTE POLICY IF TRIGGERED
-                    if(Tau <= Policy_Trg_Action && onceFlag == false && V_mag_rel > 0.5f){
+                    if(Tau <= Policy_Trg_Action && onceFlag == false && Vel_mag_B_P > 0.5f){
 
                         onceFlag = true;
 
                         // UPDATE AND RECORD TRIGGER VALUES
-                        Trg_flag = true;  
-                        statePos_trg = statePos;
-                        stateVel_trg = stateVel;
-                        stateAcc_trg = stateAcc;
-                        stateQuat_trg = stateQuat;
-                        stateOmega_trg = stateOmega;
-                        state_dOmega_trg = state_dOmega;
+                        Trg_Flag = true;  
+                        Pos_B_O_trg = Pos_B_O;
+                        Vel_B_O_trg = Vel_B_O;
+                        Quat_B_O_trg = Quat_B_O;
+                        Omega_B_O_trg = Omega_B_O;
 
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
@@ -248,11 +234,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         M_d.x = 0.0f;
                         M_d.y = Policy_Rot_Action*Iyy;
                         M_d.z = 0.0f;
-
-                        F_thrust_Rot = 0.0;
-                        M_x_Rot = M_d.x*1e3f;
-                        M_y_Rot = M_d.y*1e3f;
-                        M_z_Rot = M_d.z*1e3f;
                         }
                         
                     break;
@@ -266,7 +247,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
 
                     // EXECUTE POLICY
-                    if(Policy_Trg_Action >= Policy_Rot_threshold && onceFlag == false && V_mag_rel > 0.1f){
+                    if(Policy_Trg_Action >= Policy_Rot_threshold && onceFlag == false && Vel_mag_B_P > 0.1f){
 
                         onceFlag = true;
 
@@ -275,13 +256,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,ACTION_MIN,ACTION_MAX);
 
                         // UPDATE AND RECORD TRIGGER VALUES
-                        Trg_flag = true;  
-                        statePos_trg = statePos;
-                        stateVel_trg = stateVel;
-                        stateAcc_trg = stateAcc;
-                        stateQuat_trg = stateQuat;
-                        stateOmega_trg = stateOmega;
-                        state_dOmega_trg = state_dOmega;
+                        Trg_Flag = true;  
+                        Pos_B_O_trg = Pos_B_O;
+                        Vel_B_O_trg = Vel_B_O;
+                        Quat_B_O_trg = Quat_B_O;
+                        Omega_B_O_trg = Omega_B_O;
 
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
@@ -292,11 +271,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         M_d.x = 0.0f;
                         M_d.y = -Policy_Rot_Action*1e-3f;
                         M_d.z = 0.0f;
-
-                        F_thrust_Rot = 0.0;
-                        M_x_Rot = M_d.x*1e3f;
-                        M_y_Rot = M_d.y*1e3f;
-                        M_z_Rot = M_d.z*1e3f;
                         }
                         
                     break;
@@ -315,7 +289,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         controlOutput(state,sensors);
 
-        if(AngAccel_flag == true || Trg_flag == true)
+        if(AngAccel_Flag == true || Trg_Flag == true)
         {
             F_thrust = 0.0f;
             M = vscl(2.0f,M_d);
@@ -338,13 +312,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
 
         // TUMBLE DETECTION
-        if(b3.z <= 0 && tumble_detection == true){ // If b3 axis has a negative z-component (Quadrotor is inverted)
-            tumbled = true;
+        if(b3.z <= 0 && TumbleDetect_Flag == true){ // If b3 axis has a negative z-component (Quadrotor is inverted)
+            Tumbled_Flag = true;
         }
 
 
         // UPDATE THRUST COMMANDS
-        if(motorstop_flag || tumbled) // STOP MOTOR COMMANDS
+        if(MotorStop_Flag || Tumbled_Flag) // STOP MOTOR COMMANDS
         { 
             M1_thrust = 0.0f;
             M2_thrust = 0.0f;
@@ -352,7 +326,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             M4_thrust = 0.0f;
 
         }
-        else if(customThrust_flag) // REPLACE THRUST VALUES WITH CUSTOM VALUES
+        else if(CustomThrust_Flag) // REPLACE THRUST VALUES WITH CUSTOM VALUES
         {
             
             M1_thrust = thrust_override[0];
@@ -363,7 +337,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
 
         // UPDATE PWM COMMANDS
-        if(customPWM_flag)
+        if(CustomPWM_Flag)
         {
             M1_pwm = PWM_override[0]; 
             M2_pwm = PWM_override[1];
@@ -385,7 +359,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         compressTrgStates();
 
         #ifdef CONFIG_SAR_EXP
-        if(safeModeEnable)
+        if(SafeMode_Flag)
         {
             motorsSetRatio(MOTOR_M1, 0);
             motorsSetRatio(MOTOR_M2, 0);
@@ -427,9 +401,9 @@ PARAM_ADD(PARAM_FLOAT, Prop_23_y, &Prop_23_y)
 PARAM_ADD(PARAM_FLOAT, C_tf, &C_tf)
 PARAM_ADD(PARAM_FLOAT, f_max, &f_max)
 
-PARAM_ADD(PARAM_UINT8, SafeMode, &safeModeEnable)
+PARAM_ADD(PARAM_UINT8, SafeMode, &SafeMode_Flag)
 PARAM_ADD(PARAM_UINT8, PolicyType, &Policy)
-PARAM_ADD(PARAM_UINT8, CamActive, &CamActive)
+PARAM_ADD(PARAM_UINT8, CamActive_Flag, &CamActive_Flag)
 PARAM_GROUP_STOP(System_Params)
 
 
@@ -487,7 +461,7 @@ LOG_GROUP_STOP(Z_States)
 
 LOG_GROUP_START(Z_Policy)
 LOG_ADD(LOG_UINT32, Thetaxy_est,    &States_Z.Theta_xy_est)
-LOG_ADD(LOG_INT16,  Tau_est,        &States_Z.Tau_est)
+LOG_ADD(LOG_INT16,  Tau_Cam,        &States_Z.Tau_Cam)
 LOG_ADD(LOG_UINT32, Pol_Actions,    &States_Z.Policy_Actions)
 LOG_GROUP_STOP(Z_Policy)
 
@@ -522,11 +496,11 @@ LOG_ADD(LOG_INT16,  Tau,            &TrgStates_Z.Tau)
 LOG_ADD(LOG_INT16,  D_perp,         &TrgStates_Z.D_perp)
 
 LOG_ADD(LOG_UINT32, Thetaxy_est,    &TrgStates_Z.Theta_xy_est)
-LOG_ADD(LOG_INT16,  Tau_est,        &TrgStates_Z.Tau_est)
+LOG_ADD(LOG_INT16,  Tau_Cam,        &TrgStates_Z.Tau_Cam)
 
 LOG_ADD(LOG_UINT32, PolActions,    &TrgStates_Z.Policy_Actions)
 
-LOG_ADD(LOG_UINT8, Trg_flag, &Trg_flag)
+LOG_ADD(LOG_UINT8, Trg_Flag, &Trg_Flag)
 LOG_GROUP_STOP(Z_TrgStates)
 
 
@@ -534,15 +508,14 @@ LOG_GROUP_STOP(Z_TrgStates)
 LOG_GROUP_START(CTRL_Flags)
 LOG_ADD(LOG_FLOAT, Pos_Ctrl,        &kp_xf)
 LOG_ADD(LOG_FLOAT, Vel_Ctrl,        &kd_xf)
-LOG_ADD(LOG_UINT8, Motorstop,       &motorstop_flag)
-LOG_ADD(LOG_UINT8, Tumbled,         &tumbled)
-LOG_ADD(LOG_UINT8, Tumble_Detect,   &tumble_detection)
-LOG_ADD(LOG_UINT8, AngAccel_flag,     &AngAccel_flag)
-LOG_ADD(LOG_UINT8, CamActive,     &CamActive)
-LOG_ADD(LOG_UINT8, SafeModeEnable,  &safeModeEnable)
-LOG_ADD(LOG_UINT8, Pol_Armed,       &policy_armed_flag)
-LOG_ADD(LOG_UINT8, CustomThrust,    &customThrust_flag)
-LOG_ADD(LOG_UINT8, CustomPWM,       &customPWM_flag)
-LOG_ADD(LOG_UINT8, AttCtrl_Flag,    &attCtrlEnable)
+LOG_ADD(LOG_UINT8, Motorstop,       &MotorStop_Flag)
+LOG_ADD(LOG_UINT8, Tumbled_Flag,         &Tumbled_Flag)
+LOG_ADD(LOG_UINT8, Tumble_Detect,   &TumbleDetect_Flag)
+LOG_ADD(LOG_UINT8, AngAccel_Flag,     &AngAccel_Flag)
+LOG_ADD(LOG_UINT8, CamActive_Flag,     &CamActive_Flag)
+LOG_ADD(LOG_UINT8, SafeMode_Flag,  &SafeMode_Flag)
+LOG_ADD(LOG_UINT8, Pol_Armed,       &Policy_Armed_Flag)
+LOG_ADD(LOG_UINT8, CustomThrust,    &CustomThrust_Flag)
+LOG_ADD(LOG_UINT8, CustomPWM,       &CustomPWM_Flag)
 LOG_GROUP_STOP(CTRL_Flags)
 #endif
