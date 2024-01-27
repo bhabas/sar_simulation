@@ -92,6 +92,8 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
             Twist_B_P_impact_Ext = Twist_P_B_impact_buff.front();
             Eul_P_B_impact_Ext = Eul_P_B_impact_buff.front();
             Rot_Sum_impact_Ext = Rot_Sum;
+
+
         }
 
     }
@@ -104,21 +106,15 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
  */
 void SAR_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
-    // RECORD MAX FORCE EXPERIENCED
-    if (msg->wrench.force.x > Force_Impact_x)
+    if (sqrt(pow(msg->wrench.force.x, 2) + pow(msg->wrench.force.y, 2) + pow(msg->wrench.force.z, 2)) > Impact_Magnitude)
     {
+        // RECORD MAX FORCE EXPERIENCED
+        Impact_Magnitude = sqrt(pow(msg->wrench.force.x, 2) + pow(msg->wrench.force.y, 2) + pow(msg->wrench.force.z, 2));
         Force_Impact_x = msg->wrench.force.x;
-    }
-    if (msg->wrench.force.y > Force_Impact_y)
-    {
         Force_Impact_y = msg->wrench.force.y;
-    }
-    if (msg->wrench.force.z > Force_Impact_z)
-    {
         Force_Impact_z = msg->wrench.force.z;
     }
-
-    Impact_Magnitude = sqrt(pow(msg->wrench.force.x, 2) + pow(msg->wrench.force.y, 2) + pow(msg->wrench.force.z, 2));
+    
 }
 
 /**

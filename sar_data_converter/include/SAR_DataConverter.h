@@ -332,7 +332,7 @@ class SAR_DataConverter {
 
         double Policy_Trg_Action = NAN;
         double Policy_Rot_Action = NAN;
-        double Rot_Sum = NAN;
+        double Rot_Sum = 0.0;
 
         // ==========================
         //  STATES AT POLICY TRIGGER
@@ -399,10 +399,10 @@ class SAR_DataConverter {
         // ==========================
         bool Impact_Flag = false;
         geometry_msgs::Vector3 Force_impact;
-        double Force_Impact_x = NAN; // Max impact force in X-direction [N]
-        double Force_Impact_y = NAN; // Max impact force in Y-direction [N]
-        double Force_Impact_z = NAN; // Max impact force in Z-direction [N]
-        double Impact_Magnitude = NAN; // Current impact force magnitude
+        double Force_Impact_x = 0.0; // Max impact force in X-direction [N]
+        double Force_Impact_y = 0.0; // Max impact force in Y-direction [N]
+        double Force_Impact_z = 0.0; // Max impact force in Z-direction [N]
+        double Impact_Magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
         boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {1};
@@ -604,11 +604,12 @@ inline void SAR_DataConverter::resetImpactData()
 
     Twist_B_P_impact_Ext = geometry_msgs::Twist();
     Eul_P_B_impact_Ext = geometry_msgs::Vector3();
-    Rot_Sum = NAN;
+    Rot_Sum = 0.0;
+    Rot_Sum_impact_Ext = NAN;
 
     // IMPACT FORCE DATA
     Force_impact = geometry_msgs::Vector3();
-    Impact_Magnitude = NAN;
+    Impact_Magnitude = 0.0;
 
     // STICKY PAD CONTACTS
     Pad_Connections = 0;

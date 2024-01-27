@@ -11,6 +11,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // STATES WRT ORIGIN
     Pose_B_O = ctrl_msg.Pose_B_O;
+    Pose_B_O.orientation.x = NAN; // Quaternion is not used
+    Pose_B_O.orientation.y = NAN;
+    Pose_B_O.orientation.z = NAN;
+    Pose_B_O.orientation.w = NAN;
     Twist_B_O = ctrl_msg.Twist_B_O;
     Accel_B_O = ctrl_msg.Accel_B_O;
     Accel_B_O_Mag = ctrl_msg.Accel_B_O_Mag;
@@ -99,7 +103,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     {
         double Time_delta = Time.toSec()-Time_prev.toSec();
         Rot_Sum += (Time_delta*Twist_B_O.angular.y)*180/M_PI;
-        // printf("Val: %f\n",Rot_Sum_Ext);
+        printf("Val: %f\n",Rot_Sum);
     }
     
 
