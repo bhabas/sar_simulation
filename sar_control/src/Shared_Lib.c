@@ -285,6 +285,17 @@ float Policy_Trg_Action_trg = 0.0f;
 float Policy_Rot_Action_trg = 0.0f;
 
 // =================================
+//  RECORD SYSTEM STATES AT IMPACT
+// =================================
+bool Impact_Flag_Onboard = false;
+float Accel_B_O_Mag_impact = 0.0f;                    // Linear Acceleration Magnitude [m/s^2]
+struct vec Pos_B_O_impact = {0.0f,0.0f,0.0f};         // Pos [m]
+struct quat Quat_B_O_impact = {0.0f,0.0f,0.0f,1.0f};  // Orientation\
+
+struct vec Vel_B_P_impact = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct vec Omega_B_P_impact = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+
+// =================================
 //    LANDING SURFACE PARAMETERS
 // =================================
 float Plane_Angle_deg = 0.0f;           // Plane Angle [deg]

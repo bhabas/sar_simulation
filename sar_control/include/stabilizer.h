@@ -413,24 +413,25 @@ void Controller::publishCtrlData()
     // ==========================
     //      STATES AT IMPACT
     // ==========================
-    // CtrlData_msg.Impact_Flag_Onboard = Impact_Flag_Onboard;
+    CtrlData_msg.Impact_Flag_Onboard = Impact_Flag_Onboard;
+    CtrlData_msg.Accel_B_O_Mag_impact = Accel_B_O_Mag_impact;
 
-    // CtrlData_msg.Pose_P_B_impact.position.x = Pos_P_B_impact.x;
-    // CtrlData_msg.Pose_P_B_impact.position.y = Pos_P_B_impact.y;
-    // CtrlData_msg.Pose_P_B_impact.position.z = Pos_P_B_impact.z;
+    CtrlData_msg.Pose_B_O_impact.position.x = Pos_B_O_impact.x;
+    CtrlData_msg.Pose_B_O_impact.position.y = Pos_B_O_impact.y;
+    CtrlData_msg.Pose_B_O_impact.position.z = Pos_B_O_impact.z;
 
-    // CtrlData_msg.Pose_P_B_impact.orientation.x = Quat_P_B_impact.x;
-    // CtrlData_msg.Pose_P_B_impact.orientation.y = Quat_P_B_impact.y;
-    // CtrlData_msg.Pose_P_B_impact.orientation.z = Quat_P_B_impact.z;
-    // CtrlData_msg.Pose_P_B_impact.orientation.w = Quat_P_B_impact.w;
+    CtrlData_msg.Pose_B_O_impact.orientation.x = Quat_B_O_impact.x;
+    CtrlData_msg.Pose_B_O_impact.orientation.y = Quat_B_O_impact.y;
+    CtrlData_msg.Pose_B_O_impact.orientation.z = Quat_B_O_impact.z;
+    CtrlData_msg.Pose_B_O_impact.orientation.w = Quat_B_O_impact.w;
 
-    // CtrlData_msg.Twist_B_P_impact.linear.x = Vel_B_P_impact.x;
-    // CtrlData_msg.Twist_B_P_impact.linear.y = Vel_B_P_impact.y;
-    // CtrlData_msg.Twist_B_P_impact.linear.z = Vel_B_P_impact.z;
+    CtrlData_msg.Twist_B_P_impact.linear.x = Vel_B_P_impact.x;
+    CtrlData_msg.Twist_B_P_impact.linear.y = Vel_B_P_impact.y;
+    CtrlData_msg.Twist_B_P_impact.linear.z = Vel_B_P_impact.z;
 
-    // CtrlData_msg.Twist_B_P_impact.angular.x = Omega_B_P_impact.x;
-    // CtrlData_msg.Twist_B_P_impact.angular.y = Omega_B_P_impact.y;
-    // CtrlData_msg.Twist_B_P_impact.angular.z = Omega_B_P_impact.z;
+    CtrlData_msg.Twist_B_P_impact.angular.x = Omega_B_P_impact.x;
+    CtrlData_msg.Twist_B_P_impact.angular.y = Omega_B_P_impact.y;
+    CtrlData_msg.Twist_B_P_impact.angular.z = Omega_B_P_impact.z;
 
 
 

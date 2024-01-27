@@ -49,8 +49,9 @@ float64 Policy_Rot_Action_trg
 
 bool Impact_Flag_Onboard
 
-geometry_msgs/Pose Pose_P_B_impact
+geometry_msgs/Pose Pose_B_O_impact
 geometry_msgs/Twist Twist_B_P_impact
+float64 Accel_B_O_Mag_impact
 
 
 
