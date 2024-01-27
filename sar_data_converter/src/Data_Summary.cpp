@@ -76,8 +76,8 @@ void SAR_DataConverter::Publish_TriggerData()
 {
 
     ros::Duration Time_delta(Time_trg-Time_start);
-    TriggerData_msg.header.stamp.sec = Time_delta.sec;
-    TriggerData_msg.header.stamp.nsec = Time_delta.nsec;
+    TriggerData_msg.Trg_Time.data.sec = Time_delta.sec;
+    TriggerData_msg.Trg_Time.data.nsec = Time_delta.nsec;
 
     TriggerData_msg.Trg_Flag = Trg_Flag;
 
@@ -105,34 +105,52 @@ void SAR_DataConverter::Publish_TriggerData()
 
 void SAR_DataConverter::Publish_ImpactData()
 {
-    // ros::Duration Time_delta(Time_impact-Time_start);
-    // ImpactData_msg.header.stamp.sec = Time_delta.sec;
-    // ImpactData_msg.header.stamp.nsec = Time_delta.nsec;
 
-    // ImpactData_msg.Impact_Flag_Ext = Impact_Flag_Ext;
-    // ImpactData_msg.BodyContact_flag = BodyContact_flag;
-    // ImpactData_msg.LegContact_flag = LegContact_flag;
+    ImpactData_msg.Impact_Flag = Impact_Flag;
 
-    // ImpactData_msg.Force_impact.x = impact_force_x;
-    // ImpactData_msg.Force_impact.y = impact_force_y;
-    // ImpactData_msg.Force_impact.z = impact_force_z;
+    // ONBOARD IMPACT DATA
+    ros::Duration Time_delta_OB(Time_Impact_OB-Time_start);
+    ImpactData_msg.Time_Impact_OB.data.sec = Time_delta_OB.sec;
+    ImpactData_msg.Time_Impact_OB.data.nsec = Time_delta_OB.nsec;
 
-    // ImpactData_msg.Pose_impact = Pose_impact;
-    // ImpactData_msg.Twist_impact = Twist_impact;
-    // ImpactData_msg.Accel_impact = Accel_impact;
-    // ImpactData_msg.Eul_impact = Eul_impact;
-    // ImpactData_msg.Impact_Magnitude = impact_magnitude;
+    ImpactData_msg.Impact_Flag_OB = Impact_Flag_OB;
 
-    // ImpactData_msg.Pad_Connections = Pad_Connect_Sum;
+    ImpactData_msg.Pose_B_O_impact_OB = Pose_B_O_impact_OB;
+    ImpactData_msg.Twist_B_P_impact_OB = Twist_B_P_impact_OB;
+    ImpactData_msg.Eul_P_B_impact_OB = Eul_P_B_impact_OB;
+    ImpactData_msg.Accel_B_O_Mag_impact_OB = Accel_B_O_Mag_impact_OB;
 
-    // ImpactData_msg.Pad1_Contact = Pad1_Contact;
-    // ImpactData_msg.Pad2_Contact = Pad2_Contact;
-    // ImpactData_msg.Pad3_Contact = Pad3_Contact;
-    // ImpactData_msg.Pad4_Contact = Pad4_Contact;
+    // EXTERNAL IMPACT DATA
+    ros::Duration Time_delta_Ext(Time_Impact_Ext-Time_start);
+    ImpactData_msg.Time_Impact_Ext.data.sec = Time_delta_Ext.sec;
+    ImpactData_msg.Time_Impact_Ext.data.nsec = Time_delta_Ext.nsec;
 
-    // ImpactData_msg.Rot_Sum = Rot_Sum;
+    ImpactData_msg.Impact_Flag_Ext = Impact_Flag_Ext;
+    ImpactData_msg.BodyContact_Flag = BodyContact_flag;
+    ImpactData_msg.LegContact_Flag = LegContact_flag;
 
-    // ImpactData_Pub.publish(ImpactData_msg);
+    ImpactData_msg.Pose_B_O_impact_Ext = Pose_B_O_impact_Ext;
+    ImpactData_msg.Twist_B_P_impact_Ext = Twist_B_P_impact_Ext;
+    ImpactData_msg.Eul_P_B_impact_Ext = Eul_P_B_impact_Ext;
+    ImpactData_msg.Rot_Sum_Ext = Rot_Sum_Ext;
+
+    // IMPACT FORCES
+    ImpactData_msg.Force_impact.x = Force_Impact_x;
+    ImpactData_msg.Force_impact.y = Force_Impact_y;
+    ImpactData_msg.Force_impact.z = Force_Impact_z;
+    ImpactData_msg.Impact_Magnitude = Impact_Magnitude;
+
+
+    // STICKY PAD CONTACTS
+    ImpactData_msg.Pad_Connections = Pad_Connections;
+
+    ImpactData_msg.Pad1_Contact = Pad1_Contact;
+    ImpactData_msg.Pad2_Contact = Pad2_Contact;
+    ImpactData_msg.Pad3_Contact = Pad3_Contact;
+    ImpactData_msg.Pad4_Contact = Pad4_Contact;
+
+
+    ImpactData_Pub.publish(ImpactData_msg);
 }
 
 void SAR_DataConverter::Publish_MiscData()

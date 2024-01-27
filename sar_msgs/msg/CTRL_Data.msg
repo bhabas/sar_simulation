@@ -47,11 +47,11 @@ float64 Policy_Rot_Action_trg
 #      STATES AT IMPACT
 # =========================
 
-bool Impact_Flag_Onboard
+bool Impact_Flag_OB
 
-geometry_msgs/Pose Pose_B_O_impact
-geometry_msgs/Twist Twist_B_P_impact
-float64 Accel_B_O_Mag_impact
+geometry_msgs/Pose Pose_B_O_impact_OB
+geometry_msgs/Twist Twist_B_P_impact_OB
+float64 Accel_B_O_Mag_impact_OB
 
 
 

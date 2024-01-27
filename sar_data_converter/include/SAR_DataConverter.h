@@ -328,7 +328,7 @@ class SAR_DataConverter {
 
         double Policy_Trg_Action = 0.0;
         double Policy_Rot_Action = 0.0;
-        double Rot_Sum = 0.0;
+        double Rot_Sum_Ext = 0.0;
 
         // ==========================
         //  STATES AT POLICY TRIGGER
@@ -355,25 +355,28 @@ class SAR_DataConverter {
         double Policy_Trg_Action_trg = 0.0;
         double Policy_Rot_Action_trg = 0.0;
 
-        // ===================
-        //    ONBOARD IMPACT DATA
-        // ===================
+        // =======================
+        //   ONBOARD IMPACT DATA
+        // =======================
+        bool Impact_Flag_OB = false;
+        bool OnceFlag_Impact_OB = false;
+        ros::Time Time_Impact_OB;
 
-        bool Impact_Flag_Onboard = false;
-        bool OnceFlag_Impact_Onboard = false;
-        ros::Time Time_Impact_Onboard;
-        geometry_msgs::Pose Pose_B_O_impact;
-        geometry_msgs::Twist Twist_B_P_impact;
-        float Accel_B_O_Mag_impact = 0.0f;
+        geometry_msgs::Pose Pose_B_O_impact_OB;
+        geometry_msgs::Twist Twist_B_P_impact_OB;
+        geometry_msgs::Vector3 Eul_P_B_impact_OB;
+        float Accel_B_O_Mag_impact_OB = 0.0f;
 
 
         // ==========================
         //    EXTERNAL IMPACT DATA
         // ==========================
         bool Impact_Flag_Ext = false;
-        ros::Time Time_impact_Ext;
+        ros::Time Time_Impact_Ext;
+
         geometry_msgs::Pose Pose_B_O_impact_Ext;
         geometry_msgs::Twist Twist_B_P_impact_Ext;
+        geometry_msgs::Vector3 Eul_P_B_impact_Ext;
 
         bool BodyContact_flag = false;
         bool LegContact_flag = false;
@@ -382,12 +385,15 @@ class SAR_DataConverter {
         std::string LegCollision_str = "Leg_Collision_";
 
 
-
+        // ==========================
+        //    IMPACT FORCE DATA
+        // ==========================
+        bool Impact_Flag = false;
         geometry_msgs::Vector3 Force_impact;
-        double impact_force_x = 0.0; // Max impact force in X-direction [N]
-        double impact_force_y = 0.0; // Max impact force in Y-direction [N]
-        double impact_force_z = 0.0; // Max impact force in Z-direction [N]
-        double impact_magnitude = 0.0; // Current impact force magnitude
+        double Force_Impact_x = 0.0; // Max impact force in X-direction [N]
+        double Force_Impact_y = 0.0; // Max impact force in Y-direction [N]
+        double Force_Impact_z = 0.0; // Max impact force in Z-direction [N]
+        double Impact_Magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
         boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {1};
@@ -405,7 +411,7 @@ class SAR_DataConverter {
         uint8_t Pad3_Contact = 0;
         uint8_t Pad4_Contact = 0;
 
-        uint8_t Pad_Connect_Sum = 0;
+        uint8_t Pad_Connections = 0;
 
         // ====================
         //     DEBUG VALUES
@@ -429,9 +435,6 @@ class SAR_DataConverter {
         // SIM
         bool Sticky_Flag = false;
 
-        // EXPERIMENT
-        bool SafeModeEnable = false;
-
 
         // ===================
         //     RL DATA
@@ -443,10 +446,10 @@ class SAR_DataConverter {
 
         boost::array<double,2> mu{0,0};
         boost::array<float,2> sigma{0,0};
-        boost::array<float,3> policy{0,0,0};
+        boost::array<float,2> policy{0,0};
 
         float reward = 0.0;
-        boost::array<float,5> reward_vals{0,0,0,0,0};
+        boost::array<float,6> reward_vals{0,0,0,0,0,0};
 
 
         boost::array<float,3> vel_d{0,0,0};
@@ -547,7 +550,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             // OnceFlag_Trg = false;
             // Time_trg.sec = 0.0;
             // Time_trg.nsec = 0.0;
-            // Rot_Sum = 0.0;
+            // Rot_Sum_Ext = 0.0;
 
             // RESET IMPACT TIME
             // Impact_Flag_Ext = false;
@@ -588,10 +591,10 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             // Eul_impact.z = 0.0;
 
             // RESET MAX IMPACT FORCE
-            impact_force_x = 0.0;
-            impact_force_y = 0.0;
-            impact_force_z = 0.0;
-            impact_magnitude = 0;
+            Force_Impact_x = 0.0;
+            Force_Impact_y = 0.0;
+            Force_Impact_z = 0.0;
+            Impact_Magnitude = 0;
 
             // RESET PAD CONTACTS FLAGS
             Pad1_Contact = 0;
@@ -599,7 +602,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             Pad3_Contact = 0;
             Pad4_Contact = 0;
 
-            Pad_Connect_Sum = 0;
+            Pad_Connections = 0;
 
             if (DATA_TYPE.compare("SIM") == 0)
             {

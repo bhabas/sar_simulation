@@ -420,29 +420,25 @@ void Controller::publishCtrlData()
     // ==========================
     //      STATES AT IMPACT
     // ==========================
-    CtrlData_msg.Impact_Flag_Onboard = Impact_Flag_Onboard;
-    CtrlData_msg.Accel_B_O_Mag_impact = Accel_B_O_Mag_impact;
+    CtrlData_msg.Impact_Flag_OB = Impact_Flag_OB;
+    CtrlData_msg.Accel_B_O_Mag_impact_OB = Accel_B_O_Mag_impact_OB;
 
-    CtrlData_msg.Pose_B_O_impact.position.x = Pos_B_O_impact.x;
-    CtrlData_msg.Pose_B_O_impact.position.y = Pos_B_O_impact.y;
-    CtrlData_msg.Pose_B_O_impact.position.z = Pos_B_O_impact.z;
+    CtrlData_msg.Pose_B_O_impact_OB.position.x = Pos_B_O_impact_OB.x;
+    CtrlData_msg.Pose_B_O_impact_OB.position.y = Pos_B_O_impact_OB.y;
+    CtrlData_msg.Pose_B_O_impact_OB.position.z = Pos_B_O_impact_OB.z;
 
-    CtrlData_msg.Pose_B_O_impact.orientation.x = Quat_B_O_impact.x;
-    CtrlData_msg.Pose_B_O_impact.orientation.y = Quat_B_O_impact.y;
-    CtrlData_msg.Pose_B_O_impact.orientation.z = Quat_B_O_impact.z;
-    CtrlData_msg.Pose_B_O_impact.orientation.w = Quat_B_O_impact.w;
+    CtrlData_msg.Pose_B_O_impact_OB.orientation.x = Quat_B_O_impact_OB.x;
+    CtrlData_msg.Pose_B_O_impact_OB.orientation.y = Quat_B_O_impact_OB.y;
+    CtrlData_msg.Pose_B_O_impact_OB.orientation.z = Quat_B_O_impact_OB.z;
+    CtrlData_msg.Pose_B_O_impact_OB.orientation.w = Quat_B_O_impact_OB.w;
 
-    CtrlData_msg.Twist_B_P_impact.linear.x = Vel_B_P_impact.x;
-    CtrlData_msg.Twist_B_P_impact.linear.y = Vel_B_P_impact.y;
-    CtrlData_msg.Twist_B_P_impact.linear.z = Vel_B_P_impact.z;
+    CtrlData_msg.Twist_B_P_impact_OB.linear.x = Vel_B_P_impact_OB.x;
+    CtrlData_msg.Twist_B_P_impact_OB.linear.y = Vel_B_P_impact_OB.y;
+    CtrlData_msg.Twist_B_P_impact_OB.linear.z = Vel_B_P_impact_OB.z;
 
-    CtrlData_msg.Twist_B_P_impact.angular.x = Omega_B_P_impact.x;
-    CtrlData_msg.Twist_B_P_impact.angular.y = Omega_B_P_impact.y;
-    CtrlData_msg.Twist_B_P_impact.angular.z = Omega_B_P_impact.z;
-
-
-
+    CtrlData_msg.Twist_B_P_impact_OB.angular.x = Omega_B_P_impact_OB.x;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.y = Omega_B_P_impact_OB.y;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.z = Omega_B_P_impact_OB.z;
     
     CTRL_Data_Publisher.publish(CtrlData_msg);
-
 }

@@ -298,13 +298,13 @@ extern float Policy_Rot_Action_trg;
 // =================================
 //  RECORD SYSTEM STATES AT IMPACT
 // =================================
-extern bool Impact_Flag_Onboard;
-extern float Accel_B_O_Mag_impact;      // Linear Accel. Magnitude [m/s^2]
-extern struct vec Pos_B_O_impact;       // Pos [m]
-extern struct quat Quat_B_O_impact;     // Orientation
+extern bool Impact_Flag_OB;
+extern float Accel_B_O_Mag_impact_OB;      // Linear Accel. Magnitude [m/s^2]
+extern struct vec Pos_B_O_impact_OB;       // Pos [m]
+extern struct quat Quat_B_O_impact_OB;     // Orientation
 
-extern struct vec Vel_B_P_impact;       // Vel [m/s]
-extern struct vec Omega_B_P_impact;     // Angular Rate [rad/s]
+extern struct vec Vel_B_P_impact_OB;       // Vel [m/s]
+extern struct vec Omega_B_P_impact_OB;     // Angular Rate [rad/s]
 
 // =================================
 //    LANDING SURFACE PARAMETERS

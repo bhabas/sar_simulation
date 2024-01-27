@@ -1,5 +1,7 @@
-Header header
+
 bool Trg_Flag
+std_msgs/Time Trg_Time
+
 
 ## STATES WRT ORIGIN
 geometry_msgs/Pose Pose_B_O_trg

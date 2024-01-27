@@ -90,8 +90,8 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     if(ctrl_msg.Trg_Flag == true && Impact_Flag_Ext == false)
     {
         double Time_delta = Time.toSec()-Time_prev.toSec();
-        Rot_Sum += (Time_delta*Twist_B_O.angular.y)*180/M_PI;
-        // printf("Val: %f\n",Rot_Sum);
+        Rot_Sum_Ext += (Time_delta*Twist_B_O.angular.y)*180/M_PI;
+        // printf("Val: %f\n",Rot_Sum_Ext);
     }
     
 
@@ -137,21 +137,18 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     //   ONBOARD IMPACT DATA
     // =======================
 
-    Impact_Flag_Onboard = ctrl_msg.Impact_Flag_Onboard;
+    Impact_Flag_OB = ctrl_msg.Impact_Flag_OB;
 
-    if(ctrl_msg.Impact_Flag_Onboard == true && OnceFlag_Impact_Onboard == false)
+    if(ctrl_msg.Impact_Flag_OB == true && OnceFlag_Impact_OB == false)
     {   
-        Time_Impact_Onboard = ros::Time::now();
-        OnceFlag_Impact_Onboard = true;
+        Time_Impact_OB = ros::Time::now();
+        OnceFlag_Impact_OB = true;
 
     }
 
-    // Pose_B_O_impact = ctrl_msg.Pose_B_O_impact;
-    // Twist_P_B_impact = ctrl_msg.Twist_P_B_impact;
-    // Accel_B_O_impact = ctrl_msg.Accel_B_O_impact;
-
-
-
+    Pose_B_O_impact_OB = ctrl_msg.Pose_B_O_impact_OB;
+    Twist_B_P_impact_OB = ctrl_msg.Twist_B_P_impact_OB;
+    Accel_B_O_Mag_impact_OB = ctrl_msg.Accel_B_O_Mag_impact_OB;
 
 }
 

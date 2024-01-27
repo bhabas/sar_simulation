@@ -32,7 +32,7 @@ void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Conn
         Pad3_Contact = 1;
     if (msg.Pad4_Contact == 1)
         Pad4_Contact = 1;
-    Pad_Connect_Sum = Pad1_Contact + Pad2_Contact + Pad3_Contact + Pad4_Contact;
+    Pad_Connections = Pad1_Contact + Pad2_Contact + Pad3_Contact + Pad4_Contact;
 }
 
 /**
@@ -114,20 +114,20 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
 void SAR_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
     // RECORD MAX FORCE EXPERIENCED
-    if (msg->wrench.force.x > impact_force_x)
+    if (msg->wrench.force.x > Force_Impact_x)
     {
-        impact_force_x = msg->wrench.force.x;
+        Force_Impact_x = msg->wrench.force.x;
     }
-    if (msg->wrench.force.y > impact_force_y)
+    if (msg->wrench.force.y > Force_Impact_y)
     {
-        impact_force_y = msg->wrench.force.y;
+        Force_Impact_y = msg->wrench.force.y;
     }
-    if (msg->wrench.force.z > impact_force_z)
+    if (msg->wrench.force.z > Force_Impact_z)
     {
-        impact_force_z = msg->wrench.force.z;
+        Force_Impact_z = msg->wrench.force.z;
     }
 
-    impact_magnitude = sqrt(pow(msg->wrench.force.x, 2) + pow(msg->wrench.force.y, 2) + pow(msg->wrench.force.z, 2));
+    Impact_Magnitude = sqrt(pow(msg->wrench.force.x, 2) + pow(msg->wrench.force.y, 2) + pow(msg->wrench.force.z, 2));
 }
 
 /**
