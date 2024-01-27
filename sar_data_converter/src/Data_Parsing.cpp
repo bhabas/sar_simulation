@@ -31,6 +31,11 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // STATES WRT PLANE
     Pose_P_B = ctrl_msg.Pose_P_B;
+    Pose_P_B.orientation.x = NAN; // Quaternion is not used
+    Pose_P_B.orientation.y = NAN;
+    Pose_P_B.orientation.z = NAN;
+    Pose_P_B.orientation.w = NAN;
+
     Twist_B_P = ctrl_msg.Twist_B_P;
     Vel_mag_B_P = ctrl_msg.Vel_mag_B_P;
     Vel_angle_B_P = ctrl_msg.Vel_angle_B_P;
@@ -98,6 +103,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     
     // STATES WRT ORIGIN
     Pose_B_O_trg = ctrl_msg.Pose_B_O_trg;
+    Pose_B_O_trg.orientation.x = NAN; // Quaternion is not used
+    Pose_B_O_trg.orientation.y = NAN;
+    Pose_B_O_trg.orientation.z = NAN;
+    Pose_B_O_trg.orientation.w = NAN;
     Twist_B_O_trg = ctrl_msg.Twist_B_O_trg;
 
     float quat_trg[4] = {
@@ -147,6 +156,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     }
 
     Pose_B_O_impact_OB = ctrl_msg.Pose_B_O_impact_OB;
+    Pose_B_O_impact_OB.orientation.x = NAN; // Quaternion is not used
+    Pose_B_O_impact_OB.orientation.y = NAN;
+    Pose_B_O_impact_OB.orientation.z = NAN;
+    Pose_B_O_impact_OB.orientation.w = NAN;
     Twist_B_P_impact_OB = ctrl_msg.Twist_B_P_impact_OB;
     Accel_B_O_Mag_impact_OB = ctrl_msg.Accel_B_O_Mag_impact_OB;
 

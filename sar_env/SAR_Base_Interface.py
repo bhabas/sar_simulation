@@ -414,52 +414,52 @@ class SAR_Base_Interface():
         if TriggerData_msg.Trg_Flag == True:
 
             ## POLICY TRIGGERING CONDITIONS
-            self.t_trg = TriggerData_msg.Time_Trg.to_sec()
+            self.t_trg = TriggerData_msg.Time_trg.data.to_sec()
 
             ## STATES WRT ORIGIN
-            self.r_B_O_trg = np.round([TriggerData_msg.Pose_B_O_Trg.position.x,
-                                        TriggerData_msg.Pose_B_O_Trg.position.y,
-                                        TriggerData_msg.Pose_B_O_Trg.position.z],3)
+            self.r_B_O_trg = np.round([TriggerData_msg.Pose_B_O_trg.position.x,
+                                        TriggerData_msg.Pose_B_O_trg.position.y,
+                                        TriggerData_msg.Pose_B_O_trg.position.z],3)
             
-            self.V_B_O_trg = np.round([TriggerData_msg.Twist_B_O_Trg.linear.x,
-                                        TriggerData_msg.Twist_B_O_Trg.linear.y,
-                                        TriggerData_msg.Twist_B_O_Trg.linear.z],3)
+            self.V_B_O_trg = np.round([TriggerData_msg.Twist_B_O_trg.linear.x,
+                                        TriggerData_msg.Twist_B_O_trg.linear.y,
+                                        TriggerData_msg.Twist_B_O_trg.linear.z],3)
             
-            self.Eul_B_O_trg = np.round([TriggerData_msg.Eul_B_O_Trg.x,
-                                        TriggerData_msg.Eul_B_O_Trg.y,
-                                        TriggerData_msg.Eul_B_O_Trg.z],3)
+            self.Eul_B_O_trg = np.round([TriggerData_msg.Eul_B_O_trg.x,
+                                        TriggerData_msg.Eul_B_O_trg.y,
+                                        TriggerData_msg.Eul_B_O_trg.z],3)
             
-            self.Omega_B_O_trg = np.round([TriggerData_msg.Twist_B_O_Trg.angular.x,
-                                            TriggerData_msg.Twist_B_O_Trg.angular.y,
-                                            TriggerData_msg.Twist_B_O_Trg.angular.z],3)
+            self.Omega_B_O_trg = np.round([TriggerData_msg.Twist_B_O_trg.angular.x,
+                                            TriggerData_msg.Twist_B_O_trg.angular.y,
+                                            TriggerData_msg.Twist_B_O_trg.angular.z],3)
 
             ## STATES WRT PLANE
-            self.r_P_B_trg = np.round([TriggerData_msg.Pose_P_B_Trg.position.x,
-                                        TriggerData_msg.Pose_P_B_Trg.position.y,
-                                        TriggerData_msg.Pose_P_B_Trg.position.z],3)
+            self.r_P_B_trg = np.round([TriggerData_msg.Pose_P_B_trg.position.x,
+                                        TriggerData_msg.Pose_P_B_trg.position.y,
+                                        TriggerData_msg.Pose_P_B_trg.position.z],3)
             
-            self.Eul_P_B_trg = np.round([TriggerData_msg.Eul_P_B_Trg.x,
-                                        TriggerData_msg.Eul_P_B_Trg.y,
-                                        TriggerData_msg.Eul_P_B_Trg.z],3)
+            self.Eul_P_B_trg = np.round([TriggerData_msg.Eul_P_B_trg.x,
+                                        TriggerData_msg.Eul_P_B_trg.y,
+                                        TriggerData_msg.Eul_P_B_trg.z],3)
             
-            self.V_B_P_trg = np.round([TriggerData_msg.Twist_B_P_Trg.linear.x,  
-                                        TriggerData_msg.Twist_B_P_Trg.linear.y,
-                                        TriggerData_msg.Twist_B_P_Trg.linear.z],3)
+            self.V_B_P_trg = np.round([TriggerData_msg.Twist_B_P_trg.linear.x,  
+                                        TriggerData_msg.Twist_B_P_trg.linear.y,
+                                        TriggerData_msg.Twist_B_P_trg.linear.z],3)
             
-            self.Omega_B_P_trg = np.round([TriggerData_msg.Twist_B_P_Trg.angular.x,
-                                            TriggerData_msg.Twist_B_P_Trg.angular.y,
-                                            TriggerData_msg.Twist_B_P_Trg.angular.z],3)
+            self.Omega_B_P_trg = np.round([TriggerData_msg.Twist_B_P_trg.angular.x,
+                                            TriggerData_msg.Twist_B_P_trg.angular.y,
+                                            TriggerData_msg.Twist_B_P_trg.angular.z],3)
             
-            self.D_perp_trg = np.round(TriggerData_msg.D_perp_Trg,3)
+            self.D_perp_trg = np.round(TriggerData_msg.D_perp_trg,3)
 
             ## OPTICAL FLOW STATES
-            self.Theta_x_trg = np.round(TriggerData_msg.Optical_Flow_Trg.x,3)
-            self.Theta_y_trg = np.round(TriggerData_msg.Optical_Flow_Trg.y,3)
-            self.Tau_trg = np.round(TriggerData_msg.Optical_Flow_Trg.z,3)
+            self.Theta_x_trg = np.round(TriggerData_msg.Optical_Flow_trg.x,3)
+            self.Theta_y_trg = np.round(TriggerData_msg.Optical_Flow_trg.y,3)
+            self.Tau_trg = np.round(TriggerData_msg.Optical_Flow_trg.z,3)
 
             ## POLICY TRIGGERING CONDITIONS
-            self.Policy_Trg_Action_trg = np.round(TriggerData_msg.Policy_Trg_Action,3)
-            self.Policy_Rot_Action_trg = np.round(TriggerData_msg.Policy_Rot_Action,3)
+            self.Policy_Trg_Action_trg = np.round(TriggerData_msg.Policy_Trg_Action_trg,3)
+            self.Policy_Rot_Action_trg = np.round(TriggerData_msg.Policy_Rot_Action_trg,3)
 
     def _SAR_ImpactDataCallback(self,ImpactData_msg):
 

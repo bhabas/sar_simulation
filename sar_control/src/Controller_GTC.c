@@ -161,15 +161,15 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         Vel_angle_B_P = atan2f(Vel_B_P.z,Vel_B_P.x)*Rad2Deg;
 
 
-        if (Accel_B_O_Mag > 10.0f && Impact_Flag_OB == false)
-        {
-            Impact_Flag_OB = true;
-            Pos_B_O_impact_OB = Pos_B_O;
-            Vel_B_P_impact_OB = Vel_B_P;
-            Quat_B_O_impact_OB = Quat_B_O;
-            Omega_B_P_impact_OB = Omega_B_P;
-            Accel_B_O_Mag_impact_OB = Accel_B_O_Mag;
-        }
+        // if (Accel_B_O_Mag > 10.0f && Impact_Flag_OB == false)
+        // {
+        //     Impact_Flag_OB = true;
+        //     Pos_B_O_impact_OB = Pos_B_O;
+        //     Vel_B_P_impact_OB = Vel_B_P;
+        //     Quat_B_O_impact_OB = Quat_B_O;
+        //     Omega_B_P_impact_OB = Omega_B_P;
+        //     Accel_B_O_Mag_impact_OB = Accel_B_O_Mag;
+        // }
 
 
         // SAVE PREVIOUS VALUES

@@ -1,6 +1,6 @@
 
 bool Trg_Flag
-std_msgs/Time Time_Trg
+std_msgs/Time Time_trg
 
 
 ## STATES WRT ORIGIN

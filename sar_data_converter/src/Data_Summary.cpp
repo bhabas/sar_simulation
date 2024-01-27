@@ -76,8 +76,8 @@ void SAR_DataConverter::Publish_TriggerData()
 {
 
     ros::Duration Time_delta(Time_trg-Time_start);
-    TriggerData_msg.Time_Trg.data.sec = Time_delta.sec;
-    TriggerData_msg.Time_Trg.data.nsec = Time_delta.nsec;
+    TriggerData_msg.Time_trg.data.sec = Time_delta.sec;
+    TriggerData_msg.Time_trg.data.nsec = Time_delta.nsec;
 
     TriggerData_msg.Trg_Flag = Trg_Flag;
 

@@ -182,16 +182,16 @@ def cmd_send(env,logName):
 
 
                 ## GET INPUT VALUES
-                V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
+                V_B_O_mag,V_B_O_angle = env.userInput("Flight Velocity (V_B_O_mag,V_B_O_angle):",float)
 
                 ## DEFINE CARTESIAN VELOCITIES
-                phi_rad = np.radians(phi)
-                Vx_d = V_d*np.cos(phi_rad)
-                Vy_d = 0
-                Vz_d = V_d*np.sin(phi_rad)
+                V_B_O_angle = np.radians(V_B_O_angle)
+                V_B_O = [V_B_O_mag*np.cos(V_B_O_angle),
+                         0,
+                         V_B_O_mag*np.sin(V_B_O_angle)]
 
                 ## ESTIMATE IMPACT POINT
-                env.GZ_VelTraj(env.pos,[Vx_d,Vy_d,Vz_d])
+                env.GZ_VelTraj(env.r_B_O,V_B_O)
                 env.pausePhysics(False)
                 
                     
