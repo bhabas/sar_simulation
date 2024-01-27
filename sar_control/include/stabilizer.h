@@ -106,7 +106,7 @@ class Controller
         void appLoop();
         void stabilizerLoop();
 
-        void loadParams();
+        void loadInitParams();
         void publishCtrlData();
         void publishCtrlDebug();
 
@@ -136,7 +136,7 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
 
     if(req.cmd_type == 21) // RESET ROS PARAM VALUES
     {
-        Controller::loadParams();
+        Controller::loadInitParams();
 
     }
 
@@ -182,7 +182,7 @@ void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg
 }
 
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
-void Controller::loadParams()
+void Controller::loadInitParams()
 {
     printf("Updating Parameters\n");
 
