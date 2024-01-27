@@ -31,40 +31,45 @@ class SAR_Base_Interface():
         ## SAR PARAMETERS
         self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
-        self.preInit_Values()
+
         self.Pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
 
+
+        ## INERTIAL PARAMETERS
+        self.Ref_Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Mass")
+        self.Ref_Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Ixx")
+        self.Ref_Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Iyy")
+        self.Ref_Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Izz")
 
         ## GEOMETRIC PARAMETERS
         self.Forward_Reach = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Forward_Reach")
         self.Leg_Length = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Length")
         self.Leg_Angle = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Angle")
+        self.Prop_Front = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Front")
+        self.Prop_Rear = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Rear")
 
         ## EFFECTIVE-GEOEMTRIC PARAMETERS
         self.L_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/L_eff")
         self.Gamma_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Gamma_eff")
         self.Lx_eff = self.L_eff*np.sin(np.radians(self.Gamma_eff))
         self.Lz_eff = self.L_eff*np.cos(np.radians(self.Gamma_eff))
-
-
-        self.Beta_Min = -(self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff)))
         self.Collision_Radius = max(self.L_eff,self.Forward_Reach)
 
-        self.f_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/f_max")
-        self.Prop_Front = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Front")
-        self.Prop_Rear = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Rear")
-
-        self.Ang_Acc_max = (9.81*self.f_max*1e-3*self.Prop_Front[0])*2/self.Ref_Iyy
+        ## SYSTEM AND FLIGHT PARAMETERS
+        self.Thrust_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Thrust_max")
+        self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")
+        self.Ang_Acc_max = (9.81*self.Thrust_max*1e-3*self.Prop_Front[0])*2/self.Ref_Iyy
         self.setAngAcc_range([-self.Ang_Acc_max, self.Ang_Acc_max])
+        
+        self.Beta_Min_deg = -(self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff)))
+        self.Phi_impact_P_B_Min_deg = -self.Beta_Min_deg - self.Gamma_eff + 90
+
+        # self.Phi_impact_B_O_Min_deg = self.Beta_Min_deg + self.Gamma_eff + self.Plane_Angle_deg - 90 
 
 
         ## CAM PARAMETERS
         self.Cam_Config = rospy.get_param('/CAM_SETTINGS/Cam_Config')
         self.Cam_Active = rospy.get_param('/CAM_SETTINGS/Cam_Active')
-
-
-        ## TRAJECTORY PARAMETERS
-        self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")
         
 
         ## PLANE PARAMETERS
@@ -86,6 +91,9 @@ class SAR_Base_Interface():
         print(f"SAR Type: {self.SAR_Type} -- SAR Config: {self.SAR_Config}\n")
         print(f"Leg Length: {self.Leg_Length:.3f} m \t Leg Angle: {self.Leg_Angle:.1f} deg")
         print(f"L_eff: {self.L_eff:.3f} m \t\t Gamma_eff: {self.Gamma_eff:.1f} deg\n")
+        print(f"Phi_impact_P_B_Min: {self.Phi_impact_P_B_Min_deg:.1f} deg\n")
+
+        print(f"Thrust_max: {self.Thrust_max:.0f} g")
         print(f"Ang_Acc_Max: {self.Ang_Acc_max:.0f} rad/s^2")
         print(f"TrajAcc_Max: [{self.TrajAcc_Max[0]:.1f}, {self.TrajAcc_Max[1]:.1f}, {self.TrajAcc_Max[2]:.1f}]  m/s^2") 
 
@@ -294,119 +302,6 @@ class SAR_Base_Interface():
         self.RL_History_Pub.publish(RL_convg_msg) ## Publish RL_Data message
 
         time.sleep(0.1)
-
-    def preInit_Values(self):
-
-        self.Ref_Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Mass")
-        self.Ref_Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Ixx")
-        self.Ref_Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Iyy")
-        self.Ref_Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Izz")
-        
-
-        ## INITIALIZE STATE VALUES
-        self.t = 0.0
-        self.pos = [0,0,0]
-        self.vel = [0,0,0]
-
-        self.quat = [0,0,0,1]
-        self.eul = [0,0,0]
-        self.omega = [0,0,0]
-
-        self.Tau = 0.0
-        self.Theta_x = 0.0
-        self.Theta_y = 0.0
-
-        self.D_perp = 0.0 
-        self.V_perp = 0.0
-        self.V_tx = 0.0
-        self.V_ty = 0.0
-
-
-        self.MS_pwm = [0,0,0,0]         # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
-        self.MotorThrusts = [0,0,0,0]   # Controller Motor Thrusts [M1,M2,M3,M4][g]
-        self.FM = [0,0,0,0]             # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
-        
-        self.Policy_Trg_Action = 0.0
-        self.Policy_Rot_Action = 0.0
-        
-        self.x_d = [0,0,0]
-        self.v_d = [0,0,0]
-        self.a_d = [0,0,0]
-
-        ## INITIALIZE TRIGGER VALUES
-        self.Trg_flag = False      # Flag if model has started Rot maneuver
-
-        self.t_trg = 0.0             # [s]
-        self.pos_trg = [0,0,0]       # [m]
-        self.vel_trg = [0,0,0]       # [m/s]
-        self.quat_trg = [0,0,0,1]    # [quat]
-        self.omega_trg = [0,0,0]     # [rad/s]
-        self.eul_trg = [0,0,0]       # [deg]
-
-        self.Tau_trg = 0.0           # [s]
-        self.Theta_x_trg = 0.0       # [rad/s]
-        self.Theta_y_trg = 0.0       # [rad/s]
-        self.D_perp_trg = 0.0        # [m]
-
-        self.FM_trg = [0,0,0,0]      # [N,N*mm]
-
-        self.Policy_Trg_Action_trg = 0.0
-        self.Policy_Rot_Action_trg = 0.0 # [N*mm]
-
-        self.vel_trg_mag = 0.0       # [m/s]
-        self.phi_trg = 0.0           # [deg]
-
-        ## INITIALIZE IMPACT VALUES
-        self.Impact_flag = False
-        self.BodyContact_flag = False   # Flag if model body impacts ceiling plane
-
-        self.t_impact = 0.0
-        self.pos_impact = [0,0,0]
-        self.vel_impact = [0,0,0]
-        self.quat_impact = [0,0,0,1]
-        self.omega_impact = [0,0,0]
-        self.eul_impact = [0,0,0]
-
-        self.impact_force_x = 0.0     # Ceiling impact force, X-dir [N]
-        self.impact_force_y = 0.0     # Ceiling impact force, Y-dir [N]
-        self.impact_force_z = 0.0     # Ceiling impact force, Z-dir [N]
-        self.impact_magnitude = 0.0
-
-        self.pad_connections = 0 # Number of pad connections
-
-        ## INITIALIZE MISC VALUES
-        self.V_Battery = 0.0
-
-        ## INITIALIZE RL VALUES
-
-        ## CONVERGENCE HISTORY
-        self.K_ep_list = []
-        self.K_run_list = []
-
-        self.mu_1_list = []         # List of mu values over course of convergence
-        self.mu_2_list = [] 
-
-        self.sigma_1_list = []      # List of sigma values over course of convergence
-        self.sigma_2_list = []
-
-        self.reward_list = []       # List of reward values over course of convergence
-        self.reward_avg_list = []   # List of reward averages ""
-        self.Kep_list_reward_avg = []
-
-        ## PARAM OPTIM DATA
-        self.K_ep = 0                   # Episode number
-        self.K_run = 0                  # Run number
-        self.Error_Str = ""
-        self.n_rollouts = 0
-
-        self.vel_d = [0.0,0.0,0.0]      # Desired velocity for trial
-        self.policy = [0.0,0.0,0.0]     # Policy sampled from Gaussian distribution
-
-        self.reward = 0.0               # Calculated reward from run
-        self.reward_avg = 0.0           # Averaged rewards over episode
-        self.reward_vals = np.zeros(5)
-
-        self.trialComplete_flag = False
 
 
 

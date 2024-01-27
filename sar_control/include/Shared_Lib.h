@@ -38,7 +38,7 @@ extern float Izz;           // [kg*m^2]
 extern struct mat33 J;      // Rotational Inertia Matrix [kg*m^2]
 
 extern float C_tf;          // Moment Coeff [Nm/N]
-extern float f_max;         // Max thrust per motor [g]
+extern float Thrust_max;         // Max thrust per motor [g]
 
 extern float Prop_14_x;     // Front Prop Distance - x-axis [m]
 extern float Prop_14_y;     // Front Prop Distance - y-axis [m]

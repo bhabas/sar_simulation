@@ -32,7 +32,7 @@ SAR_Type:
       C_tf: 6.18e-3                     # Torque-Thrust Coeff [N*m/N]
       Tau_up: 0.05                      # Motor Time Constant (Up) [s]
       Tau_down: 0.15                    # Motor Time Constant (Down) [s]
-      f_max: 15.0                       # Max thrust [g]
+      Thrust_max: 15.0                       # Max thrust [g]
 
       Prop_Front: [33.0e-3, 33.0e-3]    # [x,y] absolute distances [m]
       Prop_Rear:  [33.0e-3, 33.0e-3]    # [x,y] absolute distances [m]
@@ -200,7 +200,7 @@ SAR_Type:
         C_tf: 1.1e-2                    # Torque-Thrust Coeff [N*m/N]
         Tau_up: 9.8e-3                  # Motor Time Constant (Up) [s]
         Tau_down: 31.9e-3               # Motor Time Constant (Down) [s]
-        f_max: 800                      # Max motor thrust [g]
+        Thrust_max: 800                      # Max motor thrust [g]
 
         Prop_Front: [72.6e-3, 86.6e-3]  # Front Prop Location [m]
         Prop_Rear:  [72.6e-3, 86.6e-3]  # Rear Prop Location [m]
@@ -424,7 +424,7 @@ SAR_Type:
         C_tf: 6.7e-3                    # Torque-Thrust Coeff [N*m/N]
         Tau_up: 27.0e-3                 # Motor Time Constant (Up) [s]
         Tau_down: 34.0e-3               # Motor Time Constant (Down) [s]
-        f_max: 225                      # Max thrust [g]
+        Thrust_max: 225                      # Max thrust [g]
 
         Prop_Front: [44.5e-3, 58.6e-3]  # [x,y] absolute distances [m]
         Prop_Rear:  [44.5e-3, 58.6e-3]  # [x,y] absolute distances [m]

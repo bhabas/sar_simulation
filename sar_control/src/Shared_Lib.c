@@ -12,7 +12,7 @@ float Izz = 0.0f;           // [kg*m^2]
 struct mat33 J;             // Rotational Inertia Matrix [kg*m^2]
 
 float C_tf = 0.0f;          // Moment Coeff [Nm/N]
-float f_max = 0.0f;         // Max thrust per motor [g]
+float Thrust_max = 0.0f;         // Max thrust per motor [g]
 
 float Prop_14_x = 0.0f;     // Front Prop Distance - x-axis [m]
 float Prop_14_y = 0.0f;     // Front Prop Distance - y-axis [m]

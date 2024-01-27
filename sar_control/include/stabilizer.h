@@ -199,7 +199,7 @@ void Controller::loadParams()
 
 
     // UPDATE SYSTEM PARAMETERS
-    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/f_max",f_max);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Thrust_max",Thrust_max);
     ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/C_tf",C_tf);
 
 

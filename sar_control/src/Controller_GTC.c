@@ -368,10 +368,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
 
         // CLAMP AND CONVERT THRUST FROM [N] AND [N*M] TO [g]
-        M1_thrust = clamp((M1_thrust/2.0f)*Newton2g,0.0f,f_max);
-        M2_thrust = clamp((M2_thrust/2.0f)*Newton2g,0.0f,f_max);
-        M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,f_max);
-        M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M1_thrust = clamp((M1_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
+        M2_thrust = clamp((M2_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
+        M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
+        M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
 
 
 
@@ -463,7 +463,7 @@ PARAM_ADD(PARAM_FLOAT, Prop_23_x, &Prop_23_x)
 PARAM_ADD(PARAM_FLOAT, Prop_23_y, &Prop_23_y)
 
 PARAM_ADD(PARAM_FLOAT, C_tf, &C_tf)
-PARAM_ADD(PARAM_FLOAT, f_max, &f_max)
+PARAM_ADD(PARAM_FLOAT, Thrust_max, &Thrust_max)
 
 PARAM_ADD(PARAM_UINT8, SafeMode, &SafeMode_Flag)
 PARAM_ADD(PARAM_UINT8, PolicyType, &Policy)
