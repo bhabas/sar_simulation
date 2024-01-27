@@ -299,6 +299,8 @@ class SAR_DataConverter {
 
         geometry_msgs::Pose Pose_P_B;
         geometry_msgs::Twist Twist_B_P;
+        geometry_msgs::Vector3 Eul_P_B;
+
         float Vel_mag_B_P = 0.0f;
         float Vel_angle_B_P = 0.0f;
         float D_perp = 0.0f;
@@ -342,6 +344,7 @@ class SAR_DataConverter {
 
         geometry_msgs::Pose Pose_P_B_trg;
         geometry_msgs::Twist Twist_B_P_trg;
+        geometry_msgs::Vector3 Eul_P_B_trg;
 
         geometry_msgs::Vector3 Optical_Flow_trg;
         double Tau_trg = 0.0;
@@ -357,7 +360,8 @@ class SAR_DataConverter {
         // ===================
 
         bool Impact_Flag_Onboard = false;
-        ros::Time Time_impact_Onboard;
+        bool OnceFlag_Impact_Onboard = false;
+        ros::Time Time_Impact_Onboard;
         geometry_msgs::Pose Pose_B_O_impact;
         geometry_msgs::Twist Twist_B_P_impact;
         float Accel_B_O_Mag_impact = 0.0f;

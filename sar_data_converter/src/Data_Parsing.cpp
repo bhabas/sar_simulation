@@ -8,16 +8,12 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Time_prev = Time;
     Time = ros::Time::now();
 
+
+    // STATES WRT ORIGIN
     Pose_B_O = ctrl_msg.Pose_B_O;
     Twist_B_O = ctrl_msg.Twist_B_O;
     Accel_B_O = ctrl_msg.Accel_B_O;
     Accel_B_O_Mag = ctrl_msg.Accel_B_O_Mag;
-
-    Pose_P_B = ctrl_msg.Pose_P_B;
-    Twist_B_P = ctrl_msg.Twist_B_P;
-    Vel_mag_B_P = ctrl_msg.Vel_mag_B_P;
-    Vel_angle_B_P = ctrl_msg.Vel_angle_B_P;
-
 
     // PROCESS EULER ANGLES
     float quat[4] = {
@@ -31,6 +27,18 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Eul_B_O.x = eul[0]*180/M_PI;
     Eul_B_O.y = eul[1]*180/M_PI;
     Eul_B_O.z = eul[2]*180/M_PI;
+
+
+    // STATES WRT PLANE
+    Pose_P_B = ctrl_msg.Pose_P_B;
+    Twist_B_P = ctrl_msg.Twist_B_P;
+    Vel_mag_B_P = ctrl_msg.Vel_mag_B_P;
+    Vel_angle_B_P = ctrl_msg.Vel_angle_B_P;
+
+    Eul_P_B.x = NAN;
+    Eul_P_B.y = Plane_Angle_deg - Eul_B_O.y;
+    Eul_P_B.z = NAN;
+    
 
     // STATES RELATIVE TO LANDING SURFACE
     D_perp = ctrl_msg.D_perp;
@@ -68,10 +76,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
 
     // =================
-    //     TRIGGER DATA
+    //   TRIGGER DATA
     // =================
 
-    // CARTESIAN SPACE DATA
+    Trg_Flag = ctrl_msg.Trg_Flag;
     if(ctrl_msg.Trg_Flag == true && OnceFlag_Trg == false)
     {   
         Time_trg = ros::Time::now();
@@ -87,14 +95,11 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     }
     
 
-    Trg_Flag = ctrl_msg.Trg_Flag;
+    
+    // STATES WRT ORIGIN
     Pose_B_O_trg = ctrl_msg.Pose_B_O_trg;
     Twist_B_O_trg = ctrl_msg.Twist_B_O_trg;
 
-    Pose_P_B_trg = ctrl_msg.Pose_P_B_trg;
-    Twist_B_P_trg = ctrl_msg.Twist_B_P_trg;
-
-    // PROCESS EULER ANGLES
     float quat_trg[4] = {
         (float)ctrl_msg.Pose_B_O_trg.orientation.x,
         (float)ctrl_msg.Pose_B_O_trg.orientation.y,
@@ -107,18 +112,46 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Eul_B_O_trg.y = eul_trg[1]*180/M_PI;
     Eul_B_O_trg.z = eul_trg[2]*180/M_PI;
 
+    // STATES WRT PLANE
+    Pose_P_B_trg = ctrl_msg.Pose_P_B_trg;
+    Twist_B_P_trg = ctrl_msg.Twist_B_P_trg;
+
+    Eul_P_B_trg.x = NAN;
+    Eul_P_B_trg.y = Plane_Angle_deg - Eul_B_O_trg.y;
+    Eul_P_B_trg.z = NAN;
+
+
     // OPTICAL FLOW
     Optical_Flow_trg = ctrl_msg.Optical_Flow_trg;
-
     Theta_x_trg = Optical_Flow_trg.x;
     Theta_y_trg = Optical_Flow_trg.y;
     Tau_trg = Optical_Flow_trg.z;
     D_perp_trg = ctrl_msg.Pose_P_B_trg.position.z;
 
 
-    // NEURAL NETWORK DATA
+    // POLICY ACTION DATA
     Policy_Trg_Action_trg = ctrl_msg.Policy_Trg_Action_trg;
     Policy_Rot_Action_trg = ctrl_msg.Policy_Rot_Action_trg;
+
+    // =======================
+    //   ONBOARD IMPACT DATA
+    // =======================
+
+    Impact_Flag_Onboard = ctrl_msg.Impact_Flag_Onboard;
+
+    if(ctrl_msg.Impact_Flag_Onboard == true && OnceFlag_Impact_Onboard == false)
+    {   
+        Time_Impact_Onboard = ros::Time::now();
+        OnceFlag_Impact_Onboard = true;
+
+    }
+
+    // Pose_B_O_impact = ctrl_msg.Pose_B_O_impact;
+    // Twist_P_B_impact = ctrl_msg.Twist_P_B_impact;
+    // Accel_B_O_impact = ctrl_msg.Accel_B_O_impact;
+
+
+
 
 }
 

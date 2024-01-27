@@ -26,58 +26,50 @@ void SAR_DataConverter::RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg)
 
 void SAR_DataConverter::Publish_StateData()
 {
-    // // ===================
-    // //     FLIGHT DATA
-    // // ===================
-    // ros::Duration Time_delta(Time-Time_start);
-    // StateData_msg.header.stamp.sec = Time_delta.sec;
-    // StateData_msg.header.stamp.nsec = Time_delta.nsec;
+    // ===================
+    //     FLIGHT DATA
+    // ===================
+    ros::Duration Time_delta(Time-Time_start);
+    StateData_msg.header.stamp.sec = Time_delta.sec;
+    StateData_msg.header.stamp.nsec = Time_delta.nsec;
 
-    // // CARTESIAN SPACE DATA
-    // StateData_msg.Pose = Pose;
-    // StateData_msg.Twist = Twist;
-    // StateData_msg.Accel = Accel;
+    // STATES WRT ORIGIN
+    StateData_msg.Pose_B_O = Pose_B_O;
+    StateData_msg.Twist_B_O = Twist_B_O;
+    StateData_msg.Accel_B_O = Accel_B_O;
+    StateData_msg.Eul_B_O = Eul_B_O;
+    StateData_msg.Accel_B_O_Mag = Accel_B_O_Mag;
 
-    // StateData_msg.Eul_B_O = Eul_B_O;
-
-
-
-    // // OPTICAL FLOW STATES
-    // StateData_msg.Tau = Tau;
-    // StateData_msg.Theta_x = Theta_x;
-    // StateData_msg.Theta_y = Theta_y;
-
-    // // PLANE RELATIVE STATES
-    // StateData_msg.D_perp = D_perp;
-    // StateData_msg.V_tx = V_rel.x;
-    // StateData_msg.V_ty = V_rel.y;
-    // StateData_msg.V_perp = V_rel.z;
-
-    // StateData_msg.V_mag_rel = V_mag_rel;
-    // StateData_msg.V_angle_rel = V_angle_rel;
-
-    // // OPTICAL FLOW STATE ESTIMATES
-    // StateData_msg.Tau_Cam = Tau_Cam;
-    // StateData_msg.Theta_x_Cam = Theta_x_Cam;
-    // StateData_msg.Theta_y_Cam = Theta_y_Cam;
-
-    // // STATE SETPOINTS
-    // StateData_msg.x_d = x_d;
-    // StateData_msg.v_d = v_d;
-    // StateData_msg.a_d = a_d;
-
-    // // CONTROL ACTIONS
-    // StateData_msg.FM = FM;
-    // StateData_msg.MotorThrusts = MotorThrusts;
-    // StateData_msg.MS_PWM = MS_PWM;
-
-    // // NEURAL NETWORK DATA
-    // StateData_msg.Policy_Trg_Action = Policy_Trg_Action;
-    // StateData_msg.Policy_Rot_Action = Policy_Rot_Action;
+    // STATES WRT PLANE
+    StateData_msg.Pose_P_B = Pose_P_B;
+    StateData_msg.Twist_B_P = Twist_B_P;
+    StateData_msg.Eul_P_B = Eul_P_B;
+    StateData_msg.Vel_mag_B_P = Vel_mag_B_P;
+    StateData_msg.Vel_angle_B_P = Vel_angle_B_P;
+    StateData_msg.D_perp = D_perp;
 
 
-    // // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
-    // StateData_Pub.publish(StateData_msg);
+    // OPTICAL FLOW STATES
+    StateData_msg.Optical_Flow = Optical_Flow;
+    StateData_msg.Optical_Flow_Cam = Optical_Flow_Cam;
+
+    // STATE SETPOINTS
+    StateData_msg.x_d = x_d;
+    StateData_msg.v_d = v_d;
+    StateData_msg.a_d = a_d;
+
+    // CONTROL ACTIONS
+    StateData_msg.FM = FM;
+    StateData_msg.MotorThrusts = MotorThrusts;
+    StateData_msg.MS_PWM = MS_PWM;
+
+    // POLICY ACTIONS
+    StateData_msg.Policy_Trg_Action = Policy_Trg_Action;
+    StateData_msg.Policy_Rot_Action = Policy_Rot_Action;
+
+
+    // PUBLISH STATE DATA RECEIVED FROM CONTROLLER
+    StateData_Pub.publish(StateData_msg);
 }
 
 void SAR_DataConverter::Publish_TriggerData()

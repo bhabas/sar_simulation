@@ -28,9 +28,9 @@ float64 Policy_Trg_Action
 float64 Policy_Rot_Action
 
 
-# =========================
-# STATES AT POLICY TRIGGER
-# =========================
+# ==========================
+#  STATES AT POLICY TRIGGER
+# ==========================
 bool Trg_Flag
 
 geometry_msgs/Pose Pose_B_O_trg
@@ -44,7 +44,7 @@ float64 Policy_Trg_Action_trg
 float64 Policy_Rot_Action_trg
 
 # =========================
-# STATES AT IMPACT
+#      STATES AT IMPACT
 # =========================
 
 bool Impact_Flag_Onboard
