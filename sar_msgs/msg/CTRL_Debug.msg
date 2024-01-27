@@ -8,6 +8,6 @@ bool CustomPWM_Flag
 
 bool Pos_Ctrl_Flag
 bool Vel_Ctrl_Flag
-bool Traj_Active_Flag
 bool Policy_Armed_Flag
+bool CamActive_Flag
 

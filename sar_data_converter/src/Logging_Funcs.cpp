@@ -72,9 +72,9 @@ void SAR_DataConverter::create_CSV()
     // // STATE DATA
     // fprintf(fPtr,"x,y,z,");
     // fprintf(fPtr,"vx,vy,vz,");
-    // fprintf(fPtr,"D_perp,Tau,Tau_est,");
-    // fprintf(fPtr,"Theta_x,Theta_x_est,Theta_y,Theta_y_est,");
-    // fprintf(fPtr,"Trg_flag,Impact_flag,");
+    // fprintf(fPtr,"D_perp,Tau,Tau_Cam,");
+    // fprintf(fPtr,"Theta_x,Theta_x_Cam,Theta_y,Theta_y_Cam,");
+    // fprintf(fPtr,"Trg_Flag,Impact_Flag_Ext,");
 
 
     // //  MISC STATE DATA
@@ -114,13 +114,13 @@ void SAR_DataConverter::append_CSV_states()
     // // STATE DATA
     // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Pose.position.x,Pose.position.y,Pose.position.z);    // x,y,z
     // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Twist.linear.x,Twist.linear.y,Twist.linear.z);       // vx,vy,vz
-    // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",D_perp,Tau,Tau_est);                    // Tau,Theta_x,Theta_y,D_perp
-    // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,%.3f,",Theta_x,Theta_x_est,Theta_y,Theta_y_est);                    // Tau_est,Theta_x_est,Theta_y_est
-    // fprintf(fPtr,"%s,%s,",formatBool(Trg_flag),formatBool(Impact_flag));               // Trg_flag,Impact_flag
+    // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",D_perp,Tau,Tau_Cam);                    // Tau,Theta_x,Theta_y,D_perp
+    // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,%.3f,",Theta_x,Theta_x_Cam,Theta_y,Theta_y_Cam);                    // Tau_Cam,Theta_x_Cam,Theta_y_Cam
+    // fprintf(fPtr,"%s,%s,",formatBool(Trg_Flag),formatBool(Impact_Flag_Ext));               // Trg_Flag,Impact_Flag_Ext
 
 
     // // MISC STATE DATA
-    // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Eul.x,Eul.y,Eul.z);                                  // eul_x,eul_y,eul_z
+    // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Eul_B_O.x,Eul_B_O.y,Eul_B_O.z);                                  // eul_x,eul_y,eul_z
     // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Twist.angular.x,Twist.angular.y,Twist.angular.z);    // wx,wy,wz
     // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,% 6.3f,",Pose.orientation.x,Pose.orientation.y,Pose.orientation.z,Pose.orientation.w); // qx,qy,qz,qw
     // fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,% 6.3f,",FM[0],FM[1],FM[2],FM[3]);                       // F_thrust,Mx,My,Mz
@@ -151,9 +151,9 @@ void SAR_DataConverter::append_CSV_misc()
     // // STATE DATA
     // fprintf(fPtr,"--,--,--,");                                  // x,y,z
     // fprintf(fPtr,"%.3f,%.3f,%.3f,",vel_d[0],vel_d[1],vel_d[2]); // vel_d.x,vel_d.y,vel_d.z
-    // fprintf(fPtr,"--,--,--,");                                  // D_perp, Tau, Tau_est
-    // fprintf(fPtr,"--,--,--,--,");                               // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
-    // fprintf(fPtr,"%.2f,[%.2f %.2f %.2f %.2f %.2f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // Trg_flag,Impact_flag
+    // fprintf(fPtr,"--,--,--,");                                  // D_perp, Tau, Tau_Cam
+    // fprintf(fPtr,"--,--,--,--,");                               // Theta_x,Theta_x_Cam,Theta_y,Theta_y_Cam,
+    // fprintf(fPtr,"%.2f,[%.2f %.2f %.2f %.2f %.2f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // Trg_Flag,Impact_Flag_Ext
 
 
     // // MISC STATE DATA
@@ -186,9 +186,9 @@ void SAR_DataConverter::append_CSV_Rot()
     // // // INTERNAL STATE ESTIMATES (CF)
     // fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_trg.position.x,Pose_trg.position.y,Pose_trg.position.z);   // x,y,z
     // fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_trg.linear.x,Twist_trg.linear.y,Twist_trg.linear.z);      // vx,vy,vz
-    // fprintf(fPtr,"%.3f,%.3f,--,",D_perp_trg,Tau_trg);                                             // D_perp,Tau,Tau_est
-    // fprintf(fPtr,"%.3f,--,%.3f,--,",Theta_x_trg,Theta_y_trg);                                     // Tau_est,Theta_x_est,Theta_y_est
-    // fprintf(fPtr,"%s,--,",formatBool(Trg_flag));                                               // Trg_flag,Impact_flag
+    // fprintf(fPtr,"%.3f,%.3f,--,",D_perp_trg,Tau_trg);                                             // D_perp,Tau,Tau_Cam
+    // fprintf(fPtr,"%.3f,--,%.3f,--,",Theta_x_trg,Theta_y_trg);                                     // Tau_Cam,Theta_x_Cam,Theta_y_Cam
+    // fprintf(fPtr,"%s,--,",formatBool(Trg_Flag));                                               // Trg_Flag,Impact_Flag_Ext
 
 
 
@@ -222,9 +222,9 @@ void SAR_DataConverter::append_CSV_impact()
     // // STATE DATA
     // fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_impact.position.x,Pose_impact.position.y,Pose_impact.position.z);   // x,y,z
     // fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.linear.x,Twist_impact.linear.y,Twist_impact.linear.z);      // vx,vy,vz
-    // fprintf(fPtr,"--,--,--,");                                                                              // D_perp,Tau,Tau_est,
-    // fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);   // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
-    // fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(Impact_flag));        // Trg_flag,Impact_flag
+    // fprintf(fPtr,"--,--,--,");                                                                              // D_perp,Tau,Tau_Cam,
+    // fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);   // Theta_x,Theta_x_Cam,Theta_y,Theta_y_Cam,
+    // fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(Impact_Flag_Ext));        // Trg_Flag,Impact_Flag_Ext
 
 
     // // MISC STATE DATA

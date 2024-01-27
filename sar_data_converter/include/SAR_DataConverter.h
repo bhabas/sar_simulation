@@ -204,10 +204,10 @@ class SAR_DataConverter {
         std::string POLICY_TYPE;
 
         // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
-        float Mass = 34.4e3; // [kg]
-        float Ixx = 15.83e-6f;  // [kg*m^2]
-        float Iyy = 17.00e-6f;  // [kg*m^2]
-        float Izz = 31.19e-6f;  // [kg*m^2]
+        float Mass = 0.0f; // [kg]
+        float Ixx = 0.0f;  // [kg*m^2]
+        float Iyy = 0.0f;  // [kg*m^2]
+        float Izz = 0.0f;  // [kg*m^2]
 
         float P_kp_xy,P_kd_xy,P_ki_xy;
         float P_kp_z,P_kd_z,P_ki_z;
@@ -294,21 +294,31 @@ class SAR_DataConverter {
         geometry_msgs::Pose Pose_B_O;
         geometry_msgs::Twist Twist_B_O;
         geometry_msgs::Accel Accel_B_O;
+        geometry_msgs::Vector3 Eul_B_O;
+        float Accel_B_O_Mag = 0.0f;
 
         geometry_msgs::Pose Pose_P_B;
-        geometry_msgs::Twist Twist_P_B;
-        geometry_msgs::Accel Accel_P_B;
+        geometry_msgs::Twist Twist_B_P;
+        float Vel_mag_B_P = 0.0f;
+        float Vel_angle_B_P = 0.0f;
+        float D_perp = 0.0f;
 
-
-
+        geometry_msgs::Vector3 Optical_Flow;
+        geometry_msgs::Vector3 Optical_Flow_Cam;
 
         double Tau = 0.0;
         double Theta_x = 0.0;
         double Theta_y = 0.0;
 
-        double Tau_est = 0.0;
-        double Theta_x_est = 0.0;
-        double Theta_y_est = 0.0;
+        double Tau_Cam = 0.0;
+        double Theta_x_Cam = 0.0;
+        double Theta_y_Cam = 0.0;
+
+
+        geometry_msgs::Vector3 x_d;
+        geometry_msgs::Vector3 v_d;
+        geometry_msgs::Vector3 a_d;
+
 
         boost::array<double,4> FM{0,0,0,0};
         boost::array<double,4> MotorThrusts{0,0,0,0};
@@ -316,47 +326,51 @@ class SAR_DataConverter {
 
         double Policy_Trg_Action = 0.0;
         double Policy_Rot_Action = 0.0;
-
-        geometry_msgs::Vector3 x_d;
-        geometry_msgs::Vector3 v_d;
-        geometry_msgs::Vector3 a_d;
-
         double Rot_Sum = 0.0;
 
-        // ==================
-        //     TRIGGER DATA
-        // ==================
+        // ==========================
+        //  STATES AT POLICY TRIGGER
+        // ==========================
 
-        bool Trg_flag = false;
+        bool Trg_Flag = false;
         bool OnceFlag_Trg = false;
-
         ros::Time Time_trg;
 
         geometry_msgs::Pose Pose_B_O_trg;
         geometry_msgs::Twist Twist_B_O_trg;
-        geometry_msgs::Accel Accel_B_O_trg;
+        geometry_msgs::Vector3 Eul_B_O_trg;
 
         geometry_msgs::Pose Pose_P_B_trg;
-        geometry_msgs::Twist Twist_P_B_trg;
-        geometry_msgs::Accel Accel_P_B_trg;
+        geometry_msgs::Twist Twist_B_P_trg;
 
-
+        geometry_msgs::Vector3 Optical_Flow_trg;
         double Tau_trg = 0.0;
         double Theta_x_trg = 0.0;
         double Theta_y_trg = 0.0;
         double D_perp_trg = 0.0;
 
-        boost::array<double,4> FM_trg{0,0,0,0};
-
         double Policy_Trg_Action_trg = 0.0;
         double Policy_Rot_Action_trg = 0.0;
 
-
         // ===================
-        //     IMPACT DATA
+        //    ONBOARD IMPACT DATA
         // ===================
 
-        bool Impact_flag = false;
+        bool Impact_Flag_Onboard = false;
+        ros::Time Time_impact_Onboard;
+        geometry_msgs::Pose Pose_B_O_impact;
+        geometry_msgs::Twist Twist_B_P_impact;
+        float Accel_B_O_Mag_impact = 0.0f;
+
+
+        // ==========================
+        //    EXTERNAL IMPACT DATA
+        // ==========================
+        bool Impact_Flag_Ext = false;
+        ros::Time Time_impact_Ext;
+        geometry_msgs::Pose Pose_B_O_impact_Ext;
+        geometry_msgs::Twist Twist_B_P_impact_Ext;
+
         bool BodyContact_flag = false;
         bool LegContact_flag = false;
         bool OnceFlag_Impact = false;
@@ -365,27 +379,15 @@ class SAR_DataConverter {
 
 
 
-        ros::Time Time_impact;
         geometry_msgs::Vector3 Force_impact;
-        geometry_msgs::Pose Pose_B_O_impact;
-        geometry_msgs::Twist Twist_B_O_impact;
-        geometry_msgs::Accel Accel_B_O_impact;
-
-        geometry_msgs::Pose Pose_P_B_impact;
-        geometry_msgs::Twist Twist_P_B_impact;
-        geometry_msgs::Accel Accel_P_B_impact;
-
-
-
         double impact_force_x = 0.0; // Max impact force in X-direction [N]
         double impact_force_y = 0.0; // Max impact force in Y-direction [N]
         double impact_force_z = 0.0; // Max impact force in Z-direction [N]
         double impact_magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
-        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {1};
-        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {1};
-        boost::circular_buffer<geometry_msgs::Accel> Accel_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Twist> Twist_P_B_impact_buff {1};
 
 
         // ==================
@@ -405,20 +407,20 @@ class SAR_DataConverter {
         //     DEBUG VALUES
         // ====================
 
-        bool Motorstop_Flag = false;
-        bool Pos_Ctrl_Flag = false;
-        bool Vel_Ctrl_Flag = false;
-        bool Tumble_Detection = false;
         bool Tumbled_Flag = false;
-
-        bool AttCtrl_Flag = false;
-        bool AngAccel_flag = false;
+        bool TumbleDetect_Flag = false;
+        bool MotorStop_Flag = false;
+        bool AngAccel_Flag = false;
+        bool SafeMode_Flag = false;
         bool CustomThrust_Flag = false;
         bool CustomPWM_Flag = false;
 
-        bool Traj_Active_Flag = false;
+        bool Pos_Ctrl_Flag = false;
+        bool Vel_Ctrl_Flag = false;
         bool Policy_Armed_Flag = false;
-        bool isCamActive = false;
+
+
+        bool CamActive_Flag = false;
 
         // SIM
         bool Sticky_Flag = false;
@@ -537,19 +539,19 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
     switch (req.cmd_type)
     {
         case 0:
-            // RESET TRIGGER TIME
-            OnceFlag_Trg = false;
-            Time_trg.sec = 0.0;
-            Time_trg.nsec = 0.0;
-            Rot_Sum = 0.0;
+            // // RESET TRIGGER TIME
+            // OnceFlag_Trg = false;
+            // Time_trg.sec = 0.0;
+            // Time_trg.nsec = 0.0;
+            // Rot_Sum = 0.0;
 
             // RESET IMPACT TIME
-            Impact_flag = false;
-            BodyContact_flag = false;
-            LegContact_flag = false;
-            OnceFlag_Impact = false;
-            Time_impact.sec = 0.0;
-            Time_impact.nsec = 0.0;
+            // Impact_Flag_Ext = false;
+            // BodyContact_flag = false;
+            // LegContact_flag = false;
+            // OnceFlag_Impact = false;
+            // Time_impact.sec = 0.0;
+            // Time_impact.nsec = 0.0;
 
             // // RESET IMPACT VALUES
             // Pose_impact.position.x = 0.0;

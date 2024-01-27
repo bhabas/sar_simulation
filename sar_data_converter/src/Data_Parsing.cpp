@@ -8,127 +8,134 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Time_prev = Time;
     Time = ros::Time::now();
 
-    // // Pose = ctrl_msg.Pose;
-    // // Twist = ctrl_msg.Twist;
-    // // Accel = ctrl_msg.Accel;
-    // // Acc_mag = ctrl_msg.AccMag;
-    // // Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
-    // // Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
-    // // Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
+    Pose_B_O = ctrl_msg.Pose_B_O;
+    Twist_B_O = ctrl_msg.Twist_B_O;
+    Accel_B_O = ctrl_msg.Accel_B_O;
+    Accel_B_O_Mag = ctrl_msg.Accel_B_O_Mag;
 
-    // // // PROCESS EULER ANGLES
-    // // float quat[4] = {
-    // //     (float)ctrl_msg.Pose.orientation.x,
-    // //     (float)ctrl_msg.Pose.orientation.y,
-    // //     (float)ctrl_msg.Pose.orientation.z,
-    // //     (float)ctrl_msg.Pose.orientation.w
-    // // };
-    // // float eul[3];
-    // // quat2euler(quat,eul);
-    // // Eul.x = eul[0]*180/M_PI;
-    // // Eul.y = eul[1]*180/M_PI;
-    // // Eul.z = eul[2]*180/M_PI;
+    Pose_P_B = ctrl_msg.Pose_P_B;
+    Twist_B_P = ctrl_msg.Twist_B_P;
+    Vel_mag_B_P = ctrl_msg.Vel_mag_B_P;
+    Vel_angle_B_P = ctrl_msg.Vel_angle_B_P;
 
-    // // // STATES RELATIVE TO LANDING SURFACE
-    // // D_perp = ctrl_msg.D_perp;
-    // // V_rel = ctrl_msg.V_rel;
+
+    // PROCESS EULER ANGLES
+    float quat[4] = {
+        (float)ctrl_msg.Pose_B_O.orientation.x,
+        (float)ctrl_msg.Pose_B_O.orientation.y,
+        (float)ctrl_msg.Pose_B_O.orientation.z,
+        (float)ctrl_msg.Pose_B_O.orientation.w
+    };
+    float eul[3];
+    quat2euler(quat,eul);
+    Eul_B_O.x = eul[0]*180/M_PI;
+    Eul_B_O.y = eul[1]*180/M_PI;
+    Eul_B_O.z = eul[2]*180/M_PI;
+
+    // STATES RELATIVE TO LANDING SURFACE
+    D_perp = ctrl_msg.D_perp;
+
+    // OPTICAL FLOW STATES
+    Optical_Flow = ctrl_msg.Optical_Flow;
+    Optical_Flow_Cam = ctrl_msg.Optical_Flow_Cam;
     
-    // // V_mag_rel = ctrl_msg.V_mag_rel;
-    // // V_angle_rel = ctrl_msg.V_angle_rel;
+    Theta_x = Optical_Flow.x;
+    Theta_y = Optical_Flow.y;
+    Tau = Optical_Flow.z;
 
-    // // // OPTICAL FLOW STATES
-    // // Tau = ctrl_msg.Tau;
-    // // Theta_x = ctrl_msg.Theta_x;
-    // // Theta_y = ctrl_msg.Theta_y;
+    // ESTIMATED OPTICAL FLOW STATES
+    Theta_x_Cam = Optical_Flow_Cam.x;
+    Theta_y_Cam = Optical_Flow_Cam.y;    
+    Tau_Cam = Optical_Flow_Cam.z;
 
-    // // // ESTIMATED OPTICAL FLOW STATES
-    // // Tau_est = ctrl_msg.Tau_est;
-    // // Theta_x_est = ctrl_msg.Theta_x_est;
-    // // Theta_y_est = ctrl_msg.Theta_y_est;    
+    // STATE SETPOINTS
+    x_d = ctrl_msg.x_d;
+    v_d = ctrl_msg.v_d;
+    a_d = ctrl_msg.a_d;
 
-    // // // STATE SETPOINTS
-    // // x_d = ctrl_msg.x_d;
-    // // v_d = ctrl_msg.v_d;
-    // // a_d = ctrl_msg.a_d;
-
-    // // // CONTROL ACTIONS
-    // // FM = ctrl_msg.FM;
-    // // MotorThrusts = ctrl_msg.MotorThrusts;
-    // // MS_PWM = ctrl_msg.MS_PWM;
+    // CONTROL ACTIONS
+    FM = ctrl_msg.FM;
+    MotorThrusts = ctrl_msg.MotorThrusts;
+    MS_PWM = ctrl_msg.MS_PWM;
 
 
-    // // // NEURAL NETWORK DATA
-    // // Policy_Trg_Action = ctrl_msg.Policy_Trg_Action;
-    // // Policy_Rot_Action = ctrl_msg.Policy_Rot_Action;
+    // NEURAL NETWORK DATA
+    Policy_Trg_Action = ctrl_msg.Policy_Trg_Action;
+    Policy_Rot_Action = ctrl_msg.Policy_Rot_Action;
 
-    // Pose_impact_buff.push_back(Pose);
-    // Twist_impact_buff.push_back(Twist);
-    // Accel_impact_buff.push_back(Accel);
+    Pose_B_O_impact_buff.push_back(Pose_B_O);
+    Twist_P_B_impact_buff.push_back(Twist_B_P);
 
 
-    // // =================
-    // //     TRIGGER DATA
-    // // =================
+    // =================
+    //     TRIGGER DATA
+    // =================
 
-    // // CARTESIAN SPACE DATA
-    // if(ctrl_msg.Trg_flag == true && OnceFlag_Trg == false)
-    // {   
-    //     Time_trg = ros::Time::now();
-    //     OnceFlag_Trg = true;
+    // CARTESIAN SPACE DATA
+    if(ctrl_msg.Trg_Flag == true && OnceFlag_Trg == false)
+    {   
+        Time_trg = ros::Time::now();
+        OnceFlag_Trg = true;
 
-    // }
+    }
 
-    // if(ctrl_msg.Trg_flag == true && Impact_flag == false)
-    // {
-    //     double Time_delta = Time.toSec()-Time_prev.toSec();
-    //     Rot_Sum += (Time_delta*Twist.angular.y)*180/M_PI;
-    //     // printf("Val: %f\n",Rot_Sum);
-    // }
+    if(ctrl_msg.Trg_Flag == true && Impact_Flag_Ext == false)
+    {
+        double Time_delta = Time.toSec()-Time_prev.toSec();
+        Rot_Sum += (Time_delta*Twist_B_O.angular.y)*180/M_PI;
+        // printf("Val: %f\n",Rot_Sum);
+    }
     
 
-    // Trg_flag = ctrl_msg.Trg_flag;
-    // Pose_trg = ctrl_msg.Pose_trg;
-    // Twist_trg = ctrl_msg.Twist_trg;
-    // Accel_trg = ctrl_msg.Accel_trg;
+    Trg_Flag = ctrl_msg.Trg_Flag;
+    Pose_B_O_trg = ctrl_msg.Pose_B_O_trg;
+    Twist_B_O_trg = ctrl_msg.Twist_B_O_trg;
 
-    // // PROCESS EULER ANGLES
-    // float quat_trg[4] = {
-    //     (float)ctrl_msg.Pose_trg.orientation.x,
-    //     (float)ctrl_msg.Pose_trg.orientation.y,
-    //     (float)ctrl_msg.Pose_trg.orientation.z,
-    //     (float)ctrl_msg.Pose_trg.orientation.w
-    // };
-    // float eul_trg[3];
-    // quat2euler(quat_trg,eul_trg);
-    // Eul_trg.x = eul_trg[0]*180/M_PI;
-    // Eul_trg.y = eul_trg[1]*180/M_PI;
-    // Eul_trg.z = eul_trg[2]*180/M_PI;
+    Pose_P_B_trg = ctrl_msg.Pose_P_B_trg;
+    Twist_B_P_trg = ctrl_msg.Twist_B_P_trg;
 
-    // // OPTICAL FLOW
-    // Tau_trg = ctrl_msg.Tau_trg;
-    // Theta_x_trg = ctrl_msg.Theta_x_trg;
-    // Theta_y_trg = ctrl_msg.Theta_y_trg;
-    // D_perp_trg = ctrl_msg.D_perp_trg;
+    // PROCESS EULER ANGLES
+    float quat_trg[4] = {
+        (float)ctrl_msg.Pose_B_O_trg.orientation.x,
+        (float)ctrl_msg.Pose_B_O_trg.orientation.y,
+        (float)ctrl_msg.Pose_B_O_trg.orientation.z,
+        (float)ctrl_msg.Pose_B_O_trg.orientation.w
+    };
+    float eul_trg[3];
+    quat2euler(quat_trg,eul_trg);
+    Eul_B_O_trg.x = eul_trg[0]*180/M_PI;
+    Eul_B_O_trg.y = eul_trg[1]*180/M_PI;
+    Eul_B_O_trg.z = eul_trg[2]*180/M_PI;
 
-    // // CONTROLLER ACTIONS
-    // FM_trg = ctrl_msg.FM_Rot;
+    // OPTICAL FLOW
+    Optical_Flow_trg = ctrl_msg.Optical_Flow_trg;
 
-    // // NEURAL NETWORK DATA
-    // Policy_Trg_Action_trg = ctrl_msg.Policy_Trg_Action_trg;
-    // Policy_Rot_Action_trg = ctrl_msg.Policy_Rot_Action_trg;
+    Theta_x_trg = Optical_Flow_trg.x;
+    Theta_y_trg = Optical_Flow_trg.y;
+    Tau_trg = Optical_Flow_trg.z;
+    D_perp_trg = ctrl_msg.Pose_P_B_trg.position.z;
+
+
+    // NEURAL NETWORK DATA
+    Policy_Trg_Action_trg = ctrl_msg.Policy_Trg_Action_trg;
+    Policy_Rot_Action_trg = ctrl_msg.Policy_Rot_Action_trg;
 
 }
 
 void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg)
 {
-    // Motorstop_Flag = ctrl_msg.Motorstop_Flag;
-    // Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl;
-    // Vel_Ctrl_Flag = ctrl_msg.Vel_Ctrl;
-    // Traj_Active_Flag = ctrl_msg.Traj_Active;
-    // Tumble_Detection = ctrl_msg.Tumble_Detection;
-    // Tumbled_Flag = ctrl_msg.Tumbled_Flag;
-    // AngAccel_flag = ctrl_msg.AngAccel_flag;
-    // Policy_Armed_Flag = ctrl_msg.Policy_Armed;
+    Tumbled_Flag = ctrl_msg.Tumbled_Flag;
+    TumbleDetect_Flag = ctrl_msg.TumbleDetect_Flag;
+    MotorStop_Flag = ctrl_msg.MotorStop_Flag;
+    AngAccel_Flag = ctrl_msg.AngAccel_Flag;
+    SafeMode_Flag = ctrl_msg.SafeMode_Flag;
+    CustomThrust_Flag = ctrl_msg.CustomThrust_Flag;
+    CustomPWM_Flag = ctrl_msg.CustomPWM_Flag;
+    
+    Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl_Flag;
+    Vel_Ctrl_Flag = ctrl_msg.Vel_Ctrl_Flag;
+    Policy_Armed_Flag = ctrl_msg.Policy_Armed_Flag;
+    CamActive_Flag = ctrl_msg.CamActive_Flag;
 }
 
 
@@ -184,9 +191,9 @@ void SAR_DataConverter::cf1_FullState_Callback(const sar_msgs::GenericLogData::C
     // // PROCESS EULER ANGLES
     // float eul[3];
     // quat2euler(quat,eul);
-    // Eul.x = eul[0]*180/M_PI;
-    // Eul.y = eul[1]*180/M_PI;
-    // Eul.z = eul[2]*180/M_PI;
+    // Eul_B_O.x = eul[0]*180/M_PI;
+    // Eul_B_O.y = eul[1]*180/M_PI;
+    // Eul_B_O.z = eul[2]*180/M_PI;
 
     // // ANGULAR VELOCITY
     // float wxy_arr[2];
@@ -216,9 +223,9 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     // float Theta_xy_est_arr[2];
     // decompressXY(log_msg->values[3],Theta_xy_est_arr);
     
-    // Theta_x_est = Theta_xy_est_arr[0];
-    // Theta_y_est = Theta_xy_est_arr[1];
-    // Tau_est = log_msg->values[4]*1e-3;
+    // Theta_x_Cam = Theta_xy_est_arr[0];
+    // Theta_y_Cam = Theta_xy_est_arr[1];
+    // Tau_Cam = log_msg->values[4]*1e-3;
 
 
     // // POLICY ACTIONS
@@ -228,8 +235,8 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     // Policy_Rot_Action = Policy_Action_arr[1];
 
     // // TRIGGER FLAG
-    // Trg_flag = log_msg->values[6];
-    // if(Trg_flag == true && OnceFlag_Trg == false)
+    // Trg_Flag = log_msg->values[6];
+    // if(Trg_Flag == true && OnceFlag_Trg == false)
     // {
     //     Time_trg = ros::Time::now();
     //     OnceFlag_Trg = true;
@@ -350,12 +357,12 @@ void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::Const
 
     // Pos_Ctrl_Flag = (bool)log_msg->values[0];
     // Vel_Ctrl_Flag = (bool)log_msg->values[1];
-    // Motorstop_Flag = (bool)log_msg->values[2];
-    // AngAccel_flag = (bool)log_msg->values[3];
+    // MotorStop_Flag = (bool)log_msg->values[2];
+    // AngAccel_Flag = (bool)log_msg->values[3];
     // Tumbled_Flag = (bool)log_msg->values[4];
-    // Tumble_Detection = (bool)log_msg->values[5];
+    // TumbleDetect_Flag = (bool)log_msg->values[5];
     // Policy_Armed_Flag = (bool)log_msg->values[6];
-    // isCamActive = (bool)log_msg->values[7];
+    // CamActive_Flag = (bool)log_msg->values[7];
 
     // // V_battery = log_msg->values[0];
 }

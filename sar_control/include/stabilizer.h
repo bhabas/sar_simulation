@@ -258,13 +258,18 @@ void Controller::loadParams()
 
 void Controller::publishCtrlDebug()
 {
+    CtrlDebug_msg.Tumbled_Flag = Tumbled_Flag;
+    CtrlDebug_msg.TumbleDetect_Flag = TumbleDetect_Flag;
+    CtrlDebug_msg.MotorStop_Flag = MotorStop_Flag;
+    CtrlDebug_msg.AngAccel_Flag = AngAccel_Flag; 
+    CtrlDebug_msg.SafeMode_Flag = SafeMode_Flag;
+    CtrlDebug_msg.CustomThrust_Flag = CustomThrust_Flag;
+    CtrlDebug_msg.CustomPWM_Flag = CustomPWM_Flag;
+
     CtrlDebug_msg.Pos_Ctrl_Flag = (bool)kp_xf;
     CtrlDebug_msg.Vel_Ctrl_Flag = (bool)kd_xf;
-    CtrlDebug_msg.TumbleDetect_Flag = TumbleDetect_Flag;
-    CtrlDebug_msg.Tumbled_Flag = Tumbled_Flag;
-    CtrlDebug_msg.AngAccel_Flag = AngAccel_Flag; 
-    CtrlDebug_msg.MotorStop_Flag = MotorStop_Flag;
     CtrlDebug_msg.Policy_Armed_Flag = Policy_Armed_Flag; 
+    CtrlDebug_msg.CamActive_Flag = CamActive_Flag;
 
     CTRL_Debug_Publisher.publish(CtrlDebug_msg);
 }
@@ -364,8 +369,6 @@ void Controller::publishCtrlData()
     //  STATES AT POLICY TRIGGER
     // ==========================
     CtrlData_msg.Trg_Flag = Trg_Flag;
-    // CtrlData_msg.Pose_B_O_trg.header.stamp = t_Rot;     
-
 
     // STATE DATA WRT ORIGIN
     CtrlData_msg.Pose_B_O_trg.position.x = Pos_B_O_trg.x;
@@ -418,7 +421,6 @@ void Controller::publishCtrlData()
     //      STATES AT IMPACT
     // ==========================
     CtrlData_msg.Impact_Flag_Onboard = Impact_Flag_Onboard;
-    // CtrlData_msg.Pose_B_O_impact.header.stamp = t_impact;     
     CtrlData_msg.Accel_B_O_Mag_impact = Accel_B_O_Mag_impact;
 
     CtrlData_msg.Pose_B_O_impact.position.x = Pos_B_O_impact.x;

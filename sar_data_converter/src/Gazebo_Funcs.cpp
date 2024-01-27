@@ -81,14 +81,14 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
         }
 
         // LOCK IN STATE DATA WHEN INITIAL IMPACT DETECTED
-        if (Impact_flag == false && (BodyContact_flag == true || LegContact_flag == true))
+        if (Impact_Flag_Ext == false && (BodyContact_flag == true || LegContact_flag == true))
         {
-            Impact_flag = true;
+            Impact_Flag_Ext = true;
 
             // // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
             // Time_impact = ros::Time::now();
-            // Pose_impact = Pose_impact_buff.front();
-            // Twist_impact = Twist_impact_buff.front();
+            // Pose_impact = Pose_B_O_impact_buff.front();
+            // Twist_impact = Twist_P_B_impact_buff.front();
 
             // // PROCESS EULER ANGLES AT TIME OF IMPACT
             // float quat_impact[4] = {
@@ -184,7 +184,7 @@ void SAR_DataConverter::checkSlowdown()
         // }
 
         // // IF IMPACTED LANDING SURFACE OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
-        // if (Impact_flag == true && SLOWDOWN_TYPE == 1)
+        // if (Impact_Flag_Ext == true && SLOWDOWN_TYPE == 1)
         // {
         //     SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
         //     SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)

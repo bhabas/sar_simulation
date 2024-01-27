@@ -38,7 +38,7 @@ void SAR_DataConverter::Publish_StateData()
     // StateData_msg.Twist = Twist;
     // StateData_msg.Accel = Accel;
 
-    // StateData_msg.Eul = Eul;
+    // StateData_msg.Eul_B_O = Eul_B_O;
 
 
 
@@ -57,9 +57,9 @@ void SAR_DataConverter::Publish_StateData()
     // StateData_msg.V_angle_rel = V_angle_rel;
 
     // // OPTICAL FLOW STATE ESTIMATES
-    // StateData_msg.Tau_est = Tau_est;
-    // StateData_msg.Theta_x_est = Theta_x_est;
-    // StateData_msg.Theta_y_est = Theta_y_est;
+    // StateData_msg.Tau_Cam = Tau_Cam;
+    // StateData_msg.Theta_x_Cam = Theta_x_Cam;
+    // StateData_msg.Theta_y_Cam = Theta_y_Cam;
 
     // // STATE SETPOINTS
     // StateData_msg.x_d = x_d;
@@ -86,7 +86,7 @@ void SAR_DataConverter::Publish_TriggerData()
     // ros::Duration Time_delta(Time_trg-Time_start);
     // TriggerData_msg.header.stamp.sec = Time_delta.sec;
     // TriggerData_msg.header.stamp.nsec = Time_delta.nsec;
-    // TriggerData_msg.Trg_flag = Trg_flag;
+    // TriggerData_msg.Trg_Flag = Trg_Flag;
 
 
     // // CARTESIAN SPACE DATA
@@ -122,7 +122,7 @@ void SAR_DataConverter::Publish_ImpactData()
     // ImpactData_msg.header.stamp.sec = Time_delta.sec;
     // ImpactData_msg.header.stamp.nsec = Time_delta.nsec;
 
-    // ImpactData_msg.Impact_flag = Impact_flag;
+    // ImpactData_msg.Impact_Flag_Ext = Impact_Flag_Ext;
     // ImpactData_msg.BodyContact_flag = BodyContact_flag;
     // ImpactData_msg.LegContact_flag = LegContact_flag;
 
