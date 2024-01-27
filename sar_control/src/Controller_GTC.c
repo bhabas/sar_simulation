@@ -125,6 +125,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         float time_delta = (tick-prev_tick)/1000.0f;
 
+        // CALC STATES WRT ORIGIN
         Pos_B_O = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
         Vel_B_O = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
         Accel_B_O = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
@@ -143,6 +144,15 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         state->attitudeQuaternion.y,
                         state->attitudeQuaternion.z,
                         state->attitudeQuaternion.w);
+
+        
+
+
+        // CALC STATES WRT PLANE
+        Pos_P_B = mvmul(R_WP,vsub(r_P_O,Pos_B_O)); 
+        Vel_B_P = mvmul(R_WP,Vel_B_O);
+        Vel_mag_B_P = vmag(Vel_B_P);
+        Vel_angle_B_P = atan2f(Vel_B_P.z,Vel_B_P.x)*Rad2Deg;
 
         // SAVE PREVIOUS VALUES
         Omega_B_O_prev = Omega_B_O;

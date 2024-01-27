@@ -114,9 +114,9 @@ extern struct vec b3;               // Current body z-axis in global coord.
 // =================================
 //     BODY WRT PLANE STATES
 // =================================
-extern struct vec Pos_B_P;         // Pos [m]
+extern struct vec Pos_P_B;         // Pos [m]
 extern struct vec Vel_B_P;         // Vel [m/s]
-extern struct quat Quat_B_P;       // Orientation
+extern struct quat Quat_P_B;       // Orientation
 extern struct vec Omega_B_P;       // Angular Rate [rad/s]
 
 // RELATIVE STATES
@@ -274,9 +274,9 @@ extern struct quat Quat_B_O_trg;   // Orientation
 extern struct vec Omega_B_O_trg;   // Angular Rate [rad/s]
 
 // BODY WRT PLANE STATES
-extern struct vec Pos_B_P_trg;     // Pos [m]
+extern struct vec Pos_P_B_trg;     // Pos [m]
 extern struct vec Vel_B_P_trg;     // Vel [m/s]
-extern struct quat Quat_B_P_trg;   // Orientation
+extern struct quat Quat_P_B_trg;   // Orientation
 extern struct vec Omega_B_P_trg;   // Angular Rate [rad/s]
 extern float D_perp_trg;                // Distance perp to plane [m]
 

@@ -6,7 +6,7 @@ geometry_msgs/Twist Twist_B_O
 geometry_msgs/Accel Accel_B_O
 float64 Accel_B_O_Mag
 
-geometry_msgs/Pose Pose_B_P
+geometry_msgs/Pose Pose_P_B
 geometry_msgs/Twist Twist_B_P
 float64 Vel_mag_B_P
 float64 Vel_angle_B_P
@@ -36,7 +36,7 @@ bool Trg_Flag
 geometry_msgs/Pose Pose_B_O_trg
 geometry_msgs/Twist Twist_B_O_trg
 
-geometry_msgs/Pose Pose_B_P_trg
+geometry_msgs/Pose Pose_P_B_trg
 geometry_msgs/Twist Twist_B_P_trg
 
 geometry_msgs/Vector3 Optical_Flow_trg
@@ -49,7 +49,7 @@ float64 Policy_Rot_Action_trg
 
 bool Impact_Flag_Onboard
 
-geometry_msgs/Pose Pose_B_P_impact
+geometry_msgs/Pose Pose_P_B_impact
 geometry_msgs/Twist Twist_B_P_impact
 
 

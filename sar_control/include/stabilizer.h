@@ -299,14 +299,14 @@ void Controller::publishCtrlData()
 
 
     // STATE DATA WRT PLANE
-    CtrlData_msg.Pose_B_P.position.x = Pos_B_P.x;
-    CtrlData_msg.Pose_B_P.position.y = Pos_B_P.y;
-    CtrlData_msg.Pose_B_P.position.z = Pos_B_P.z;
+    CtrlData_msg.Pose_P_B.position.x = Pos_P_B.x;
+    CtrlData_msg.Pose_P_B.position.y = Pos_P_B.y;
+    CtrlData_msg.Pose_P_B.position.z = Pos_P_B.z;
 
-    CtrlData_msg.Pose_B_P.orientation.x = Quat_B_P.x;
-    CtrlData_msg.Pose_B_P.orientation.y = Quat_B_P.y;
-    CtrlData_msg.Pose_B_P.orientation.z = Quat_B_P.z;
-    CtrlData_msg.Pose_B_P.orientation.w = Quat_B_P.w;
+    CtrlData_msg.Pose_P_B.orientation.x = Quat_P_B.x;
+    CtrlData_msg.Pose_P_B.orientation.y = Quat_P_B.y;
+    CtrlData_msg.Pose_P_B.orientation.z = Quat_P_B.z;
+    CtrlData_msg.Pose_P_B.orientation.w = Quat_P_B.w;
 
     CtrlData_msg.Twist_B_P.linear.x = Vel_B_P.x;
     CtrlData_msg.Twist_B_P.linear.y = Vel_B_P.y;
@@ -359,46 +359,80 @@ void Controller::publishCtrlData()
     // ==========================
     //  STATES AT POLICY TRIGGER
     // ==========================
-    // // CtrlData_msg.Trg_Flag = Trg_Flag;
-
-    // // // CtrlData_msg.Pose_trg.header.stamp = t_Rot;             
-    // // CtrlData_msg.Pose_trg.position.x = Pos_B_O_trg.x;
-    // // CtrlData_msg.Pose_trg.position.y = Pos_B_O_trg.y;
-    // // CtrlData_msg.Pose_trg.position.z = Pos_B_O_trg.z;
-
-    // // CtrlData_msg.Pose_trg.orientation.x = Quat_B_O_trg.x;
-    // // CtrlData_msg.Pose_trg.orientation.y = Quat_B_O_trg.y;
-    // // CtrlData_msg.Pose_trg.orientation.z = Quat_B_O_trg.z;
-    // // CtrlData_msg.Pose_trg.orientation.w = Quat_B_O_trg.w;
-
-    // // CtrlData_msg.Twist_trg.linear.x = Vel_B_O_trg.x;
-    // // CtrlData_msg.Twist_trg.linear.y = Vel_B_O_trg.y;
-    // // CtrlData_msg.Twist_trg.linear.z = Vel_B_O_trg.z;
-
-    // // CtrlData_msg.Twist_trg.angular.x = Omega_B_O_trg.x;
-    // // CtrlData_msg.Twist_trg.angular.y = Omega_B_O_trg.y;
-    // // CtrlData_msg.Twist_trg.angular.z = Omega_B_O_trg.z;
+    CtrlData_msg.Trg_Flag = Trg_Flag;
+    // CtrlData_msg.Pose_trg.header.stamp = t_Rot;     
 
 
-    // // CtrlData_msg.Accel_trg.linear.x = stateAcc_B_O_trg.x;
-    // // CtrlData_msg.Accel_trg.linear.y = stateAcc_B_O_trg.y;
-    // // CtrlData_msg.Accel_trg.linear.z = stateAcc_B_O_trg.z;
+    // STATE DATA WRT ORIGIN
+    CtrlData_msg.Pose_B_O_trg.position.x = Pos_B_O_trg.x;
+    CtrlData_msg.Pose_B_O_trg.position.y = Pos_B_O_trg.y;
+    CtrlData_msg.Pose_B_O_trg.position.z = Pos_B_O_trg.z;
 
-    // // CtrlData_msg.Accel_trg.angular.x = 0;
-    // // CtrlData_msg.Accel_trg.angular.y = 0;
-    // // CtrlData_msg.Accel_trg.angular.z = 0;
+    CtrlData_msg.Pose_B_O_trg.orientation.x = Quat_B_O_trg.x;
+    CtrlData_msg.Pose_B_O_trg.orientation.y = Quat_B_O_trg.y;
+    CtrlData_msg.Pose_B_O_trg.orientation.z = Quat_B_O_trg.z;
+    CtrlData_msg.Pose_B_O_trg.orientation.w = Quat_B_O_trg.w;
 
-    // // // OPTICAL FLOW DATA (TRIGGER)
-    // // CtrlData_msg.Tau_trg = Tau_trg;
-    // // CtrlData_msg.Theta_x_trg = Theta_x_trg;
-    // // CtrlData_msg.Theta_y_trg = Theta_y_trg;
-    // // CtrlData_msg.D_perp_trg = D_perp_trg;
+    CtrlData_msg.Twist_B_O_trg.linear.x = Vel_B_O_trg.x;
+    CtrlData_msg.Twist_B_O_trg.linear.y = Vel_B_O_trg.y;
+    CtrlData_msg.Twist_B_O_trg.linear.z = Vel_B_O_trg.z;
 
-    // // // POLICY ACTIONS (TRIGGER)
-    // // CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    // // CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
+    CtrlData_msg.Twist_B_O_trg.angular.x = Omega_B_O_trg.x;
+    CtrlData_msg.Twist_B_O_trg.angular.y = Omega_B_O_trg.y;
+    CtrlData_msg.Twist_B_O_trg.angular.z = Omega_B_O_trg.z;
 
-    // // // CONTROL ACTIONS (TRIGGER)
+    // STATE DATA WRT PLANE
+    CtrlData_msg.Pose_P_B_trg.position.x = Pos_P_B_trg.x;
+    CtrlData_msg.Pose_P_B_trg.position.y = Pos_P_B_trg.y;
+    CtrlData_msg.Pose_P_B_trg.position.z = Pos_P_B_trg.z;
+
+    CtrlData_msg.Pose_P_B_trg.orientation.x = Quat_P_B_trg.x;
+    CtrlData_msg.Pose_P_B_trg.orientation.y = Quat_P_B_trg.y;
+    CtrlData_msg.Pose_P_B_trg.orientation.z = Quat_P_B_trg.z;
+    CtrlData_msg.Pose_P_B_trg.orientation.w = Quat_P_B_trg.w;
+
+    CtrlData_msg.Twist_B_P_trg.linear.x = Vel_B_P_trg.x;
+    CtrlData_msg.Twist_B_P_trg.linear.y = Vel_B_P_trg.y;    
+    CtrlData_msg.Twist_B_P_trg.linear.z = Vel_B_P_trg.z;
+
+    CtrlData_msg.Twist_B_P_trg.angular.x = Omega_B_P_trg.x;
+    CtrlData_msg.Twist_B_P_trg.angular.y = Omega_B_P_trg.y;
+    CtrlData_msg.Twist_B_P_trg.angular.z = Omega_B_P_trg.z;
+
+
+    // OPTICAL FLOW DATA (TRIGGER)
+    CtrlData_msg.Optical_Flow_trg.x = Theta_x_trg;
+    CtrlData_msg.Optical_Flow_trg.y = Theta_y_trg;
+    CtrlData_msg.Optical_Flow_trg.z = Tau_trg;
+
+
+    // POLICY ACTIONS (TRIGGER)
+    CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
+    CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
+
+    // ==========================
+    //      STATES AT IMPACT
+    // ==========================
+    // CtrlData_msg.Impact_Flag_Onboard = Impact_Flag_Onboard;
+
+    // CtrlData_msg.Pose_P_B_impact.position.x = Pos_P_B_impact.x;
+    // CtrlData_msg.Pose_P_B_impact.position.y = Pos_P_B_impact.y;
+    // CtrlData_msg.Pose_P_B_impact.position.z = Pos_P_B_impact.z;
+
+    // CtrlData_msg.Pose_P_B_impact.orientation.x = Quat_P_B_impact.x;
+    // CtrlData_msg.Pose_P_B_impact.orientation.y = Quat_P_B_impact.y;
+    // CtrlData_msg.Pose_P_B_impact.orientation.z = Quat_P_B_impact.z;
+    // CtrlData_msg.Pose_P_B_impact.orientation.w = Quat_P_B_impact.w;
+
+    // CtrlData_msg.Twist_B_P_impact.linear.x = Vel_B_P_impact.x;
+    // CtrlData_msg.Twist_B_P_impact.linear.y = Vel_B_P_impact.y;
+    // CtrlData_msg.Twist_B_P_impact.linear.z = Vel_B_P_impact.z;
+
+    // CtrlData_msg.Twist_B_P_impact.angular.x = Omega_B_P_impact.x;
+    // CtrlData_msg.Twist_B_P_impact.angular.y = Omega_B_P_impact.y;
+    // CtrlData_msg.Twist_B_P_impact.angular.z = Omega_B_P_impact.z;
+
+
 
     
     CTRL_Data_Publisher.publish(CtrlData_msg);

@@ -89,9 +89,9 @@ struct vec b3 = {0.0f,0.0f,1.0f};                   // Current body z-axis in gl
 // =================================
 //     BODY WRT PLANE STATES
 // =================================
-struct vec Pos_B_P = {0.0f,0.0f,0.0f};         // Pos [m]
+struct vec Pos_P_B = {0.0f,0.0f,0.0f};         // Pos [m]
 struct vec Vel_B_P = {0.0f,0.0f,0.0f};         // Vel [m/s]
-struct quat Quat_B_P = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+struct quat Quat_P_B = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec Omega_B_P = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
 // RELATIVE STATES
@@ -263,9 +263,9 @@ struct vec Omega_B_O_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
 
 // BODY WRT PLANE STATES
-struct vec Pos_B_P_trg = {0.0f,0.0f,0.0f};         // Pos [m]
+struct vec Pos_P_B_trg = {0.0f,0.0f,0.0f};         // Pos [m]
 struct vec Vel_B_P_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
-struct quat Quat_B_P_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+struct quat Quat_P_B_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec Omega_B_P_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 float D_perp_trg = 0.0f;                                // Distance perp to plane [m]
 
@@ -746,19 +746,8 @@ bool updateOpticalFlowEst()
 
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors)
 {
-    // UPDATE POS AND VEL
     // TODO: ADD CAMERA OFFSETS SO THESE NUMBERS MATCH CAMERA ESTIMATION
-    Pos_B_O = mkvec(state->position.x, state->position.y, state->position.z);
-    Vel_B_O = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
-
-    // CALC DISPLACEMENT FROM PLANE CENTER
-    Pos_B_P = mvmul(R_WP,vsub(r_P_O,Pos_B_O)); 
-    Vel_B_P = mvmul(R_WP,Vel_B_O);
-    D_perp = mvmul(R_WP,Pos_B_P).z;
-
-    Vel_mag_B_P = vmag(Vel_B_P);
-    Vel_angle_B_P = atan2f(Vel_B_P.z,Vel_B_P.x)*Rad2Deg;
-
+    D_perp = Pos_P_B.z;
     if (fabsf(D_perp) < 0.02f)
     {
         D_perp = 0.0f;
