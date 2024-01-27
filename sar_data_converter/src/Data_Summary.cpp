@@ -127,13 +127,15 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Time_impact_Ext.data.nsec = Time_delta_Ext.nsec;
 
     ImpactData_msg.Impact_Flag_Ext = Impact_Flag_Ext;
-    ImpactData_msg.BodyContact_Flag = BodyContact_flag;
-    ImpactData_msg.LegContact_Flag = LegContact_flag;
+    ImpactData_msg.BodyContact_Flag = BodyContact_Flag;
+    ImpactData_msg.LegContact_Flag = LegContact_Flag;
 
     ImpactData_msg.Pose_B_O_impact_Ext = Pose_B_O_impact_Ext;
+    ImpactData_msg.Eul_B_O_impact_Ext = Eul_B_O_impact_Ext;
+    
     ImpactData_msg.Twist_B_P_impact_Ext = Twist_B_P_impact_Ext;
     ImpactData_msg.Eul_P_B_impact_Ext = Eul_P_B_impact_Ext;
-    ImpactData_msg.Rot_Sum_Ext = Rot_Sum_Ext;
+    ImpactData_msg.Rot_Sum_impact_Ext = Rot_Sum_impact_Ext;
 
     // IMPACT FORCES
     ImpactData_msg.Force_impact.x = Force_Impact_x;

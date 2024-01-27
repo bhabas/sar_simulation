@@ -517,7 +517,7 @@ class SAR_Base_Interface():
                                             ImpactData_msg.Eul_P_B_impact_Ext.y,
                                             ImpactData_msg.Eul_P_B_impact_Ext.z],3)
             
-            self.Rot_Sum_Ext = np.round(ImpactData_msg.Rot_Sum_Ext,3)
+            self.Rot_Sum_impact_Ext = np.round(ImpactData_msg.Rot_Sum_impact_Ext,3)
 
         
         ## IMPACT FORCES

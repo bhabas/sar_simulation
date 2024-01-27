@@ -22,7 +22,7 @@ geometry_msgs/Vector3 Eul_B_O_impact_Ext
 
 geometry_msgs/Twist Twist_B_P_impact_Ext
 geometry_msgs/Vector3 Eul_P_B_impact_Ext
-float64 Rot_Sum_Ext
+float64 Rot_Sum_impact_Ext
 
 ## IMPACT FORCES
 geometry_msgs/Vector3 Force_impact

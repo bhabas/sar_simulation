@@ -77,7 +77,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Policy_Rot_Action = ctrl_msg.Policy_Rot_Action;
 
     Pose_B_O_impact_buff.push_back(Pose_B_O);
+    Eul_B_O_impact_buff.push_back(Eul_B_O);
+
     Twist_P_B_impact_buff.push_back(Twist_B_P);
+    Eul_P_B_impact_buff.push_back(Eul_P_B);
 
 
     // =================
@@ -92,10 +95,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     }
 
-    if(ctrl_msg.Trg_Flag == true && Impact_Flag_Ext == false)
+    if(ctrl_msg.Trg_Flag == true)
     {
         double Time_delta = Time.toSec()-Time_prev.toSec();
-        Rot_Sum_Ext += (Time_delta*Twist_B_O.angular.y)*180/M_PI;
+        Rot_Sum += (Time_delta*Twist_B_O.angular.y)*180/M_PI;
         // printf("Val: %f\n",Rot_Sum_Ext);
     }
     
@@ -123,6 +126,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // STATES WRT PLANE
     Pose_P_B_trg = ctrl_msg.Pose_P_B_trg;
+    Pose_P_B_trg.orientation.x = NAN; // Quaternion is not used
+    Pose_P_B_trg.orientation.y = NAN;
+    Pose_P_B_trg.orientation.z = NAN;
+    Pose_P_B_trg.orientation.w = NAN;
     Twist_B_P_trg = ctrl_msg.Twist_B_P_trg;
 
     Eul_P_B_trg.x = NAN;

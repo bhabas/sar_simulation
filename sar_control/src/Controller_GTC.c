@@ -159,6 +159,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         Vel_B_P = mvmul(R_WP,Vel_B_O);
         Vel_mag_B_P = vmag(Vel_B_P);
         Vel_angle_B_P = atan2f(Vel_B_P.z,Vel_B_P.x)*Rad2Deg;
+        Omega_B_P = Omega_B_O;
+
 
 
         // if (Accel_B_O_Mag > 10.0f && Impact_Flag_OB == false)

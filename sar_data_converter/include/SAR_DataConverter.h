@@ -96,7 +96,7 @@ class SAR_DataConverter {
 
             // INITIALIZE SAR_DC THREADS
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
-            ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+            // ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
             // Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
 
 
@@ -332,7 +332,7 @@ class SAR_DataConverter {
 
         double Policy_Trg_Action = NAN;
         double Policy_Rot_Action = NAN;
-        double Rot_Sum_Ext = NAN;
+        double Rot_Sum = NAN;
 
         // ==========================
         //  STATES AT POLICY TRIGGER
@@ -385,9 +385,10 @@ class SAR_DataConverter {
 
         geometry_msgs::Twist Twist_B_P_impact_Ext;
         geometry_msgs::Vector3 Eul_P_B_impact_Ext;
+        float Rot_Sum_impact_Ext = NAN;
 
-        bool BodyContact_flag = false;
-        bool LegContact_flag = false;
+        bool BodyContact_Flag = false;
+        bool LegContact_Flag = false;
         bool OnceFlag_Impact = false;
         std::string BodyCollision_str = "SAR_Body::Body_Collision_";
         std::string LegCollision_str = "Leg_Collision_";
@@ -405,8 +406,10 @@ class SAR_DataConverter {
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
         boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {1};
-        boost::circular_buffer<geometry_msgs::Twist> Twist_P_B_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Vector3> Eul_B_O_impact_buff {1};
 
+        boost::circular_buffer<geometry_msgs::Twist> Twist_P_B_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Vector3> Eul_P_B_impact_buff {1};
 
         // ==================
         //     MISC DATA
@@ -593,15 +596,15 @@ inline void SAR_DataConverter::resetImpactData()
     Time_impact_Ext.sec = 0.0;
     Time_impact_Ext.nsec = 0.0;
 
-    BodyContact_flag = false;
-    LegContact_flag = false;
+    BodyContact_Flag = false;
+    LegContact_Flag = false;
 
     Pose_B_O_impact_Ext = geometry_msgs::Pose();
     Eul_B_O_impact_Ext = geometry_msgs::Vector3();
 
     Twist_B_P_impact_Ext = geometry_msgs::Twist();
     Eul_P_B_impact_Ext = geometry_msgs::Vector3();
-    Rot_Sum_Ext = NAN;
+    Rot_Sum = NAN;
 
     // IMPACT FORCE DATA
     Force_impact = geometry_msgs::Vector3();

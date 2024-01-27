@@ -224,7 +224,7 @@ void SAR_DataConverter::append_CSV_impact()
     // fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.linear.x,Twist_impact.linear.y,Twist_impact.linear.z);      // vx,vy,vz
     // fprintf(fPtr,"--,--,--,");                                                                              // D_perp,Tau,Tau_Cam,
     // fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);   // Theta_x,Theta_x_Cam,Theta_y,Theta_y_Cam,
-    // fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(Impact_Flag_Ext));        // Trg_Flag,Impact_Flag_Ext
+    // fprintf(fPtr,"%s,%s,",formatBool(BodyContact_Flag),formatBool(Impact_Flag_Ext));        // Trg_Flag,Impact_Flag_Ext
 
 
     // // MISC STATE DATA

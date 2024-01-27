@@ -67,40 +67,31 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
     for (int i = 0; i < msg.states.size(); i++)
     {
         // IF CONTACT MSG MATCHES BODY COLLISION STR THEN TURN ON BODY_CONTACT_FLAG
-        if (msg.states[i].collision1_name.find(BodyCollision_str) != std::string::npos && BodyContact_flag == false)
+        if (msg.states[i].collision1_name.find(BodyCollision_str) != std::string::npos && BodyContact_Flag == false)
         {
-            BodyContact_flag = true;
+            BodyContact_Flag = true;
             // std::cout << "Body Contact: " << msg.states[i].collision1_name << std::endl;
         }
 
         // IF CONTACT MSG MATCHES LEG COLLISION STR THEN TURN ON LEG_CONTACT_FLAG
-        if (msg.states[i].collision1_name.find(LegCollision_str) != std::string::npos && LegContact_flag == false)
+        if (msg.states[i].collision1_name.find(LegCollision_str) != std::string::npos && LegContact_Flag == false)
         {
-            LegContact_flag = true;
+            LegContact_Flag = true;
             // std::cout << "Leg Contact: " << msg.states[i].collision1_name << std::endl;
         }
 
         // LOCK IN STATE DATA WHEN INITIAL IMPACT DETECTED
-        if (Impact_Flag_Ext == false && (BodyContact_flag == true || LegContact_flag == true))
+        if (Impact_Flag_Ext == false && (BodyContact_Flag == true || LegContact_Flag == true))
         {
             Impact_Flag_Ext = true;
 
-            // // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
-            // Time_impact = ros::Time::now();
-            // Pose_impact = Pose_B_O_impact_buff.front();
-            // Twist_impact = Twist_P_B_impact_buff.front();
-
-            // // PROCESS EULER ANGLES AT TIME OF IMPACT
-            // float quat_impact[4] = {
-            //     (float)Pose_impact.orientation.x,
-            //     (float)Pose_impact.orientation.y,
-            //     (float)Pose_impact.orientation.z,
-            //     (float)Pose_impact.orientation.w};
-            // float eul_impact[3];
-            // quat2euler(quat_impact, eul_impact);
-            // Eul_impact.x = eul_impact[0] * 180 / M_PI;
-            // Eul_impact.y = eul_impact[1] * 180 / M_PI;
-            // Eul_impact.z = eul_impact[2] * 180 / M_PI;
+            // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
+            Time_impact_Ext = ros::Time::now();
+            Pose_B_O_impact_Ext = Pose_B_O_impact_buff.front();
+            Eul_B_O_impact_Ext = Eul_B_O_impact_buff.front();
+            Twist_B_P_impact_Ext = Twist_P_B_impact_buff.front();
+            Eul_P_B_impact_Ext = Eul_P_B_impact_buff.front();
+            Rot_Sum_impact_Ext = Rot_Sum;
         }
 
     }
@@ -175,24 +166,24 @@ void SAR_DataConverter::checkSlowdown()
     if (LANDING_SLOWDOWN_FLAG == true)
     {
 
-        // // WHEN CLOSE TO THE LANDING SURFACE REDUCE SIM SPEED
-        // if (D_perp <= 0.5 && SLOWDOWN_TYPE == 0)
-        // {
-        //     // std::cout << D_perp << std::endl;
-        //     SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
-        //     SLOWDOWN_TYPE = 1;
-        // }
+        // WHEN CLOSE TO THE LANDING SURFACE REDUCE SIM SPEED
+        if (D_perp <= 0.5 && SLOWDOWN_TYPE == 0)
+        {
+            // std::cout << D_perp << std::endl;
+            SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
+            SLOWDOWN_TYPE = 1;
+        }
 
-        // // IF IMPACTED LANDING SURFACE OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
-        // if (Impact_Flag_Ext == true && SLOWDOWN_TYPE == 1)
-        // {
-        //     SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
-        //     SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)
-        // }
-        // else if (V_rel.z <= -0.5 && SLOWDOWN_TYPE == 1)
-        // {
-        //     SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
-        //     SLOWDOWN_TYPE = 2;
-        // }
+        // IF IMPACTED LANDING SURFACE OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
+        if (Impact_Flag_Ext == true && SLOWDOWN_TYPE == 1)
+        {
+            SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+            SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)
+        }
+        else if (Twist_B_P.linear.z <= -0.5 && SLOWDOWN_TYPE == 1)
+        {
+            SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+            SLOWDOWN_TYPE = 2;
+        }
     }
 }

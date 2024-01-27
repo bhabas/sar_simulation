@@ -779,6 +779,7 @@ float firstOrderFilter(float newValue, float prevValue, float alpha) {
 
 void updateRotationMatrices()
 {
+    printf("Updating Rotation Matrices\n");
     struct vec temp_a = {cosf(radians(Plane_Angle_deg)),0.0f,-sinf(radians(Plane_Angle_deg))};
     struct vec temp_b = {0.0f,1.0f,0.0f};
     struct vec temp_c = {sinf(radians(Plane_Angle_deg)),0.0f, cosf(radians(Plane_Angle_deg))};
