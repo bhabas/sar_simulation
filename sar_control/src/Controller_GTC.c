@@ -260,10 +260,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Quat_P_B_trg = Quat_P_B;
                         Omega_B_P_trg = Omega_B_P;
 
+                        D_perp_trg = D_perp;
+                        Vel_mag_B_P_trg = Vel_mag_B_P;
+                        Vel_angle_B_P_trg = Vel_angle_B_P;
+
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
                         Theta_y_trg = Theta_y_trg;
-                        D_perp_trg = D_perp;
 
                         Policy_Trg_Action_trg = Policy_Trg_Action;
                         Policy_Rot_Action_trg = Policy_Rot_Action;
@@ -303,10 +306,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Quat_P_B_trg = Quat_P_B;
                         Omega_B_P_trg = Omega_B_P;
 
+                        D_perp_trg = D_perp;
+                        Vel_mag_B_P_trg = Vel_mag_B_P;
+                        Vel_angle_B_P_trg = Vel_angle_B_P;
+
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
                         Theta_y_trg = Theta_y_trg;
-                        D_perp_trg = D_perp;
 
                         Policy_Trg_Action_trg = Policy_Trg_Action;
                         Policy_Rot_Action_trg = Policy_Rot_Action;

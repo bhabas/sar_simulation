@@ -406,6 +406,11 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist_B_P_trg.angular.y = Omega_B_P_trg.y;
     CtrlData_msg.Twist_B_P_trg.angular.z = Omega_B_P_trg.z;
 
+    // PLANE RELATIVE STATES
+    CtrlData_msg.D_perp_trg = D_perp_trg;
+    CtrlData_msg.Vel_mag_B_P_trg = Vel_mag_B_P_trg;
+    CtrlData_msg.Vel_angle_B_P_trg = Vel_angle_B_P_trg;
+
 
     // OPTICAL FLOW DATA (TRIGGER)
     CtrlData_msg.Optical_Flow_trg.x = Theta_x_trg;

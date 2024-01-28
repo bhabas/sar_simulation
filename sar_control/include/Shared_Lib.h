@@ -278,7 +278,12 @@ extern struct vec Pos_P_B_trg;     // Pos [m]
 extern struct vec Vel_B_P_trg;     // Vel [m/s]
 extern struct quat Quat_P_B_trg;   // Orientation
 extern struct vec Omega_B_P_trg;   // Angular Rate [rad/s]
+
+// RELATIVE STATES
 extern float D_perp_trg;                // Distance perp to plane [m]
+extern float Vel_mag_B_P_trg;           // Velocity magnitude relative [m/s]
+extern float Vel_angle_B_P_trg;         // Velocity angle relative [deg]
+
 
 
 // OPTICAL FLOW STATES

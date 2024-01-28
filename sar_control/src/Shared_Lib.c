@@ -267,7 +267,9 @@ struct vec Pos_P_B_trg = {0.0f,0.0f,0.0f};         // Pos [m]
 struct vec Vel_B_P_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct quat Quat_P_B_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec Omega_B_P_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
-float D_perp_trg = 0.0f;                                // Distance perp to plane [m]
+float Vel_mag_B_P_trg = 0.0f;                      // Velocity magnitude relative [m/s]
+float Vel_angle_B_P_trg = 0.0f;                    // Velocity angle relative [deg]
+float D_perp_trg = 0.0f;                           // Distance perp to plane [m]
 
 
 // OPTICAL FLOW STATES

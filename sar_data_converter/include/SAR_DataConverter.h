@@ -350,11 +350,14 @@ class SAR_DataConverter {
         geometry_msgs::Twist Twist_B_P_trg;
         geometry_msgs::Vector3 Eul_P_B_trg;
 
+        double Vel_mag_B_P_trg = NAN;
+        double Vel_angle_B_P_trg = NAN;
+        double D_perp_trg = NAN;
+
         geometry_msgs::Vector3 Optical_Flow_trg;
         double Tau_trg = NAN;
         double Theta_x_trg = NAN;
         double Theta_y_trg = NAN;
-        double D_perp_trg = NAN;
 
         double Policy_Trg_Action_trg = NAN;
         double Policy_Rot_Action_trg = NAN;
