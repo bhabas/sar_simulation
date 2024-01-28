@@ -47,11 +47,13 @@ void SAR_DataConverter::Publish_StateData()
     StateData_msg.Vel_mag_B_P = Vel_mag_B_P;
     StateData_msg.Vel_angle_B_P = Vel_angle_B_P;
     StateData_msg.D_perp = D_perp;
+    StateData_msg.D_perp_CR = D_perp_CR;
 
 
     // OPTICAL FLOW STATES
     StateData_msg.Optical_Flow = Optical_Flow;
     StateData_msg.Optical_Flow_Cam = Optical_Flow_Cam;
+    StateData_msg.Tau_CR = Tau_CR;
 
     // STATE SETPOINTS
     StateData_msg.x_d = x_d;
@@ -95,10 +97,11 @@ void SAR_DataConverter::Publish_TriggerData()
     TriggerData_msg.Vel_mag_B_P_trg = Vel_mag_B_P_trg;
     TriggerData_msg.Vel_angle_B_P_trg = Vel_angle_B_P_trg;
     TriggerData_msg.D_perp_trg = D_perp_trg;
+    TriggerData_msg.D_perp_CR_trg = D_perp_CR_trg;
 
     // OPTICAL FLOW STATES
     TriggerData_msg.Optical_Flow_trg = Optical_Flow_trg;
-
+    TriggerData_msg.Tau_CR_trg = Tau_CR_trg;
 
     // POLICY ACTIONS
     TriggerData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;

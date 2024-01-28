@@ -11,10 +11,12 @@ geometry_msgs/Twist Twist_B_P
 float64 Vel_mag_B_P
 float64 Vel_angle_B_P
 float64 D_perp
+float64 D_perp_CR
 
 ## OPTICAL FLOW STATES
 geometry_msgs/Vector3 Optical_Flow
 geometry_msgs/Vector3 Optical_Flow_Cam
+float64 Tau_CR
 
 geometry_msgs/Vector3 x_d
 geometry_msgs/Vector3 v_d
@@ -41,8 +43,10 @@ geometry_msgs/Twist Twist_B_P_trg
 float64 Vel_mag_B_P_trg
 float64 Vel_angle_B_P_trg
 float64 D_perp_trg
+float64 D_perp_CR_trg
 
 geometry_msgs/Vector3 Optical_Flow_trg
+float64 Tau_CR_trg
 float64 Policy_Trg_Action_trg
 float64 Policy_Rot_Action_trg
 

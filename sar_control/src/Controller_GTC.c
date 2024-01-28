@@ -1,6 +1,6 @@
 #include "Controller_GTC.h"
 
-
+#define max(a,b) ((a) > (b) ? (a) : (b))
 
 
 void appMain() {
@@ -95,6 +95,9 @@ void controllerOutOfTreeReset() {
     Trg_Flag = false;
     onceFlag = false;
 
+    // UPDATE COLLISION RADIUS
+    Collision_Radius = max(L_eff,Forward_Reach);
+
 
     // RESET LOGGED TRIGGER VALUES
     Trg_Flag = false;
@@ -116,7 +119,6 @@ void controllerOutOfTreeReset() {
     Policy_Rot_Action_trg = 0.0f;
 
 
-    updateRotationMatrices();
 }
 
 
@@ -125,6 +127,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const state_t *state, 
                                             const uint32_t tick) 
 {
+    if (RATE_DO_EXECUTE(10, tick))
+    {
+        updateRotationMatrices();
+
+    }
+    
+
     // STATE UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
@@ -307,10 +316,12 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Omega_B_P_trg = Omega_B_P;
 
                         D_perp_trg = D_perp;
+                        D_perp_CR_trg = D_perp_CR;
                         Vel_mag_B_P_trg = Vel_mag_B_P;
                         Vel_angle_B_P_trg = Vel_angle_B_P;
 
                         Tau_trg = Tau;
+                        Tau_CR_trg = Tau_CR;
                         Theta_x_trg = Theta_x_trg;
                         Theta_y_trg = Theta_y_trg;
 
@@ -338,9 +349,12 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     Omega_B_P_trg = Omega_B_P;
 
                     Tau_trg = Tau;
+                    Tau_CR_trg = Tau_CR;
                     Theta_x_trg = Theta_x_trg;
                     Theta_y_trg = Theta_y_trg;
                     D_perp_trg = D_perp;
+                    D_perp_CR_trg = D_perp_CR;
+
 
                     Policy_Trg_Action_trg = Policy_Trg_Action;
                     Policy_Rot_Action_trg = Policy_Rot_Action;

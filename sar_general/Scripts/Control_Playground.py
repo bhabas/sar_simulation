@@ -126,8 +126,8 @@ def cmd_send(env,logName):
                 Vx_d = V_d*np.cos(phi_rad)
                 Vz_d = V_d*np.sin(phi_rad)
 
-                env.sendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
-                env.sendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
+                env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
+                env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
 
             elif action=='Impact_traj':
 
@@ -148,14 +148,14 @@ def cmd_send(env,logName):
                 str_input = env.userInput("Approve start position (y/n): ",str)
 
                 if str_input == 'y':
-                    env.sendCmd('P2P_traj',cmd_vals=[env.pos[0],x_0,env.TrajAcc_Max[0]],cmd_flag=0)
-                    env.sendCmd('P2P_traj',cmd_vals=[env.pos[1],0.0,env.TrajAcc_Max[1]],cmd_flag=1)
-                    env.sendCmd('P2P_traj',cmd_vals=[env.pos[2],z_0,env.TrajAcc_Max[2]],cmd_flag=2)
+                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],x_0,env.TrajAcc_Max[0]],cmd_flag=0)
+                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],0.0,env.TrajAcc_Max[1]],cmd_flag=1)
+                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],z_0,env.TrajAcc_Max[2]],cmd_flag=2)
 
                     str_input = env.userInput("Approve flight (y/n): ",str)
                     if str_input == 'y':
-                        env.sendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
-                        env.sendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
+                        env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
+                        env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
 
                 else:
                     print(f"Try again")
@@ -164,9 +164,9 @@ def cmd_send(env,logName):
             elif action=='P2P_traj':
                 ## GET INPUT VALUES
                 x_d = env.userInput("Desired position (x,y,z):",float)
-                env.sendCmd('P2P_traj',cmd_vals=[env.pos[0],x_d[0],env.TrajAcc_Max[0]],cmd_flag=0)
-                env.sendCmd('P2P_traj',cmd_vals=[env.pos[1],x_d[1],env.TrajAcc_Max[1]],cmd_flag=1)
-                env.sendCmd('P2P_traj',cmd_vals=[env.pos[2],x_d[2],env.TrajAcc_Max[2]],cmd_flag=2)
+                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],x_d[0],env.TrajAcc_Max[0]],cmd_flag=0)
+                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],x_d[1],env.TrajAcc_Max[1]],cmd_flag=1)
+                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],x_d[2],env.TrajAcc_Max[2]],cmd_flag=2)
 
 
             elif action=='GZ_StickyPads':
@@ -210,7 +210,7 @@ def cmd_send(env,logName):
             else:
                 print("Please try another command")
 
-        except (ValueError, KeyError):
+        except (ValueError, KeyError,TypeError):
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
             continue
 

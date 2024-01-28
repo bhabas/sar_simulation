@@ -15,12 +15,14 @@ geometry_msgs/Vector3 Eul_P_B
 float64 Vel_mag_B_P
 float64 Vel_angle_B_P
 float64 D_perp
+float64 D_perp_CR
 
 
 
 ## OPTICAL FLOW STATES
 geometry_msgs/Vector3 Optical_Flow
 geometry_msgs/Vector3 Optical_Flow_Cam
+float64 Tau_CR
 
 ## STATE SETPOINTS
 geometry_msgs/Vector3 x_d

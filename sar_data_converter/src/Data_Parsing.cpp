@@ -51,6 +51,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // STATES RELATIVE TO LANDING SURFACE
     D_perp = ctrl_msg.D_perp;
+    D_perp_CR = ctrl_msg.D_perp_CR;
 
     // OPTICAL FLOW STATES
     Optical_Flow = ctrl_msg.Optical_Flow;
@@ -59,6 +60,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Theta_x = Optical_Flow.x;
     Theta_y = Optical_Flow.y;
     Tau = Optical_Flow.z;
+    Tau_CR = ctrl_msg.Tau_CR;
 
     // ESTIMATED OPTICAL FLOW STATES
     Theta_x_Cam = Optical_Flow_Cam.x;
@@ -149,7 +151,9 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Theta_x_trg = Optical_Flow_trg.x;
     Theta_y_trg = Optical_Flow_trg.y;
     Tau_trg = Optical_Flow_trg.z;
+    Tau_CR_trg = ctrl_msg.Tau_CR_trg;
     D_perp_trg = ctrl_msg.Pose_P_B_trg.position.z;
+    D_perp_CR_trg = ctrl_msg.D_perp_CR_trg;
 
 
     // POLICY ACTION DATA

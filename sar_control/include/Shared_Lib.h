@@ -31,24 +31,31 @@ extern "C" {
 // =================================
 //    INITIAL SYSTEM PARAMETERS
 // =================================
-extern float m;             // [kg]
-extern float Ixx;           // [kg*m^2]
-extern float Iyy;           // [kg*m^2]
-extern float Izz;           // [kg*m^2]
-extern struct mat33 J;      // Rotational Inertia Matrix [kg*m^2]
+extern float m;                 // [kg]
+extern float Ixx;               // [kg*m^2]
+extern float Iyy;               // [kg*m^2]
+extern float Izz;               // [kg*m^2]
+extern struct mat33 J;          // Rotational Inertia Matrix [kg*m^2]
 
-extern float C_tf;          // Moment Coeff [Nm/N]
-extern float Thrust_max;         // Max thrust per motor [g]
+extern float C_tf;              // Moment Coeff [Nm/N]
+extern float Thrust_max;        // Max thrust per motor [g]
 
-extern float Prop_14_x;     // Front Prop Distance - x-axis [m]
-extern float Prop_14_y;     // Front Prop Distance - y-axis [m]
-extern float Prop_23_x;     // Rear  Prop Distance - x-axis [m]
-extern float Prop_23_y;     // Rear  Prop Distance - y-axis [m]
-
-extern float dt;            // Controller cycle time
+extern float dt;                // Controller cycle time
 extern uint32_t prev_tick;
 
 
+// =================================
+//       GEOMETRIC PARAMETERS
+// =================================
+
+extern float Prop_14_x;         // Front Prop Distance - x-axis [m]
+extern float Prop_14_y;         // Front Prop Distance - y-axis [m]
+extern float Prop_23_x;         // Rear  Prop Distance - x-axis [m]
+extern float Prop_23_y;         // Rear  Prop Distance - y-axis [m]
+
+extern float L_eff;             // Effective Leg Length [m]
+extern float Forward_Reach;     // Forward Reach [m]
+extern float Collision_Radius;  // Collision Radius [m]
 
 
 // =================================
@@ -120,9 +127,10 @@ extern struct quat Quat_P_B;       // Orientation
 extern struct vec Omega_B_P;       // Angular Rate [rad/s]
 
 // RELATIVE STATES
-extern float D_perp;                    // Distance perp to plane [m]
-extern float Vel_mag_B_P;                 // Velocity magnitude relative [m/s]
-extern float Vel_angle_B_P;               // Velocity angle relative [deg]
+extern float D_perp;               // Distance from body to plane [m]
+extern float D_perp_CR;            // Distance from CR to plane [m]
+extern float Vel_mag_B_P;          // Velocity magnitude relative [m/s]
+extern float Vel_angle_B_P;        // Velocity angle relative [deg]
 
 
 // =================================
@@ -190,6 +198,7 @@ extern float thrust_override[4];    // Motor thrusts [g]
 
 // OPTICAL FLOW STATES (GROUND TRUTH)
 extern float Tau;           // [s]
+extern float Tau_CR;        // [s]
 extern float Theta_x;       // [rad/s] 
 extern float Theta_y;       // [rad/s]
 
@@ -274,13 +283,14 @@ extern struct quat Quat_B_O_trg;   // Orientation
 extern struct vec Omega_B_O_trg;   // Angular Rate [rad/s]
 
 // BODY WRT PLANE STATES
-extern struct vec Pos_P_B_trg;     // Pos [m]
-extern struct vec Vel_B_P_trg;     // Vel [m/s]
-extern struct quat Quat_P_B_trg;   // Orientation
-extern struct vec Omega_B_P_trg;   // Angular Rate [rad/s]
+extern struct vec Pos_P_B_trg;              // Pos [m]
+extern struct vec Vel_B_P_trg;              // Vel [m/s]
+extern struct quat Quat_P_B_trg;            // Orientation
+extern struct vec Omega_B_P_trg;            // Angular Rate [rad/s]
 
 // RELATIVE STATES
 extern float D_perp_trg;                // Distance perp to plane [m]
+extern float D_perp_CR_trg;             // Distance from CR to plane [m]
 extern float Vel_mag_B_P_trg;           // Velocity magnitude relative [m/s]
 extern float Vel_angle_B_P_trg;         // Velocity angle relative [deg]
 
@@ -288,6 +298,7 @@ extern float Vel_angle_B_P_trg;         // Velocity angle relative [deg]
 
 // OPTICAL FLOW STATES
 extern float Tau_trg;                   // [rad/s]
+extern float Tau_CR_trg;                // [rad/s]
 extern float Theta_x_trg;               // [rad/s]
 extern float Theta_y_trg;               // [rad/s]
 

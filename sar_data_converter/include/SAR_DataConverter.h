@@ -308,11 +308,13 @@ class SAR_DataConverter {
         double Vel_mag_B_P = NAN;
         double Vel_angle_B_P = NAN;
         double D_perp = NAN;
+        double D_perp_CR = NAN;
 
         geometry_msgs::Vector3 Optical_Flow;
         geometry_msgs::Vector3 Optical_Flow_Cam;
 
         double Tau = NAN;
+        double Tau_CR = NAN;
         double Theta_x = NAN;
         double Theta_y = NAN;
 
@@ -353,9 +355,11 @@ class SAR_DataConverter {
         double Vel_mag_B_P_trg = NAN;
         double Vel_angle_B_P_trg = NAN;
         double D_perp_trg = NAN;
+        double D_perp_CR_trg = NAN;
 
         geometry_msgs::Vector3 Optical_Flow_trg;
         double Tau_trg = NAN;
+        double Tau_CR_trg = NAN;
         double Theta_x_trg = NAN;
         double Theta_y_trg = NAN;
 

@@ -202,6 +202,9 @@ void Controller::loadInitParams()
     ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Thrust_max",Thrust_max);
     ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/C_tf",C_tf);
 
+    // UPDAT GEOMETRIC PARAMETERS
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Forward_Reach",Forward_Reach);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/L_eff",L_eff);
 
     // UPDATE PROP DISTANCES
     ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Front",Prop_Front_Vec);
@@ -328,6 +331,7 @@ void Controller::publishCtrlData()
 
     // PLANE RELATIVE STATES
     CtrlData_msg.D_perp = D_perp;
+    CtrlData_msg.D_perp_CR = D_perp_CR;
     CtrlData_msg.Vel_mag_B_P = Vel_mag_B_P;
     CtrlData_msg.Vel_angle_B_P = Vel_angle_B_P;
 
@@ -335,6 +339,7 @@ void Controller::publishCtrlData()
     CtrlData_msg.Optical_Flow.x = Theta_x;
     CtrlData_msg.Optical_Flow.y = Theta_y;
     CtrlData_msg.Optical_Flow.z = Tau;
+    CtrlData_msg.Tau_CR = Tau_CR;
     
 
     // ESTIMATED OPTICAL FLOW DATA
@@ -408,6 +413,7 @@ void Controller::publishCtrlData()
 
     // PLANE RELATIVE STATES
     CtrlData_msg.D_perp_trg = D_perp_trg;
+    CtrlData_msg.D_perp_CR_trg = D_perp_CR_trg;
     CtrlData_msg.Vel_mag_B_P_trg = Vel_mag_B_P_trg;
     CtrlData_msg.Vel_angle_B_P_trg = Vel_angle_B_P_trg;
 
@@ -416,7 +422,7 @@ void Controller::publishCtrlData()
     CtrlData_msg.Optical_Flow_trg.x = Theta_x_trg;
     CtrlData_msg.Optical_Flow_trg.y = Theta_y_trg;
     CtrlData_msg.Optical_Flow_trg.z = Tau_trg;
-
+    CtrlData_msg.Tau_CR_trg = Tau_CR_trg;
 
     // POLICY ACTIONS (TRIGGER)
     CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;

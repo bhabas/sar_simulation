@@ -15,9 +15,11 @@ geometry_msgs/Vector3 Eul_P_B_trg
 float64 Vel_mag_B_P_trg
 float64 Vel_angle_B_P_trg
 float64 D_perp_trg
+float64 D_perp_CR_trg
 
 ## OPTICAL FLOW STATES
 geometry_msgs/Vector3 Optical_Flow_trg
+float64 Tau_CR_trg
 
 ## POLICY ACTIONS
 float64 Policy_Trg_Action_trg

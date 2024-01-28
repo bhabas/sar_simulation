@@ -398,11 +398,13 @@ class SAR_Base_Interface():
         self.Vel_mag_B_P = np.round(StateData_msg.Vel_mag_B_P,3)
         self.Vel_angle_B_P = np.round(StateData_msg.Vel_angle_B_P,3)
         self.D_perp = np.round(StateData_msg.D_perp,3)
+        self.D_perp_CR = np.round(StateData_msg.D_perp_CR,3)
 
         ## OPTICAL FLOW STATES
         self.Theta_x = np.round(StateData_msg.Optical_Flow.x,3)
         self.Theta_y = np.round(StateData_msg.Optical_Flow.y,3)
         self.Tau = np.round(StateData_msg.Optical_Flow.z,3)
+        self.Tau_CR = np.round(StateData_msg.Tau_CR,3)
         
         self.t_prev = self.t # Save t value for next callback iteration
 
@@ -451,11 +453,13 @@ class SAR_Base_Interface():
                                             TriggerData_msg.Twist_B_P_trg.angular.z],3)
             
             self.D_perp_trg = np.round(TriggerData_msg.D_perp_trg,3)
+            self.D_perp_CR_trg = np.round(TriggerData_msg.D_perp_CR_trg,3)
 
             ## OPTICAL FLOW STATES
             self.Theta_x_trg = np.round(TriggerData_msg.Optical_Flow_trg.x,3)
             self.Theta_y_trg = np.round(TriggerData_msg.Optical_Flow_trg.y,3)
             self.Tau_trg = np.round(TriggerData_msg.Optical_Flow_trg.z,3)
+            self.Tau_CR_trg = np.round(TriggerData_msg.Tau_CR_trg,3)
 
             ## POLICY TRIGGERING CONDITIONS
             self.Policy_Trg_Action_trg = np.round(TriggerData_msg.Policy_Trg_Action_trg,3)
