@@ -469,59 +469,61 @@ class SAR_Base_Interface():
 
         self.Impact_Flag = ImpactData_msg.Impact_Flag
 
-        if ImpactData_msg.Impact_Flag_OB == True:
-            self.Impact_Flag_OB = ImpactData_msg.Impact_Flag_OB
 
-            self.t_impact_OB = ImpactData_msg.Time_impact_OB.data.to_sec()
+        ## ONBOARD IMPACT DETECTION
+        self.Impact_Flag_OB = ImpactData_msg.Impact_Flag_OB
 
-            self.r_B_O_impact_OB = np.round([ImpactData_msg.Pose_B_O_impact_OB.position.x,
-                                            ImpactData_msg.Pose_B_O_impact_OB.position.y,
-                                            ImpactData_msg.Pose_B_O_impact_OB.position.z],3)
-            
-            self.Eul_B_O_impact_OB = np.round([ImpactData_msg.Eul_B_O_impact_OB.x,
-                                                ImpactData_msg.Eul_B_O_impact_OB.y,
-                                                ImpactData_msg.Eul_B_O_impact_OB.z],3)
-            
-            self.V_B_P_impact_OB = np.round([ImpactData_msg.Twist_B_P_impact_OB.linear.x,
-                                            ImpactData_msg.Twist_B_P_impact_OB.linear.y,
-                                            ImpactData_msg.Twist_B_P_impact_OB.linear.z],3)
-            
-            self.Omega_B_P_impact_OB = np.round([ImpactData_msg.Twist_B_P_impact_OB.angular.x,
-                                                ImpactData_msg.Twist_B_P_impact_OB.angular.y,
-                                                ImpactData_msg.Twist_B_P_impact_OB.angular.z],3)
-            
-            self.Eul_P_B_impact_OB = np.round([ImpactData_msg.Eul_P_B_impact_OB.x,
-                                            ImpactData_msg.Eul_P_B_impact_OB.y,
-                                            ImpactData_msg.Eul_P_B_impact_OB.z],3)
-            
-            self.Accel_B_O_Mag_impact_OB = np.round(ImpactData_msg.Accel_B_O_Mag_impact_OB,3)
+        self.t_impact_OB = ImpactData_msg.Time_impact_OB.data.to_sec()
 
-        if ImpactData_msg.Impact_Flag_Ext == True:
-            self.Impact_Flag_Ext = ImpactData_msg.Impact_Flag_Ext
-            
-            self.t_impact_Ext = ImpactData_msg.Time_impact_Ext.data.to_sec()
+        self.r_B_O_impact_OB = np.round([ImpactData_msg.Pose_B_O_impact_OB.position.x,
+                                        ImpactData_msg.Pose_B_O_impact_OB.position.y,
+                                        ImpactData_msg.Pose_B_O_impact_OB.position.z],3)
+        
+        self.Eul_B_O_impact_OB = np.round([ImpactData_msg.Eul_B_O_impact_OB.x,
+                                            ImpactData_msg.Eul_B_O_impact_OB.y,
+                                            ImpactData_msg.Eul_B_O_impact_OB.z],3)
+        
+        self.V_B_P_impact_OB = np.round([ImpactData_msg.Twist_B_P_impact_OB.linear.x,
+                                        ImpactData_msg.Twist_B_P_impact_OB.linear.y,
+                                        ImpactData_msg.Twist_B_P_impact_OB.linear.z],3)
+        
+        self.Omega_B_P_impact_OB = np.round([ImpactData_msg.Twist_B_P_impact_OB.angular.x,
+                                            ImpactData_msg.Twist_B_P_impact_OB.angular.y,
+                                            ImpactData_msg.Twist_B_P_impact_OB.angular.z],3)
+        
+        self.Eul_P_B_impact_OB = np.round([ImpactData_msg.Eul_P_B_impact_OB.x,
+                                        ImpactData_msg.Eul_P_B_impact_OB.y,
+                                        ImpactData_msg.Eul_P_B_impact_OB.z],3)
+        
+        self.Accel_B_O_Mag_impact_OB = np.round(ImpactData_msg.Accel_B_O_Mag_impact_OB,3)
+        
 
-            self.r_B_O_impact_Ext = np.round([ImpactData_msg.Pose_B_O_impact_Ext.position.x,
-                                            ImpactData_msg.Pose_B_O_impact_Ext.position.y,
-                                            ImpactData_msg.Pose_B_O_impact_Ext.position.z],3)
-            
-            self.Eul_B_O_impact_Ext = np.round([ImpactData_msg.Eul_B_O_impact_Ext.x,
-                                                ImpactData_msg.Eul_B_O_impact_Ext.y,
-                                                ImpactData_msg.Eul_B_O_impact_Ext.z],3)
-            
-            self.V_B_P_impact_Ext = np.round([ImpactData_msg.Twist_B_P_impact_Ext.linear.x,
-                                            ImpactData_msg.Twist_B_P_impact_Ext.linear.y,
-                                            ImpactData_msg.Twist_B_P_impact_Ext.linear.z],3)
-            
-            self.Omega_B_P_impact_Ext = np.round([ImpactData_msg.Twist_B_P_impact_Ext.angular.x,
-                                                ImpactData_msg.Twist_B_P_impact_Ext.angular.y,
-                                                ImpactData_msg.Twist_B_P_impact_Ext.angular.z],3)
-            
-            self.Eul_P_B_impact_Ext = np.round([ImpactData_msg.Eul_P_B_impact_Ext.x,
-                                            ImpactData_msg.Eul_P_B_impact_Ext.y,
-                                            ImpactData_msg.Eul_P_B_impact_Ext.z],3)
-            
-            self.Rot_Sum_impact_Ext = np.round(ImpactData_msg.Rot_Sum_impact_Ext,3)
+        ## EXTERNAL IMPACT DETECTION
+        self.Impact_Flag_Ext = ImpactData_msg.Impact_Flag_Ext
+        
+        self.t_impact_Ext = ImpactData_msg.Time_impact_Ext.data.to_sec()
+
+        self.r_B_O_impact_Ext = np.round([ImpactData_msg.Pose_B_O_impact_Ext.position.x,
+                                        ImpactData_msg.Pose_B_O_impact_Ext.position.y,
+                                        ImpactData_msg.Pose_B_O_impact_Ext.position.z],3)
+        
+        self.Eul_B_O_impact_Ext = np.round([ImpactData_msg.Eul_B_O_impact_Ext.x,
+                                            ImpactData_msg.Eul_B_O_impact_Ext.y,
+                                            ImpactData_msg.Eul_B_O_impact_Ext.z],3)
+        
+        self.V_B_P_impact_Ext = np.round([ImpactData_msg.Twist_B_P_impact_Ext.linear.x,
+                                        ImpactData_msg.Twist_B_P_impact_Ext.linear.y,
+                                        ImpactData_msg.Twist_B_P_impact_Ext.linear.z],3)
+        
+        self.Omega_B_P_impact_Ext = np.round([ImpactData_msg.Twist_B_P_impact_Ext.angular.x,
+                                            ImpactData_msg.Twist_B_P_impact_Ext.angular.y,
+                                            ImpactData_msg.Twist_B_P_impact_Ext.angular.z],3)
+        
+        self.Eul_P_B_impact_Ext = np.round([ImpactData_msg.Eul_P_B_impact_Ext.x,
+                                        ImpactData_msg.Eul_P_B_impact_Ext.y,
+                                        ImpactData_msg.Eul_P_B_impact_Ext.z],3)
+        
+        self.Rot_Sum_impact_Ext = np.round(ImpactData_msg.Rot_Sum_impact_Ext,3)
 
         
         ## IMPACT FORCES

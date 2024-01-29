@@ -395,7 +395,8 @@ class SAR_DataConverter {
         float Rot_Sum_impact_Ext = NAN;
 
         bool BodyContact_Flag = false;
-        bool LegContact_Flag = false;
+        bool ForelegContact_Flag = false;
+        bool HindlegContact_Flag = false;
         bool OnceFlag_Impact = false;
         std::string BodyCollision_str = "SAR_Body::Body_Collision_";
         std::string LegCollision_str = "Leg_Collision_";
@@ -604,7 +605,8 @@ inline void SAR_DataConverter::resetImpactData()
     Time_impact_Ext.nsec = 0.0;
 
     BodyContact_Flag = false;
-    LegContact_Flag = false;
+    ForelegContact_Flag = false;
+    HindlegContact_Flag = false;
 
     Pose_B_O_impact_Ext = geometry_msgs::Pose();
     Eul_B_O_impact_Ext = geometry_msgs::Vector3();

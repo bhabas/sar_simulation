@@ -105,7 +105,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     {
         double Time_delta = Time.toSec()-Time_prev.toSec();
         Rot_Sum += (Time_delta*Twist_B_O.angular.y)*180/M_PI;
-        printf("Val: %f\n",Rot_Sum);
+        // printf("Val: %f\n",Rot_Sum);
     }
     
 

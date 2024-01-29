@@ -134,7 +134,8 @@ void SAR_DataConverter::Publish_ImpactData()
 
     ImpactData_msg.Impact_Flag_Ext = Impact_Flag_Ext;
     ImpactData_msg.BodyContact_Flag = BodyContact_Flag;
-    ImpactData_msg.LegContact_Flag = LegContact_Flag;
+    ImpactData_msg.ForelegContact_Flag = ForelegContact_Flag;
+    ImpactData_msg.HindlegContact_Flag = HindlegContact_Flag;
 
     ImpactData_msg.Pose_B_O_impact_Ext = Pose_B_O_impact_Ext;
     ImpactData_msg.Eul_B_O_impact_Ext = Eul_B_O_impact_Ext;

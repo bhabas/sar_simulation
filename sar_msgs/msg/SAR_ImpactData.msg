@@ -15,7 +15,8 @@ bool Impact_Flag_Ext
 std_msgs/Time Time_impact_Ext
 
 bool BodyContact_Flag
-bool LegContact_Flag
+bool ForelegContact_Flag
+bool HindlegContact_Flag
 
 geometry_msgs/Pose Pose_B_O_impact_Ext
 geometry_msgs/Vector3 Eul_B_O_impact_Ext

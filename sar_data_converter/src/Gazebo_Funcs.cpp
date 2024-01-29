@@ -74,14 +74,21 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
         }
 
         // IF CONTACT MSG MATCHES LEG COLLISION STR THEN TURN ON LEG_CONTACT_FLAG
-        if (msg.states[i].collision1_name.find(LegCollision_str) != std::string::npos && LegContact_Flag == false)
+        if (msg.states[i].collision1_name.find(LegCollision_str) != std::string::npos && (!ForelegContact_Flag && !HindlegContact_Flag))
         {
-            LegContact_Flag = true;
+            char lastChar = msg.states[i].collision1_name.back();
+            if (lastChar == '1' || lastChar == '4') {
+                ForelegContact_Flag = true;
+            }
+            else if (lastChar == '2' || lastChar == '3') {
+                HindlegContact_Flag = true;
+            }
+            
             // std::cout << "Leg Contact: " << msg.states[i].collision1_name << std::endl;
         }
 
         // LOCK IN STATE DATA WHEN INITIAL IMPACT DETECTED
-        if (Impact_Flag_Ext == false && (BodyContact_Flag == true || LegContact_Flag == true))
+        if (Impact_Flag_Ext == false && (BodyContact_Flag == true || ForelegContact_Flag == true || HindlegContact_Flag == true))
         {
             Impact_Flag_Ext = true;
 

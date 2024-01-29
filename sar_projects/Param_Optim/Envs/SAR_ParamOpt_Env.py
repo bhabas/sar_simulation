@@ -164,11 +164,11 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
                 self.D_perp_min = self.D_perp 
 
             ## START TRIGGER AND IMPACT TERMINATION TIMERS
-            if (self.Trg_flag == True and OnceFlag_Trg == False):
+            if (self.Trg_Flag == True and OnceFlag_Trg == False):
                 self.start_time_trg = t_now     # Starts countdown for when to reset run
                 OnceFlag_Trg = True             # Turns on to make sure this only runs once per rollout
 
-            if (self.Impact_flag and OnceFlag_Impact == False):
+            if (self.Impact_Flag_Ext and OnceFlag_Impact == False):
                 self.start_time_impact = t_now
                 OnceFlag_Impact = True
 
@@ -215,11 +215,16 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     
     def _CalcReward(self):
 
+        print()
+
+        # if <= self.Eul_P_B_impact_Ext[1] <= 180:
+
+
         ## CALC PHI BOUNDARY ANGLE
-        Phi_Impact_min_deg = self.Beta_Min + self.Gamma_eff + self.Plane_Angle_deg - 90
+        # Phi_Impact_min_deg = self.Beta_Min + self.Gamma_eff + self.Plane_Angle_deg - 90
 
         ## CALC RELATIVE BOUNDARY ANGLE
-        Phi_P_B_Impact_min_deg = self.Plane_Angle_deg - Phi_Impact_min_deg
+        # Phi_P_B_Impact_min_deg = self.Plane_Angle_deg - Phi_Impact_min_deg
 
         # Phi_Impact
         # V_B_O Impact
