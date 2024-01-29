@@ -62,7 +62,7 @@ class SAR_Base_Interface():
         self.setAngAcc_range([-self.Ang_Acc_max, self.Ang_Acc_max])
         
         self.Beta_Min_deg = -(self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff)))
-        self.Phi_impact_P_B_Min_deg = -self.Beta_Min_deg - self.Gamma_eff + 90
+        self.Phi_P_B_impact_Min_deg = -self.Beta_Min_deg - self.Gamma_eff + 90
 
         # self.Phi_impact_B_O_Min_deg = self.Beta_Min_deg + self.Gamma_eff + self.Plane_Angle_deg - 90 
 
@@ -91,7 +91,7 @@ class SAR_Base_Interface():
         print(f"SAR Type: {self.SAR_Type} -- SAR Config: {self.SAR_Config}\n")
         print(f"Leg Length: {self.Leg_Length:.3f} m \t Leg Angle: {self.Leg_Angle:.1f} deg")
         print(f"L_eff: {self.L_eff:.3f} m \t\t Gamma_eff: {self.Gamma_eff:.1f} deg\n")
-        print(f"Phi_impact_P_B_Min: {self.Phi_impact_P_B_Min_deg:.1f} deg\n")
+        print(f"Phi_impact_P_B_Min: {self.Phi_P_B_impact_Min_deg:.1f} deg\n")
 
         print(f"Thrust_max: {self.Thrust_max:.0f} g")
         print(f"Ang_Acc_Max: {self.Ang_Acc_max:.0f} rad/s^2")
@@ -678,6 +678,23 @@ class SAR_Base_Interface():
         ])
 
         return R_C2B.dot(vec)
+    
+    
+
+    def arctan4(self,y, x, rotation_direction=-1):
+        angle_radians = np.arctan2(y, x)
+
+        if rotation_direction == -1:
+            if angle_radians < 0:
+                angle_radians += 2*np.pi
+        elif rotation_direction == +1:
+            if angle_radians > 0:
+                angle_radians = 2*np.pi - angle_radians
+            else:
+                angle_radians = -angle_radians
+
+        return angle_radians
+
 
 
 if __name__ == "__main__":

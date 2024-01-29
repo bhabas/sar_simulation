@@ -219,11 +219,11 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         V_B_O_impact = self.R_PW(self.V_B_P_impact_Ext,self.Plane_Angle_rad)    # {X_W,Y_W,Z_W}
         V_hat_impact = V_B_O_impact/np.linalg.norm(V_B_O_impact)                # {X_W,Y_W,Z_W}
 
-        V_B_O_angle_impact_rad = np.arctan2(V_hat_impact[2],V_hat_impact[0])*COORD_FLIP
+        V_B_O_angle_impact_rad = self.arctan4(V_hat_impact[2],V_hat_impact[0],-1)*COORD_FLIP
         V_B_O_angle_impact_deg = np.degrees(V_B_O_angle_impact_rad)
 
         ## FLIGHT VELOCITY ANGLE RELATIVE TO WORLD ("ORIGINAL BODY ORIENTATION")
-        V_B_B_angle_impact_deg = V_B_O_angle_impact_deg + self.Plane_Angle_deg  # {X_B,Z_B}
+        V_B_B_angle_impact_deg = V_B_O_angle_impact_deg + self.Plane_Angle_deg  # {X_B,Y_B,Z_B}
         if V_B_B_angle_impact_deg < -90:
             Phi_B_P_Impact_Condition = -1
         elif -90 <= V_B_B_angle_impact_deg:
@@ -258,16 +258,48 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
 
             ## PHI IMPACT REWARD
-            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_impact_P_B_Min_deg,Phi_B_P_Impact_Condition)
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
         elif self.HindlegContact_Flag:
-            pass
+
+            Phi_P_B_impact_deg = self.Eul_P_B_impact_Ext[1]
+            Beta2_deg = self.Gamma_eff + -Phi_P_B_impact_deg  + 90
+            Beta2_rad = np.radians(Beta2_deg)
+
+            ## CALC LEG DIRECTION VECTOR
+            r_B_C2 = np.array([-self.L_eff,0,0]) # {e_r2,0,e_beta2}
+            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta2_rad),self.Plane_Angle_rad)   # {X_W,Y_W,Z_W}
+
+            r_C2_B = -r_B_C2                        # {X_W,Y_W,Z_W}
+            e_r_hat = r_C2_B/np.linalg.norm(r_C2_B) # {X_W,Y_W,Z_W}
+
+            ## MOMENTUM TRANSFER REWARD
+            CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
+            DP_LT = np.dot(V_hat_impact,e_r_hat)
+            CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
+            R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+
+            
+            ## GRAVITY MOMENT REWARD
+            g_hat = np.array([0,0,-1])              # {X_W,Y_W,Z_W}
+            CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
+            DP_GM = np.dot(g_hat,e_r_hat)
+            CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))[1]
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+
+            ## PHI IMPACT REWARD
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
 
         elif self.BodyContact_Flag:
-            pass
+            
+            ## CALC IMPACT ANGLE CONDITIONS
+            Phi_P_B_impact_deg = self.Eul_P_B_impact_Ext[1]
 
-
+            ## CALC REWARD VALUES
+            R_LT = 0
+            R_GM = 0
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
         else:
 
             ## CALC REWARD VALUES
@@ -298,7 +330,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
-        print(f"R_t_norm: {R_t/self.W_max:.3f} ")
+        print(f"R_t_norm: {R_t/self.W_max:.3f}")
         print(np.round(self.reward_vals,2))
 
         return R_t/self.W_max
