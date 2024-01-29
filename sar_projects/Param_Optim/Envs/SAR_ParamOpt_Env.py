@@ -277,14 +277,26 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## REWARD: MINIMUM DISTANCE 
         if self.Tau_CR_trg < np.inf:
-
-            R_dist = self.Reward_Exp_Decay(self.D_min,self.L_eff)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.L_eff)
         else:
             R_dist = 0
 
+        ## REWARD: TAU_CR TRIGGER
+        # R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,5)
+        R_tau_cr = 0
 
+        ## REWARD: PAD CONNECTIONS
+        if self.Pad_Connections >= 3: 
+            R_Legs = 1.0
+        elif self.Pad_Connections == 2:
+            R_Legs = 0.2
+        else:
+            R_Legs = 0.0
 
-        self.reward_vals = [0,0,0,0,0,0]
+        if self.BodyContact_Flag:
+            R_Legs = R_Legs*0.5
+
+        self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
         print(f"R_t_norm: {R_t/self.W_max:.3f} ")
         print(np.round(self.reward_vals,2))
@@ -335,9 +347,9 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
     def Reward_LT(self,CP_angle_deg,ForelegContact_Flag,HindlegContact_Flag):
 
-        if ForelegContact_Flag == True:
+        if HindlegContact_Flag == True:
             CP_angle_deg = -CP_angle_deg  # Reflect function across the y-axis
-        elif HindlegContact_Flag == True:
+        elif ForelegContact_Flag == True:
             CP_angle_deg = CP_angle_deg
         else:
             return 0
@@ -350,9 +362,9 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         
     def Reward_GravityMoment(self,CP_angle_deg,ForelegContact_Flag,HindlegContact_Flag):
 
-        if ForelegContact_Flag == True:
+        if HindlegContact_Flag == True:
             CP_angle_deg = -CP_angle_deg  # Reflect function across the y-axis
-        elif HindlegContact_Flag == True:
+        elif ForelegContact_Flag == True:
             CP_angle_deg = CP_angle_deg
         else:
             return 0

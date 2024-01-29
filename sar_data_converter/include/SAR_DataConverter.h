@@ -176,6 +176,7 @@ class SAR_DataConverter {
         inline void euler2quat(float quat[],float eul[]);
         inline void loadInitParams();
         inline void updateParams();
+        inline void resetStateData();
         inline void resetTriggerData();
         inline void resetImpactData();
 
@@ -309,6 +310,7 @@ class SAR_DataConverter {
         double Vel_angle_B_P = NAN;
         double D_perp = NAN;
         double D_perp_CR = NAN;
+        double D_perp_min = INFINITY;   
 
         geometry_msgs::Vector3 Optical_Flow;
         geometry_msgs::Vector3 Optical_Flow_Cam;
@@ -556,6 +558,11 @@ inline void SAR_DataConverter::updateParams()
 
 }
 
+inline void SAR_DataConverter::resetStateData()
+{
+    D_perp_min = INFINITY;
+}
+
 inline void SAR_DataConverter::resetTriggerData()
 {
     Trg_Flag = false;
@@ -635,6 +642,7 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
     {
         case 0:
 
+            resetStateData();
             resetTriggerData();
             resetImpactData();
 
