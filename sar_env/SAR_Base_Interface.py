@@ -500,6 +500,10 @@ class SAR_Base_Interface():
 
         ## EXTERNAL IMPACT DETECTION
         self.Impact_Flag_Ext = ImpactData_msg.Impact_Flag_Ext
+
+        self.BodyContact_Flag = ImpactData_msg.BodyContact_Flag
+        self.ForelegContact_Flag = ImpactData_msg.ForelegContact_Flag
+        self.HindlegContact_Flag = ImpactData_msg.HindlegContact_Flag
         
         self.t_impact_Ext = ImpactData_msg.Time_impact_Ext.data.to_sec()
 
@@ -587,8 +591,9 @@ class SAR_Base_Interface():
     def R_BW(self,vec,phi):
 
         R_BW = np.array([
-            [ np.cos(phi), np.sin(phi)],
-            [-np.sin(phi), np.cos(phi)],
+            [ np.cos(phi), 0,     np.sin(phi)],
+            [     0,       1,         0      ],
+            [-np.sin(phi), 0,     np.cos(phi)],
         ])
 
         return R_BW.dot(vec)
@@ -597,7 +602,7 @@ class SAR_Base_Interface():
 
         R_WP = np.array([
             [ np.cos(theta), 0, -np.sin(theta)],
-            [     0,         1,       0      ],
+            [     0,         1,        0      ],
             [ np.sin(theta), 0,  np.cos(theta)]
         ])
 
@@ -616,8 +621,9 @@ class SAR_Base_Interface():
     def R_PC1(self,vec,Beta1):
 
         R_PC1 = np.array([
-            [ np.cos(Beta1),-np.sin(Beta1)],
-            [ np.sin(Beta1), np.cos(Beta1)]
+            [ np.cos(Beta1), 0, -np.sin(Beta1)],
+            [     0,         1,       0       ],
+            [ np.sin(Beta1), 0,  np.cos(Beta1)]
         ])
 
         return R_PC1.dot(vec)
@@ -625,8 +631,9 @@ class SAR_Base_Interface():
     def R_C1P(self,vec,Beta1):
 
         R_C1P = np.array([
-            [ np.cos(Beta1), np.sin(Beta1)],
-            [-np.sin(Beta1), np.cos(Beta1)]
+            [ np.cos(Beta1), 0, np.sin(Beta1)],
+            [     0,         1,       0      ],
+            [-np.sin(Beta1), 0, np.cos(Beta1)]
         ])
 
         return R_C1P.dot(vec)
@@ -634,8 +641,9 @@ class SAR_Base_Interface():
     def R_C1B(self,vec,gamma_rad):
 
         R_C1B = np.array([
-            [ np.sin(gamma_rad), np.cos(gamma_rad)],
-            [-np.cos(gamma_rad), np.sin(gamma_rad)],
+            [ np.sin(gamma_rad), 0, np.cos(gamma_rad)],
+            [     0,             1,         0        ],
+            [-np.cos(gamma_rad), 0, np.sin(gamma_rad)],
         ])
 
         return R_C1B.dot(vec)
@@ -643,8 +651,9 @@ class SAR_Base_Interface():
     def R_PC2(self,vec,Beta2):
 
         R_PC2 = np.array([
-            [ np.cos(Beta2), np.sin(Beta2)],
-            [-np.sin(Beta2), np.cos(Beta2)]
+            [ np.cos(Beta2), 0, np.sin(Beta2)],
+            [     0,         1,       0      ],
+            [-np.sin(Beta2), 0, np.cos(Beta2)]
         ])
 
         return R_PC2.dot(vec)
@@ -652,8 +661,9 @@ class SAR_Base_Interface():
     def R_C2P(self,vec,Beta2):
 
         R_C2P = np.array([
-            [ np.cos(Beta2), np.sin(Beta2)],
-            [-np.sin(Beta2), np.cos(Beta2)],
+            [ np.cos(Beta2), 0, np.sin(Beta2)],
+            [     0,         1,       0      ],
+            [-np.sin(Beta2), 0, np.cos(Beta2)],
         ])
 
         return R_C2P.dot(vec)
@@ -661,8 +671,9 @@ class SAR_Base_Interface():
     def R_C2B(self,vec,gamma_rad):
 
         R_C2B = np.array([
-            [-np.sin(gamma_rad), np.cos(gamma_rad)],
-            [-np.cos(gamma_rad),-np.sin(gamma_rad)],
+            [-np.sin(gamma_rad), 0,  np.cos(gamma_rad)],
+            [        0,          1,          0        ],
+            [-np.cos(gamma_rad), 0, -np.sin(gamma_rad)],
         ])
 
         return R_C2B.dot(vec)

@@ -215,23 +215,74 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     
     def _CalcReward(self):
 
-        print()
+        self.V_B_P_impact_Ext   # {t_x,t_y,n_p}
+        V_B_O_impact = self.R_PW(self.V_B_P_impact_Ext,self.Plane_Angle_rad)    # {X_W,Y_W,Z_W}
+        V_hat_impact = V_B_O_impact/np.linalg.norm(V_B_O_impact)                # {X_W,Y_W,Z_W}
 
-        # if <= self.Eul_P_B_impact_Ext[1] <= 180:
+        V_B_O_angle_impact_rad = np.arctan2(V_hat_impact[2],V_hat_impact[0])*COORD_FLIP
+        V_B_O_angle_impact_deg = np.degrees(V_B_O_angle_impact_rad)
+
+        ## FLIGHT VELOCITY ANGLE RELATIVE TO WORLD ("ORIGINAL BODY ORIENTATION")
+        V_B_B_angle_impact_deg = V_B_O_angle_impact_deg + self.Plane_Angle_deg  # {X_B,Z_B}
+        if V_B_B_angle_impact_deg < -90:
+            Phi_B_P_Impact_Condition = -1
+        elif -90 <= V_B_B_angle_impact_deg:
+            Phi_B_P_Impact_Condition = 1
 
 
-        ## CALC PHI BOUNDARY ANGLE
-        # Phi_Impact_min_deg = self.Beta_Min + self.Gamma_eff + self.Plane_Angle_deg - 90
+        if self.ForelegContact_Flag:
 
-        ## CALC RELATIVE BOUNDARY ANGLE
-        # Phi_P_B_Impact_min_deg = self.Plane_Angle_deg - Phi_Impact_min_deg
+            Phi_P_B_impact_deg = self.Eul_P_B_impact_Ext[1]
+            Beta1_deg = -Phi_P_B_impact_deg - self.Gamma_eff + 90
+            Beta1_rad = np.radians(Beta1_deg)
 
-        # Phi_Impact
-        # V_B_O Impact
-        # V_hat Impact
+            ## CALC LEG DIRECTION VECTOR
+            r_B_C1 = np.array([-self.L_eff,0,0]) # {e_r1,0,e_beta1}
+            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta1_rad),self.Plane_Angle_rad)   # {X_W,Y_W,Z_W}
 
-        # V_Angle_Body_0
-        
+            r_C1_B = -r_B_C1                        # {X_W,Y_W,Z_W}
+            e_r_hat = r_C1_B/np.linalg.norm(r_C1_B) # {X_W,Y_W,Z_W}
+
+            ## MOMENTUM TRANSFER REWARD
+            CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
+            DP_LT = np.dot(V_hat_impact,e_r_hat)
+            CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
+            R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+
+            
+            ## GRAVITY MOMENT REWARD
+            g_hat = np.array([0,0,-1])              # {X_W,Y_W,Z_W}
+            CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
+            DP_GM = np.dot(g_hat,e_r_hat)
+            CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))[1]
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+
+            ## PHI IMPACT REWARD
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_impact_P_B_Min_deg,Phi_B_P_Impact_Condition)
+
+        elif self.HindlegContact_Flag:
+            pass
+
+
+        elif self.BodyContact_Flag:
+            pass
+
+
+        else:
+
+            ## CALC REWARD VALUES
+            R_LT = 0
+            R_GM = 0
+            R_Phi = 0
+
+        ## REWARD: MINIMUM DISTANCE 
+        if self.Tau_CR_trg < np.inf:
+
+            R_dist = self.Reward_Exp_Decay(self.D_min,self.L_eff)
+        else:
+            R_dist = 0
+
+
 
         self.reward_vals = [0,0,0,0,0,0]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
@@ -282,21 +333,31 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         elif (360 + 2*Phi_min) <= Phi_deg:
             return -1.0
 
-    def Reward_LT(self,CP_angle_deg,Leg_Num):
+    def Reward_LT(self,CP_angle_deg,ForelegContact_Flag,HindlegContact_Flag):
 
-        if Leg_Num == 2:
-            CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
+        if ForelegContact_Flag == True:
+            CP_angle_deg = -CP_angle_deg  # Reflect function across the y-axis
+        elif HindlegContact_Flag == True:
+            CP_angle_deg = CP_angle_deg
+        else:
+            return 0
 
+        ## CALCULATE REWARD
         if -180 <= CP_angle_deg <= 0:
             return -np.sin(np.radians(CP_angle_deg))
         elif 0 < CP_angle_deg <= 180:
             return -1.0/180 * CP_angle_deg
         
-    def Reward_GravityMoment(self,CP_angle_deg,Leg_Num):
+    def Reward_GravityMoment(self,CP_angle_deg,ForelegContact_Flag,HindlegContact_Flag):
 
-        if Leg_Num == 2:
-            CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
+        if ForelegContact_Flag == True:
+            CP_angle_deg = -CP_angle_deg  # Reflect function across the y-axis
+        elif HindlegContact_Flag == True:
+            CP_angle_deg = CP_angle_deg
+        else:
+            return 0
 
+        ## CALCULATE REWARD
         return -np.sin(np.radians(CP_angle_deg))
 
 
