@@ -96,8 +96,8 @@ class SAR_DataConverter {
 
             // INITIALIZE SAR_DC THREADS
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
-            ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
-            // Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
+            // ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+            Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
 
 
         }
@@ -218,6 +218,11 @@ class SAR_DataConverter {
         float P_kp_z,P_kd_z,P_ki_z;
         float R_kp_xy,R_kd_xy,R_ki_xy;     
         float R_kp_z,R_kd_z,R_ki_z;
+
+        float Gamma_eff = NAN;
+        float L_eff = NAN;
+        float K_Pitch = NAN;
+        float K_Yaw = NAN;
 
 
         // ============================
@@ -506,6 +511,14 @@ inline void SAR_DataConverter::loadInitParams()
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Ixx",Ixx);
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Iyy",Iyy);
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Izz",Izz);
+
+    // UPDATE LEG PARAMETERS
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Gamma_eff",Gamma_eff);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/L_eff",L_eff);
+    ros::param::get(SAR_Type_str + "/Leg_Params/K_Pitch",K_Pitch);
+    ros::param::get(SAR_Type_str + "/Leg_Params/K_Yaw",K_Yaw);
+
+
 
     // PLANE SETTINGS
     ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);

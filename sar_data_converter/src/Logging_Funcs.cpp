@@ -14,12 +14,14 @@ bool SAR_DataConverter::DataLogging_Callback(sar_msgs::Logging_CMD::Request &req
             Logging_Flag = false;
             fPtr = fopen(req.filePath.c_str(), "w");
             create_CSV();
+            std::cout << "CSV Created" << std::endl;
             break;
 
 
         case 1: // TURN ON/OFF LOGGING
             Logging_Flag = true;
             fPtr = fopen(req.filePath.c_str(), "a");
+            std::cout << "Logging Started" << std::endl;
             break;
 
         case 2: // CAP CSV W/ TRIGGER,IMPACT,MISC DATA
@@ -32,6 +34,8 @@ bool SAR_DataConverter::DataLogging_Callback(sar_msgs::Logging_CMD::Request &req
             append_CSV_Rot();
             append_CSV_impact();
             append_CSV_blank();
+
+            std::cout << "CSV Capped" << std::endl;
             break;
 
     }
@@ -62,43 +66,47 @@ void SAR_DataConverter::LoggingLoop()
 
 void SAR_DataConverter::create_CSV()
 {  
-    // // POLICY DATA
-    // fprintf(fPtr,"K_ep,K_run,");
-    // fprintf(fPtr,"t,");
-    // fprintf(fPtr,"Policy_Trg_Action,Policy_Rot_Action,");
-    // fprintf(fPtr,"mu,sigma,policy,");
+    // POLICY DATA
+    fprintf(fPtr,"K_ep,K_run,");
+    fprintf(fPtr,"t,");
+    fprintf(fPtr,"Trg_Action,Rot_Action,");
+    fprintf(fPtr,"Mu,Sigma,Policy,");
 
 
-    // // STATE DATA
-    // fprintf(fPtr,"x,y,z,");
-    // fprintf(fPtr,"vx,vy,vz,");
-    // fprintf(fPtr,"D_perp,Tau,Tau_Cam,");
-    // fprintf(fPtr,"Theta_x,Theta_x_Cam,Theta_y,Theta_y_Cam,");
-    // fprintf(fPtr,"Trg_Flag,Impact_Flag_Ext,");
+    // STATE DATA
+    fprintf(fPtr,"r_BO.x,r_BO.y,r_BO.z,");
+    fprintf(fPtr,"V_BO.x,V_BO.y,V_BO.z,");
+    fprintf(fPtr,"a_BO.x,a_BO.y,a_BO.z,");
+    fprintf(fPtr,"V_BO_Mag,V_BO_Angle,a_BO_Mag,");
+    fprintf(fPtr,"V_BP_Mag,V_BP_Angle,Phi_PB,");
 
 
-    // //  MISC STATE DATA
-    // fprintf(fPtr,"eul_x,eul_y,eul_z,");
-    // fprintf(fPtr,"wx,wy,wz,");
-    // fprintf(fPtr,"qx,qy,qz,qw,");
-    // fprintf(fPtr,"F_thrust,Mx,My,Mz,");
-
-    // // SETPOINT VALUES
-    // fprintf(fPtr,"x_d.x,x_d.y,x_d.z,");
-    // fprintf(fPtr,"v_d.x,v_d.y,v_d.z,");
-    // fprintf(fPtr,"a_d.x,a_d.y,a_d.z,");
-
-    // // MISC VALUES
-    // fprintf(fPtr,"Error");
-    // fprintf(fPtr,"\n");
+    fprintf(fPtr,"D_perp,Tau,Tau_CR,Theta_x,");
+    fprintf(fPtr,"Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB,");
 
 
-    // fprintf(fPtr,"# DATA_TYPE: %s, ",DATA_TYPE.c_str());
-    // fprintf(fPtr,"SAR_SETTINGS: {Policy_Type: %s, SAR_Type: %s, SAR_Config: %s}, ",POLICY_TYPE.c_str(),SAR_Type.c_str(),SAR_Config.c_str());
-    // fprintf(fPtr,"PLANE_SETTINGS: {Plane_Config: %s}, ",Plane_Config.c_str());
-    // fprintf(fPtr,"\n");
+    //  MISC STATE DATA
+    fprintf(fPtr,"Eul_BO.x,Eul_BO.y,Eul_BO.z,");
+    fprintf(fPtr,"W_BO.x,W_BO.y,W_BO.z,");
+    fprintf(fPtr,"AngAcc_BO.x,AngAcc_BO.y,AngAcc_BO.z,");
+    fprintf(fPtr,"F_thrust,Mx,My,Mz,");
 
-    // fflush(fPtr);
+    // SETPOINT VALUES
+    fprintf(fPtr,"x_d.x,x_d.y,x_d.z,");
+    fprintf(fPtr,"v_d.x,v_d.y,v_d.z,");
+    fprintf(fPtr,"a_d.x,a_d.y,a_d.z,");
+
+    // MISC VALUES
+    fprintf(fPtr,"Error");
+    fprintf(fPtr,"\n");
+
+
+    fprintf(fPtr,"# DATA_TYPE: %s, ",DATA_TYPE.c_str());
+    fprintf(fPtr,"SAR_SETTINGS: {Policy_Type: %s, SAR_Type: %s, SAR_Config: %s}, ",POLICY_TYPE.c_str(),SAR_Type.c_str(),SAR_Config.c_str());
+    fprintf(fPtr,"LEG_SETTINGS: {L_eff: %.3f, Gamma_eff: %.0f, K_Pitch: %.1f, K_Yaw: %.1f}, ",L_eff,Gamma_eff,K_Pitch,K_Yaw);
+    fprintf(fPtr,"\n");
+
+    fflush(fPtr);
 
 }
 
