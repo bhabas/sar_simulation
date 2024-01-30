@@ -222,33 +222,32 @@ void SAR_DataConverter::append_CSV_Trg()
 
 void SAR_DataConverter::append_CSV_impact()
 {
-    // // POLICY DATA
-    // fprintf(fPtr,"%u,%u,",K_ep,K_run);                      // K_ep,K_run
-    // fprintf(fPtr,"%.3f,",(Time_impact-Time_start).toSec()); // t
-    // fprintf(fPtr,"--,--,");                                 // Policy_Trg_Action,Policy_Rot_Action
-    // fprintf(fPtr,"--,--,--,");                              // mu,sigma,policy
+    // POLICY DATA
+    fprintf(fPtr,"%u,%u,",K_ep,K_run);                                                                          // K_ep,K_run
+    fprintf(fPtr,"% 5.3f,",(Time_impact_Ext-Time_start).toSec());                                                          // t
+    fprintf(fPtr,"--,%u,",Pad_Connections);                                           // Trg_Action,Rot_Action
+    fprintf(fPtr,"%s,%s,%s,",formatBool(BodyContact_Flag),formatBool(ForelegContact_Flag),formatBool(HindlegContact_Flag));                                                                                  // Mu,Sigma,Policy
 
+    fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad3_Contact);                                     // D_perp,Tau,Tau_CR,Theta_x
+    fprintf(fPtr,"--,--,--,");                              // V_BO_Mag,V_BO_Angle,a_BO_Mag
+    fprintf(fPtr,"--,--,% 7.2f,",Eul_P_B_impact_Ext.y);                                  // V_BP_Mag,V_BP_Angle,Phi_PB
+    fprintf(fPtr,"--,%s,%s,",formatBool(Impact_Flag_Ext),formatBool(Impact_Flag_OB));      // Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB
 
-    // // STATE DATA
-    // fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_impact.position.x,Pose_impact.position.y,Pose_impact.position.z);   // x,y,z
-    // fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.linear.x,Twist_impact.linear.y,Twist_impact.linear.z);      // vx,vy,vz
-    // fprintf(fPtr,"--,--,--,");                                                                              // D_perp,Tau,Tau_Cam,
-    // fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);   // Theta_x,Theta_x_Cam,Theta_y,Theta_y_Cam,
-    // fprintf(fPtr,"%s,%s,",formatBool(BodyContact_Flag),formatBool(Impact_Flag_Ext));        // Trg_Flag,Impact_Flag_Ext
+    // STATE DATA
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Pose_B_O_impact_Ext.position.x,Pose_B_O_impact_Ext.position.y,Pose_B_O_impact_Ext.position.z);          // r_BO.x,r_BO.y,r_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.linear.x,Twist_B_P_impact_Ext.linear.y,Twist_B_P_impact_Ext.linear.z);             // V_BO.x,V_BO.y,V_BO.z
+    fprintf(fPtr,"--,--,--,");             // a_BO.x,a_BO.y,a_BO.z
+    
+    // MISC STATE DATA
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Eul_B_O_impact_Ext.x,Eul_B_O_impact_Ext.y,Eul_B_O_impact_Ext.z);                                        // Eul_BO.x,Eul_BO.y,Eul_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.angular.x,Twist_B_P_impact_Ext.angular.y,Twist_B_P_impact_Ext.angular.z);          // W_BO.x,W_BO.y,W_BO.z
+    fprintf(fPtr,"--,");                                                                // AngAcc_BO.x,AngAcc_BO.y,AngAcc_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,% 5.2f,",Impact_Magnitude,Force_impact.x,Force_impact.y,Force_impact.z);                                       // F_thrust,Mx,My,Mz
 
-
-    // // MISC STATE DATA
-    // fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_impact.x,Eul_impact.y,Eul_impact.z);                                 // eul_x,eul_y,eul_z
-    // fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.angular.x,Twist_impact.angular.y,Twist_impact.angular.z);   // wx,wy,wz
-    // fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_impact.orientation.x,Pose_impact.orientation.y,Pose_impact.orientation.z,Pose_impact.orientation.w); // qx,qy,qz,qw
-    // fprintf(fPtr,"%u,--,--,--,",Pad_Connections); // F_thrust,Mx,My,Mz
-
-
-    // // SETPOINT VALUES
-    // fprintf(fPtr,"--,--,--,");
-    // fprintf(fPtr,"--,--,--,");
-    // fprintf(fPtr,"--,--,--,");
-
+    // SETPOINT VALUES
+    fprintf(fPtr,"--,--,--,");                                                    // x_d.x,x_d.y,x_d.z
+    fprintf(fPtr,"--,--,--,");                                                    // v_d.x,v_d.y,v_d.z
+    fprintf(fPtr,"--,--,--,");                                                    // a_d.x,a_d.y,a_d.z
 
     // MISC VALUES
     fprintf(fPtr,"%s","Impact Data");
