@@ -415,11 +415,11 @@ class SAR_DataConverter {
         double Impact_Magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
-        boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {1};
-        boost::circular_buffer<geometry_msgs::Vector3> Eul_B_O_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {4};
+        boost::circular_buffer<geometry_msgs::Vector3> Eul_B_O_impact_buff {4};
 
-        boost::circular_buffer<geometry_msgs::Twist> Twist_P_B_impact_buff {1};
-        boost::circular_buffer<geometry_msgs::Vector3> Eul_P_B_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Twist> Twist_P_B_impact_buff {4};
+        boost::circular_buffer<geometry_msgs::Vector3> Eul_P_B_impact_buff {4};
 
         // ==================
         //     MISC DATA
@@ -583,6 +583,7 @@ inline void SAR_DataConverter::resetTriggerData()
 
     // OPTICAL FLOW
     Optical_Flow_trg = geometry_msgs::Vector3();
+    Tau_CR_trg = NAN;
 
     // POLICY ACTIONS
     Policy_Trg_Action_trg = NAN;

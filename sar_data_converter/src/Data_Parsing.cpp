@@ -103,6 +103,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     {   
         Time_trg = ros::Time::now();
         OnceFlag_Trg = true;
+        Rot_Sum = Eul_B_O.y;
 
     }
 

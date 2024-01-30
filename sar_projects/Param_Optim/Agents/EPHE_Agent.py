@@ -104,22 +104,11 @@ class EPHE_Agent():
 
         theta = np.zeros((len(self.mu),self.n_rollouts))
         
-        ## SET UPPER AND LOWER LIMITS FOR TAU AND My
-        lower_limit = [-1.0, -1.0] # Lower and Upper limits for truncated normal distribution 
-        upper_limit = [1.0, 1.0]    
-        eps = 1e-6 # Prevent divide by zero error
-                                
-        ## SAMPLE VALUES FROM TRUNCATED NORMAL DISTRIBUTION
         for ii,mu_ii in enumerate(self.mu):
-            theta[ii,:] = scipy.stats.truncnorm.rvs(
-                (lower_limit[ii]-mu_ii)/(self.sigma[ii]+eps),
-                (upper_limit[ii]-mu_ii)/(self.sigma[ii]+eps),
-                loc=mu_ii,
-                scale=self.sigma[ii],
-                size=self.n_rollouts
-            )      
+            theta[ii,:] = np.random.normal(mu_ii,self.sigma[ii],self.n_rollouts)
 
-        return theta
+        return np.tanh(theta)
+                                
 
     def train(self,theta,reward,k=3):
         
@@ -145,12 +134,13 @@ class EPHE_Agent():
 
 if __name__ == "__main__":
     np.set_printoptions(precision=2, suppress=True)
-    mu = np.array([[1.0],[4.0]])
-    sigma = np.array([[0.1],[1.5]])
+    mu = np.array([[0.0],[0.0]])
+    sigma = np.array([[0.25],[0.5]])
 
     agent = EPHE_Agent(mu,sigma)
 
     theta = agent.get_theta()
-    reward = np.array([[11, 20, 11, 40, 32, 45, 80, 80]])
+    print(theta)
+    # reward = np.array([[11, 20, 11, 40, 32, 45, 80, 80]])
 
-    agent.train(theta,reward)
+    # agent.train(theta,reward)

@@ -28,7 +28,7 @@ ENDC = '\033[m'
 
 class SAR_Sim_Interface(SAR_Base_Interface):
 
-    def __init__(self,GZ_Timeout=True):
+    def __init__(self,GZ_Timeout=False):
         SAR_Base_Interface.__init__(self)
 
         self.GZ_Sim_process = None

@@ -114,6 +114,7 @@ void controllerOutOfTreeReset() {
     Theta_x_trg = 0.0f;
     Theta_y_trg = 0.0f;
     Tau_trg = 0.0f;
+    Tau_CR_trg = 0.0f;
 
     Policy_Trg_Action_trg = 0.0f;
     Policy_Rot_Action_trg = 0.0f;
@@ -274,6 +275,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Vel_angle_B_P_trg = Vel_angle_B_P;
 
                         Tau_trg = Tau;
+                        Tau_CR_trg = Tau_CR;
                         Theta_x_trg = Theta_x_trg;
                         Theta_y_trg = Theta_y_trg;
 

@@ -2,7 +2,7 @@
 import numpy as np
 import time
 import warnings
-
+import math 
 from sar_env import SAR_Sim_Interface
 
 EPS = 1e-6 # Epsilon (Prevent division by zero)
@@ -12,7 +12,7 @@ COORD_FLIP = -1  # Swap sign to match proper coordinate notation
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
     def __init__(self,GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
-        SAR_Sim_Interface.__init__(self)        
+        SAR_Sim_Interface.__init__(self,GZ_Timeout=GZ_Timeout)        
 
         ######################
         #    GENERAL CONFIGS
@@ -43,11 +43,11 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
-            "W_Dist":0.2,
-            "W_tau_cr":0.0,
+            "W_Dist":0.5,
+            "W_tau_cr":0.5,
             "W_LT":1.0,
-            "W_GM":0.0,
-            "W_Phi_rel":0.0,
+            "W_GM":1.0,
+            "W_Phi_rel":2.0,
             "W_Legs":2.0
         }
         self.W_max = sum(self.reward_weights.values())
@@ -215,24 +215,37 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     
     def _CalcReward(self):
 
-        self.V_B_P_impact_Ext   # {t_x,t_y,n_p}
-        V_B_O_impact = self.R_PW(self.V_B_P_impact_Ext,self.Plane_Angle_rad)    # {X_W,Y_W,Z_W}
-        V_hat_impact = V_B_O_impact/np.linalg.norm(V_B_O_impact)                # {X_W,Y_W,Z_W}
+        if self.Impact_Flag_Ext:
+            V_B_O_impact = self.R_PW(self.V_B_P_impact_Ext,self.Plane_Angle_rad)    # {X_W,Y_W,Z_W}
+            V_hat_impact = V_B_O_impact/np.linalg.norm(V_B_O_impact)                # {X_W,Y_W,Z_W}
 
-        V_B_O_angle_impact_rad = self.arctan4(V_hat_impact[2],V_hat_impact[0],-1)*COORD_FLIP
-        V_B_O_angle_impact_deg = np.degrees(V_B_O_angle_impact_rad)
+            temp_angle_rad = np.arctan2(V_hat_impact[0],V_hat_impact[2])
+            temp_angle_deg = np.degrees(temp_angle_rad)
 
-        ## FLIGHT VELOCITY ANGLE RELATIVE TO WORLD ("ORIGINAL BODY ORIENTATION")
-        V_B_B_angle_impact_deg = V_B_O_angle_impact_deg + self.Plane_Angle_deg  # {X_B,Y_B,Z_B}
-        if V_B_B_angle_impact_deg < -90:
-            Phi_B_P_Impact_Condition = -1
-        elif -90 <= V_B_B_angle_impact_deg:
-            Phi_B_P_Impact_Condition = 1
+            if temp_angle_deg < 0:
+                Phi_B_P_Impact_Condition = -1
+            elif temp_angle_deg > 0:
+                Phi_B_P_Impact_Condition = 1
+            elif math.isnan(temp_angle_deg):
+                Phi_B_P_Impact_Condition = 1
+
+        else:
+            ## CALC REWARD VALUES
+            R_LT = 0
+            R_GM = 0
+            R_Phi = 0
 
 
         if self.ForelegContact_Flag:
 
-            Phi_P_B_impact_deg = self.Eul_P_B_impact_Ext[1]
+            ## CALC IMPACT ANGLE CONDITIONS
+            rot_dir = np.sign(self.Rot_Sum_impact_Ext)
+            num_rev = self.Rot_Sum_impact_Ext // (np.sign(self.Rot_Sum_impact_Ext)*360)  # Integer division to get full revolutions
+            Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
+
+            Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
+            Phi_P_B_impact_deg = -Phi_B_P_impact_deg
+
             Beta1_deg = -Phi_P_B_impact_deg - self.Gamma_eff + 90
             Beta1_rad = np.radians(Beta1_deg)
 
@@ -262,7 +275,14 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         elif self.HindlegContact_Flag:
 
-            Phi_P_B_impact_deg = self.Eul_P_B_impact_Ext[1]
+            ## CALC IMPACT ANGLE CONDITIONS
+            rot_dir = np.sign(self.Rot_Sum_impact_Ext)
+            num_rev = self.Rot_Sum_impact_Ext // (np.sign(self.Rot_Sum_impact_Ext)*360)  # Integer division to get full revolutions
+            Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
+
+            Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
+            Phi_P_B_impact_deg = -Phi_B_P_impact_deg
+
             Beta2_deg = self.Gamma_eff + -Phi_P_B_impact_deg  + 90
             Beta2_rad = np.radians(Beta2_deg)
 
@@ -290,22 +310,21 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             ## PHI IMPACT REWARD
             R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
-
         elif self.BodyContact_Flag:
-            
+
             ## CALC IMPACT ANGLE CONDITIONS
-            Phi_P_B_impact_deg = self.Eul_P_B_impact_Ext[1]
+            rot_dir = np.sign(self.Rot_Sum_impact_Ext)
+            num_rev = self.Rot_Sum_impact_Ext // (np.sign(self.Rot_Sum_impact_Ext)*360)  # Integer division to get full revolutions
+            Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
+
+            Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
+            Phi_P_B_impact_deg = -Phi_B_P_impact_deg
 
             ## CALC REWARD VALUES
             R_LT = 0
             R_GM = 0
             R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
-        else:
 
-            ## CALC REWARD VALUES
-            R_LT = 0
-            R_GM = 0
-            R_Phi = 0
 
         ## REWARD: MINIMUM DISTANCE 
         if self.Tau_CR_trg < np.inf:
@@ -314,8 +333,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        # R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,5)
-        R_tau_cr = 0
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
+        # R_tau_cr = 0
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -343,12 +362,6 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         else:
             return 0
     
-    def Reward_RotationDirection(self,x,rot_dir):
-
-        if rot_dir == +1:
-            return x if x < 0 else 1
-        elif rot_dir == -1:
-            return 1 if x < 0 else -x
         
     def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
 
@@ -411,10 +424,10 @@ if __name__ == "__main__":
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
-        Tau_trg = 0.30
-        Rot_acc = -50
+        Tau_trg = 0.39
+        Rot_acc = 200
         V_mag = 2.5
-        V_angle = 60
+        V_angle = 120
         Plane_Angle = 0
         env.ParamOptim_reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,Rot_acc)
