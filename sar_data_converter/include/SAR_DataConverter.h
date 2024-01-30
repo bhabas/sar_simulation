@@ -96,7 +96,7 @@ class SAR_DataConverter {
 
             // INITIALIZE SAR_DC THREADS
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
-            // ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+            ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
             // Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
 
 
@@ -300,6 +300,8 @@ class SAR_DataConverter {
         geometry_msgs::Twist Twist_B_O;
         geometry_msgs::Accel Accel_B_O;
         geometry_msgs::Vector3 Eul_B_O;
+        double Vel_mag_B_O = NAN;
+        double Vel_angle_B_O = NAN;
         float Accel_B_O_Mag = NAN;
 
         geometry_msgs::Pose Pose_P_B;
@@ -349,6 +351,8 @@ class SAR_DataConverter {
         geometry_msgs::Pose Pose_B_O_trg;
         geometry_msgs::Twist Twist_B_O_trg;
         geometry_msgs::Vector3 Eul_B_O_trg;
+        double Vel_mag_B_O_trg = NAN;
+        double Vel_angle_B_O_trg = NAN;
 
         geometry_msgs::Pose Pose_P_B_trg;
         geometry_msgs::Twist Twist_B_P_trg;
@@ -579,6 +583,8 @@ inline void SAR_DataConverter::resetTriggerData()
     Pose_P_B_trg = geometry_msgs::Pose();
     Twist_B_P_trg = geometry_msgs::Twist();
     Eul_P_B_trg = geometry_msgs::Vector3();
+    Vel_mag_B_P_trg = NAN;
+    Vel_angle_B_P_trg = NAN;
     D_perp_trg = NAN;
 
     // OPTICAL FLOW

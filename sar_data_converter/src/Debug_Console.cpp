@@ -26,56 +26,79 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 
 
         mvprintw(4, 0,"==== Flags ====");
-        // mvprintw(5, 0,"Motorstop:     %u  Policy_Armed: %u  Pos_Ctrl:      %u  AngAccel_Flag: %u",MotorStop_Flag,Policy_Armed_Flag,Pos_Ctrl_Flag,AngAccel_Flag);
-        // mvprintw(6, 0,"SafeMode:      %u  Trg_Flag:     %u  Vel_Ctrl:      %u  AttCtrl_Flag:  %u",SafeModeEnable,Trg_Flag,Vel_Ctrl_Flag,AttCtrl_Flag);
-        // mvprintw(7, 0,"Tumbled:       %u  Impact_Flag_Ext:  %u  Sticky_Flag:   %u  Custom_Thrust: %u",Tumbled_Flag,Impact_Flag_Ext,Sticky_Flag,CustomThrust_Flag);
-        // mvprintw(8, 0,"Tumble_Detect: %u  Cam_Active:   %u  Slowdown_Type: %u  Custom_PWM:    %u",TumbleDetect_Flag,CamActive_Flag,SLOWDOWN_TYPE,CustomPWM_Flag);
+        mvprintw(5, 0,"SafeMode:   %u",SafeMode_Flag);
+        mvprintw(6, 0,"MotorStop:  %u",MotorStop_Flag);
+        mvprintw(7, 0,"Tumble:     %u",Tumbled_Flag);
+        mvprintw(8, 0,"Tumbl_Det:  %u",TumbleDetect_Flag);
+
+        mvprintw(5, 15,"Policy_Armed:    %u",Policy_Armed_Flag);
+        mvprintw(6, 15,"Trg_Flag:        %u",Trg_Flag);
+        mvprintw(7, 15,"Impct_Flag_Ext:  %u",Impact_Flag_Ext);
+        mvprintw(8, 15,"Impct_Flag_OB:   %u",Impact_Flag_OB);
+
+        mvprintw(5, 35,"Pos_Ctrl:       %u",Pos_Ctrl_Flag);
+        mvprintw(6, 35,"Vel_Ctrl:       %u",Vel_Ctrl_Flag);
+        mvprintw(7, 35,"Custom_PWM:     %u",CustomPWM_Flag);
+        mvprintw(8, 35,"Custom_Thrust:  %u",CustomThrust_Flag);
+
+        mvprintw(5, 55,"Ang_Accel:   %u",AngAccel_Flag);
+        mvprintw(6, 55,"Cam_Active:  %u",CamActive_Flag);
+        mvprintw(7, 55,"Sticky_Flag: %u",Sticky_Flag);
+
+
+        mvprintw(10, 0,"============== World States =============");
+        mvprintw(11, 0,"r_B_O [m]:           % 6.2f % 6.2f % 6.2f",Pose_B_O.position.x,Pose_B_O.position.y,Pose_B_O.position.z);
+        mvprintw(12, 0,"V_B_O [m/s]:         % 6.2f % 6.2f % 6.2f",Twist_B_O.linear.x,Twist_B_O.linear.y,Twist_B_O.linear.z);
+        mvprintw(13, 0,"a_B_O [m/s^2]:       % 6.2f % 6.2f % 6.2f",Accel_B_O.linear.x,Accel_B_O.linear.y,Accel_B_O.linear.z);
+        mvprintw(14, 0,"Omega_B_O [rad/s]:   % 6.2f % 6.2f % 6.2f",Twist_B_O.angular.x,Twist_B_O.angular.y,Twist_B_O.angular.z);
+        mvprintw(15, 0,"AngAcc_B_O [rad/s^2]:% 6.2f % 6.2f % 6.2f",Accel_B_O.angular.x,Accel_B_O.angular.y,Accel_B_O.angular.z);
+        mvprintw(16, 0,"V_B_O:  (% 5.2f % 6.2f)",Vel_mag_B_O,Vel_angle_B_O);
+
+        mvprintw(10, 44,"============== Rel. States ==============");
+        mvprintw(11, 44,"r_P_O [m]:           % 6.2f % 6.2f % 6.2f",Plane_Pos.x,Plane_Pos.y,Plane_Pos.z);
+        mvprintw(12, 44,"r_P_B [m]:           % 6.2f % 6.2f % 6.2f",Pose_P_B.position.x,Pose_P_B.position.y,Pose_P_B.position.z);
+        mvprintw(13, 44,"V_B_P [m/s]:         % 6.2f % 6.2f % 6.2f",Twist_B_P.linear.x,Twist_B_P.linear.y,Twist_B_P.linear.z);
+        mvprintw(14, 44,"Eul_B_O [deg]:       % 6.2f % 6.2f % 6.2f",Eul_B_O.x,Eul_B_O.y,Eul_B_O.z);
+        mvprintw(15, 44,"Eul_P_B [deg]:       % 6.2f % 6.2f % 6.2f",Eul_P_B.x,Eul_P_B.y,Eul_P_B.z);
+        mvprintw(16, 44,"V_B_P:  (% 5.2f % 6.2f)",Vel_mag_B_P,Vel_angle_B_P);
+
+
+        mvprintw(18,  0,"====== Policy: %s ======",POLICY_TYPE.c_str());
+        mvprintw(19, 0,"Tau:    % 6.3f",Tau);
+        mvprintw(20, 0,"Tau_CR: % 6.3f",Tau_CR);
+
+        mvprintw(19, 20,"Theta_x: % 6.3f",Theta_x);
+        mvprintw(20, 20,"D_perp:  % 6.3f",D_perp);
+
+        mvprintw(19, 42,"Trg_Act: % 6.3f",Policy_Trg_Action);
+        mvprintw(20, 42,"Rot_Act: % 6.3f",Policy_Rot_Action);
+
+        mvprintw(22, 0,"============= Trigger States ============");
+        mvprintw(23, 0,"Tau_trg:    % 6.3f",Tau_trg);
+        mvprintw(24, 0,"Tau_CR_trg: % 6.3f",Tau_CR_trg);
+
+        mvprintw(23, 20,"Theta_x_trg: % 6.3f",Theta_x_trg);
+        mvprintw(24, 20,"D_perp_trg:  % 6.3f",D_perp_trg);
+
+        mvprintw(23, 42,"Trg_Act_trg: % 6.3f",Policy_Trg_Action_trg);
+        mvprintw(24, 42,"Rot_Act_trg: % 6.3f",Policy_Rot_Action_trg);
+
+        mvprintw(25, 0,"V_B_O_trg:  (% 5.2f % 6.2f)",Vel_mag_B_O_trg,Vel_angle_B_O_trg);
+        mvprintw(25, 42,"V_B_P_trg: (% 5.2f % 6.2f)",Vel_mag_B_P_trg,Vel_angle_B_P_trg);
+
+        mvprintw(27, 0,"============= Impact States ============");
+
+        mvprintw(28, 0,"Body Contact: %u",BodyContact_Flag);
+        mvprintw(29, 0,"Pad Connect:  %u",Pad_Connections);
         
-        mvprintw(10, 0,"============ World States ============");
-        mvprintw(11, 0,"Pos [m]:          % 6.2f % 6.2f % 6.2f",Pose_B_O.position.x,Pose_B_O.position.y,Pose_B_O.position.z);
-        mvprintw(12, 0,"Vel [m/s]:        % 6.2f % 6.2f % 6.2f",Twist_B_O.linear.x,Twist_B_O.linear.y,Twist_B_O.linear.z);
-        mvprintw(13, 0,"Accel [m/s^2]:    % 6.2f % 6.2f % 6.2f",Accel_B_O.linear.x,Accel_B_O.linear.y,Accel_B_O.linear.z);
-        mvprintw(14, 0,"Omega [rad/s]:    % 6.2f % 6.2f % 6.2f",Twist_B_O.angular.x,Twist_B_O.angular.y,Twist_B_O.angular.z);
-        mvprintw(15, 0,"Ang Acc [rad/s^2]:% 6.2f % 6.2f % 6.2f",Accel_B_O.angular.x,Accel_B_O.angular.y,Accel_B_O.angular.z);
+        mvprintw(28, 17,"Fore Contact: %u",ForelegContact_Flag);
+        mvprintw(29, 17,"Hind Contact: %u",HindlegContact_Flag);
 
-        mvprintw(10, 42,"========== Relative States ==========");
-        // mvprintw(11, 42,"r_P_B [m]: % 6.2f % 6.2f % 6.2f",r_P_B.x,r_P_B.y,r_P_B.z);
-
-        // mvprintw(12, 42,"D_perp:% 6.2f  V_perp:% 6.2f  V_tx:% 6.2f",D_perp,V_rel.z,V_rel.x);
-        // mvprintw(14, 0,"Eul_B_O [deg]:    % 8.3f % 8.3f % 8.3f",Eul_B_O.x,Eul_B_O.y,Eul_B_O.z);
-        // mvprintw(11, 42,"[V_mag, V_angle]:% 7.2f % 6.1f",Vel_mag,Phi);
-        // mvprintw(12, 42,"[V_rel, V_angle_rel]:");
-        // mvprintw(13, 42,"Acc_Mag [m/s^2]: % 7.2f",Acc_mag);
+        mvprintw(28, 34,"Phi_B_O_impact: % 6.3f",Eul_B_O_impact_Ext.y);
+        mvprintw(29, 34,"Phi_P_B_impact: % 6.3f",Eul_P_B_impact_Ext.y);
 
 
 
-
-
-
-        mvprintw(17, 0,"==== Relative States ====");
-        // mvprintw(18, 0,"D_perp:  % 7.3f  V_perp:      % 7.3f  V_tx:        % 7.3f",D_perp,V_rel.z,V_rel.x);
-        mvprintw(19, 0,"Tau:     % 7.3f  Theta_x:     % 7.3f  Theta_y:     % 7.3f",Tau,Theta_x,Theta_y);
-        mvprintw(20, 0,"Tau_Cam: % 7.3f  Theta_x_Cam: % 7.3f  Theta_y_Cam: % 7.3f",Tau_Cam,Theta_x_Cam,Theta_y_Cam);
-
-
-        mvprintw(23, 0,"==== Policy: %s ====",POLICY_TYPE.c_str());
-        if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
-        {
-            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Rot_Action);
-        }
-        else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
-        {
-            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
-        }
-        else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_ONBOARD") == 0)
-        {
-            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
-        }
-
-        mvprintw(25,0,"==== Rot Trigger Values ====");
-        mvprintw(26,0,"Tau_trg:     % 7.3f \tPol_Trg_Act_trg:  % 7.3f ",Tau_trg,Policy_Trg_Action_trg);
-        mvprintw(27,0,"\u03B8x_trg:     % 7.3f \tPol_Rot_Act_trg: % 7.3f ",Theta_x_trg,Policy_Rot_Action_trg);
-        mvprintw(28,0,"D_perp_trg:  % 7.3f ",D_perp_trg);
 
         mvprintw(31,0,"==== Setpoints ====");
         mvprintw(32,0,"x_d: % 7.3f  % 7.3f  % 7.3f",x_d.x,x_d.y,x_d.z);
@@ -85,7 +108,7 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(36,0,"==== Controller Actions ====");
         mvprintw(37,0,"FM [N/N*mm]:       % 7.3f  % 7.3f  % 7.3f  % 7.3f",FM[0],FM[1],FM[2],FM[3]);
         mvprintw(38,0,"Motor Thrusts [g]: % 7.3f  % 7.3f  % 7.3f  % 7.3f",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
-        mvprintw(39,0,"MS_PWM: %u  %u  %u  %u",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
+        mvprintw(39,0,"MS_Cmd: %u  %u  %u  %u",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
 
 
         mvprintw(41,0,"=== Controller Gains ====");

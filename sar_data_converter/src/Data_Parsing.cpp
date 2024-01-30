@@ -32,6 +32,9 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Eul_B_O.y = eul[1]*180/M_PI;
     Eul_B_O.z = eul[2]*180/M_PI;
 
+    Vel_mag_B_O = sqrt(pow(Twist_B_O.linear.x,2)+pow(Twist_B_O.linear.z,2));
+    Vel_angle_B_O = atan2(Twist_B_O.linear.z,Twist_B_O.linear.x)*180/M_PI;
+
 
     // STATES WRT PLANE
     Pose_P_B = ctrl_msg.Pose_P_B;
@@ -123,6 +126,9 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Pose_B_O_trg.orientation.z = NAN;
     Pose_B_O_trg.orientation.w = NAN;
     Twist_B_O_trg = ctrl_msg.Twist_B_O_trg;
+
+    Vel_mag_B_O_trg = sqrt(pow(Twist_B_O_trg.linear.x,2)+pow(Twist_B_O_trg.linear.z,2));
+    Vel_angle_B_O_trg = atan2(Twist_B_O_trg.linear.z,Twist_B_O_trg.linear.x)*180/M_PI;
 
     float quat_trg[4] = {
         (float)ctrl_msg.Pose_B_O_trg.orientation.x,
