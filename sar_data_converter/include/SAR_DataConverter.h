@@ -153,7 +153,7 @@ class SAR_DataConverter {
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
-        void append_CSV_Rot();
+        void append_CSV_Trg();
         void append_CSV_impact();
         void append_CSV_blank();
 
