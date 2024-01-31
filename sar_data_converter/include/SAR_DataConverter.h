@@ -96,7 +96,7 @@ class SAR_DataConverter {
 
             // INITIALIZE SAR_DC THREADS
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
-            // ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+            ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
             Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
 
 

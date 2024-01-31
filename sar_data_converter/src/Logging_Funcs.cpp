@@ -14,14 +14,12 @@ bool SAR_DataConverter::DataLogging_Callback(sar_msgs::Logging_CMD::Request &req
             Logging_Flag = false;
             fPtr = fopen(req.filePath.c_str(), "w");
             create_CSV();
-            std::cout << "CSV Created" << std::endl;
             break;
 
 
         case 1: // TURN ON/OFF LOGGING
             Logging_Flag = true;
             fPtr = fopen(req.filePath.c_str(), "a");
-            std::cout << "Logging Started" << std::endl;
             break;
 
         case 2: // CAP CSV W/ TRIGGER,IMPACT,MISC DATA
@@ -35,7 +33,6 @@ bool SAR_DataConverter::DataLogging_Callback(sar_msgs::Logging_CMD::Request &req
             append_CSV_impact();
             append_CSV_blank();
 
-            std::cout << "CSV Capped" << std::endl;
             break;
 
     }
@@ -130,7 +127,7 @@ void SAR_DataConverter::append_CSV_states()
     // MISC STATE DATA
     fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Eul_B_O.x,Eul_B_O.y,Eul_B_O.z);                                        // Eul_BO.x,Eul_BO.y,Eul_BO.z
     fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_O.angular.x,Twist_B_O.angular.y,Twist_B_O.angular.z);          // W_BO.x,W_BO.y,W_BO.z
-    fprintf(fPtr,"% 5.2f,",Accel_B_O.angular.y);                                                                // AngAcc_BO.x,AngAcc_BO.y,AngAcc_BO.z
+    fprintf(fPtr,"% 5.2f,",Accel_B_O.angular.y);                                                                // AngAcc_BO.y
     fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,% 6.3f,",FM[0],FM[1],FM[2],FM[3]);                                       // F_thrust,Mx,My,Mz
 
     // SETPOINT VALUES
@@ -223,26 +220,26 @@ void SAR_DataConverter::append_CSV_Trg()
 void SAR_DataConverter::append_CSV_impact()
 {
     // POLICY DATA
-    fprintf(fPtr,"%u,%u,",K_ep,K_run);                                                                          // K_ep,K_run
-    fprintf(fPtr,"% 5.3f,",(Time_impact_Ext-Time_start).toSec());                                                          // t
-    fprintf(fPtr,"--,%u,",Pad_Connections);                                           // Trg_Action,Rot_Action
+    fprintf(fPtr,"%u,%u,",K_ep,K_run);                              // K_ep,K_run
+    fprintf(fPtr,"% 5.3f,",(Time_impact_Ext-Time_start).toSec());   // t_Impact
+    fprintf(fPtr,"--,%u,",Pad_Connections);                         // --,Pad_Connections
     fprintf(fPtr,"%s,%s,%s,",formatBool(BodyContact_Flag),formatBool(ForelegContact_Flag),formatBool(HindlegContact_Flag));                                                                                  // Mu,Sigma,Policy
 
-    fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad3_Contact);                                     // D_perp,Tau,Tau_CR,Theta_x
-    fprintf(fPtr,"--,--,--,");                              // V_BO_Mag,V_BO_Angle,a_BO_Mag
-    fprintf(fPtr,"--,--,% 7.2f,",Eul_P_B_impact_Ext.y);                                  // V_BP_Mag,V_BP_Angle,Phi_PB
-    fprintf(fPtr,"--,%s,%s,",formatBool(Impact_Flag_Ext),formatBool(Impact_Flag_OB));      // Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB
+    fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad3_Contact);   // Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact
+    fprintf(fPtr,"--,--,--,");                                                          // V_BO_Mag,V_BO_Angle,a_BO_Mag
+    fprintf(fPtr,"--,--,% 7.2f,",Eul_P_B_impact_Ext.y);                                 // V_BP_Mag,V_BP_Angle,Phi_PB
+    fprintf(fPtr,"--,%s,%s,",formatBool(Impact_Flag_Ext),formatBool(Impact_Flag_OB));   // Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB
 
     // STATE DATA
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Pose_B_O_impact_Ext.position.x,Pose_B_O_impact_Ext.position.y,Pose_B_O_impact_Ext.position.z);          // r_BO.x,r_BO.y,r_BO.z
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.linear.x,Twist_B_P_impact_Ext.linear.y,Twist_B_P_impact_Ext.linear.z);             // V_BO.x,V_BO.y,V_BO.z
-    fprintf(fPtr,"--,--,--,");             // a_BO.x,a_BO.y,a_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Pose_B_O_impact_Ext.position.x,Pose_B_O_impact_Ext.position.y,Pose_B_O_impact_Ext.position.z);     // r_BO.x,r_BO.y,r_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.linear.x,Twist_B_P_impact_Ext.linear.y,Twist_B_P_impact_Ext.linear.z);        // V_BO.x,V_BO.y,V_BO.z
+    fprintf(fPtr,"--,--,--,");                                                                                                              // a_BO.x,a_BO.y,a_BO.z
     
     // MISC STATE DATA
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Eul_B_O_impact_Ext.x,Eul_B_O_impact_Ext.y,Eul_B_O_impact_Ext.z);                                        // Eul_BO.x,Eul_BO.y,Eul_BO.z
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.angular.x,Twist_B_P_impact_Ext.angular.y,Twist_B_P_impact_Ext.angular.z);          // W_BO.x,W_BO.y,W_BO.z
-    fprintf(fPtr,"--,");                                                                // AngAcc_BO.x,AngAcc_BO.y,AngAcc_BO.z
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,% 5.2f,",Impact_Magnitude,Force_impact.x,Force_impact.y,Force_impact.z);                                       // F_thrust,Mx,My,Mz
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Eul_B_O_impact_Ext.x,Eul_B_O_impact_Ext.y,Eul_B_O_impact_Ext.z);                                   // Eul_BO.x,Eul_BO.y,Eul_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.angular.x,Twist_B_P_impact_Ext.angular.y,Twist_B_P_impact_Ext.angular.z);     // W_BO.x,W_BO.y,W_BO.z
+    fprintf(fPtr,"--,");                                                                                                                    // AngAcc_BO.x,AngAcc_BO.y,AngAcc_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,% 5.2f,",Impact_Magnitude,Force_Impact_x,Force_Impact_y,Force_Impact_z);                             // F_thrust,Mx,My,Mz
 
     // SETPOINT VALUES
     fprintf(fPtr,"--,--,--,");                                                    // x_d.x,x_d.y,x_d.z

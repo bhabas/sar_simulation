@@ -276,8 +276,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         Tau_trg = Tau;
                         Tau_CR_trg = Tau_CR;
-                        Theta_x_trg = Theta_x_trg;
-                        Theta_y_trg = Theta_y_trg;
+                        Theta_x_trg = Theta_x;
+                        Theta_y_trg = Theta_y;
 
                         Policy_Trg_Action_trg = Policy_Trg_Action;
                         Policy_Rot_Action_trg = Policy_Rot_Action;
@@ -324,8 +324,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         Tau_trg = Tau;
                         Tau_CR_trg = Tau_CR;
-                        Theta_x_trg = Theta_x_trg;
-                        Theta_y_trg = Theta_y_trg;
+                        Theta_x_trg = Theta_x;
+                        Theta_y_trg = Theta_y;
 
                         Policy_Trg_Action_trg = Policy_Trg_Action;
                         Policy_Rot_Action_trg = Policy_Rot_Action;
