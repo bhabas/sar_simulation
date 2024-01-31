@@ -260,7 +260,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
             DP_LT = np.dot(V_hat_impact,e_r_hat)
             CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
-            R_LT = 1/2*self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)+0.5
+            R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
 
             
             ## GRAVITY MOMENT REWARD
@@ -268,10 +268,10 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
             DP_GM = np.dot(g_hat,e_r_hat)
             CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))[1]
-            R_GM = 1/2*self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)+0.5
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
 
             ## PHI IMPACT REWARD
-            R_Phi = 1/2*self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)+0.5
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
         elif self.HindlegContact_Flag:
 
@@ -297,7 +297,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
             DP_LT = np.dot(V_hat_impact,e_r_hat)
             CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
-            R_LT = 1/2*self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)+0.5
+            R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
 
             
             ## GRAVITY MOMENT REWARD
@@ -305,10 +305,10 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
             DP_GM = np.dot(g_hat,e_r_hat)
             CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))[1]
-            R_GM = 1/2*self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)+0.5
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
 
             ## PHI IMPACT REWARD
-            R_Phi = 1/2*self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)+0.5
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
         elif self.BodyContact_Flag:
 
@@ -323,7 +323,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             ## CALC REWARD VALUES
             R_LT = 0
             R_GM = 0
-            R_Phi = 1/2*self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)+0.5
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
 
         ## REWARD: MINIMUM DISTANCE 
@@ -374,21 +374,21 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         Phi_b = Phi_w/2
 
         if Phi_deg <= -2*Phi_min:
-            return -1.0
+            return 0.0
         elif -2*Phi_min < Phi_deg <= Phi_min:
-            return 0.5/(Phi_min - 0) * (Phi_deg - Phi_min) + 0.5
+            return 0.5/(3*Phi_min - 0) * (Phi_deg - Phi_min) + 0.50
         elif Phi_min < Phi_deg <= Phi_min + Phi_b:
             return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
         elif Phi_min + Phi_b < Phi_deg <= Phi_TD:
-            return -0.5/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.5
+            return -0.25/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.75
         elif Phi_TD < Phi_deg <= Phi_TD + Phi_b:
-            return 0.5/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.5
+            return 0.25/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.75
         elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
             return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
         elif (Phi_TD + Phi_w) < Phi_deg <= (360 + 2*Phi_min):
-            return -0.5/(360 - ((Phi_TD + Phi_w))) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
+            return -0.5/(3*Phi_min) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
         elif (360 + 2*Phi_min) <= Phi_deg:
-            return -1.0
+            return 0.0
 
     def Reward_LT(self,CP_angle_deg,ForelegContact_Flag,HindlegContact_Flag):
 
@@ -401,9 +401,9 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## CALCULATE REWARD
         if -180 <= CP_angle_deg <= 0:
-            return -np.sin(np.radians(CP_angle_deg))
+            return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
         elif 0 < CP_angle_deg <= 180:
-            return -1.0/180 * CP_angle_deg
+            return -1.0/180 * CP_angle_deg * 1/2 + 0.5
         
     def Reward_GravityMoment(self,CP_angle_deg,ForelegContact_Flag,HindlegContact_Flag):
 
@@ -415,7 +415,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             return 0
 
         ## CALCULATE REWARD
-        return -np.sin(np.radians(CP_angle_deg))
+        return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
 
 
 

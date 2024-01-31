@@ -680,21 +680,21 @@ class SAR_Env_2D(gym.Env):
         Phi_b = Phi_w/2
 
         if Phi_deg <= -2*Phi_min:
-            return -1.0
+            return 0.0
         elif -2*Phi_min < Phi_deg <= Phi_min:
-            return 0.5/(Phi_min - 0) * (Phi_deg - Phi_min) + 0.5
+            return 0.5/(3*Phi_min - 0) * (Phi_deg - Phi_min) + 0.50
         elif Phi_min < Phi_deg <= Phi_min + Phi_b:
             return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
         elif Phi_min + Phi_b < Phi_deg <= Phi_TD:
-            return -0.5/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.5
+            return -0.25/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.75
         elif Phi_TD < Phi_deg <= Phi_TD + Phi_b:
-            return 0.5/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.5
+            return 0.25/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.75
         elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
             return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
         elif (Phi_TD + Phi_w) < Phi_deg <= (360 + 2*Phi_min):
-            return -0.5/(360 - ((Phi_TD + Phi_w))) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
+            return -0.5/(3*Phi_min) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
         elif (360 + 2*Phi_min) <= Phi_deg:
-            return -1.0
+            return 0.0
 
     def Reward_LT(self,CP_angle_deg,Leg_Num):
 
@@ -702,16 +702,16 @@ class SAR_Env_2D(gym.Env):
             CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
         if -180 <= CP_angle_deg <= 0:
-            return -np.sin(np.radians(CP_angle_deg))
+            return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
         elif 0 < CP_angle_deg <= 180:
-            return -1.0/180 * CP_angle_deg
+            return -1.0/180 * CP_angle_deg * 1/2 + 0.5
         
     def Reward_GravityMoment(self,CP_angle_deg,Leg_Num):
 
         if Leg_Num == 2:
             CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
-        return -np.sin(np.radians(CP_angle_deg))
+        return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
 
     def _sample_flight_conditions(self):
 

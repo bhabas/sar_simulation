@@ -151,8 +151,8 @@ class InteractivePlot:
             valinit=0,
             valstep=1
         )
-        self.V_Angle_Slider.valmax = -15
-        self.V_Angle_Slider.valmin = -165
+        self.V_Angle_Slider.valmax = +20
+        self.V_Angle_Slider.valmin = -200
         self.V_Angle_Slider.set_val(-33)
         self.V_Angle_Slider.on_changed(self.Update_2) 
 
@@ -281,9 +281,9 @@ class InteractivePlot:
 
         # CONFIG
         self.R_LT_ax.set_xlim(-200,200)
-        self.R_LT_ax.set_ylim(-1.25,1.25)
+        self.R_LT_ax.set_ylim(-0.25,1.25)
         self.R_LT_ax.set_xticks(np.arange(-180,181,45))
-        self.R_LT_ax.set_yticks(np.arange(-1,1.1,0.5))
+        self.R_LT_ax.set_yticks(np.arange(0,1.1,0.25))
         self.R_LT_ax.set_title("Reward: Angular Momentum Transfer")
         self.R_LT_ax.set_xlabel("Angle: (v x e_r)")
         self.R_LT_ax.set_ylabel("Reward")
@@ -306,9 +306,9 @@ class InteractivePlot:
 
         # CONFIG
         self.R_GM_ax.set_xlim(-200,200)
-        self.R_GM_ax.set_ylim(-1.25,1.25)
+        self.R_GM_ax.set_ylim(-0.25,1.25)
         self.R_GM_ax.set_xticks(np.arange(-180,181,45))
-        self.R_GM_ax.set_yticks(np.arange(-1,1.1,0.5))
+        self.R_GM_ax.set_yticks(np.arange(0,1.1,0.25))
         self.R_GM_ax.set_title("Reward: Gravity Moment")
         self.R_GM_ax.set_xlabel("Angle: (g x e_r)")
         self.R_GM_ax.set_ylabel("Reward")
@@ -325,10 +325,10 @@ class InteractivePlot:
         
 
         # CONFIG
-        self.R_Phi_ax.set_xticks(np.arange(-720,720+1,90))
-        self.R_Phi_ax.set_yticks(np.arange(-1,1.1,0.5))
         self.R_Phi_ax.set_xlim(-540,540)
-        self.R_Phi_ax.set_ylim(-1.25,1.25)
+        self.R_Phi_ax.set_ylim(-0.25,1.25)
+        self.R_Phi_ax.set_xticks(np.arange(-720,720+1,90))
+        self.R_Phi_ax.set_yticks(np.arange(0,1.1,0.25))
         self.R_Phi_ax.set_title("Reward: Impact Angle Window")
         self.R_Phi_ax.set_xlabel("Angle: Phi_rel")
         self.R_Phi_ax.set_ylabel("Reward")
@@ -718,21 +718,21 @@ class InteractivePlot:
         Phi_b = Phi_w/2
 
         if Phi_deg <= -2*Phi_min:
-            return -1.0
+            return 0.0
         elif -2*Phi_min < Phi_deg <= Phi_min:
-            return 0.5/(Phi_min - 0) * (Phi_deg - Phi_min) + 0.5
+            return 0.5/(3*Phi_min - 0) * (Phi_deg - Phi_min) + 0.50
         elif Phi_min < Phi_deg <= Phi_min + Phi_b:
             return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
         elif Phi_min + Phi_b < Phi_deg <= Phi_TD:
-            return -0.5/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.5
+            return -0.25/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.75
         elif Phi_TD < Phi_deg <= Phi_TD + Phi_b:
-            return 0.5/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.5
+            return 0.25/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.75
         elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
             return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
         elif (Phi_TD + Phi_w) < Phi_deg <= (360 + 2*Phi_min):
-            return -0.5/(360 - ((Phi_TD + Phi_w))) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
+            return -0.5/(3*Phi_min) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
         elif (360 + 2*Phi_min) <= Phi_deg:
-            return -1.0
+            return 0.0
 
     def Reward_LT(self,CP_angle_deg,Leg_Num):
 
@@ -740,16 +740,16 @@ class InteractivePlot:
             CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
         if -180 <= CP_angle_deg <= 0:
-            return -np.sin(np.radians(CP_angle_deg))
+            return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
         elif 0 < CP_angle_deg <= 180:
-            return -1.0/180 * CP_angle_deg
+            return -1.0/180 * CP_angle_deg * 1/2 + 0.5
         
     def Reward_GravityMoment(self,CP_angle_deg,Leg_Num):
 
         if Leg_Num == 2:
             CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
-        return -np.sin(np.radians(CP_angle_deg))
+        return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
 
     def _get_pose(self,x,z,phi):
 
