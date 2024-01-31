@@ -227,7 +227,7 @@ void SAR_DataConverter::append_CSV_impact()
 
     fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad3_Contact);   // Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact
     fprintf(fPtr,"--,--,--,");                                                          // V_BO_Mag,V_BO_Angle,a_BO_Mag
-    fprintf(fPtr,"--,--,% 7.2f,",Eul_P_B_impact_Ext.y);                                 // V_BP_Mag,V_BP_Angle,Phi_PB
+    fprintf(fPtr,"--,% 7.2f,% 7.2f,",Rot_Sum_impact_Ext,Eul_P_B_impact_Ext.y);                                 // V_BP_Mag,V_BP_Angle,Phi_PB
     fprintf(fPtr,"--,%s,%s,",formatBool(Impact_Flag_Ext),formatBool(Impact_Flag_OB));   // Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB
 
     // STATE DATA

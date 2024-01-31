@@ -69,103 +69,136 @@ SAR_Type:
       # ============================================================== #
 
       A10_L30:
-          Ref_Mass:  47.10E-3
-          Ref_Ixx:   34.60E-6
-          Ref_Iyy:   35.10E-6
-          Ref_Izz:   51.90E-6
-  
-          Leg_Angle:  10
-          Leg_Length:  30.00E-3
+        Ref_Mass:  47.10E-3
+        Ref_Ixx:   34.60E-6
+        Ref_Iyy:   35.10E-6
+        Ref_Izz:   51.90E-6
+
+        Leg_Angle:  10
+        Leg_Length:  30.00E-3
+
+        Gamma_eff:  46.17
+        L_eff:  43.50E-3
 
       A10_L55:
-          Ref_Mass:  49.40E-3
-          Ref_Ixx:   54.40E-6
-          Ref_Iyy:   55.00E-6
-          Ref_Izz:   58.30E-6
-  
-          Leg_Angle:  10
-          Leg_Length:  55.00E-3
+        Ref_Mass:  49.40E-3
+        Ref_Ixx:   54.40E-6
+        Ref_Iyy:   55.00E-6
+        Ref_Izz:   58.30E-6
+
+        Leg_Angle:  10
+        Leg_Length:  55.00E-3
+
+        Gamma_eff:  32.18
+        L_eff:  64.68E-3
 
       A10_L70:
-          Ref_Mass:  50.78E-3
-          Ref_Ixx:   71.50E-6
-          Ref_Iyy:   72.00E-6
-          Ref_Izz:   62.60E-6
-  
-          Leg_Angle:  10
-          Leg_Length:  70.00E-3
+        Ref_Mass:  50.78E-3
+        Ref_Ixx:   71.50E-6
+        Ref_Iyy:   72.00E-6
+        Ref_Izz:   62.60E-6
+
+        Leg_Angle:  10
+        Leg_Length:  70.00E-3
+
+        Gamma_eff:  27.57
+        L_eff:  78.42E-3
 
       A15_L90:
-          Ref_Mass:  52.62E-3
-          Ref_Ixx:   102.90E-6
-          Ref_Iyy:   103.40E-6
-          Ref_Izz:   77.60E-6
-  
-          Leg_Angle:  15
-          Leg_Length:  90.00E-3
+        Ref_Mass:  52.62E-3
+        Ref_Ixx:   102.90E-6
+        Ref_Iyy:   103.40E-6
+        Ref_Izz:   77.60E-6
+
+        Leg_Angle:  15
+        Leg_Length:  90.00E-3
+
+        Gamma_eff:  26.78
+        L_eff:  98.03E-3
 
       A25_L50:
-          Ref_Mass:  48.93E-3
-          Ref_Ixx:   52.20E-6
-          Ref_Iyy:   52.70E-6
-          Ref_Izz:   67.60E-6
-  
-          Leg_Angle:  25
-          Leg_Length:  50.00E-3
+        Ref_Mass:  48.93E-3
+        Ref_Ixx:   52.20E-6
+        Ref_Iyy:   52.70E-6
+        Ref_Izz:   67.60E-6
+
+        Leg_Angle:  25
+        Leg_Length:  50.00E-3
+
+        Gamma_eff:  42.90
+        L_eff:  62.65E-3
 
       A30_L25:
-          Ref_Mass:  46.62E-3
-          Ref_Ixx:   33.40E-6
-          Ref_Iyy:   33.90E-6
-          Ref_Izz:   56.00E-6
-  
-          Leg_Angle:  30
-          Leg_Length:  25.00E-3
+        Ref_Mass:  46.62E-3
+        Ref_Ixx:   33.40E-6
+        Ref_Iyy:   33.90E-6
+        Ref_Izz:   56.00E-6
+
+        Leg_Angle:  30
+        Leg_Length:  25.00E-3
+
+        Gamma_eff:  58.68
+        L_eff:  42.77E-3
 
       A30_L70:
-          Ref_Mass:  50.76E-3
-          Ref_Ixx:   75.90E-6
-          Ref_Iyy:   76.40E-6
-          Ref_Izz:   87.60E-6
-  
-          Leg_Angle:  30
-          Leg_Length:  70.00E-3
+        Ref_Mass:  50.76E-3
+        Ref_Ixx:   75.90E-6
+        Ref_Iyy:   76.40E-6
+        Ref_Izz:   87.60E-6
+
+        Leg_Angle:  30
+        Leg_Length:  70.00E-3
+
+        Gamma_eff:  40.60
+        L_eff:  80.60E-3
 
       A30_L80:
-          Ref_Mass:  51.69E-3
-          Ref_Ixx:   90.10E-6
-          Ref_Iyy:   90.60E-6
-          Ref_Izz:   97.10E-6
-  
-          Leg_Angle:  30
-          Leg_Length:  80.00E-3
+        Ref_Mass:  51.69E-3
+        Ref_Ixx:   90.10E-6
+        Ref_Iyy:   90.60E-6
+        Ref_Izz:   97.10E-6
+
+        Leg_Angle:  30
+        Leg_Length:  80.00E-3
+
+        Gamma_eff:  38.71
+        L_eff:  89.53E-3
 
       A45_L45:
-          Ref_Mass:  48.43E-3
-          Ref_Ixx:   48.90E-6
-          Ref_Iyy:   49.40E-6
-          Ref_Izz:   77.30E-6
-  
-          Leg_Angle:  45
-          Leg_Length:  45.00E-3
+        Ref_Mass:  48.43E-3
+        Ref_Ixx:   48.90E-6
+        Ref_Iyy:   49.40E-6
+        Ref_Izz:   77.30E-6
+
+        Leg_Angle:  45
+        Leg_Length:  45.00E-3
+
+        Gamma_eff:  57.16
+        L_eff:  59.75E-3
 
       A50_L60:
-          Ref_Mass:  49.80E-3
-          Ref_Ixx:   64.10E-6
-          Ref_Iyy:   64.60E-6
-          Ref_Izz:   99.10E-6
-  
-          Leg_Angle:  50
-          Leg_Length:  60.00E-3
+        Ref_Mass:  49.80E-3
+        Ref_Ixx:   64.10E-6
+        Ref_Iyy:   64.60E-6
+        Ref_Izz:   99.10E-6
+
+        Leg_Angle:  50
+        Leg_Length:  60.00E-3
+
+        Gamma_eff:  56.96
+        L_eff:  71.81E-3
 
       A50_L80:
-          Ref_Mass:  51.65E-3
-          Ref_Ixx:   90.20E-6
-          Ref_Iyy:   90.70E-6
-          Ref_Izz:   131.00E-6
-  
-          Leg_Angle:  50
-          Leg_Length:  80.00E-3
+        Ref_Mass:  51.65E-3
+        Ref_Ixx:   90.20E-6
+        Ref_Iyy:   90.70E-6
+        Ref_Izz:   131.00E-6
+
+        Leg_Angle:  50
+        Leg_Length:  80.00E-3
+
+        Gamma_eff:  53.79
+        L_eff:  88.03E-3
 
   Source_One_V5:
       CtrlGains:
@@ -244,6 +277,9 @@ SAR_Type:
   
           Leg_Angle:  15
           Leg_Length:  100.00E-3
+  
+          Gamma_eff:  22.15
+          L_eff:  119.12E-3
 
         A15_L150:
           Ref_Mass:  775.23E-3
@@ -253,6 +289,9 @@ SAR_Type:
   
           Leg_Angle:  15
           Leg_Length:  150.00E-3
+  
+          Gamma_eff:  18.82
+          L_eff:  167.58E-3
 
         A15_L200:
           Ref_Mass:  781.13E-3
@@ -262,9 +301,9 @@ SAR_Type:
   
           Leg_Angle:  15
           Leg_Length:  200.00E-3
-
-          Gamma_eff: 17.0
-          L_eff: 216.4e-3
+  
+          Gamma_eff:  16.99
+          L_eff:  216.36E-3
 
         A15_L250:
           Ref_Mass:  787.00E-3
@@ -274,6 +313,11 @@ SAR_Type:
   
           Leg_Angle:  15
           Leg_Length:  250.00E-3
+  
+          Gamma_eff:  15.83
+          L_eff:  265.27E-3
+
+        
 
         # ============================================================== #
 
@@ -285,6 +329,9 @@ SAR_Type:
   
           Leg_Angle:  30
           Leg_Length:  100.00E-3
+  
+          Gamma_eff:  32.66
+          L_eff:  117.92E-3
 
         A30_L150:
           Ref_Mass:  774.90E-3
@@ -294,6 +341,9 @@ SAR_Type:
   
           Leg_Angle:  30
           Leg_Length:  150.00E-3
+  
+          Gamma_eff:  29.70
+          L_eff:  164.13E-3
 
         A30_L200:
           Ref_Mass:  780.80E-3
@@ -303,6 +353,9 @@ SAR_Type:
   
           Leg_Angle:  30
           Leg_Length:  200.00E-3
+  
+          Gamma_eff:  28.04
+          L_eff:  210.59E-3
 
         A30_L250:
           Ref_Mass:  786.70E-3
@@ -312,6 +365,9 @@ SAR_Type:
   
           Leg_Angle:  30
           Leg_Length:  250.00E-3
+  
+          Gamma_eff:  26.98
+          L_eff:  257.17E-3
 
         # ============================================================== #
 
@@ -323,6 +379,9 @@ SAR_Type:
   
           Leg_Angle:  45
           Leg_Length:  100.00E-3
+  
+          Gamma_eff:  44.31
+          L_eff:  114.38E-3
 
         A45_L150:
           Ref_Mass:  774.65E-3
@@ -332,6 +391,9 @@ SAR_Type:
   
           Leg_Angle:  45
           Leg_Length:  150.00E-3
+  
+          Gamma_eff:  41.83
+          L_eff:  157.29E-3
 
         A45_L200:
           Ref_Mass:  780.54E-3
@@ -341,6 +403,9 @@ SAR_Type:
   
           Leg_Angle:  45
           Leg_Length:  200.00E-3
+  
+          Gamma_eff:  40.41
+          L_eff:  200.37E-3
 
         A45_L250:
           Ref_Mass:  786.43E-3
@@ -350,6 +415,9 @@ SAR_Type:
   
           Leg_Angle:  45
           Leg_Length:  250.00E-3
+  
+          Gamma_eff:  39.50
+          L_eff:  243.53E-3
 
         # ============================================================== #
 
@@ -361,6 +429,9 @@ SAR_Type:
   
           Leg_Angle:  60
           Leg_Length:  100.00E-3
+  
+          Gamma_eff:  57.37
+          L_eff:  109.94E-3
 
         A60_L150:
           Ref_Mass:  774.40E-3
@@ -370,6 +441,9 @@ SAR_Type:
   
           Leg_Angle:  60
           Leg_Length:  150.00E-3
+  
+          Gamma_eff:  55.63
+          L_eff:  149.27E-3
 
         A60_L200:
           Ref_Mass:  780.28E-3
@@ -379,6 +453,9 @@ SAR_Type:
   
           Leg_Angle:  60
           Leg_Length:  200.00E-3
+  
+          Gamma_eff:  54.61
+          L_eff:  188.69E-3
 
         A60_L250:
           Ref_Mass:  786.17E-3
@@ -388,6 +465,9 @@ SAR_Type:
   
           Leg_Angle:  60
           Leg_Length:  250.00E-3
+  
+          Gamma_eff:  53.94
+          L_eff:  228.14E-3
         
 
 
@@ -468,15 +548,21 @@ SAR_Type:
   
           Leg_Angle:  15              # [deg]
           Leg_Length:  50.00E-3       # [m]
+  
+          Gamma_eff:  30.26           # [deg]
+          L_eff:  74.70E-3            # [m]
 
         A15_L100:
-          Ref_Mass:  351.34E-3        
-          Ref_Ixx:   1.35E-3          
-          Ref_Iyy:   1.20E-3          
-          Ref_Izz:   1.23E-3          
+          Ref_Mass:  351.34E-3
+          Ref_Ixx:   1.35E-3
+          Ref_Iyy:   1.20E-3
+          Ref_Izz:   1.23E-3
   
-          Leg_Angle:  15             
-          Leg_Length:  100.00E-3      
+          Leg_Angle:  15
+          Leg_Length:  100.00E-3
+  
+          Gamma_eff:  22.52
+          L_eff:  122.14E-3
 
         A15_L125:
           Ref_Mass:  354.29E-3
@@ -486,6 +572,9 @@ SAR_Type:
   
           Leg_Angle:  15
           Leg_Length:  125.00E-3
+  
+          Gamma_eff:  20.56
+          L_eff:  146.29E-3
 
         A15_L150:
           Ref_Mass:  357.23E-3
@@ -495,6 +584,9 @@ SAR_Type:
   
           Leg_Angle:  15
           Leg_Length:  150.00E-3
+  
+          Gamma_eff:  19.15
+          L_eff:  170.55E-3
 
         # ============================================================== # 
 
@@ -506,6 +598,9 @@ SAR_Type:
   
           Leg_Angle:  30
           Leg_Length:  50.00E-3
+  
+          Gamma_eff:  39.29
+          L_eff:  75.54E-3
 
         A30_L100:
           Ref_Mass:  351.00E-3
@@ -515,6 +610,9 @@ SAR_Type:
   
           Leg_Angle:  30
           Leg_Length:  100.00E-3
+  
+          Gamma_eff:  32.77
+          L_eff:  121.03E-3
 
         A30_L125:
           Ref_Mass:  354.00E-3
@@ -524,6 +622,9 @@ SAR_Type:
   
           Leg_Angle:  30
           Leg_Length:  125.00E-3
+  
+          Gamma_eff:  31.06
+          L_eff:  144.09E-3
 
         A30_L150:
           Ref_Mass:  356.90E-3
@@ -533,6 +634,9 @@ SAR_Type:
   
           Leg_Angle:  30
           Leg_Length:  150.00E-3
+  
+          Gamma_eff:  29.83
+          L_eff:  167.23E-3
 
         # ============================================================== # 
 
@@ -544,6 +648,9 @@ SAR_Type:
   
           Leg_Angle:  45
           Leg_Length:  50.00E-3
+  
+          Gamma_eff:  49.20
+          L_eff:  75.00E-3
 
         A45_L100:
           Ref_Mass:  350.76E-3
@@ -553,6 +660,9 @@ SAR_Type:
   
           Leg_Angle:  45
           Leg_Length:  100.00E-3
+  
+          Gamma_eff:  44.11
+          L_eff:  117.49E-3
 
         A45_L125:
           Ref_Mass:  353.70E-3
@@ -562,6 +672,9 @@ SAR_Type:
   
           Leg_Angle:  45
           Leg_Length:  125.00E-3
+  
+          Gamma_eff:  42.74
+          L_eff:  138.93E-3
 
         A45_L150:
           Ref_Mass:  356.65E-3
@@ -571,6 +684,9 @@ SAR_Type:
   
           Leg_Angle:  45
           Leg_Length:  150.00E-3
+  
+          Gamma_eff:  41.73
+          L_eff:  160.42E-3
 
         # ============================================================== #
 
@@ -582,6 +698,9 @@ SAR_Type:
   
           Leg_Angle:  60
           Leg_Length:  50.00E-3
+  
+          Gamma_eff:  60.06
+          L_eff:  73.68E-3
 
         A60_L100:
           Ref_Mass:  350.50E-3
@@ -591,6 +710,9 @@ SAR_Type:
   
           Leg_Angle:  60
           Leg_Length:  100.00E-3
+  
+          Gamma_eff:  56.82
+          L_eff:  112.87E-3
 
         A60_L125:
           Ref_Mass:  353.45E-3
@@ -600,6 +722,9 @@ SAR_Type:
   
           Leg_Angle:  60
           Leg_Length:  125.00E-3
+  
+          Gamma_eff:  55.92
+          L_eff:  132.54E-3
 
         A60_L150:
           Ref_Mass:  356.40E-3
@@ -609,6 +734,9 @@ SAR_Type:
   
           Leg_Angle:  60
           Leg_Length:  150.00E-3
+  
+          Gamma_eff:  55.25
+          L_eff:  152.24E-3
 
 
 
