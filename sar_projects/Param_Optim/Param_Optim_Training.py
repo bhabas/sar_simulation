@@ -7,12 +7,12 @@ import time
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
-def runTraining(env,agent,V_mag_rel,V_angle_rel,Plane_Angle,logName,K_ep_max=15):
+def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max=15):
 
     # agent.V_mag_rel = V_mag_rel
     # agent.V_angle_rel = V_angle_rel
     # agent.Plane_angle = Plane_Angle
-    # env.createCSV(logName)
+    env.createCSV(logName)
 
     # ============================
     ##          Episode         
@@ -71,8 +71,9 @@ def runTraining(env,agent,V_mag_rel,V_angle_rel,Plane_Angle,logName,K_ep_max=15)
             a_Trg = a_Trg_list[K_run]  
             a_Rot = a_Rot_list[K_run] 
 
-            env.ParamOptim_reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-            # env.startLogging(logName)
+            print(f"Rollout # {K_run:d} Policy: a_Trg = {a_Trg:.3f}, a_Rot = {a_Rot:.3f}")
+            env.ParamOptim_reset(V_mag=Vel_mag_B_P,V_angle=Vel_angle_B_P,Plane_Angle=Plane_Angle)
+            env.startLogging(logName)
 
             
             obs,reward,done,info = env.ParamOptim_Flight(a_Trg,a_Rot)
@@ -106,15 +107,7 @@ def runTraining(env,agent,V_mag_rel,V_angle_rel,Plane_Angle,logName,K_ep_max=15)
         agent.reward_avg = np.mean(reward_arr)
         agent.RL_Publish()
 
-        # if all(agent.sigma < 0.05):
-        #     break
 
-        
-    #     ## PUBLISH AVERAGE REWARD DATA
-    #     agent.Kep_list_reward_avg.append(K_ep)
-    #     agent.reward_avg_list.append(np.mean(reward_arr))
-    #     agent.reward_avg = np.mean(reward_arr)
-    #     agent.RL_Publish()
 
 
 if __name__ == '__main__':
@@ -137,10 +130,10 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_mag = 2.5     # [m/s]
-    V_angle = 60    # [deg]
+    V_angle = 150    # [deg]
     Plane_angle = 0 # [deg]
-    env.setAngAcc_range([-100,0])
-    env.TauThr_range = [0,1]
+    env.setAngAcc_range([-100,100])
+    env.TauThr_range = [0,0.5]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25

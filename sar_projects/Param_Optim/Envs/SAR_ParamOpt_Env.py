@@ -31,7 +31,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.abs(self.Ang_Acc_range[0])) # Allow enough time for a full rotation [s]
         self.t_trg_max = 1.0        # [s]
-        self.t_impact_max = 0.5     # [s]
+        self.t_impact_max = 1.0     # [s]
         self.t_run_max = 5.0        # [s]
         self.t_real_max = 15.0      # [s]
 
@@ -240,7 +240,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
             ## CALC IMPACT ANGLE CONDITIONS
             rot_dir = np.sign(self.Rot_Sum_impact_Ext)
-            num_rev = self.Rot_Sum_impact_Ext // (np.sign(self.Rot_Sum_impact_Ext)*360)  # Integer division to get full revolutions
+            num_rev = self.Rot_Sum_impact_Ext // (rot_dir*360+1e-6)  # Integer division to get full revolutions
             Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
 
             Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
@@ -260,7 +260,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
             DP_LT = np.dot(V_hat_impact,e_r_hat)
             CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
-            R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+            R_LT = 1/2*self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)+0.5
 
             
             ## GRAVITY MOMENT REWARD
@@ -268,16 +268,16 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
             DP_GM = np.dot(g_hat,e_r_hat)
             CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))[1]
-            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+            R_GM = 1/2*self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)+0.5
 
             ## PHI IMPACT REWARD
-            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
+            R_Phi = 1/2*self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)+0.5
 
         elif self.HindlegContact_Flag:
 
             ## CALC IMPACT ANGLE CONDITIONS
             rot_dir = np.sign(self.Rot_Sum_impact_Ext)
-            num_rev = self.Rot_Sum_impact_Ext // (np.sign(self.Rot_Sum_impact_Ext)*360)  # Integer division to get full revolutions
+            num_rev = self.Rot_Sum_impact_Ext // (rot_dir*360+1e-6)  # Integer division to get full revolutions
             Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
 
             Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
@@ -297,7 +297,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
             DP_LT = np.dot(V_hat_impact,e_r_hat)
             CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
-            R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+            R_LT = 1/2*self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)+0.5
 
             
             ## GRAVITY MOMENT REWARD
@@ -305,16 +305,16 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
             DP_GM = np.dot(g_hat,e_r_hat)
             CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))[1]
-            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+            R_GM = 1/2*self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)+0.5
 
             ## PHI IMPACT REWARD
-            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
+            R_Phi = 1/2*self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)+0.5
 
         elif self.BodyContact_Flag:
 
             ## CALC IMPACT ANGLE CONDITIONS
             rot_dir = np.sign(self.Rot_Sum_impact_Ext)
-            num_rev = self.Rot_Sum_impact_Ext // (np.sign(self.Rot_Sum_impact_Ext)*360)  # Integer division to get full revolutions
+            num_rev = self.Rot_Sum_impact_Ext // (rot_dir*360+1e-6)  # Integer division to get full revolutions
             Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
 
             Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
@@ -323,12 +323,12 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             ## CALC REWARD VALUES
             R_LT = 0
             R_GM = 0
-            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
+            R_Phi = 1/2*self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)+0.5
 
 
         ## REWARD: MINIMUM DISTANCE 
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.L_eff)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_min,0)
         else:
             R_dist = 0
 

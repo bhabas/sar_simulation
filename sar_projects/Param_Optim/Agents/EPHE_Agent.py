@@ -110,7 +110,7 @@ class EPHE_Agent():
         return np.tanh(theta)
                                 
 
-    def train(self,theta,reward,k=3):
+    def train(self,theta,reward,k=2):
         
         ## SORT THETA/REWARD ARRAYS (TODO: CLEAN LOGIC)
         reward = reward.reshape(-1,1)
@@ -128,8 +128,8 @@ class EPHE_Agent():
         S_diff = np.square(theta_h - self.mu).dot(R_h)
 
         ## CALC UPDATED MU AND SIGMA VECTORS
-        self.mu = S_theta/(S_reward + 1e-3)
-        self.sigma = np.sqrt(S_diff/(S_reward + 1e-3))
+        self.mu = S_theta/(S_reward + 1e-6)
+        self.sigma = np.sqrt(S_diff/(S_reward + 1e-6))
     
 
 if __name__ == "__main__":

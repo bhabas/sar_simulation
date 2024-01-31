@@ -71,7 +71,7 @@
         </material>
       </visual>
 
-      <collision name='Prop_Collision_1'>
+      <collision name='Body_Collision_Prop_1'>
         <pose>44.5e-3 -58.6e-3 14.75e-3 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -81,7 +81,7 @@
         </geometry>
       </collision>
 
-      <collision name='Prop_Collision_2'>
+      <collision name='Body_Collision_Prop_2'>
         <pose>-44.5e-3 -58.6e-3 14.75e-3 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -91,7 +91,7 @@
         </geometry>
       </collision>
 
-      <collision name='Prop_Collision_3'>
+      <collision name='Body_Collision_Prop_3'>
         <pose>-44.5e-3 58.6e-3 14.75e-3 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -101,7 +101,7 @@
         </geometry>
       </collision>
 
-      <collision name='Prop_Collision_4'>
+      <collision name='Body_Collision_Prop_4'>
         <pose>44.5e-3 58.6e-3 14.75e-3 0 0 0</pose>
         <geometry>
           <cylinder>
