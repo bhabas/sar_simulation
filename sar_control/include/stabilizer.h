@@ -5,6 +5,7 @@
 #include <thread>
 #include <stdio.h>
 #include <string>
+#include <boost/circular_buffer.hpp>
 
 // FIRMWARE INCLUDES
 #include "app.h"
@@ -70,6 +71,7 @@ class Controller
         // MESSAGES
         sar_msgs::CTRL_Data CtrlData_msg;
         sar_msgs::CTRL_Debug CtrlDebug_msg;
+        boost::circular_buffer<nav_msgs::Odometry> Ext_Position_msgBuffer {10};
 
 
         // DEFINE THREAD OBJECTS
@@ -94,6 +96,9 @@ class Controller
         // QUAD GEOMETRY PARAMETERS
         std::vector<float> Prop_Front_Vec;
         std::vector<float> Prop_Rear_Vec;
+
+
+
 
 
 
@@ -175,27 +180,40 @@ void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 // POSE AND TWIST FROM "VICON" SYSTEM (GAZEBO WORLD FRAME)
 void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-    // UPDATE POSE FROM VICON SYSTEM
-    state.position.x = msg->pose.pose.position.x;
-    state.position.y = msg->pose.pose.position.y;
-    state.position.z = msg->pose.pose.position.z;
+    Ext_Position_msgBuffer.push_back(*msg);
 
-    // UPDATE VELOCITIES FROM VICON SYSTEM
-    state.velocity.x = msg->twist.twist.linear.x;
-    state.velocity.y = msg->twist.twist.linear.y;
-    state.velocity.z = msg->twist.twist.linear.z;
+    // Check if the buffer is full
+    if (Ext_Position_msgBuffer.full()) {
+        // The front of the queue is the 10th message from the past
+        nav_msgs::Odometry delayedMsg = Ext_Position_msgBuffer.front();
+
+        // UPDATE POSE FROM VICON SYSTEM
+        state.position.x = delayedMsg.pose.pose.position.x;
+        state.position.y = delayedMsg.pose.pose.position.y;
+        state.position.z = delayedMsg.pose.pose.position.z;
+
+        // UPDATE VELOCITIES FROM VICON SYSTEM
+        state.velocity.x = delayedMsg.twist.twist.linear.x;
+        state.velocity.y = delayedMsg.twist.twist.linear.y;
+        state.velocity.z = delayedMsg.twist.twist.linear.z;
+
+    }
+
+
+    
 
 
     // THIS IS TO MAKE SURE THE SYSTEM HAS MAX DELAY BETWEEN VICON AND CONTROLLER [8ms vs 1ms]
     if (ResetTickDelay_Flag == true)
     {
-        int tick_delay = 8; // [ms]
+        int tick_delay = 1; // [ms]
         int unitsDigit = tick % 10;
 
         tick += ((20-tick_delay) - unitsDigit);
         ResetTickDelay_Flag = false;
     }
     
+
 }
 
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
@@ -232,6 +250,7 @@ void Controller::loadInitParams()
     ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
     Prop_23_x = Prop_Rear_Vec[0];
     Prop_23_y = Prop_Rear_Vec[1];
+
 
 
     // UPDATE CTRL GAINS
@@ -272,6 +291,10 @@ void Controller::loadInitParams()
     {
         Policy = DEEP_RL_SB3;
     }    
+
+    int Vicon_Delay_ms;
+    ros::param::get("/SIM_SETTINGS/Vicon_Delay",Vicon_Delay_ms);
+    Ext_Position_msgBuffer.set_capacity(Vicon_Delay_ms);
 
 }
 
