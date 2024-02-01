@@ -134,12 +134,9 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
     }
 
-    printf("Tick: %d\n",tick);
-
 
     // STATE UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
-        printf("State Update Tick: %d\n",tick);
 
         float time_delta = (tick-prev_tick)/1000.0f;
 
