@@ -20,7 +20,6 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         
         ## ENV CONFIG SETTINGS
         self.Env_Name = "SAR_ParamOptim_Env"
-        self.GZ_Timeout = GZ_Timeout
 
         ## TESTING CONDITIONS     
         self.V_mag_range = V_mag_range  
@@ -29,7 +28,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.setAngAcc_range(Ang_Acc_range)
 
         ## TIME CONSTRAINTS
-        self.t_rot_max = np.sqrt(np.radians(360)/np.abs(self.Ang_Acc_range[0])) # Allow enough time for a full rotation [s]
+        self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
         self.t_trg_max = 1.0        # [s]
         self.t_impact_max = 1.0     # [s]
         self.t_run_max = 5.0        # [s]

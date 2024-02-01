@@ -163,7 +163,7 @@ class SAR_Env_2D(gym.Env):
         self.MomentCutoff = False
 
         ## RESET/UPDATE TIME CONDITIONS
-        self.start_time_episode = self._get_time()
+        self.start_time_ep = self._getTime()
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
 
@@ -249,7 +249,7 @@ class SAR_Env_2D(gym.Env):
         if action[0] <= self.Pol_Trg_threshold:
 
             ## 2) UPDATE STATE
-            self._iter_step(n_steps=10)
+            self._iterStep(n_steps=10)
 
             # UPDATE RENDER
             if self.RENDER:
@@ -279,7 +279,7 @@ class SAR_Env_2D(gym.Env):
                 or (impact_flag or self.BodyContact_flag)
             )
             terminated = self.Done
-            truncated = bool(self._get_time() - self.start_time_episode >= self.t_flight_max) 
+            truncated = bool(self._getTime() - self.start_time_ep >= self.t_flight_max) 
 
             if truncated:
                 print("Truncated")
@@ -303,7 +303,7 @@ class SAR_Env_2D(gym.Env):
 
             self.Tau_trg = self.obs_trg[0]
             self.Tau_CR_trg = self.Tau_CR
-            self.start_time_trg = self._get_time()
+            self.start_time_trg = self._getTime()
 
             ## TRIGGER STATE
             self.state_trg = self._get_state()
@@ -366,7 +366,7 @@ class SAR_Env_2D(gym.Env):
 
                 ## START IMPACT TIMER
                 start_time_impact = self.t
-                self.start_time_impact = self._get_time()
+                self.start_time_impact = self._getTime()
                 (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
 
                 ## GRAB IMPACT STATE
@@ -736,7 +736,7 @@ class SAR_Env_2D(gym.Env):
        
         return V_mag,Flight_Angle
     
-    def _iter_step(self,n_steps=10):
+    def _iterStep(self,n_steps=10):
 
         for _ in range(n_steps):
 
@@ -925,7 +925,7 @@ class SAR_Env_2D(gym.Env):
 
         return obs
     
-    def _get_time(self):
+    def _getTime(self):
 
         return self.t
     

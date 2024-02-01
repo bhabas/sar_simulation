@@ -59,7 +59,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     # =========================
     
 
-    def iterStep(self,n_steps:int = 10):
+    def _iterStep(self,n_steps:int = 10):
         """Update simulation by n timesteps
 
         Args:
@@ -126,16 +126,16 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.pausePhysics()
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
-        self.iterStep(2)
+        self._iterStep(2)
 
 
         ## SET DESIRED VEL IN CONTROLLER
         self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[0],vel[0],0],cmd_flag=0)
-        self.iterStep(2)
+        self._iterStep(2)
         self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[1],vel[1],0],cmd_flag=1)
-        self.iterStep(2)
+        self._iterStep(2)
         self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[2],vel[2],0],cmd_flag=2)
-        self.iterStep(2)
+        self._iterStep(2)
 
     def resetPose(self,z_0=0.4):           
 

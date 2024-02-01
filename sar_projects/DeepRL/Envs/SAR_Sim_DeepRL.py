@@ -6,6 +6,7 @@ from gymnasium import spaces
 
 import rospy
 import time
+import math
 from gazebo_msgs.srv import GetModelState, GetModelStateRequest
 
 from sar_env import SAR_Sim_Interface
@@ -15,38 +16,58 @@ EPS = 1e-6 # Epsilon (Prevent division by zero)
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=[180,180],Tau_0=0.4):
-        """
-        Args:
-            GZ_Timeout (bool, optional): Determines if Gazebo will restart if it freezed. Defaults to False.
-            My_range (list, optional): Range of body moment actions (N*mm). Defaults to [0.0,8.0].
-            Vel_range (list, optional): Range of flight velocities (m/s). Defaults to [1.5,3.5].
-            Phi_range (list, optional): Range of flight angles (Deg). Defaults to [0,90].
-            Tau_0 (float, optional): Flight position will start at this Tau value. Defaults to 0.4.
-        """   
-        SAR_Sim_Interface.__init__(self, GZ_Timeout)
+    def __init__(self,GZ_Timeout=True,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
+
+        SAR_Sim_Interface.__init__(self, GZ_Timeout=GZ_Timeout)
         gym.Env.__init__(self)
 
+        ######################
+        #    GENERAL CONFIGS
+        ######################
+        
         ## ENV CONFIG SETTINGS
         self.Env_Name = "SAR_Sim_DeepRL_Env"
 
-        ## DOMAIN RANDOMIZATION SETTINGS
-        self.Mass_std = 0.5e-3  # [kg]
-        self.Iyy_std = 1.5e-6   # [kg*m^2]
-
-        ## TESTING CONDITIONS
-        self.Tau_0 = Tau_0          
-        self.Vel_range = Vel_range  
-        self.Phi_rel_range = Phi_rel_range
+        ## TESTING CONDITIONS     
+        self.V_mag_range = V_mag_range  
+        self.V_angle_range = V_angle_range
         self.Plane_Angle_range = Plane_Angle_range
-        self.My_range = My_range
+        self.setAngAcc_range(Ang_Acc_range)
 
-        ## RESET INITIAL VALUES
+
+        ## TIME CONSTRAINTS
+        self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
+        self.t_trg_max = 1.0        # [s]
+        self.t_impact_max = 1.0     # [s]
+        self.t_run_max = 5.0        # [s]
+        self.t_real_max = 15.0      # [s]
+
+
+        ## INITIAL LEARNING/REWARD CONFIGS
         self.K_ep = 0
-        self.Rot_threshold = 0.5
-        self.D_min = np.inf
-        self.Tau_trg = np.inf
+        self.Pol_Trg_Threshold = 0.5
+        self.Pol_Trg_Flag = False
         self.Done = False
+        self.reward = 0
+        self.reward_vals = np.array([0,0,0,0,0,0])
+        self.reward_weights = {
+            "W_Dist":0.5,
+            "W_tau_cr":0.5,
+            "W_LT":1.0,
+            "W_GM":1.0,
+            "W_Phi_rel":2.0,
+            "W_Legs":2.0
+        }
+        self.W_max = sum(self.reward_weights.values())
+
+        self.D_perp_min = np.inf
+        self.Tau_trg = np.inf
+        self.Tau_CR_trg = np.inf
+
+        ## DOMAIN RANDOMIZATION
+        self.Base_Iyy_std = 0.1
+        self.Base_Mass_std = 0.1
+
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -56,195 +77,189 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-    def reset(self, seed=None, options=None, V_mag=None, Phi_rel=None):
-        """Resets the full pose and twist state of the robot and starts flight with specificed flight conditions.
+    def reset(self, seed=None, options=None, V_mag=None,V_angle=None,Plane_Angle=None):
 
-        Args:
-            vel (float, optional): Desired flight velocity [m/s]. Default to None for randomized conditions.
-            phi (float, optional): Desired flight angle [deg]. Default to None for randomized conditions.
+        ######################
+        #    GENERAL CONFIGS
+        ######################
 
-        Returns:
-            observation array: 
-        """        
+        ## RESET LEARNING/REWARD CONDITIONS
+        self.K_ep += 1
+        self.Done = False
+        self.Pol_Trg_Flag = False
+        self.reward = 0
 
-        ## DETACH ROBOT AND UNPAUSE PHYSICS
-        self.pause_physics(False)
-        self.sendCmd('GZ_StickyPads',cmd_flag=0)
+        self.D_perp_min = np.inf
+        self.Tau_trg = np.inf
+        self.Tau_CR_trg = np.inf
+
+        self.Impact_Flag = False
+        self.BodyContact_Flag = False
+        self.Pad_Connections = 0
+        self.MomentCutoff = False
+
+        self.start_time_real = time.time()
+
+        self.resetPose()
 
         ## SET PLANE POSE
-        Plane_Angle_Low = self.Plane_Angle_range[0]
-        Plane_Angle_High = self.Plane_Angle_range[1]
-        self.setPlanePose([0,1.5,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
+        if Plane_Angle == None:
 
-        ## UPDATE INERTIA VALUES (DOMAIN RANDOMIZATION)
-        self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,self.Iyy_std)
-        self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,self.Mass_std)
-        # self.setModelInertia(Mass=self.Mass,Inertia=[self.Ixx,self.Iyy,self.Izz])
+            Plane_Angle_Low = self.Plane_Angle_range[0]
+            Plane_Angle_High = self.Plane_Angle_range[1]
+            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+            self._setPlanePose(self.Plane_Pos,Plane_Angle)
 
-        ## RESET ROBOT STATE
-        self.sendCmd('Tumble',cmd_flag=0)
-        self.sendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(0.1)
-
-        self.sendCmd('Tumble',cmd_flag=1)
-        self.sendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(1.0) # Give time for drone to settle
-
-
-        ## ACTIVATE STICKY PADS AND PAUSE PHYSICS
-        self.sendCmd('GZ_StickyPads',cmd_flag=1)
-        self.pause_physics(True)
-
-        
-
-
-        ## RESET RECORDED VALUES
-        self.Done = False
-        self.D_min = np.inf       # Reset max distance from landing surface [m]
-        self.Tau_trg = np.inf     # Reset Tau triggering value [s]
-        self.obs_trg = np.zeros_like(self.observation_space.high)
-        self.action_trg = np.zeros_like(self.action_space.high)
-
-        ## RESET LOGGING CONDITIONS 
-        self.K_ep += 1
-        self.eventCaptureFlag_Rot = False      # Ensures Rot data recorded only once
-        self.eventCaptureFlag_impact = False    # Ensures impact data recorded only once 
-
-        
-
-        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
-        # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
-        r_PO = np.array(self.Plane_Pos)                             # Plane Position w/r to origin
-        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle_deg)    # Plane direction vectors
+        else:
+            self._setPlanePose(self.Plane_Pos,Plane_Angle)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if V_mag == None or Phi_rel == None:
-            V_mag,Phi_rel = self._sample_flight_conditions()
+        if V_mag == None or V_angle == None:
+            V_mag,V_angle = self._sampleFlightConditions()
 
         else:
-            V_mag = V_mag           # Flight velocity
-            Phi_rel = Phi_rel   # Flight angle  
+            V_mag = V_mag       # Flight velocity
+            V_angle = V_angle   # Flight angle  
 
-        ## RELATIVE VEL VECTORS
-        V_perp = V_mag*np.sin(np.deg2rad(Phi_rel))
-        V_tx = V_mag*np.cos(np.deg2rad(Phi_rel))
-        V_ty = 0
-        V_BP = np.array([V_tx,V_ty,V_perp])
+        self.V_mag = V_mag
+        self.V_angle = V_angle
 
-        ## ROTATION MATRIX FROM PLANE TO WORLD COORDS
-        R_PO = np.vstack((t_x,t_y,n_hat)).T 
+        ## CALC STARTING VELOCITY IN GLOBAL COORDS
+        V_tx = V_mag*np.cos(np.deg2rad(V_angle))
+        V_perp = V_mag*np.sin(np.deg2rad(V_angle))
+        V_B_P = np.array([V_tx,0,V_perp]) # {t_x,n_p}
+        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad) # {X_W,Z_W}
 
-        ## CALCULATE GLOBAL VEL VECTORS
-        V_BO = R_PO.dot(V_BP)
-        V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
+        ## CALCULATE STARTING TAU VALUE
+        self.Tau_CR_start = self.t_rot_max*2
+        self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
 
+        ## CALC STARTING POSITION IN GLOBAL COORDS
+        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
-        ## CALC STARTING DISTANCE WHERE POLICY IS MONITORED
-        if ((Phi_rel <= 0) or (Phi_rel >= 180)):
-            D_perp = 0.1
-            self.Done = True
-
-        elif (0 < Phi_rel <= 5) or (175 <= Phi_rel < 180):
-            Tau_0 = 1.5
-            D_perp = max((Tau_0*V_perp),0.1) # Ensure a reasonable minimum perp distance [m]
-            
-        elif (5 < Phi_rel < 20) or (160 < Phi_rel < 175):
-            Tau_0 = self.Tau_0
-            D_perp = (self.Tau_0*V_perp) 
-        else:
-            Tau_0 = self.Tau_0
-            D_perp = (self.Tau_0*V_perp) 
-
-
-        ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-        t_settle = 1.5              # Time for system to settle on flight conditions
-        D_settle = t_settle*V_mag     # Flight settling distance
-
-        ## INITIAL POSITION RELATIVE TO PLANE
-        r_BP = -(D_perp/(V_hat.dot(n_hat)+EPS) + D_settle)*V_hat
-
-        ## INITIAL POSITION IN GLOBAL COORDS
-        r_BO = r_PO + r_BP 
+        r_P_O = np.array(self.Plane_Pos)                                        # Plane Position wrt to Origin - {X_W,Z_W}
+        r_P_B = np.array([self.Tau_CR_start*V_tx,0,self.Tau_Body_start*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
+        r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                   # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self.Vel_Launch(r_BO,V_BO)
-        self.iter_step(t_settle*1e3)
-        
+        self.initial_state = (r_B_O,V_B_O)
+        self.GZ_VelTraj(pos=r_B_O,vel=V_B_O)        
 
-        ## RESET/UPDATE RUN CONDITIONS
-        self.start_time_rollout = self.getTime()
-        self.start_time_pitch = np.nan
+        # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
+        # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
+        # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
+        # self.setModelInertia()
+
+        ## RESET/UPDATE TIME CONDITIONS
+        self.start_time_ep = self._getTime()
+        self.start_time_trg = np.nan
         self.start_time_impact = np.nan
-        self.start_time_ep = time.time()
-
+        self.t_flight_max = self.Tau_Body_start*2   # [s]
+        
         return self._get_obs(), {}
     
     def step(self, action):
 
-        ########## PRE-TRIGGER TRIGGER ##########
-        if action[0] < self.Rot_threshold:
+        # 1. TAKE ACTION
+        # 2. UPDATE STATE
+        # 3. CALC REWARD
+        # 4. CHECK TERMINATION
+        # 5. RETURN VALUES
+
+        ########## POLICY PRE-TRIGGER ##########
+        if action[0] <= self.Pol_Trg_Threshold:
+
+            ## 2) UPDATE STATE
+            self._iterStep(n_steps=10)
+            t_now = self._getTime()
+
+            # GRAB NEXT OBS
+            next_obs = self._get_obs()
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()
 
-            ## CHECK FOR DONE
+            # 3) CALCULATE REWARD
+            reward = 0.0
+
+            # 4) CHECK TERMINATION
             self.Done = bool(
                 self.Done
-                or (self.Impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O TRIGGER TRIGGER
-            )       
-
-            ## UPDATE MINIMUM DISTANCE
-            D_perp = obs[2]
-            if not self.Done:
-                if D_perp <= self.D_min:
-                    self.D_min = D_perp 
-
-
+                or (self.Impact_Flag_Ext or self.BodyContact_Flag)
+            )
             terminated = self.Done
-            truncated = bool(self.t - self.start_time_rollout > 3.5) # EPISODE TIMEOUT (SIM TIME)
 
-            ## CALCULATE REWARD
-            reward = 0
+            # ============================
+            ##    Termination Criteria 
+            # ============================
 
-            ## UPDATE SIM 
-            self.iter_step() ## WATCH PLACEMENT OF THIS?
+            ## TRIGGER TIMEOUT  
+            if (t_now-self.start_time_trg) > self.t_trg_max:
+                self.error_str = "Episode Completed: Pitch Timeout [Truncated]"
+                truncated = True
+                print(self.error_str)
 
-            ## UDPATE OBSERVATION
-            obs = self._get_obs()
 
-        ########## POST-TRIGGER TRIGGER ##########
-        elif action[0] >= self.Rot_threshold:
+            ## IMPACT TIMEOUT
+            elif (t_now-self.start_time_impact) > self.t_impact_max:
+                self.error_str = "Episode Completed: Impact Timeout [Truncated]"
+                truncated = True
+                print(self.error_str)
 
-            ## GRAB CURRENT OBSERVATION
-            obs = self._get_obs()   # Return this observation because reward and future 
-                                    # are defined by action taken here. Not obs at end of episode.
 
-            ## SAVE TRIGGERING OBSERVATION AND ACTIONS
-            self.obs_trg = obs
-            self.Tau_trg = obs[0]
+            ## ROLLOUT TIMEOUT
+            elif (t_now - self.start_time_ep) > self.t_flight_max:
+                self.error_str = "Episode Completed: Time Exceeded [Truncated]"
+                truncated = True
+                print(self.error_str)
+
+            else:
+                truncated = False
+
+            
+            # 5) RETURN VALUES
+            return(
+                next_obs,
+                reward,
+                terminated,
+                truncated,
+                {},
+            )
+
+        ########## POLICY POST-TRIGGER ##########
+        elif action[0] >= self.Pol_Trg_Threshold:
+
+            # GRAB TERMINAL OBS/ACTION
+            self.obs_trg = self._get_obs()
             self.action_trg = action
 
-            ## COMPLETE REST OF SIMULATION
-            self._finish_sim(action)
+            self.Tau_trg = self.obs_trg[0]
+            self.Tau_CR_trg = self.Tau_CR
+            self.start_time_trg = self._getTime()
 
+            # 2) UPDATE STATE
+            self.Pol_Trg_Flag = True
+            self._finishSim(action)
+
+            # 3) CALC REWARD
+            reward = self.Calc_Reward()  
+
+            # 4) CHECK TERMINATION
             terminated = self.Done = True
             truncated = False
-            
-            ## CALCULATE REWARD
-            reward = self._CalcReward()
 
-        if terminated or truncated:
-            self._RL_Publish()
 
-        return (
-            obs,
-            reward,
-            terminated,
-            truncated,
-            {},
-        )
+            # 5) RETURN VALUES
+            return(
+                self.obs_trg,
+                reward,
+                terminated,
+                truncated,
+                {},
+            )
+        
+
+        return obs, reward, terminated, truncated, {}
 
 
     def render(self):
@@ -257,7 +272,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         return
     
 
-    def _finish_sim(self,action):
+    def _finishSim(self,action):
         """This function continues the remaining steps of the simulation at full speed 
         since policy actions only continue up until Rot trigger.
 
@@ -298,149 +313,254 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     def _get_obs(self):
 
-        ## CREATE SERVICE MESSAGE
-        model_srv = GetModelStateRequest()
-        model_srv.model_name = self.SAR_Config 
-        resp = self.callService('/gazebo/get_model_state',model_srv,GetModelState)
+        # ## CREATE SERVICE MESSAGE
+        # model_srv = GetModelStateRequest()
+        # model_srv.model_name = self.SAR_Config 
+        # resp = self.callService('/gazebo/get_model_state',model_srv,GetModelState)
 
-        pos = resp.pose.position
-        vel = resp.twist.linear
-        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle_deg)
+        # pos = resp.pose.position
+        # vel = resp.twist.linear
+        # n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle_deg)
 
-        ## UPDATE POS AND VEL
-        r_BO = np.array([pos.x,pos.y,pos.z])
-        V_BO = np.array([vel.x,vel.y,vel.z])
+        # ## UPDATE POS AND VEL
+        # r_BO = np.array([pos.x,pos.y,pos.z])
+        # V_BO = np.array([vel.x,vel.y,vel.z])
 
-        ## CALC DISPLACEMENT FROM PLANE CENTER
-        r_PO = np.array(self.Plane_Pos)
+        # ## CALC DISPLACEMENT FROM PLANE CENTER
+        # r_PO = np.array(self.Plane_Pos)
 
-        ## CALC DISPLACEMENT FROM PLANE CENTER
-        r_PO = np.array(self.Plane_Pos)
-        r_PB = r_PO - r_BO
+        # ## CALC DISPLACEMENT FROM PLANE CENTER
+        # r_PO = np.array(self.Plane_Pos)
+        # r_PB = r_PO - r_BO
 
-        ## CALC RELATIVE DISTANCE AND VEL
-        D_perp = r_PB.dot(n_hat) + 1e-6
-        V_perp = V_BO.dot(n_hat) + 1e-6
-        V_tx = V_BO.dot(t_x)
-        V_ty = V_BO.dot(t_y)
+        # ## CALC RELATIVE DISTANCE AND VEL
+        # D_perp = r_PB.dot(n_hat) + 1e-6
+        # V_perp = V_BO.dot(n_hat) + 1e-6
+        # V_tx = V_BO.dot(t_x)
+        # V_ty = V_BO.dot(t_y)
 
-        ## CALC OPTICAL FLOW VALUES
-        Theta_x = np.clip(V_tx/D_perp,-20,20)
-        Theta_y = np.clip(V_ty/D_perp,-20,20)
-        Tau = np.clip(D_perp/V_perp,0,3)
+        # ## CALC OPTICAL FLOW VALUES
+        # Theta_x = np.clip(V_tx/D_perp,-20,20)
+        # Theta_y = np.clip(V_ty/D_perp,-20,20)
+        # Tau = np.clip(D_perp/V_perp,0,3)
 
-        def normalize(val,min_val,max_val):
+        # def normalize(val,min_val,max_val):
 
-            norm_val = (val-min_val)/(max_val-min_val)
+        #     norm_val = (val-min_val)/(max_val-min_val)
 
-            return norm_val
+        #     return norm_val
             
-        Tau_norm = normalize(Tau,0,3)
-        Theta_x_norm = normalize(Theta_x,-20,20)
-        D_perp_norm = normalize(D_perp,0,4)
-        Plane_Angle_norm = normalize(self.Plane_Angle_deg,0,180)
+        # Tau_norm = normalize(Tau,0,3)
+        # Theta_x_norm = normalize(Theta_x,-20,20)
+        # D_perp_norm = normalize(D_perp,0,4)
+        # Plane_Angle_norm = normalize(self.Plane_Angle_deg,0,180)
 
 
-        return np.array([Tau,Theta_x,D_perp,self.Plane_Angle_deg],dtype=np.float32)
-
-    def _sample_flight_conditions(self):
-        """This function samples the flight velocity and angle from the supplied range.
-        Velocity is sampled from a uniform distribution. Phi is sampled from a set of 
-        uniform distributions which are weighted such that edge cases are only sampled 10% of the time.
-        Poor performance on edge cases can cause poor learning convergence.
-
-        Returns:
-            V_mag,Phi_rel: Sampled flight velocity and flight angle
-        """        
-
-        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
-        Vel_Low = self.Vel_range[0]
-        Vel_High = self.Vel_range[1]
-        V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
-
-        ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
-        Phi_rel_Low = self.Phi_rel_range[0]
-        Phi_rel_High = self.Phi_rel_range[1]
-        Phi_rel_Range = Phi_rel_High-Phi_rel_Low
-
-        Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
-
-        if Dist_Num == 0: # Low Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.1*Phi_rel_Range)
-        elif Dist_Num == 1: # Medium Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.1*Phi_rel_Range, high=Phi_rel_High - 0.1*Phi_rel_Range)
-        elif Dist_Num == 2: # High Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.1*Phi_rel_Range, high=Phi_rel_High)
-       
-        return V_mag,Phi_rel
-
-    def _calc_PlaneNormal(self,Plane_Angle):
-
-        Plane_Angle_rad = np.deg2rad(Plane_Angle)
-
-        ## PRE-INIT ARRAYS
-        t_x =   np.array([1,0,0],dtype=np.float64)
-        t_y =   np.array([0,1,0],dtype=np.float64)
-        n_hat = np.array([0,0,1],dtype=np.float64)
-
-        ## DEFINE PLANE TANGENT UNIT-VECTOR
-        t_x[0] = -np.cos(Plane_Angle_rad)
-        t_x[1] = 0
-        t_x[2] = -np.sin(Plane_Angle_rad)
-
-        ## DEFINE PLANE TANGENT UNIT-VECTOR
-        t_y[0] = 0
-        t_y[1] = 1
-        t_y[2] = 0
-
-        ## DEFINE PLANE NORMAL UNIT-VECTOR
-        n_hat[0] = np.sin(Plane_Angle_rad)
-        n_hat[1] = 0
-        n_hat[2] = -np.cos(Plane_Angle_rad)
-
-        return n_hat,t_x,t_y
+        return np.array([],dtype=np.float32)
 
     def _CalcReward(self):
 
-        ## DISTANCE REWARD 
-        R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
-        
-        ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+        if self.Impact_Flag_Ext:
+            V_B_O_impact = self.R_PW(self.V_B_P_impact_Ext,self.Plane_Angle_rad)    # {X_W,Y_W,Z_W}
+            V_hat_impact = V_B_O_impact/np.linalg.norm(V_B_O_impact)                # {X_W,Y_W,Z_W}
 
+            temp_angle_rad = np.arctan2(V_hat_impact[0],V_hat_impact[2])
+            temp_angle_deg = np.degrees(temp_angle_rad)
 
-        ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
-        Beta_d = 150 # Desired impact angle [= 180 deg - gamma [deg]] TODO: Change to live value?
-        Beta_rel = -180 + self.Rot_Sum_impact + self.Plane_Angle_deg
+            if temp_angle_deg < 0:
+                Phi_B_P_Impact_Condition = -1
+            elif temp_angle_deg > 0:
+                Phi_B_P_Impact_Condition = 1
+            elif math.isnan(temp_angle_deg):
+                Phi_B_P_Impact_Condition = 1
 
-        if Beta_rel < -180:
-            R_angle = 0
-        elif -180 <= Beta_rel < 180:
-            R_angle = 0.5*(-np.cos(np.deg2rad(Beta_rel*180/Beta_d))+1)
-        elif Beta_rel > 180:
-            R_angle = 0
-
-        ## PAD CONTACT REWARD
-        if self.pad_connections >= 3: 
-            if self.BodyContact_flag == False:
-                R_legs = 1.0
-            else:
-                R_legs = 0.3
-
-        elif self.pad_connections == 2: 
-            if self.BodyContact_flag == False:
-                R_legs = 0.6
-            else:
-                R_legs = 0.1
-                
         else:
-            R_legs = 0.0
+            ## CALC REWARD VALUES
+            R_LT = 0
+            R_GM = 0
+            R_Phi = 0
 
-        self.reward_vals = [R_dist,R_tau,R_angle,R_legs,0]
-        self.reward = 0.05*R_dist + 0.1*R_tau + 0.2*R_angle + 0.65*R_legs
+
+        if self.ForelegContact_Flag:
+
+            ## CALC IMPACT ANGLE CONDITIONS
+            rot_dir = np.sign(self.Rot_Sum_impact_Ext)
+            num_rev = self.Rot_Sum_impact_Ext // (rot_dir*360+1e-6)  # Integer division to get full revolutions
+            Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
+
+            Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
+            Phi_P_B_impact_deg = -Phi_B_P_impact_deg
+
+            Beta1_deg = -Phi_P_B_impact_deg - self.Gamma_eff + 90
+            Beta1_rad = np.radians(Beta1_deg)
+
+            ## CALC LEG DIRECTION VECTOR
+            r_B_C1 = np.array([-self.L_eff,0,0]) # {e_r1,0,e_beta1}
+            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta1_rad),self.Plane_Angle_rad)   # {X_W,Y_W,Z_W}
+
+            r_C1_B = -r_B_C1                        # {X_W,Y_W,Z_W}
+            e_r_hat = r_C1_B/np.linalg.norm(r_C1_B) # {X_W,Y_W,Z_W}
+
+            ## MOMENTUM TRANSFER REWARD
+            CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
+            DP_LT = np.dot(V_hat_impact,e_r_hat)
+            CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
+            R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+
+            
+            ## GRAVITY MOMENT REWARD
+            g_hat = np.array([0,0,-1])              # {X_W,Y_W,Z_W}
+            CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
+            DP_GM = np.dot(g_hat,e_r_hat)
+            CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))[1]
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+
+            ## PHI IMPACT REWARD
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
+
+        elif self.HindlegContact_Flag:
+
+            ## CALC IMPACT ANGLE CONDITIONS
+            rot_dir = np.sign(self.Rot_Sum_impact_Ext)
+            num_rev = self.Rot_Sum_impact_Ext // (rot_dir*360+1e-6)  # Integer division to get full revolutions
+            Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
+
+            Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
+            Phi_P_B_impact_deg = -Phi_B_P_impact_deg
+
+            Beta2_deg = self.Gamma_eff + -Phi_P_B_impact_deg  + 90
+            Beta2_rad = np.radians(Beta2_deg)
+
+            ## CALC LEG DIRECTION VECTOR
+            r_B_C2 = np.array([-self.L_eff,0,0]) # {e_r2,0,e_beta2}
+            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta2_rad),self.Plane_Angle_rad)   # {X_W,Y_W,Z_W}
+
+            r_C2_B = -r_B_C2                        # {X_W,Y_W,Z_W}
+            e_r_hat = r_C2_B/np.linalg.norm(r_C2_B) # {X_W,Y_W,Z_W}
+
+            ## MOMENTUM TRANSFER REWARD
+            CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
+            DP_LT = np.dot(V_hat_impact,e_r_hat)
+            CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
+            R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+
+            
+            ## GRAVITY MOMENT REWARD
+            g_hat = np.array([0,0,-1])              # {X_W,Y_W,Z_W}
+            CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
+            DP_GM = np.dot(g_hat,e_r_hat)
+            CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))[1]
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
+
+            ## PHI IMPACT REWARD
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
+
+        elif self.BodyContact_Flag:
+
+            ## CALC IMPACT ANGLE CONDITIONS
+            rot_dir = np.sign(self.Rot_Sum_impact_Ext)
+            num_rev = self.Rot_Sum_impact_Ext // (rot_dir*360+1e-6)  # Integer division to get full revolutions
+            Phi_B_O_impact_deg = self.Eul_B_O_impact_Ext[1] + rot_dir*(num_rev*360)
+
+            Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
+            Phi_P_B_impact_deg = -Phi_B_P_impact_deg
+
+            ## CALC REWARD VALUES
+            R_LT = 0
+            R_GM = 0
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
 
-        return self.reward
+        ## REWARD: MINIMUM DISTANCE 
+        if self.Tau_CR_trg < np.inf:
+            R_dist = self.Reward_Exp_Decay(self.D_perp_min,0)
+        else:
+            R_dist = 0
+
+        ## REWARD: TAU_CR TRIGGER
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
+        # R_tau_cr = 0
+
+        ## REWARD: PAD CONNECTIONS
+        if self.Pad_Connections >= 3: 
+            R_Legs = 1.0
+        elif self.Pad_Connections == 2:
+            R_Legs = 0.2
+        else:
+            R_Legs = 0.0
+
+        if self.BodyContact_Flag:
+            R_Legs = R_Legs*0.5
+
+        self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
+        R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
+        print(f"R_t_norm: {R_t/self.W_max:.3f}")
+        print(np.round(self.reward_vals,2))
+
+        return R_t/self.W_max
+    
+    def Reward_Exp_Decay(self,x,threshold,k=5):
+        if -0.1 < x < threshold:
+            return 1
+        elif threshold <= x:
+            return np.exp(-k*(x-threshold))
+        else:
+            return 0
+    
+        
+    def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
+
+        if Impact_condition == -1:
+            Phi_deg = -Phi_deg
+
+        ## NOTE: THESE ARE ALL RELATIVE ANGLES
+        Phi_TD = 180
+        Phi_w = Phi_TD - Phi_min
+        Phi_b = Phi_w/2
+
+        if Phi_deg <= -2*Phi_min:
+            return 0.0
+        elif -2*Phi_min < Phi_deg <= Phi_min:
+            return 0.5/(3*Phi_min - 0) * (Phi_deg - Phi_min) + 0.50
+        elif Phi_min < Phi_deg <= Phi_min + Phi_b:
+            return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
+        elif Phi_min + Phi_b < Phi_deg <= Phi_TD:
+            return -0.25/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.75
+        elif Phi_TD < Phi_deg <= Phi_TD + Phi_b:
+            return 0.25/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.75
+        elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
+            return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
+        elif (Phi_TD + Phi_w) < Phi_deg <= (360 + 2*Phi_min):
+            return -0.5/(3*Phi_min) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
+        elif (360 + 2*Phi_min) <= Phi_deg:
+            return 0.0
+
+    def Reward_LT(self,CP_angle_deg,ForelegContact_Flag,HindlegContact_Flag):
+
+        if HindlegContact_Flag == True:
+            CP_angle_deg = -CP_angle_deg  # Reflect function across the y-axis
+        elif ForelegContact_Flag == True:
+            CP_angle_deg = CP_angle_deg
+        else:
+            return 0
+
+        ## CALCULATE REWARD
+        if -180 <= CP_angle_deg <= 0:
+            return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
+        elif 0 < CP_angle_deg <= 180:
+            return -1.0/180 * CP_angle_deg * 1/2 + 0.5
+        
+    def Reward_GravityMoment(self,CP_angle_deg,ForelegContact_Flag,HindlegContact_Flag):
+
+        if HindlegContact_Flag == True:
+            CP_angle_deg = -CP_angle_deg  # Reflect function across the y-axis
+        elif ForelegContact_Flag == True:
+            CP_angle_deg = CP_angle_deg
+        else:
+            return 0
+
+        ## CALCULATE REWARD
+        return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
 
 if __name__ == "__main__":
 
