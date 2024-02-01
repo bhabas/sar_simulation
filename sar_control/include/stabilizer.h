@@ -82,6 +82,7 @@ class Controller
         state_t state;
         control_t control;
         uint32_t tick = 1;
+        bool ResetTickDelay_Flag = false;
 
         // ROS PARAMS
         std::string SAR_Type;
@@ -139,6 +140,11 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
         Controller::loadInitParams();
 
     }
+    else if(req.cmd_type == 0)
+    {
+        // SYNC UP TICKS FOR MAX DELAY BETWEEN POSITION DATA
+        ResetTickDelay_Flag = true;
+    }
 
     return 1;
 }
@@ -179,6 +185,17 @@ void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg
     state.velocity.y = msg->twist.twist.linear.y;
     state.velocity.z = msg->twist.twist.linear.z;
 
+
+    // THIS IS TO MAKE SURE THE SYSTEM HAS MAX DELAY BETWEEN VICON AND CONTROLLER [8ms vs 1ms]
+    if (ResetTickDelay_Flag == true)
+    {
+        int tick_delay = 8; // [ms]
+        int unitsDigit = tick % 10;
+
+        tick += ((20-tick_delay) - unitsDigit);
+        ResetTickDelay_Flag = false;
+    }
+    
 }
 
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER

@@ -455,7 +455,7 @@
 
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>true</alwaysOn>
-      <updateRate>1000</updateRate>
+      <updateRate>100</updateRate>
       <bodyName>SAR_Body</bodyName>
       <topicName>SAR_External/ExtPosition</topicName>
       <frameName>world</frameName>
