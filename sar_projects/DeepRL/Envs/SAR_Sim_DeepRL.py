@@ -8,6 +8,7 @@ import rospy
 import time
 import math
 from gazebo_msgs.srv import GetModelState, GetModelStateRequest
+from sar_msgs.srv import CTRL_Get_Obs,CTRL_Get_ObsRequest
 
 from sar_env import SAR_Sim_Interface
 
@@ -323,10 +324,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     def _get_obs(self):
 
-        Tau = self.Tau
-        Theta_x = self.Theta_x
-        D_perp = self.D_perp
-        Plane_Angle_rad = self.Plane_Angle_rad
+        resp = self.callService('/CTRL/Get_Obs',None,CTRL_Get_Obs)
+
+        Tau = resp.Tau
+        Theta_x = resp.Theta_x
+        D_perp = resp.D_perp
+        Plane_Angle_rad = np.radians(resp.Plane_Angle_deg)
 
         ## OBSERVATION VECTOR
         obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)

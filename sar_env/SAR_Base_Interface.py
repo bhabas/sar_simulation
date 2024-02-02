@@ -187,7 +187,10 @@ class SAR_Base_Interface():
         service_proxy = rospy.ServiceProxy(srv_addr, srv_type)
         for retry in range(num_retries):
             try:
-                response = service_proxy(srv_msg)
+                if srv_msg is None:
+                    response = service_proxy()
+                else:
+                    response = service_proxy(srv_msg)
                 return response
             
             except (rospy.ServiceException,rospy.exceptions.ROSException) as e:

@@ -19,6 +19,7 @@
 #include <sensor_msgs/Imu.h>
 
 #include "sar_msgs/CTRL_Cmd_srv.h"
+#include "sar_msgs/CTRL_Get_Obs.h"
 #include "sar_msgs/CTRL_Data.h"
 #include "sar_msgs/CTRL_Debug.h"
 #include "sar_msgs/SAR_MiscData.h"
@@ -46,6 +47,7 @@ class Controller
             CTRL_Data_Publisher = nh->advertise<sar_msgs::CTRL_Data>("/CTRL/data",1);
             CTRL_Debug_Publisher = nh->advertise<sar_msgs::CTRL_Debug>("CTRL/debug",1);
             CTRL_CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
+            Get_Obs_Service = nh->advertiseService("/CTRL/Get_Obs",&Controller::Get_Obs_Resp,this);
             SAR_DC_Subscriber = nh->subscribe("/SAR_DC/MiscData",1,&Controller::Plane_Pose_Callback,this,ros::TransportHints().tcpNoDelay());
 
 
@@ -64,6 +66,7 @@ class Controller
 
         // SERVICES
         ros::ServiceServer CTRL_CMD_Service;
+        ros::ServiceServer Get_Obs_Service;
         ros::Publisher CTRL_Data_Publisher;
         ros::Publisher CTRL_Debug_Publisher;
         ros::Subscriber SAR_DC_Subscriber;
@@ -106,6 +109,7 @@ class Controller
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         bool CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
+        bool Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res);
         void Plane_Pose_Callback(const sar_msgs::SAR_MiscData::ConstPtr &msg);
 
 
@@ -125,6 +129,18 @@ void Controller::Plane_Pose_Callback(sar_msgs::SAR_MiscData::ConstPtr const &msg
     r_P_O.x = msg->Plane_Pos.x;
     r_P_O.y = msg->Plane_Pos.y;
     r_P_O.z = msg->Plane_Pos.z;
+}
+
+bool Controller::Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res)
+{
+    res.Tick = tick;
+    res.Tau = Tau;
+    res.Theta_x = Theta_x;
+    res.D_perp = D_perp;
+    res.Plane_Angle_deg = Plane_Angle_deg;
+    res.Tau_CR = Tau_CR;
+    
+    return 1;
 }
 
 bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res)
@@ -320,6 +336,7 @@ void Controller::publishCtrlDebug()
 // PUBLISH CONTROLLER DATA ON ROS TOPIC
 void Controller::publishCtrlData()
 {
+    CtrlData_msg.Tick = tick;
 
     // STATE DATA WRT ORIGIN
     CtrlData_msg.Pose_B_O.position.x = Pos_B_O.x;

@@ -42,6 +42,7 @@ add_service_files(
   Surface_Params.srv
   
   CTRL_Cmd_srv.srv
+  CTRL_Get_Obs.srv
   Model_Move.srv
   Cam_Settings.srv
   Surface_Settings.srv

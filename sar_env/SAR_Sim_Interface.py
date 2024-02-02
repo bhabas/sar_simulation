@@ -224,15 +224,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
             Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_High - 0.1*Flight_Angle_range, high=Rel_Angle_High)
        
         return V_mag,Flight_Angle
-    
-    def _get_obs(self):
-    
-        ## OBSERVATION VECTOR
-        obs = np.array([self.Tau,self.Theta_x,self.D_perp,self.Plane_Angle_deg],dtype=np.float32)
-
-        return obs
-
-    
+       
 
     
     # ================================
@@ -240,15 +232,15 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     # ================================
 
     def _launch_GZ_Sim(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_launch launch_gazebo.bash"
+        cmd = "gnome-terminal --disable-factory  --geometry 85x46+1050+0 -- rosrun sar_launch launch_gazebo.bash"
         self.GZ_Sim_process = subprocess.Popen(cmd, shell=True)
 
     def _launch_SAR_DC(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_data_converter SAR_DataConverter"
+        cmd = "gnome-terminal --disable-factory  --geometry 85x46+1050+0 -- rosrun sar_data_converter SAR_DataConverter"
         self.SAR_DC_process = subprocess.Popen(cmd, shell=True)
 
     def _launch_Controller(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_control SAR_Controller"
+        cmd = "gnome-terminal --disable-factory  --geometry 85x46+1050+0 -- rosrun sar_control SAR_Controller"
         self.SAR_Ctrl_process = subprocess.Popen(cmd, shell=True)
 
     def _start_monitoring_subprocesses(self):
