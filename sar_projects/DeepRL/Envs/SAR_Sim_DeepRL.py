@@ -128,8 +128,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
         V_tx = V_mag*np.cos(np.deg2rad(V_angle))
         V_perp = V_mag*np.sin(np.deg2rad(V_angle))
-        V_B_P = np.array([V_tx,0,V_perp]) # {t_x,n_p}
-        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad) # {X_W,Z_W}
+        V_B_P = np.array([V_tx,0,V_perp])               # {t_x,n_p}
+        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
 
         ## CALCULATE STARTING TAU VALUE
         self.Tau_CR_start = self.t_rot_max*2
@@ -151,6 +151,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
         # self.setModelInertia()
 
+        ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
+        if self._getTick()%10 != 0:
+            n_steps = 10 - (self._getTick()%10)
+            self._iterStep(n_steps=n_steps)
+
         ## RESET/UPDATE TIME CONDITIONS
         self.start_time_ep = self._getTime()
         self.start_time_trg = np.nan
@@ -166,6 +171,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # 3. CALC REWARD
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
+
+        ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
+        if self._getTick()%10 != 0:
+            n_steps = 10 - (self._getTick()%10)
+            self._iterStep(n_steps=n_steps)
 
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
@@ -274,12 +284,15 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
     
 
     def _finishSim(self,a_Rot):
+        
+        terminated = False
+        truncated = False
 
         ## SEND TRIGGER ACTION TO CONTROLLER
         self.sendCmd("Policy",[0,a_Rot,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
-        self.pausePhysics(False)
+        # self.pausePhysics(False)
 
         while not self.Done:
 
@@ -335,6 +348,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
 
         return obs
+    
+    def _getTick(self):
+
+        resp = self.callService('/CTRL/Get_Obs',None,CTRL_Get_Obs)
+
+        return resp.Tick
 
     def _CalcReward(self):
 
@@ -552,11 +571,14 @@ if __name__ == "__main__":
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
 
+        
+
         Done = False
         while not Done:
 
             action = env.action_space.sample() # obs gets passed in here
-            action[0] = 0
+            action[0] = 1
+            action[1] = -50
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 

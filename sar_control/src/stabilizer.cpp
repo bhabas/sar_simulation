@@ -2,7 +2,7 @@
 
 void Controller::appLoop()
 {
-    ros::Rate rate(100);
+    ros::Rate rate(1000);
 
     // RUN STABILIZER LOOP
     while(ros::ok)
@@ -25,17 +25,16 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     // RUN STABILIZER LOOP
     while(ros::ok)
     {
-        // stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
+        printf("Tick: %d\n",tick);
         controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
     
 
         Controller::publishCtrlData();
         Controller::publishCtrlDebug();
 
-
-        
+        rate.sleep(); // Process holds here till next tick
         tick++;
-        rate.sleep();
+
     }
 }
 

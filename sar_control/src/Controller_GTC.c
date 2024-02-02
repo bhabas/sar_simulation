@@ -128,12 +128,121 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const state_t *state, 
                                             const uint32_t tick) 
 {
-    if (RATE_DO_EXECUTE(10, tick))
-    {
-        updateRotationMatrices();
+    // POLICY UPDATES
+    if (isOFUpdated == true) {
+        printf("Policy Tick: %d\n",tick);
+
+        isOFUpdated = false;
+
+        if(Policy_Armed_Flag == true){
+            printf("Policy Action: %d\n",tick);
+
+
+            switch (Policy)
+            {
+                case PARAM_OPTIM:
+
+                    // EXECUTE POLICY IF TRIGGERED
+                    if(Tau <= Policy_Trg_Action && onceFlag == false && Vel_mag_B_P > 0.5f){
+
+                        onceFlag = true;
+
+                        // UPDATE AND RECORD TRIGGER VALUES
+                        Trg_Flag = true;  
+                        Pos_B_O_trg = Pos_B_O;
+                        Vel_B_O_trg = Vel_B_O;
+                        Quat_B_O_trg = Quat_B_O;
+                        Omega_B_O_trg = Omega_B_O;
+
+                        Pos_P_B_trg = Pos_P_B;
+                        Vel_B_P_trg = Vel_B_P;
+                        Quat_P_B_trg = Quat_P_B;
+                        Omega_B_P_trg = Omega_B_P;
+
+                        D_perp_trg = D_perp;
+                        Vel_mag_B_P_trg = Vel_mag_B_P;
+                        Vel_angle_B_P_trg = Vel_angle_B_P;
+
+                        Tau_trg = Tau;
+                        Tau_CR_trg = Tau_CR;
+                        Theta_x_trg = Theta_x;
+                        Theta_y_trg = Theta_y;
+
+                        Policy_Trg_Action_trg = Policy_Trg_Action;
+                        Policy_Rot_Action_trg = Policy_Rot_Action;
+
+                        M_d.x = 0.0f;
+                        M_d.y = Policy_Rot_Action*Iyy;
+                        M_d.z = 0.0f;
+                        }
+                        
+                    break;
+
+                case DEEP_RL_SB3:
+
+                    // EXECUTE POLICY IF TRIGGERED
+                    if(onceFlag == false){
+
+                        onceFlag = true;
+
+                        // UPDATE AND RECORD TRIGGER VALUES
+                        Trg_Flag = true;  
+                        Pos_B_O_trg = Pos_B_O;
+                        Vel_B_O_trg = Vel_B_O;
+                        Quat_B_O_trg = Quat_B_O;
+                        Omega_B_O_trg = Omega_B_O;
+
+                        Pos_P_B_trg = Pos_P_B;
+                        Vel_B_P_trg = Vel_B_P;
+                        Quat_P_B_trg = Quat_P_B;
+                        Omega_B_P_trg = Omega_B_P;
+
+                        Tau_trg = Tau;
+                        Tau_CR_trg = Tau_CR;
+                        Theta_x_trg = Theta_x;
+                        Theta_y_trg = Theta_y;
+                        D_perp_trg = D_perp;
+                        D_perp_CR_trg = D_perp_CR;
+
+
+                        Policy_Trg_Action_trg = Policy_Trg_Action;
+                        Policy_Rot_Action_trg = Policy_Rot_Action;
+
+                        M_d.x = 0.0f;
+                        M_d.y = Policy_Rot_Action*Iyy;
+                        M_d.z = 0.0f;
+                    }
+
+                    break;
+
+                case DEEP_RL_ONBOARD:
+
+                    // // PASS OBSERVATION THROUGH POLICY NN
+                    // NN_forward(X_input,Y_output,&NN_DeepRL);
+
+                    // // SAMPLE POLICY TRIGGER ACTION
+                    // Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
+
+             
+                    //     }
+                        
+                    break;
+
+                
+                    
+            default:
+                break;
+            }
+
+        }
 
     }
 
+
+    if (RATE_DO_EXECUTE(RATE_25_HZ, tick))
+    {
+        updateRotationMatrices();
+    }
 
     // STATE UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
@@ -189,32 +298,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         prev_tick = tick;
     }
 
-    // TRAJECTORY UPDATES
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
-
-        switch (Traj_Type)
-        {
-            case NONE:
-                /* DO NOTHING */
-                break;
-
-            case P2P:
-                point2point_Traj();
-                break;
-
-            case CONST_VEL:
-                const_velocity_Traj();
-                break;
-
-            case CONST_VEL_GZ:
-                const_velocity_GZ_Traj();
-                break;
-        }
-    }
-
     // OPTICAL FLOW UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick))
     {
+        printf("Update Tick: %d\n",tick);
         // UPDATE GROUND TRUTH OPTICAL FLOW
         updateOpticalFlowAnalytic(state,sensors);
 
@@ -242,135 +329,29 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
     }
     
-    // POLICY UPDATES
-    if (isOFUpdated == true) {
+    // TRAJECTORY UPDATES
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
-        isOFUpdated = false;
-
-        if(Policy_Armed_Flag == true){
-
-            switch (Policy)
-            {
-                case PARAM_OPTIM:
-
-                    // EXECUTE POLICY IF TRIGGERED
-                    if(Tau <= Policy_Trg_Action && onceFlag == false && Vel_mag_B_P > 0.5f){
-
-                        onceFlag = true;
-
-                        // UPDATE AND RECORD TRIGGER VALUES
-                        Trg_Flag = true;  
-                        Pos_B_O_trg = Pos_B_O;
-                        Vel_B_O_trg = Vel_B_O;
-                        Quat_B_O_trg = Quat_B_O;
-                        Omega_B_O_trg = Omega_B_O;
-
-                        Pos_P_B_trg = Pos_P_B;
-                        Vel_B_P_trg = Vel_B_P;
-                        Quat_P_B_trg = Quat_P_B;
-                        Omega_B_P_trg = Omega_B_P;
-
-                        D_perp_trg = D_perp;
-                        Vel_mag_B_P_trg = Vel_mag_B_P;
-                        Vel_angle_B_P_trg = Vel_angle_B_P;
-
-                        Tau_trg = Tau;
-                        Tau_CR_trg = Tau_CR;
-                        Theta_x_trg = Theta_x;
-                        Theta_y_trg = Theta_y;
-
-                        Policy_Trg_Action_trg = Policy_Trg_Action;
-                        Policy_Rot_Action_trg = Policy_Rot_Action;
-
-                        M_d.x = 0.0f;
-                        M_d.y = Policy_Rot_Action*Iyy;
-                        M_d.z = 0.0f;
-                        }
-                        
-                    break;
-
-                case DEEP_RL_ONBOARD:
-
-                    // PASS OBSERVATION THROUGH POLICY NN
-                    NN_forward(X_input,Y_output,&NN_DeepRL);
-
-                    // SAMPLE POLICY TRIGGER ACTION
-                    Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
-
-                    // EXECUTE POLICY
-                    if(Policy_Trg_Action >= Policy_Rot_threshold && onceFlag == false && Vel_mag_B_P > 0.1f){
-
-                        onceFlag = true;
-
-                        // SAMPLE AND SCALE BODY TRIGGER ACTION
-                        Policy_Rot_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
-                        Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,ACTION_MIN,ACTION_MAX);
-
-                        Trg_Flag = true;  
-                        Pos_B_O_trg = Pos_B_O;
-                        Vel_B_O_trg = Vel_B_O;
-                        Quat_B_O_trg = Quat_B_O;
-                        Omega_B_O_trg = Omega_B_O;
-
-                        Pos_P_B_trg = Pos_P_B;
-                        Vel_B_P_trg = Vel_B_P;
-                        Quat_P_B_trg = Quat_P_B;
-                        Omega_B_P_trg = Omega_B_P;
-
-                        D_perp_trg = D_perp;
-                        D_perp_CR_trg = D_perp_CR;
-                        Vel_mag_B_P_trg = Vel_mag_B_P;
-                        Vel_angle_B_P_trg = Vel_angle_B_P;
-
-                        Tau_trg = Tau;
-                        Tau_CR_trg = Tau_CR;
-                        Theta_x_trg = Theta_x;
-                        Theta_y_trg = Theta_y;
-
-                        Policy_Trg_Action_trg = Policy_Trg_Action;
-                        Policy_Rot_Action_trg = Policy_Rot_Action;
-
-                        M_d.x = 0.0f;
-                        M_d.y = Policy_Rot_Action*Iyy;
-                        M_d.z = 0.0f;
-                        }
-                        
-                    break;
-
-                case DEEP_RL_SB3:
-
-                    Trg_Flag = true;  
-                    Pos_B_O_trg = Pos_B_O;
-                    Vel_B_O_trg = Vel_B_O;
-                    Quat_B_O_trg = Quat_B_O;
-                    Omega_B_O_trg = Omega_B_O;
-
-                    Pos_P_B_trg = Pos_P_B;
-                    Vel_B_P_trg = Vel_B_P;
-                    Quat_P_B_trg = Quat_P_B;
-                    Omega_B_P_trg = Omega_B_P;
-
-                    Tau_trg = Tau;
-                    Tau_CR_trg = Tau_CR;
-                    Theta_x_trg = Theta_x_trg;
-                    Theta_y_trg = Theta_y_trg;
-                    D_perp_trg = D_perp;
-                    D_perp_CR_trg = D_perp_CR;
-
-
-                    Policy_Trg_Action_trg = Policy_Trg_Action;
-                    Policy_Rot_Action_trg = Policy_Rot_Action;
-
-                    break;
-                    
-            default:
+        switch (Traj_Type)
+        {
+            case NONE:
+                /* DO NOTHING */
                 break;
-            }
 
+            case P2P:
+                point2point_Traj();
+                break;
+
+            case CONST_VEL:
+                const_velocity_Traj();
+                break;
+
+            case CONST_VEL_GZ:
+                const_velocity_GZ_Traj();
+                break;
         }
-
     }
-    
+        
     // CTRL UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 

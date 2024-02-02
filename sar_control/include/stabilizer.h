@@ -86,7 +86,7 @@ class Controller
         sensorData_t sensorData;
         state_t state;
         control_t control;
-        uint32_t tick = 1;
+        uint32_t tick = 2;
         bool ResetTickDelay_Flag = false;
 
         // ROS PARAMS
@@ -139,7 +139,7 @@ bool Controller::Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CT
     res.D_perp = D_perp;
     res.Plane_Angle_deg = Plane_Angle_deg;
     res.Tau_CR = Tau_CR;
-    
+
     return 1;
 }
 
@@ -160,11 +160,6 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
     {
         Controller::loadInitParams();
 
-    }
-    else if(req.cmd_type == 0)
-    {
-        // SYNC UP TICKS FOR MAX DELAY BETWEEN POSITION DATA
-        ResetTickDelay_Flag = true;
     }
 
     return 1;
@@ -213,22 +208,7 @@ void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg
         state.velocity.y = delayedMsg.twist.twist.linear.y;
         state.velocity.z = delayedMsg.twist.twist.linear.z;
 
-    }
-
-
-    
-
-
-    // THIS IS TO MAKE SURE THE SYSTEM HAS MAX DELAY BETWEEN VICON AND CONTROLLER [8ms vs 1ms]
-    if (ResetTickDelay_Flag == true)
-    {
-        int tick_delay = 1; // [ms]
-        int unitsDigit = tick % 10;
-
-        tick += ((20-tick_delay) - unitsDigit);
-        ResetTickDelay_Flag = false;
-    }
-    
+    }  
 
 }
 

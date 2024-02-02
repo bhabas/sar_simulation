@@ -5,8 +5,8 @@ SAR_SETTINGS:
   SAR_Type: "Impulse_Micro"
   SAR_Config: "A60_L150"
 
-  Policy_Type: "PARAM_OPTIM"
-  # Policy_Type: "DEEP_RL_SB3" 
+  # Policy_Type: "PARAM_OPTIM"
+  Policy_Type: "DEEP_RL_SB3" 
   # Policy_Type: "DEEP_RL_ONBOARD" 
 
 
@@ -30,7 +30,7 @@ SIM_SETTINGS:
   Sim_Speed: 0.5
   Sim_Slowdown_Speed: 0.1
   Landing_Slowdown_Flag: True
-  Vicon_Delay: 10 # [ms]
+  Vicon_Delay: 1 # [ms]
 
 
 CAM_SETTINGS:

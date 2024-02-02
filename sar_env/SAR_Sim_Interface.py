@@ -124,7 +124,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         state_srv.twist.angular.z = 0
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
-        self.pausePhysics()
+        self.pausePhysics(pause_flag=True)
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
         self._iterStep(2)
 
@@ -137,6 +137,9 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[2],vel[2],0],cmd_flag=2)
         self._iterStep(2)
 
+        ## ROUND OUT TO 10 ITER STEPS (0.01s) TO MATCH 100Hz CONTROLLER 
+        self._iterStep(2)
+
     def resetPose(self,z_0=0.4):           
 
         self.sendCmd('GZ_StickyPads',cmd_flag=0)
@@ -144,12 +147,12 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.sendCmd('Tumble',cmd_flag=0)
         self.sendCmd('Ctrl_Reset')
         self._setModelState(pos=[0,0,z_0])
-        self.sleep(0.01)
+        self._iterStep(10)
 
         self.sendCmd('Tumble',cmd_flag=1)
         self.sendCmd('Ctrl_Reset')
         self._setModelState(pos=[0,0,z_0])
-        self.sleep(1.0) # Give time for drone to settle
+        self._iterStep(100) # Give time for drone to settle
 
         self.sendCmd('GZ_StickyPads',cmd_flag=1)
 
