@@ -96,11 +96,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
-        self.Impact_Flag = False
-        self.BodyContact_Flag = False
-        self.Pad_Connections = 0
-        self.MomentCutoff = False
-
+        
         self.start_time_real = time.time()
 
         self.resetPose()

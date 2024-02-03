@@ -82,13 +82,13 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         resp = self.callService('/CTRL/Get_Obs',None,CTRL_Get_Obs)
 
-        Tau = resp.Tau_CR
+        Tau_CR = resp.Tau_CR
         Theta_x = resp.Theta_x
         D_perp = resp.D_perp
         Plane_Angle_rad = np.radians(resp.Plane_Angle_deg)
 
         ## OBSERVATION VECTOR
-        obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
+        obs = np.array([Tau_CR,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
 
         return obs
 
