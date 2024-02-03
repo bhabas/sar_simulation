@@ -22,7 +22,7 @@ RESET = '\033[0m'  # Reset to default color
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
-    def __init__(self,GZ_Timeout=True,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
+    def __init__(self,GZ_Timeout=True,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180]):
 
         SAR_Sim_Interface.__init__(self, GZ_Timeout=GZ_Timeout)
         gym.Env.__init__(self)
@@ -112,13 +112,15 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             Plane_Angle_High = self.Plane_Angle_range[1]
             Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
             self._setPlanePose(self.Plane_Pos,Plane_Angle)
+            self._iterStep(n_steps=2)
 
         else:
             self._setPlanePose(self.Plane_Pos,Plane_Angle)
+            self._iterStep(n_steps=2)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or V_angle == None:
-            V_mag,V_angle = self._sampleFlightConditions()
+            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
 
         else:
             V_mag = V_mag       # Flight velocity
@@ -136,17 +138,21 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## CALCULATE STARTING TAU VALUE
         self.Tau_CR_start = self.t_rot_max*np.random.uniform(1.9,2.1) # Add noise to starting condition
         self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
+        self.Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
         r_P_O = np.array(self.Plane_Pos)                                        # Plane Position wrt to Origin - {X_W,Z_W}
-        r_P_B = np.array([self.Tau_CR_start*V_tx,0,self.Tau_Body_start*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
+        r_P_B = np.array([(self.Tau_CR_start + self.Tau_Accel_start)*V_tx,
+                          0,
+                          (self.Tau_Body_start + self.Tau_Accel_start)*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                   # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self.initial_state = (r_B_O,V_B_O)
-        self.GZ_VelTraj(pos=r_B_O,vel=V_B_O)        
+        self.GZ_VelTraj(pos=r_B_O,vel=V_B_O)
+        self._iterStep(n_steps=1000)
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
         # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
@@ -163,7 +169,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
-        self.t_trg_max = self.Tau_Body_start*1.0 # [s]
+        self.t_trg_max = self.Tau_Body_start*1.5 # [s]
         
         return self._get_obs(), {}
     
@@ -184,7 +190,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
         
-        if self._get_obs()[0] <= 0.30:
+        if self._get_obs()[0] <= 0.20:
             a_Trg = 1
 
         ########## POLICY PRE-TRIGGER ##########
@@ -357,7 +363,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         resp = self.callService('/CTRL/Get_Obs',None,CTRL_Get_Obs)
 
-        Tau = resp.Tau
+        Tau = resp.Tau_CR
         Theta_x = resp.Theta_x
         D_perp = resp.D_perp
         Plane_Angle_rad = np.radians(resp.Plane_Angle_deg)
@@ -486,15 +492,14 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
 
-        ## REWARD: MINIMUM DISTANCE 
+        ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,0)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
         R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
-        # R_tau_cr = 0
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -514,8 +519,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         return R_t/self.W_max
     
-    def Reward_Exp_Decay(self,x,threshold,k=5):
-        if -0.1 < x < threshold:
+    def Reward_Exp_Decay(self,x,threshold,k=10):
+        if x < threshold:
             return 1
         elif threshold <= x:
             return np.exp(-k*(x-threshold))
@@ -579,13 +584,13 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[2.5,2.5],V_angle_range=[-60,-60],Plane_Angle_range=[0,0])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
 
     for ep in range(20):
 
-        V_mag = 2.5
-        V_angle = 60
-        Plane_Angle = 0
+        V_mag = None
+        V_angle = None
+        Plane_Angle = None
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
 

@@ -15,9 +15,9 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Config: "Checkerboard_L02"
   
   Plane_Angle: 0 # [deg]
-  Pos_X: 0.0    # [m]
+  Pos_X: 2.7    # [m]
   Pos_Y: 0.0    # [m]
-  Pos_Z: 2.0    # [m]
+  Pos_Z: 1.0    # [m]
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
@@ -27,10 +27,10 @@ GROUND_SETTINGS:
 SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: False
-  Sim_Speed: 0.1
-  Sim_Slowdown_Speed: 0.1
+  Sim_Speed: 0.5
+  Sim_Slowdown_Speed: 0.5
   Landing_Slowdown_Flag: True
-  Vicon_Delay: 5 # [ms]
+  Vicon_Delay: 15 # [ms]
 
 
 CAM_SETTINGS:
