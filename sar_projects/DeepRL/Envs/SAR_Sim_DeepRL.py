@@ -13,6 +13,11 @@ from sar_msgs.srv import CTRL_Get_Obs,CTRL_Get_ObsRequest
 from sar_env import SAR_Sim_Interface
 
 EPS = 1e-6 # Epsilon (Prevent division by zero)
+YELLOW = '\033[93m'
+RED = '\033[91m'
+GREEN = '\033[92m'
+BLUE = '\033[34m'  
+RESET = '\033[0m'  # Reset to default color
 
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
@@ -38,16 +43,14 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
-        self.t_trg_max = 1.0        # [s]
         self.t_impact_max = 1.0     # [s]
-        self.t_ep_max = 5.0        # [s]
-        self.t_real_max = 15.0      # [s]
+        self.t_ep_max = 5.0         # [s]
+        self.t_real_max = 120      # [s]
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
         self.K_ep = 0
         self.Pol_Trg_Threshold = 0.5
-        self.Pol_Trg_Flag = False
         self.Done = False
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
@@ -87,7 +90,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## RESET LEARNING/REWARD CONDITIONS
         self.K_ep += 1
         self.Done = False
-        self.Pol_Trg_Flag = False
         self.reward = 0
 
         self.D_perp_min = np.inf
@@ -132,7 +134,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
 
         ## CALCULATE STARTING TAU VALUE
-        self.Tau_CR_start = self.t_rot_max*2
+        self.Tau_CR_start = self.t_rot_max*np.random.uniform(1.9,2.1) # Add noise to starting condition
         self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
@@ -160,7 +162,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.start_time_ep = self._getTime()
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
-        self.t_flight_max = self.Tau_Body_start*2   # [s]
+        self.t_flight_max = self.Tau_Body_start*2.0   # [s]
+        self.t_trg_max = self.Tau_Body_start*1.0 # [s]
         
         return self._get_obs(), {}
     
@@ -177,8 +180,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             n_steps = 10 - (self._getTick()%10)
             self._iterStep(n_steps=n_steps)
 
+
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
+        
+        if self._get_obs()[0] <= 0.30:
+            a_Trg = 1
 
         ########## POLICY PRE-TRIGGER ##########
         if a_Trg <= self.Pol_Trg_Threshold:
@@ -190,46 +197,46 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             # GRAB NEXT OBS
             next_obs = self._get_obs()
 
-            ## GRAB CURRENT OBSERVATION
-            obs = self._get_obs()
 
             # 3) CALCULATE REWARD
             reward = 0.0
 
-            # 4) CHECK TERMINATION
-            self.Done = bool(
-                self.Done
-                or (self.Impact_Flag_Ext)
-            )
-            terminated = self.Done
+            # 4) CHECK TERMINATION/TRUNCATED
 
             # ============================
             ##    Termination Criteria 
             # ============================
 
-            ## TRIGGER TIMEOUT  
-            if (t_now-self.start_time_trg) > self.t_trg_max:
-                self.error_str = "Episode Completed: Pitch Timeout [Truncated]"
-                truncated = True
-                print(self.error_str)
+            if self.Done == True:
+                self.error_str = "Episode Completed: Done [Terminated]"
+                terminated = True
+                truncated = False
+                print(YELLOW,self.error_str,RESET)
+            
+            ## IMPACT TERMINATION
+            elif self.Impact_Flag_Ext == True:
+                self.error_str = "Episode Completed: Impact [Terminated]"
+                terminated = True
+                truncated = False
+                print(YELLOW,self.error_str,RESET)
 
-
-            ## IMPACT TIMEOUT
-            elif (t_now-self.start_time_impact) > self.t_impact_max:
-                self.error_str = "Episode Completed: Impact Timeout [Truncated]"
-                truncated = True
-                print(self.error_str)
-
-
-            ## ROLLOUT TIMEOUT
+            ## EPISODE TIMEOUT
             elif (t_now - self.start_time_ep) > self.t_flight_max:
                 self.error_str = "Episode Completed: Time Exceeded [Truncated]"
+                terminated = False
                 truncated = True
-                print(self.error_str)
+                print(YELLOW,self.error_str,RESET)
+
+            ## REAL-TIME TIMEOUT
+            elif (time.time() - self.start_time_real) > self.t_real_max:
+                self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
+                terminated = False
+                truncated = True
+                print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
 
             else:
+                terminated = False
                 truncated = False
-
             
             # 5) RETURN VALUES
             return(
@@ -247,12 +254,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             self.obs_trg = self._get_obs()
             self.action_trg = action
 
-            self.Tau_trg = self.obs_trg[0]
-            self.Tau_CR_trg = self.Tau_CR
-            self.start_time_trg = self._getTime()
-
             # 2) FINISH EPISODE
-            self.Pol_Trg_Flag = True
+            self.start_time_trg = self._getTime()
             terminated,truncated = self._finishSim(a_Rot)
             self.Done = terminated 
 
@@ -285,16 +288,19 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     def _finishSim(self,a_Rot):
         
+        OnceFlag_Trg = False
+        OnceFlag_Impact = False
+
         terminated = False
         truncated = False
-
+        
         ## SEND TRIGGER ACTION TO CONTROLLER
         self.sendCmd("Policy",[0,a_Rot,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
-        # self.pausePhysics(False)
+        self.pausePhysics(False)
 
-        while not self.Done:
+        while not (terminated or truncated):
 
             t_now = self._getTime()
 
@@ -307,33 +313,45 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 self.start_time_impact = t_now
                 OnceFlag_Impact = True
 
-            ## TIMEOUT CONDITIONS
-            if (self.Done):
-                self.error_str = "Run Completed: Done"
-                self.Done = True
-                print(self.error_str)
+
+            # 4) CHECK TERMINATION/TRUNCATED
+
+            # ============================
+            ##    Termination Criteria 
+            # ============================
+
+            if self.Done == True:
+                self.error_str = "Episode Completed: Done [Terminated] "
+                terminated = True
+                truncated = False
+                print(YELLOW,self.error_str,RESET)
 
             ## TRIGGER TIMEOUT  
-            elif (t_now-self.start_time_trg) > self.t_trg_max:
-                self.error_str = "Run Completed: Pitch Timeout"
+            elif (t_now - self.start_time_trg) > self.t_trg_max:
+                self.error_str = "Episode Completed: Pitch Timeout [Truncated] "
+                terminated = False
                 truncated = True
-                print(self.error_str)
+                print(YELLOW,self.error_str,f"{(t_now - self.start_time_trg):.3f} s",RESET)
 
             ## IMPACT TIMEOUT
-            elif (t_now-self.start_time_impact) > self.t_impact_max:
-                self.error_str = "Run Completed: Impact Timeout"
-                terminated = True
-                print(self.error_str)
-
-            ## EPISODE TIMEOUT
-            elif (t_now - self.start_time_ep) > self.t_ep_max:
-                self.error_str = "Run Completed: Time Exceeded"
+            elif (t_now - self.start_time_impact) > self.t_impact_max:
+                self.error_str = "Episode Completed: Impact Timeout [Truncated] "
+                terminated = False
                 truncated = True
-                print(self.error_str)
+                print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
 
-            self.Done = bool(terminated or self.Done)
+            ## REAL-TIME TIMEOUT
+            elif (time.time() - self.start_time_real) > self.t_real_max:
+                self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
+                terminated = False
+                truncated = True
+                print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
 
-            return terminated,truncated
+            else:
+                terminated = False
+                truncated = False
+
+        return terminated,truncated
 
     def _get_obs(self):
 
@@ -577,8 +595,8 @@ if __name__ == "__main__":
         while not Done:
 
             action = env.action_space.sample() # obs gets passed in here
-            action[0] = 1
-            action[1] = -50
+            action[0] = 0
+            action[1] = -0.5
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 

@@ -70,13 +70,13 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         ## (https://github.com/bhairavmehta95/ros-gazebo-step)
         os.system(f'gz world --multi-step={int(n_steps)}')
 
-        ## If num steps is large then wait until iteration is fully complete before proceeding
-        if n_steps >= 50: 
-            while True:
-                try:
-                    rospy.wait_for_message('/clock', Clock, timeout=0.1)
-                except:
-                    break
+        # ## If num steps is large then wait until iteration is fully complete before proceeding
+        # if n_steps >= 50: 
+        while True:
+            try:
+                rospy.wait_for_message('/clock', Clock, timeout=0.1)
+            except:
+                break
 
     def sleep(self,time_s):
         """
