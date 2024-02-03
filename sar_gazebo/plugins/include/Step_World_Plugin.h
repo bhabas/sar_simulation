@@ -12,6 +12,10 @@
 #include <gazebo/common/common.hh>
 #include <gazebo/sensors/sensors.hh>
 
+// CUSTOM INCLUDE
+#include "sar_msgs/World_Step.h"
+
+
 namespace gazebo {
 
     class Step_World_Plugin: public WorldPlugin
@@ -20,12 +24,15 @@ namespace gazebo {
             
         protected:
             void Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf);
-            // bool Step_Sim(sar_msgs::Hinge_Params::Request &req, sar_msgs::Hinge_Params::Response &res);
+            bool Step_World(sar_msgs::World_Step::Request &req, sar_msgs::World_Step::Response &res);
 
         private:
 
+            physics::WorldPtr World_Ptr;
+
+            
             ros::NodeHandle nh;
-            // ros::ServiceServer Hinge_Update_Service = nh.advertiseService("/SAR_Internal/Hinge_Joint_Update", &Step_World_Plugin::Step_Sim, this);
+            ros::ServiceServer Hinge_Update_Service = nh.advertiseService("/ENV/Step_World", &Step_World_Plugin::Step_World, this);
 
 
     };
