@@ -143,7 +143,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 case PARAM_OPTIM:
 
                     // EXECUTE POLICY IF TRIGGERED
-                    if(Tau <= Policy_Trg_Action && onceFlag == false && Vel_mag_B_P > 0.5f){
+                    if(Tau_CR <= Policy_Trg_Action && onceFlag == false && Vel_mag_B_P > 0.5f){
 
                         onceFlag = true;
 

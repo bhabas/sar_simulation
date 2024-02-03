@@ -12,6 +12,7 @@ from sar_env import SAR_Base_Interface
 from std_srvs.srv import Empty
 from rosgraph_msgs.msg import Clock
 from sar_msgs.srv import Inertia_Params,Inertia_ParamsRequest
+from sar_msgs.srv import CTRL_Get_Obs,CTRL_Get_ObsRequest
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
@@ -77,6 +78,26 @@ class SAR_Sim_Interface(SAR_Base_Interface):
                 rospy.wait_for_message('/clock', Clock, timeout=0.1)
             except:
                 break
+
+    def _getTick(self):
+
+        resp = self.callService('/CTRL/Get_Obs',None,CTRL_Get_Obs)
+
+        return resp.Tick
+    
+    def _get_obs(self):
+
+        resp = self.callService('/CTRL/Get_Obs',None,CTRL_Get_Obs)
+
+        Tau = resp.Tau_CR
+        Theta_x = resp.Theta_x
+        D_perp = resp.D_perp
+        Plane_Angle_rad = np.radians(resp.Plane_Angle_deg)
+
+        ## OBSERVATION VECTOR
+        obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
+
+        return obs
 
     def sleep(self,time_s):
         """

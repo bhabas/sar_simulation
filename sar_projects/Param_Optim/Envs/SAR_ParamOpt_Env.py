@@ -83,7 +83,6 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         self.resetPose()
 
-
         ## SET PLANE POSE
         if Plane_Angle == None:
 
@@ -91,15 +90,15 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             Plane_Angle_High = self.Plane_Angle_range[1]
             Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
             self._setPlanePose(self.Plane_Pos,Plane_Angle)
-
+            self._iterStep(n_steps=2)
 
         else:
             self._setPlanePose(self.Plane_Pos,Plane_Angle)
-
+            self._iterStep(n_steps=2)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or V_angle == None:
-            V_mag,V_angle = self._sampleFlightConditions()
+            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
 
         else:
             V_mag = V_mag       # Flight velocity
@@ -111,46 +110,54 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
         V_tx = V_mag*np.cos(np.deg2rad(V_angle))
         V_perp = V_mag*np.sin(np.deg2rad(V_angle))
-        V_B_P = np.array([V_tx,0,V_perp]) # {t_x,n_p}
-        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad) # {X_W,Z_W}
-        
+        V_B_P = np.array([V_tx,0,V_perp])               # {t_x,n_p}
+        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
+
         ## CALCULATE STARTING TAU VALUE
-        self.Tau_CR_start = self.t_rot_max*2
+        self.Tau_CR_start = self.t_rot_max*np.random.uniform(1.9,2.1) # Add noise to starting condition
         self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
+        self.Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
         r_P_O = np.array(self.Plane_Pos)                                        # Plane Position wrt to Origin - {X_W,Z_W}
-        r_P_B = np.array([self.Tau_CR_start*V_tx,0,self.Tau_Body_start*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
+        r_P_B = np.array([(self.Tau_CR_start + self.Tau_Accel_start)*V_tx,
+                          0,
+                          (self.Tau_Body_start + self.Tau_Accel_start)*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                   # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self.initial_state = (r_B_O,V_B_O)
-        # self.resetPose(r_B_O[0],r_B_O[1],np.radians(-1),V_B_O[0],V_B_O[1],0)
-        self.GZ_VelTraj(pos=r_B_O,vel=V_B_O)        
-
+        self.GZ_VelTraj(pos=r_B_O,vel=V_B_O)
+        self._iterStep(n_steps=1000)
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
         # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
         # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
         # self.setModelInertia()
 
+        ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
+        if self._getTick()%10 != 0:
+            n_steps = 10 - (self._getTick()%10)
+            self._iterStep(n_steps=n_steps)
 
         ## RESET/UPDATE TIME CONDITIONS
+        self.start_time_ep = self._getTime()
         self.start_time_run = self._getTime()
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
-        self.t_flight_max = self.Tau_Body_start*2   # [s]
+        self.t_flight_max = self.Tau_Body_start*2.0   # [s]
+        self.t_trg_max = self.Tau_Body_start*1.5 # [s]
         
-        return self._get_obs(), {}
+        return None, {}
 
-    def ParamOptim_Flight(self,Tau_trg,Rot_acc):
+    def ParamOptim_Flight(self,Tau_CR_trg,Rot_acc):
 
         ## RESET LOGGING CONDITIONS 
         OnceFlag_Trg = False    # Ensures Rot data recorded only once
         OnceFlag_Impact = False   # Ensures impact data recorded only once 
-        self.sendCmd("Policy",cmd_vals=[Tau_trg,Rot_acc,0.0],cmd_flag=1)
+        self.sendCmd("Policy",cmd_vals=[Tau_CR_trg,Rot_acc,0.0],cmd_flag=1)
         self.pausePhysics(pause_flag=False)
 
 
@@ -202,10 +209,10 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             #     # print(self.error_str)
 
 
-            if (time.time() - self.start_time_real) > self.t_real_max and self.GZ_Timeout == True:
-                print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-                self.Done = True
-                self._restart_Sim()
+            # if (time.time() - self.start_time_real) > self.t_real_max and self.GZ_Timeout == True:
+            #     print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
+            #     self.Done = True
+            #     self._restart_Sim()
 
 
         reward = self._CalcReward()
@@ -325,15 +332,14 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
 
 
-        ## REWARD: MINIMUM DISTANCE 
+        ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,0)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
         R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
-        # R_tau_cr = 0
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -423,14 +429,14 @@ if __name__ == "__main__":
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
-        Tau_trg = 0.39
-        Rot_acc = 200
+        Tau_CR_trg = 0.23
+        Rot_acc = -50
         V_mag = 2.5
-        V_angle = 120
+        V_angle = 60
         Plane_Angle = 0
         env.ParamOptim_reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-        obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,Rot_acc)
-        # print(f"Ep: {ii} \t Reward: {reward:.02f} \t Reward_vec: ",end='')
-        # print(' '.join(f"{val:.2f}" for val in env.reward_vals))
+        obs,reward,done,info = env.ParamOptim_Flight(Tau_CR_trg,Rot_acc)
+        print(f"Ep: {ii} \t Reward: {reward:.02f} \t Reward_vec: ",end='')
+        print(' '.join(f"{val:.2f}" for val in env.reward_vals))
 
 
