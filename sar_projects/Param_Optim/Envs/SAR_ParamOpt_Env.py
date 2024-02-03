@@ -334,7 +334,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius*0.8)
         else:
             R_dist = 0
 

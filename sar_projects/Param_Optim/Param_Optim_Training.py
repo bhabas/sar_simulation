@@ -130,7 +130,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_mag = 2.5     # [m/s]
-    V_angle = 150    # [deg]
+    V_angle = 60    # [deg]
     Plane_angle = 0 # [deg]
     env.setAngAcc_range([-100,100])
     env.TauThr_range = [0,0.5]
