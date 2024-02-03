@@ -117,7 +117,7 @@ namespace gazebo
     }
 
 
-    bool Landing_Surface_Pose::Service_Callback(sar_msgs::Surface_Settings::Request &req, sar_msgs::Surface_Settings::Response &res)
+    bool Landing_Surface_Pose::Service_Callback(sar_msgs::Surface_Params::Request &req, sar_msgs::Surface_Params::Response &res)
     {
         // UPDATING SURFACE POSE
         Pos_X = req.Pos.x;

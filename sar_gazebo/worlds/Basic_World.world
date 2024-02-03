@@ -134,33 +134,6 @@
         </bullet>
     </physics>
 
-    <!-- <physics type="dart">
-        <max_step_size>0.001</max_step_size>
-        <real_time_factor>1</real_time_factor>
-        <real_time_update_rate>1000</real_time_update_rate>
-
-        <gravity>0 0 -9.81</gravity>
-
-        <dart>
-            <solver>
-                <solver_type>PGS</solver_type>
-                <iterations>500</iterations>
-                <tolerance>1e-5</tolerance>
-                <alpha>1.0</alpha>
-                <threads>0</threads>
-            </solver>
-            <constraints>
-                <constraint_forces_merging>true</constraint_forces_merging>
-                <joint_position_limit>true</joint_position_limit>
-                <joint_velocity_limit>true</joint_velocity_limit>
-                <joint_coulomb_friction>true</joint_coulomb_friction>
-                <joint_limit_impulse>true</joint_limit_impulse>
-                <link_contact>true</link_contact>
-                <joint_contact>true</joint_contact>
-            </constraints>
-        </dart>
-    </physics> -->
-
 
     <scene>
       <sky>
@@ -169,6 +142,9 @@
         </clouds>
       </sky>
     </scene>
+
+    <plugin name='Step_World_Plugin' filename='libStep_World_Plugin.so'>
+    </plugin>
 
   </world>
 </sdf>

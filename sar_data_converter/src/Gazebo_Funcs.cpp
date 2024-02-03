@@ -46,7 +46,7 @@ void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Conn
 void SAR_DataConverter::setLandingSurfacePose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle_deg)
 {
 
-    sar_msgs::Surface_Settings srv;
+    sar_msgs::Surface_Params srv;
 
     srv.request.Pos.x = Pos_x;
     srv.request.Pos.y = Pos_y;

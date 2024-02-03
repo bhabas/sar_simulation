@@ -45,7 +45,6 @@ add_service_files(
   CTRL_Get_Obs.srv
   Model_Move.srv
   Cam_Settings.srv
-  Surface_Settings.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

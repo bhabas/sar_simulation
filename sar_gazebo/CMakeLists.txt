@@ -21,6 +21,9 @@ catkin_package(
 
 include_directories(plugins/include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
+add_library(Step_World_Plugin SHARED plugins/src/Step_World_Plugin.cpp)
+target_link_libraries(Step_World_Plugin ${GAZEBO_LIBRARIES})
+
 add_library(SAR_Update_Plugin SHARED plugins/src/SAR_Update_Plugin.cpp)
 target_link_libraries(SAR_Update_Plugin ${GAZEBO_LIBRARIES})
 
@@ -35,6 +38,7 @@ target_link_libraries(Landing_Surface_Pose_Plugin ${GAZEBO_LIBRARIES})
 
 #add_library(Example_Cam_Plugin_Ref SHARED plugins/src/Example_Cam_Plugin_Ref.cpp)
 #target_link_libraries(Example_Cam_Plugin_Ref ${GAZEBO_LIBRARIES})
+
 
 # EXTRA PLUGINS
 add_library(Model_Move_Plugin SHARED plugins/src/Model_Move_Plugin.cpp)
