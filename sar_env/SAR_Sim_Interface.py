@@ -107,7 +107,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         return True
         
-    def GZ_VelTraj(self,pos,vel): 
+    def Sim_VelTraj(self,pos,vel): 
         """
         Args:
             pos (list): Launch position [m]   | [x,y,z]
@@ -219,28 +219,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         os.system("roslaunch sar_launch Load_Params.launch")
 
-    def _sampleFlightConditions(self,V_mag_range=[0.5,1.5],V_angle_range=[0,90]):
-
-        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
-        Vel_Low = V_mag_range[0]
-        Vel_High = V_mag_range[1]
-        V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
-
-        ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
-        Rel_Angle_Low = V_angle_range[0]
-        Rel_Angle_High = V_angle_range[1]
-        Flight_Angle_range = Rel_Angle_High-Rel_Angle_Low
-
-        Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
-
-        if Dist_Num == 0: # Low Range
-            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low, high=Rel_Angle_Low + 0.1*Flight_Angle_range)
-        elif Dist_Num == 1: # Medium Range
-            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low + 0.1*Flight_Angle_range, high=Rel_Angle_High - 0.1*Flight_Angle_range)
-        elif Dist_Num == 2: # High Range
-            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_High - 0.1*Flight_Angle_range, high=Rel_Angle_High)
-       
-        return V_mag,Flight_Angle
+    
        
 
     

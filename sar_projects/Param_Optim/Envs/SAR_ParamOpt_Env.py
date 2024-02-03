@@ -129,7 +129,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self.initial_state = (r_B_O,V_B_O)
-        self.GZ_VelTraj(pos=r_B_O,vel=V_B_O)
+        self.Sim_VelTraj(pos=r_B_O,vel=V_B_O)
         self._iterStep(n_steps=1000)
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
