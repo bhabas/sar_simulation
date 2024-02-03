@@ -13,6 +13,8 @@ from std_srvs.srv import Empty
 from rosgraph_msgs.msg import Clock
 from sar_msgs.srv import Inertia_Params,Inertia_ParamsRequest
 from sar_msgs.srv import CTRL_Get_Obs,CTRL_Get_ObsRequest
+from sar_msgs.srv import World_Step,World_StepRequest
+
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
@@ -67,17 +69,8 @@ class SAR_Sim_Interface(SAR_Base_Interface):
             n_steps (int, optional): Number of timesteps to step through. Defaults to 10.
         """        
 
-        ## This might be better to be replaced with a world plugin with step function and a response when complete
-        ## (https://github.com/bhairavmehta95/ros-gazebo-step)
-        os.system(f'gz world --multi-step={int(n_steps)}')
+        self.callService('/ENV/World_Step',World_StepRequest(n_steps),World_Step)
 
-        # ## If num steps is large then wait until iteration is fully complete before proceeding
-        # if n_steps >= 50: 
-        while True:
-            try:
-                rospy.wait_for_message('/clock', Clock, timeout=0.1)
-            except:
-                break
 
     def _getTick(self):
 

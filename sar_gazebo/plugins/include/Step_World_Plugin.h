@@ -32,7 +32,7 @@ namespace gazebo {
 
             
             ros::NodeHandle nh;
-            ros::ServiceServer Hinge_Update_Service = nh.advertiseService("/ENV/Step_World", &Step_World_Plugin::Step_World, this);
+            ros::ServiceServer Hinge_Update_Service = nh.advertiseService("/ENV/World_Step", &Step_World_Plugin::Step_World, this);
 
 
     };
