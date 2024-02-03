@@ -25,7 +25,6 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     // RUN STABILIZER LOOP
     while(ros::ok)
     {
-        printf("Tick: %d\n",tick);
         controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
     
 

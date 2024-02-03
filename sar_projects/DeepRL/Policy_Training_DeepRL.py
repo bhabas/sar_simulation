@@ -247,11 +247,6 @@ class Policy_Trainer_DeepRL():
                     SAR_Config = self.env.SAR_Config,
                 ),
 
-                CAM_SETTINGS = dict(
-                    Cam_Config = self.env.Cam_Config,
-                    Cam_Active = self.env.Cam_Active,
-                ),
-
             )
 
         General_Dict = dict(
@@ -261,18 +256,19 @@ class Policy_Trainer_DeepRL():
                 V_mag_Limts = self.env.V_mag_range,
                 V_angle_Limits = self.env.V_angle_range,
                 Plane_Angle_Limits = self.env.Plane_Angle_range,
+                Ang_Acc_Limits = self.env.Ang_Acc_range,
             ),
 
             MODEL_SETTINGS = dict(
                 # Mass_Std = self.env.Mass_std,
                 # Iyy_Std = self.env.Iyy_std,
-                Mass = self.env.M,
-                Ixx = self.env.Ixx,
-                Iyy = self.env.Iyy,
-                Izz = self.env.Izz,
-                L = self.env.L,
-                Gamma = float(self.env.gamma_deg),
-                PD = self.env.PD,
+                Ref_Mass = self.env.Ref_Mass,
+                Ref_Ixx = self.env.Ref_Ixx,
+                Ref_Iyy = self.env.Ref_Iyy,
+                Ref_Izz = self.env.Ref_Izz,
+                L_eff = self.env.L_eff,
+                Gamma_eff = float(self.env.Gamma_eff),
+                Forward_Reach = self.env.Forward_Reach,
             ),
 
             LEARNING_MODEL = dict(
@@ -288,8 +284,6 @@ class Policy_Trainer_DeepRL():
             ),
 
             REWARD_SETTINGS=self.env.reward_weights
-
-
         )
 
         with open(config_path, 'w') as outfile:
@@ -656,12 +650,12 @@ if __name__ == '__main__':
 
 
     # START TRAINING NEW DEEP RL MODEL 
-    # env = SAR_Sim_DeepRL(GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[40,40],Plane_Angle_range=[180,180])
-    # log_name = f"{env.SAR_Config}--SAC_{current_time}" 
-    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[2.5,2.5],V_angle_range=[60,60],Plane_Angle_range=[0,45])
+    log_name = f"{env.SAR_Config}--SAC_{current_time}" 
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[0,0],V_angle_range=[-175,-5],V_mag_range=[1,3],Render=False)
+    # env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[0,0],V_angle_range=[-175,-5],V_mag_range=[1,3],Render=False)
 
     current_datetime = datetime.now()
     current_time = current_datetime.strftime("%H:%M:%S")

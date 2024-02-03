@@ -130,12 +130,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 {
     // POLICY UPDATES
     if (isOFUpdated == true) {
-        printf("Policy Tick: %d\n",tick);
 
         isOFUpdated = false;
 
         if(Policy_Armed_Flag == true){
-            printf("Policy Action: %d\n",tick);
 
 
             switch (Policy)
@@ -301,7 +299,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     // OPTICAL FLOW UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick))
     {
-        printf("Update Tick: %d\n",tick);
         // UPDATE GROUND TRUTH OPTICAL FLOW
         updateOpticalFlowAnalytic(state,sensors);
 
