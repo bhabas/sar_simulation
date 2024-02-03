@@ -646,7 +646,7 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    from sar_projects.DeepRL.Envs.SAR_Env_2D import SAR_Env_2D
+    from sar_projects.DeepRL.Envs.SAR_2D_Env_Sim import SAR_Env_2D
 
 
     # START TRAINING NEW DEEP RL MODEL 
