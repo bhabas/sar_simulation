@@ -45,7 +45,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.initial_state = (np.array([0,0,0]),np.array([0,0,0]))
 
         ## PLANE PARAMETERS
-        self.r_P_O = [1,0,0]
+        self.r_P_O = [1,0,0.5]
         self.Plane_Angle_deg = 0
         self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
 
@@ -112,47 +112,54 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         return np.array([r_B_O,L1,L2,Prop1,Prop2])
 
-    def _checkImpactConditions(self,x,z,Phi_B_O):
+    def _checkImpact(self):
 
         r_B_O,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._get_pose()
         r_P_O = self.r_P_O
 
-        ## CHECK FOR CG CONTACT 
-        r_B_P = self.R_WP((r_B_O - r_P_O),self.Plane_Angle_rad)
-        if r_B_P[1] >= 0:
-            impact_flag = True
-            Body_contact = True
-
-            return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
         ## CHECK FOR PROP CONTACT
         for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
 
             Prop_wrt_Plane = self.R_WP((Prop_Pos - r_P_O),self.Plane_Angle_rad)
-            if Prop_wrt_Plane[1] >= 0:
-                impact_flag = True
-                Body_contact = True
+            if Prop_wrt_Plane[2] >= 0:
 
-                return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+                self.Impact_Flag_Ext = True
+                self.BodyContact_Flag = True
+                self.ForelegContact_Flag = False
+                self.HindlegContact_Flag = False
 
-        ## CHECK FOR LEG1 CONTACT
-        Leg1_wrt_Plane = self.R_WP((Leg1_Pos - self.r_P_O),self.Plane_Angle_rad)
-        if Leg1_wrt_Plane[1] >= 0:
-            impact_flag = True
-            Leg1_contact = True
+                self.State_Impact = self._getState()
 
-            return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+                return
 
-        ## CHECK FOR LEG2 CONTACT
-        Leg2_wrt_Plane = self.R_WP((Leg2_Pos - self.r_P_O),self.Plane_Angle_rad)
-        if Leg2_wrt_Plane[1] >= 0:
-            impact_flag = True
-            Leg2_contact = True
+        ## CHECK FOR FORELEG CONTACT
+        Foreleg_wrt_Plane = self.R_WP((Leg1_Pos - self.r_P_O),self.Plane_Angle_rad)
 
-            return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+        if Foreleg_wrt_Plane[2] >= 0:
+
+            self.Impact_Flag_Ext = True
+            self.BodyContact_Flag = True
+            self.ForelegContact_Flag = False
+            self.HindlegContact_Flag = False
+
+            self.State_Impact = self._getState()
+
+            return
 
 
-        return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+        ## CHECK FOR HINDLEG CONTACT
+        Hindleg_wrt_Plane = self.R_WP((Leg2_Pos - self.r_P_O),self.Plane_Angle_rad)
+        if Hindleg_wrt_Plane[2] >= 0:
+            
+            self.Impact_Flag_Ext = True
+            self.BodyContact_Flag = True
+            self.ForelegContact_Flag = False
+            self.HindlegContact_Flag = False
+
+            self.State_Impact = self._getState()
+
+            return
 
     def _setState(self,r_B_O,Phi_B_O,V_B_O,dPhi):
 
@@ -186,6 +193,11 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         D_perp_CR = self.R_WP(r_P_CR,self.Plane_Angle_rad)[2]               # Convert to plane coords - {t_x,n_p}
         Tau_CR = np.clip(D_perp_CR/(V_perp + EPS),-5,5)
 
+        self.Tau = Tau
+        self.Tau_CR = Tau_CR
+        self.Theta_x = Theta_x
+        self.D_perp = D_perp
+        self.D_perp_CR = D_perp_CR
 
         ## OBSERVATION VECTOR
         obs = np.array([Tau_CR,Theta_x,D_perp,self.Plane_Angle_rad],dtype=np.float32)
@@ -201,7 +213,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
     def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
-        pass
+        self._setState(pos,0,vel,0)
 
     def _setPlanePose(self,Pos,Plane_Angle):
         self.Plane_Pos = Pos
@@ -214,13 +226,13 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         ## CHECK FOR IMPACT
         x,z,Phi_B_O,vx,vz,dPhi_B_O = self._getState()
-        self.Impact_Flag_Ext,self.Impact_Conditions = self._checkImpactConditions(x,z,Phi_B_O)
+        self.Impact_Flag_Ext,self.Impact_Conditions = self._checkImpact(x,z,Phi_B_O)
 
         ## NO IMPACT
         if self.Impact_Flag_Ext == False:
 
             ## UPDATE ROTATION FLIGHT STEP
-            self._iter_step_Rot(a_Rot)
+            self._iterStep_Rot(a_Rot)
 
             # UPDATE MINIMUM DISTANCE
             D_perp = self._getObs()[2]
@@ -340,6 +352,24 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     if self.RENDER:
                         self.render()
 
+    def _iterStep(self,n_steps=10,a_Rot=0):
+
+        for _ in range(n_steps):
+
+            if self.Trg_Flag == False:
+                self._iterStep_Flight()
+                self._checkImpact()
+
+            if self.Trg_Flag == True:
+                self._iterStep_Rot(a_Rot)
+                self._checkImpact()
+
+            # # UPDATE MINIMUM DISTANCE
+            # D_perp = next_obs[2]
+            # if D_perp <= self.D_perp_min:
+            #     self.D_perp_min = D_perp 
+
+
     def render(self):
 
         ## SET DEFAULT WINDOW POSITION
@@ -385,8 +415,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.surf.fill(WHITE_PG)
 
         ## TRAJECTORY LINE
-        r_B_O,V_B_O = self.initial_state
-        self.draw_line_dashed(self.surf,GREY_PG,c2p(r_B_O - 5*V_B_O),c2p(r_B_O + 5*V_B_O),width=3)
+        self.draw_line_dashed(self.surf,GREY_PG,c2p(self.initial_state[0] - 5*self.initial_state[1]),c2p(self.initial_state[0] + 5*self.initial_state[1]),width=3)
 
         ## ORIGIN AXES
         pg.draw.line(self.surf,GREEN_PG,c2p((0,0,0)),c2p((0.1,0,0)),width=5) # X_w   
@@ -448,31 +477,31 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ## WINDOW TEXT
         my_font = pg.font.SysFont(None, 30)
 
-        # ## STATES TEXT
-        # text_States = my_font.render(f'States:', True, GREY_PG)
-        # text_t_step = my_font.render(f'Time Step: {self.t:7.03f} [s]', True, BLACK_PG)
-        # text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f} [m/s]', True, BLACK_PG)
-        # text_Rel_Angle = my_font.render(f'Flight_Angle: {self.V_angle:.2f} [deg]', True, BLACK_PG)
+        ## STATES TEXT
+        text_States = my_font.render(f'States:', True, GREY_PG)
+        text_t_step = my_font.render(f'Time Step: {self.t:7.03f} [s]', True, BLACK_PG)
+        text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f} [m/s]', True, BLACK_PG)
+        text_Rel_Angle = my_font.render(f'Flight_Angle: {self.V_angle:.2f} [deg]', True, BLACK_PG)
 
-        # ## OBSERVATIONS TEXT
-        # text_Obs = my_font.render(f'Observations:', True, GREY_PG)
-        # text_Tau = my_font.render(f'Tau: {self._getObs()[0]:2.2f} [s]', True, BLACK_PG)
-        # text_theta_x = my_font.render(f'Theta_x: {self._getObs()[1]:2.2f} [rad/s]', True, BLACK_PG)
-        # text_D_perp = my_font.render(f'D_perp: {self._getObs()[2]:2.2f} [m]', True, BLACK_PG)
-        # text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle_deg:3.1f} [deg]', True, BLACK_PG)
+        ## OBSERVATIONS TEXT
+        text_Obs = my_font.render(f'Observations:', True, GREY_PG)
+        text_Tau = my_font.render(f'Tau: {self._getObs()[0]:2.2f} [s]', True, BLACK_PG)
+        text_theta_x = my_font.render(f'Theta_x: {self._getObs()[1]:2.2f} [rad/s]', True, BLACK_PG)
+        text_D_perp = my_font.render(f'D_perp: {self._getObs()[2]:2.2f} [m]', True, BLACK_PG)
+        text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle_deg:3.1f} [deg]', True, BLACK_PG)
 
-        # ## ACTIONS TEXT
-        # text_Actions = my_font.render(f'Actions:', True, GREY_PG)
-        # # text_Trg_Action = my_font.render(f'Trg_Action: {self.action_trg[0]:3.1f}', True, BLACK_PG)
-        # # text_Rot_Action = my_font.render(f'Rot_Action: {self.action_trg[1]:3.1f}', True, BLACK_PG)
+        ## ACTIONS TEXT
+        text_Actions = my_font.render(f'Actions:', True, GREY_PG)
+        # text_Trg_Action = my_font.render(f'Trg_Action: {self.action_trg[0]:3.1f}', True, BLACK_PG)
+        # text_Rot_Action = my_font.render(f'Rot_Action: {self.action_trg[1]:3.1f}', True, BLACK_PG)
 
-        # ## OTHER TEXT
-        # text_Other = my_font.render(f'Other:', True, GREY_PG)
-        # # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK_PG)
-        # text_Tau_trg = my_font.render(f'Tau_trg: {self.Tau_trg:.3f} [s]',True, BLACK_PG)
-        # text_Tau_CR_trg = my_font.render(f'Tau_CR_trg: {self.Tau_CR_trg:.3f} [s]',True, BLACK_PG)
-        # text_Tau_CR = my_font.render(f'Tau CR: {self.Tau_CR:.3f} [s]',True, BLACK_PG)
-        # text_Phi = my_font.render(f'Phi: {np.degrees(Phi_B_O):.0f} deg',True, BLACK_PG)
+        ## OTHER TEXT
+        text_Other = my_font.render(f'Other:', True, GREY_PG)
+        # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK_PG)
+        text_Tau_trg = my_font.render(f'Tau_trg: {self.Tau_trg:.3f} [s]',True, BLACK_PG)
+        text_Tau_CR_trg = my_font.render(f'Tau_CR_trg: {self.Tau_CR_trg:.3f} [s]',True, BLACK_PG)
+        text_Tau_CR = my_font.render(f'Tau CR: {self.Tau_CR:.3f} [s]',True, BLACK_PG)
+        text_Phi = my_font.render(f'Phi: {np.degrees(Phi_B_O):.0f} deg',True, BLACK_PG)
 
 
 
@@ -480,27 +509,27 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         ## DRAW OBJECTS TO SCREEN
         self.screen.blit(self.surf,         (0,0))
-        # self.screen.blit(text_States,       (5,5))
-        # self.screen.blit(text_t_step,       (5,5 + 25*1))
-        # self.screen.blit(text_Rel_Angle,    (5,5 + 25*2))
-        # self.screen.blit(text_V_mag,        (5,5 + 25*3))
+        self.screen.blit(text_States,       (5,5))
+        self.screen.blit(text_t_step,       (5,5 + 25*1))
+        self.screen.blit(text_Rel_Angle,    (5,5 + 25*2))
+        self.screen.blit(text_V_mag,        (5,5 + 25*3))
 
-        # self.screen.blit(text_Obs,          (5,5 + 25*5))
-        # self.screen.blit(text_Tau,          (5,5 + 25*6))
-        # self.screen.blit(text_theta_x,      (5,5 + 25*7))
-        # self.screen.blit(text_D_perp,       (5,5 + 25*8))
-        # self.screen.blit(text_Plane_Angle,  (5,5 + 25*9))
+        self.screen.blit(text_Obs,          (5,5 + 25*5))
+        self.screen.blit(text_Tau,          (5,5 + 25*6))
+        self.screen.blit(text_theta_x,      (5,5 + 25*7))
+        self.screen.blit(text_D_perp,       (5,5 + 25*8))
+        self.screen.blit(text_Plane_Angle,  (5,5 + 25*9))
 
-        # self.screen.blit(text_Actions,      (5,5 + 25*11))
-        # # self.screen.blit(text_Trg_Action,   (5,5 + 25*12))
-        # # self.screen.blit(text_Rot_Action,   (5,5 + 25*13))
+        self.screen.blit(text_Actions,      (5,5 + 25*11))
+        # self.screen.blit(text_Trg_Action,   (5,5 + 25*12))
+        # self.screen.blit(text_Rot_Action,   (5,5 + 25*13))
 
-        # self.screen.blit(text_Other,        (5,5 + 25*15))
-        # # self.screen.blit(text_reward,       (5,5 + 25*16))
-        # self.screen.blit(text_Tau_trg,      (5,5 + 25*17))
-        # self.screen.blit(text_Tau_CR_trg,   (5,5 + 25*18))
-        # self.screen.blit(text_Tau_CR,       (5,5 + 25*19))
-        # self.screen.blit(text_Phi,          (5,5 + 25*20))
+        self.screen.blit(text_Other,        (5,5 + 25*15))
+        # self.screen.blit(text_reward,       (5,5 + 25*16))
+        self.screen.blit(text_Tau_trg,      (5,5 + 25*17))
+        self.screen.blit(text_Tau_CR_trg,   (5,5 + 25*18))
+        self.screen.blit(text_Tau_CR,       (5,5 + 25*19))
+        self.screen.blit(text_Phi,          (5,5 + 25*20))
 
 
 
@@ -517,21 +546,6 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
     
 
 
-    def _iterStep(self,n_steps=10):
-
-        for _ in range(n_steps):
-
-            if self.Trg_Flag == False:
-                self._iterStep_Flight()
-
-                # # CHECK FOR IMPACT
-            # x,z,phi_B_O,Vx,Vz,dphi_B_O = self._getState()
-            # self.Impact_Flag_Ext,Impact_Conditions = self._checkImpactConditions(x,z,phi_B_O)
-
-            # # UPDATE MINIMUM DISTANCE
-            # D_perp = next_obs[2]
-            # if D_perp <= self.D_perp_min:
-            #     self.D_perp_min = D_perp 
 
                 
 
@@ -542,55 +556,52 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         self.t += self.dt
 
-        x_acc = 0.0
+        x_Acc = 0.0
         r_B_O[0] = r_B_O[0] + self.dt*V_B_O[0]
-        V_B_O[0] = V_B_O[0] + self.dt*x_acc
+        V_B_O[0] = V_B_O[0] + self.dt*x_Acc
 
-        z_acc = 0.0
+        z_Acc = 0.0
         r_B_O[2] = r_B_O[2] + self.dt*V_B_O[2]
-        V_B_O[2] = V_B_O[2] + self.dt*z_acc
+        V_B_O[2] = V_B_O[2] + self.dt*z_Acc
 
-        phi_acc = 0.0
+        Phi_Acc = 0.0
         Phi_B_O = Phi_B_O + self.dt*dPhi_B_O
-        dPhi_B_O = dPhi_B_O + self.dt*phi_acc
+        dPhi_B_O = dPhi_B_O + self.dt*Phi_Acc
 
         self._setState(r_B_O,Phi_B_O,V_B_O,dPhi_B_O)
 
 
-    def _iter_step_Rot(self,Rot_action,n_steps=2):
+    def _iterStep_Rot(self,a_Rot):
 
-        ## PARAMS
-        self.Gamma_eff,self.L_eff,self.Forward_Reach,M,Iyy,I_c = self.params
+        ## UPDATE STATE
+        r_B_O,Phi_B_O,V_B_O,dPhi_B_O = self._getState()
 
-        ## CURRENT STATE
-        x,z,phi,vx,vz,dphi = self._getState()
 
         ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
-        if np.abs(phi) < np.deg2rad(90) and self.MomentCutoff == False:
-            My = Rot_action
+        if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
+            Phi_acc = a_Rot
 
         else: 
+            Phi_acc = 0
             self.MomentCutoff= True
-            My = 0
 
-        for _ in range(n_steps):
+        ## STEP UPDATE
+        self.t += self.dt
 
-            ## STEP UPDATE
-            self.t += self.dt
+        x_Acc = 0.0
+        r_B_O[0] = r_B_O[0] + self.dt*V_B_O[0]
+        V_B_O[0] = V_B_O[0] + self.dt*x_Acc
 
-            z_acc = -self.g
-            z = z + self.dt*vz
-            vz = vz + self.dt*z_acc
+        z_Acc = -self.g
+        r_B_O[2] = r_B_O[2] + self.dt*V_B_O[2]
+        V_B_O[2] = V_B_O[2] + self.dt*z_Acc
 
-            x_acc = 0
-            x = x + self.dt*vx
-            vx = vx + self.dt*x_acc
+        Phi_acc = Phi_acc
+        Phi_B_O = Phi_B_O + self.dt*dPhi_B_O
+        dPhi_B_O = dPhi_B_O + self.dt*Phi_acc
 
-            phi_acc = My/Iyy
-            phi = phi + self.dt*dphi
-            dphi = dphi + self.dt*phi_acc
+        self._setState(r_B_O,Phi_B_O,V_B_O,dPhi_B_O)
 
-            self.State = np.array([x,z,phi,vx,vz,dphi])
 
     def _iter_step_Swing(self, Beta, dBeta, impact_leg, n_steps=2):
 

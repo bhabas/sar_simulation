@@ -110,6 +110,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         self.Impact_Flag_Ext = False
         self.BodyContact_Flag = False
+        self.ForelegContact_Flag = False
+        self.HindlegContact_Flag = False
         self.Pad_Connections = 0
         self.MomentCutoff = False
 
@@ -161,7 +163,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                   # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self.initial_state = (r_B_O,V_B_O)
+        self.initial_state = (r_B_O.copy(),V_B_O.copy())
         self.Sim_VelTraj(pos=r_B_O,vel=V_B_O)
         self._iterStep(n_steps=1000)
 
@@ -210,8 +212,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
         
-        # if self._getObs()[0] <= 0.20:
-        #     a_Trg = 1
+        if self._getObs()[0] <= 0.07:
+            a_Trg = 1
 
         ########## POLICY PRE-TRIGGER ##########
         if a_Trg <= self.Pol_Trg_Threshold:
@@ -330,7 +332,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         while not (terminated or truncated):
 
             t_now = self._getTime()
-            self.Step(a_Rot)
+            self._iterStep(a_Rot=a_Rot)
+            self.render()
             
             ## START TRIGGER AND IMPACT TERMINATION TIMERS
             if (self.Trg_Flag == True and OnceFlag_Trg == False):
@@ -598,8 +601,8 @@ if __name__ == '__main__':
 
     for ep in range(20):
 
-        V_mag = 1.0
-        V_angle = 45
+        V_mag = 2.5
+        V_angle = 60
         Plane_Angle = 0
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
