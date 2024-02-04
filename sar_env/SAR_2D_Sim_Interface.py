@@ -134,6 +134,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 self.HindlegContact_Flag = False
 
                 self.State_Impact = self._getState()
+                self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
+                self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+
                 self.render()
 
                 return
@@ -149,7 +152,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.HindlegContact_Flag = False
 
             self.State_Impact = self._getState()
-            self.V_B_P_impact_Ext = self.State_Impact[2]
+            self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
             self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
 
             self._impactConversion()
@@ -169,7 +172,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.HindlegContact_Flag = True
 
             self.State_Impact = self._getState()
-            self.V_B_P_impact_Ext = self.State_Impact[2]
+            self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
             self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
 
             self._impactConversion()
@@ -224,7 +227,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self._setModelState()
 
     def Sim_VelTraj(self,pos,vel): 
-        self._setState(pos,120*DEG2RAD,vel,0)
+        self._setState(pos,np.random.uniform(-175,175)*DEG2RAD,vel,0)
         
 
     def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):

@@ -461,7 +461,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
             Phi_P_B_impact_deg = -Phi_B_P_impact_deg
 
-            Beta2_deg = -(self.Gamma_eff + -Phi_P_B_impact_deg  + 90)
+            Beta2_deg = self.Gamma_eff + -Phi_P_B_impact_deg  + 90
             Beta2_rad = np.radians(Beta2_deg)
 
             ## CALC LEG DIRECTION VECTOR
@@ -604,11 +604,11 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 if __name__ == '__main__':
     env = SAR_2D_Env(Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
 
-    for ep in range(20):
+    for ep in range(50):
 
-        V_mag = 2.0
+        V_mag = 1.0
         V_angle = None
-        Plane_Angle = 0
+        Plane_Angle = 90
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
 

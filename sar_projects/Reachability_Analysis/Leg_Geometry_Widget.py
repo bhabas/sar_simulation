@@ -481,6 +481,7 @@ class InteractivePlot:
         elif self.HindLeg_Contact == 2:
 
             Phi_rad = (Beta_rad - gamma_rad + Plane_Angle_rad) - np.pi/2
+            Beta_rad = Phi_rad + gamma_rad - Plane_Angle_rad + np.pi/2
             Phi_deg = np.degrees(Phi_rad)
 
             Phi_rel_rad = -(Phi_rad - Plane_Angle_rad)
