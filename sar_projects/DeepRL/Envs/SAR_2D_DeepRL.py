@@ -300,6 +300,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
             # 3) CALC REWARD
             # reward = self._CalcReward()  
+            reward = 0
 
 
             # 5) RETURN VALUES
@@ -601,8 +602,8 @@ if __name__ == '__main__':
 
     for ep in range(20):
 
-        V_mag = 3.0
-        V_angle = 120
+        V_mag = 1.0
+        V_angle = None
         Plane_Angle = 0
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)

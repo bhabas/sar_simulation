@@ -214,7 +214,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self._setModelState()
 
     def Sim_VelTraj(self,pos,vel): 
-        self._setState(pos,-120*DEG2RAD,vel,0)
+        self._setState(pos,np.random.uniform(-175,175)*DEG2RAD,vel,0)
         
 
     def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
@@ -224,6 +224,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
     def _setPlanePose(self,Pos,Plane_Angle):
         self.Plane_Pos = Pos
         self.Plane_Angle_deg = Plane_Angle
+        self.Plane_Angle_rad = np.radians(Plane_Angle)
 
     
     
@@ -357,7 +358,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             elif self.Trg_Flag == True and self.Impact_Flag_Ext == True:
 
                 if self.BodyContact_Flag == True:
-                    self.Pad_Connections = 0
+                    self._checkTouchdown()
 
                 elif self.ForelegContact_Flag == True:
                     self._iterStep_Swing()
@@ -365,7 +366,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 
                 elif self.HindlegContact_Flag == True:
                     self._iterStep_Swing()
-                    # self._checkTouchdown()
+                    self._checkTouchdown()
 
             if self.Done:
                 break
@@ -639,24 +640,41 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         elif self.HindlegContact_Flag == True:
                 
 
-            r_C2_O = self._getPose()[1]
-            
+            r_C2_O = self._getPose()[2]
+    
 
             ## GRAVITY MOMENT
-            M_g = -self.Ref_Mass * self.g * self.L_eff * np.cos(Beta) * np.cos(self.Plane_Angle_rad) \
-                + self.Ref_Mass * self.g * self.L_eff * np.sin(Beta) * np.sin(self.Plane_Angle_rad)
+            M_g = -self.Ref_Mass * self.g * self.L_eff * np.cos(self.Beta) * np.cos(self.Plane_Angle_rad) \
+                + self.Ref_Mass * self.g * self.L_eff * np.sin(self.Beta) * np.sin(self.Plane_Angle_rad)
             
+            ## ITER STEP BETA
             self.t += self.dt
             Beta_acc = M_g / self.I_c
-            Beta = Beta + self.dt * dBeta
-            dBeta = dBeta + self.dt * Beta_acc
+            self.Beta = self.Beta + self.dt * self.dBeta
+            self.dBeta = self.dBeta + self.dt * Beta_acc
 
-            self.Beta = Beta
-            self.dBeta = dBeta
+            ## CONVERT BODY BACK TO WORLD COORDS
+            r_B_C2 = np.array([-self.L_eff,0,0])            # {e_r2,e_beta1}
+            r_B_C2 = self.R_C2P(r_B_C2,self.Beta)           # {t_x,n_p}
+            r_B_C2 = self.R_PW(r_B_C2,self.Plane_Angle_rad) # {X_W,Z_W}
+            r_B_O = r_C2_O + r_B_C2                         # {X_W,Z_W}
+
+            V_B_C2 = np.array([0,0,self.L_eff*self.dBeta])  # {e_r1,e_beta1}
+            V_B_P = self.R_C2P(V_B_C2,self.Beta)            # {t_x,n_p}
+            V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
+
+            Phi_B_O = self.Beta - self.Gamma_eff*DEG2RAD + self.Plane_Angle_rad - np.pi/2
+
+            self.State = (r_B_O,Phi_B_O,V_B_O,0)
 
     def _checkTouchdown(self):
+        if self.BodyContact_Flag == True:
+            self.Pad_Connections = 0
+            self.render()
+            self.Done = True
+            return
 
-        if self.ForelegContact_Flag == True:
+        elif self.ForelegContact_Flag == True:
         
             if self.Beta <= -(90 + self.Gamma_eff)*DEG2RAD:
                 self.Pad_Connections = 4
@@ -673,7 +691,19 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
             
         elif self.HindlegContact_Flag == True:
-            pass
+            
+            if self.Beta >= -(90 - self.Gamma_eff)*DEG2RAD:
+                self.Pad_Connections = 4
+                self.render()
+                self.Done = True
+                return
+
+            elif self.Beta <= -(180 + self.Beta_Min_deg)*DEG2RAD:
+                self.BodyContact_Flag = True
+                self.Pad_Connections = 2
+                self.render()
+                self.Done = True
+                return
 
 
                     
@@ -694,6 +724,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             Beta_1_deg = Phi_B_O*RAD2DEG - self.Gamma_eff - self.Plane_Angle_deg + 90
             Beta_1_rad = np.radians(Beta_1_deg)
 
+            # Beta_1 = np.arctan2(np.cos(self.Gamma_eff - phi + self.Plane_Angle_rad), \
+            #                     np.sin(self.Gamma_eff - phi + self.Plane_Angle_rad))
+            # Beta_1_deg = np.degrees(Beta_1)
+
             ## CALC DBETA FROM MOMENTUM CONVERSION
             H_V_perp = self.Ref_Mass*self.L_eff*V_perp*np.cos(Beta_1_rad)
             H_V_tx = self.Ref_Mass*self.L_eff*V_tx*np.sin(Beta_1_rad)
@@ -706,8 +740,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         elif self.HindlegContact_Flag:
 
             ## CALC BETA ANGLE
-            Beta_2_deg = self.Gamma_eff + Phi_B_O*RAD2DEG - self.Plane_Angle_deg + 90
-            Beta_2_rad = np.radians(Beta_2_deg)
+            Beta_2_rad = np.arctan2( np.cos(self.Gamma_eff*DEG2RAD + Phi_B_O - self.Plane_Angle_rad), \
+                                -np.sin(self.Gamma_eff*DEG2RAD + Phi_B_O - self.Plane_Angle_rad))
+            Beta2_deg = np.degrees(Beta_2_rad)
+
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
             H_V_perp = self.Ref_Mass*self.L_eff*V_perp*np.cos(Beta_2_rad)
