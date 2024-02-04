@@ -67,6 +67,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.State_Trg = [np.full(3,np.nan),np.nan,np.full(3,np.nan),np.nan]
         self.State_Impact = [np.full(3,np.nan),np.nan,np.full(3,np.nan),np.nan]
 
+        self.V_B_P_impact_Ext = np.full(3,np.nan)
+        self.Eul_B_O_impact_Ext = np.full(3,np.nan)
+        self.Rot_Sum_impact_Ext = 0
+
 
 
 
@@ -145,6 +149,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.HindlegContact_Flag = False
 
             self.State_Impact = self._getState()
+            self.V_B_P_impact_Ext = self.State_Impact[2]
+            self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+
             self._impactConversion()
             self.render()
 
@@ -162,6 +169,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.HindlegContact_Flag = True
 
             self.State_Impact = self._getState()
+            self.V_B_P_impact_Ext = self.State_Impact[2]
+            self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+
             self._impactConversion()
             self.render()
 
@@ -214,134 +224,18 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self._setModelState()
 
     def Sim_VelTraj(self,pos,vel): 
-        self._setState(pos,np.random.uniform(-175,175)*DEG2RAD,vel,0)
+        self._setState(pos,120*DEG2RAD,vel,0)
         
 
     def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
-        self._setState(pos,0,vel,0)
+        self._setState(np.array(pos),0,np.array(vel),0)
 
     def _setPlanePose(self,Pos,Plane_Angle):
         self.Plane_Pos = Pos
         self.Plane_Angle_deg = Plane_Angle
         self.Plane_Angle_rad = np.radians(Plane_Angle)
 
-    
-    
-    def Step(self,a_Rot):
-
-
-        ## CHECK FOR IMPACT
-        x,z,Phi_B_O,vx,vz,dPhi_B_O = self._getState()
-        self.Impact_Flag_Ext,self.Impact_Conditions = self._checkImpact(x,z,Phi_B_O)
-
-        ## NO IMPACT
-        if self.Impact_Flag_Ext == False:
-
-            ## UPDATE ROTATION FLIGHT STEP
-            self._iterStep_Rot(a_Rot)
-
-            # UPDATE MINIMUM DISTANCE
-            D_perp = self._getObs()[2]
-            if D_perp <= self.D_perp_min:
-                self.D_perp_min = D_perp 
-
-            # UPDATE RENDER
-            if self.RENDER:
-                self.render()
-
-        if self.Impact_Flag_Ext == True:
-
-
-            ## GRAB IMPACT STATE
-            (BodyContact_Flag,ForelegContact_Flag,HindlegContact_Flag) = self.Impact_Conditions
-            self.State_Impact = self._getState()
-
-            ## BODY CONTACT
-            if BodyContact_Flag == True:
-                self.BodyContact_Flag = True
-                self.Pad_Connections = 0
-                self.Done = True
-
-            ## LEG 1 CONTACT
-            elif ForelegContact_Flag == True:
-
-                Beta_1,dBeta_1 = self._impactConversion(self.State,self.params,self.Impact_Conditions)
-
-                ## FIND IMPACT COORDS (wrt World-Coords)
-                r_C1_O = self._getPose()[1]
-
-                while not self.Done:
-
-                    ## ITERATE THROUGH SWING
-                    Beta_1,dBeta_1 = self._iter_step_Swing(Beta_1,dBeta_1,impact_leg=1)
-
-                    ## CONVERT BODY BACK TO WORLD COORDS
-                    r_B_C1 = np.array([-L_eff,0])                                           # {e_r1,e_beta1}
-                    r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_1),self.Plane_Angle_rad)  # {X_W,Z_W}
-                    r_B_O = r_C1_O + r_B_C1                                             # {X_W,Z_W}
-
-                    v_B_C1 = np.array([0,L_eff*dBeta_1])                                    # {e_r1,e_beta1}
-                    v_B_C1 = self.R_PW(self.R_C1P(v_B_C1,Beta_1),self.Plane_Angle_rad)  # {X_W,Z_W}
-
-                    Phi_B_O = np.arctan2(-np.cos(Beta_1 + Gamma_eff_rad + self.Plane_Angle_rad), \
-                                        np.sin(Beta_1 + Gamma_eff_rad + self.Plane_Angle_rad))
-                    self.State = (r_B_O[0],r_B_O[1],Phi_B_O,v_B_C1[0],v_B_C1[1],0)
-                    
-
-                    if self.RENDER:
-                        self.render()
-
-
-            ## LEG 2 CONTACT
-            elif HindlegContact_Flag == True:
-
-                Beta_2,dBeta_2 = self._impactConversion(self.State,self.params,self.Impact_Conditions)
-
-                ## FIND IMPACT COORDS (wrt World-Coords)
-                r_C2_O = self._getPose()[2]
-
-                while not self.Done:
-
-                    ## ITERATE THROUGH SWING
-                    Beta_2,dBeta_2 = self._iter_step_Swing(Beta_2,dBeta_2,impact_leg=2)
-
-                    ## CHECK FOR END CONDITIONS
-                    if Beta_2 >= -self._beta_landing(impact_leg=2):
-                        self.BodyContact_Flag = False
-                        self.Pad_Connections = 4
-                        self.Done = True
-
-                    elif Beta_2 <= -self._beta_prop(impact_leg=2):
-                        self.BodyContact_Flag = True
-                        self.Pad_Connections = 2
-                        self.Done = True
-
-                    elif self.t - start_time_impact >= self.t_impact_max:
-                        self.BodyContact_Flag = False
-                        self.Pad_Connections = 2
-                        self.Done = True
-
-                    ## CONVERT BODY BACK TO WORLD COORDS
-                    r_B_C2 = np.array([-L_eff,0])                                           # {e_r1,e_beta1}
-                    r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta_2),self.Plane_Angle_rad)  # {X_W,Z_W}
-                    r_B_O = r_C2_O + r_B_C2                                             # {X_W,Z_W}
-
-                    v_B_C2 = np.array([0,L_eff*dBeta_2])                                    # {e_r1,e_beta1}
-                    v_B_C2 = self.R_PW(self.R_C2P(v_B_C2,Beta_2),self.Plane_Angle_rad)  # {X_W,Z_W}
-
-                    Phi_B_O = np.arctan2(-np.cos(Beta_2 - Gamma_eff_rad + self.Plane_Angle_rad), \
-                                        np.sin(Beta_2 - Gamma_eff_rad + self.Plane_Angle_rad))
-                    self.State = (r_B_O[0],r_B_O[1],Phi_B_O,v_B_C2[0],v_B_C2[1],0)
-
-                    ## UPDATE MINIMUM DISTANCE
-                    D_perp = self._getObs()[2]
-                    if not self.Done:
-                        if D_perp <= self.D_perp_min:
-                            self.D_perp_min = D_perp 
-
-                    if self.RENDER:
-                        self.render()
 
     def _iterStep(self,n_steps=10,a_Rot=0):
 
@@ -368,17 +262,14 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     self._iterStep_Swing()
                     self._checkTouchdown()
 
+
+            # UPDATE MINIMUM DISTANCE
+            D_perp = self._getObs()[2]
+            if D_perp <= self.D_perp_min:
+                self.D_perp_min = D_perp 
+
             if self.Done:
                 break
-
-
-
-
-            # # UPDATE MINIMUM DISTANCE
-            # D_perp = next_obs[2]
-            # if D_perp <= self.D_perp_min:
-            #     self.D_perp_min = D_perp 
-
 
     def render(self):
 
@@ -604,6 +495,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         Phi_B_O = Phi_B_O + self.dt*dPhi_B_O
         dPhi_B_O = dPhi_B_O + self.dt*Phi_acc
 
+        self.Rot_Sum_impact_Ext += self.dt*dPhi_B_O
+
         self._setState(r_B_O,Phi_B_O,V_B_O,dPhi_B_O)
 
     def _iterStep_Swing(self):
@@ -705,13 +598,6 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 self.Done = True
                 return
 
-
-                    
-            
-
-        
-
-
     def _impactConversion(self):
 
         r_B_O,Phi_B_O,V_B_O,dPhi_B_O = self.State_Impact
@@ -755,32 +641,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.Beta = Beta_2_rad
             self.dBeta = dBeta_2
 
-    def _beta_landing(self,impact_leg):
-
-        self.Gamma_eff,self.L_eff,self.Forward_Reach,M,Iyy,I_c = self.params
-
-        if impact_leg == 1:
-            return np.pi/2 + self.Gamma_eff
-
-        elif impact_leg == 2:
-            return np.pi/2 - self.Gamma_eff
-        
-    def _beta_prop(self,impact_leg):
-
-        self.Gamma_eff,self.L_eff,self.Forward_Reach,M,Iyy,I_c = self.params
-
-        a = np.sqrt(self.Forward_Reach**2 + self.L_eff**2 - 2*self.Forward_Reach*self.L_eff*np.cos(np.pi/2-self.Gamma_eff))
-        Beta = np.arccos((self.L_eff**2 + a**2 - self.Forward_Reach**2)/(2*a*self.L_eff))
-
-        if impact_leg == 1:
-
-            return Beta
-        
-        elif impact_leg == 2:
-
-            return np.pi-Beta
-
-
+  
 
     def draw_line_dashed(self,surface, color, start_pos, end_pos, width = 1, dash_length = 10, exclude_corners = True):
 

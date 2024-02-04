@@ -12,8 +12,8 @@ class InteractivePlot:
     def __init__(self):
 
         ## INITIAL VALUES
-        self.gamma_deg = 17
-        self.L_norm = 1.44
+        self.gamma_deg = 29.83
+        self.L_norm = 1.1148
         self.Plane_Angle_deg = 0
 
         self.R_vec = [0,0,0]
@@ -153,7 +153,7 @@ class InteractivePlot:
         )
         self.V_Angle_Slider.valmax = +20
         self.V_Angle_Slider.valmin = -200
-        self.V_Angle_Slider.set_val(-33)
+        self.V_Angle_Slider.set_val(-147.44)
         self.V_Angle_Slider.on_changed(self.Update_2) 
 
 

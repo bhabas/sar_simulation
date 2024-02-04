@@ -108,6 +108,10 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.State_trg = np.full(6,np.nan)
         self.State_Impact = np.full(6,np.nan)
 
+        self.V_B_P_impact_Ext = np.full(3,np.nan)
+        self.Eul_B_O_impact_Ext = np.full(3,np.nan)
+        self.Rot_Sum_impact_Ext = 0
+
         self.Impact_Flag_Ext = False
         self.BodyContact_Flag = False
         self.ForelegContact_Flag = False
@@ -299,8 +303,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             self.Done = terminated 
 
             # 3) CALC REWARD
-            # reward = self._CalcReward()  
-            reward = 0
+            reward = self._CalcReward()  
+            # reward = 0
 
 
             # 5) RETURN VALUES
@@ -457,7 +461,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             Phi_B_P_impact_deg = Phi_B_O_impact_deg - self.Plane_Angle_deg
             Phi_P_B_impact_deg = -Phi_B_P_impact_deg
 
-            Beta2_deg = self.Gamma_eff + -Phi_P_B_impact_deg  + 90
+            Beta2_deg = -(self.Gamma_eff + -Phi_P_B_impact_deg  + 90)
             Beta2_rad = np.radians(Beta2_deg)
 
             ## CALC LEG DIRECTION VECTOR
@@ -602,7 +606,7 @@ if __name__ == '__main__':
 
     for ep in range(20):
 
-        V_mag = 1.0
+        V_mag = 2.0
         V_angle = None
         Plane_Angle = 0
 
