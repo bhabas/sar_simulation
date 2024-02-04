@@ -212,7 +212,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
         
-        if self._getObs()[0] <= 0.07:
+        if self._getObs()[0] <= 0.12:
             a_Trg = 1
 
         ########## POLICY PRE-TRIGGER ##########
@@ -299,7 +299,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             self.Done = terminated 
 
             # 3) CALC REWARD
-            reward = self._CalcReward()  
+            # reward = self._CalcReward()  
 
 
             # 5) RETURN VALUES
@@ -601,8 +601,8 @@ if __name__ == '__main__':
 
     for ep in range(20):
 
-        V_mag = 2.5
-        V_angle = 60
+        V_mag = 3.0
+        V_angle = 120
         Plane_Angle = 0
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
@@ -613,7 +613,7 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -0.5
+            action[1] = 0
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 
