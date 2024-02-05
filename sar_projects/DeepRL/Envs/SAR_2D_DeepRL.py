@@ -217,7 +217,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
         
-        if self._getObs()[0] <= 0.26:
+        if self._getObs()[0] <= 0.00:
             a_Trg = 1
 
         ########## POLICY PRE-TRIGGER ##########
@@ -603,13 +603,13 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_2D_Env(Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
+    env = SAR_2D_Env(Ang_Acc_range=[-200,200],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
 
     for ep in range(50):
 
-        V_mag = 2.5
-        V_angle = 150
-        Plane_Angle = 0
+        V_mag = 1.0
+        V_angle = 10
+        Plane_Angle = 180
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
 
@@ -619,7 +619,7 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = 0.5
+            action[1] = 0.25
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 

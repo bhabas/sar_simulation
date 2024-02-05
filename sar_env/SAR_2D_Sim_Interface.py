@@ -52,7 +52,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.initial_state = (np.array([0,0,0]),np.array([0,0,0]))
 
         ## PLANE PARAMETERS
-        self.r_P_O = [1,0,0.5]
+        self.r_P_O = [1,0,0]
         self.Plane_Angle_deg = 0
         self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
 
@@ -223,7 +223,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.D_perp_CR = D_perp_CR
 
         ## OBSERVATION VECTOR
-        obs = np.array([Tau,Theta_x,D_perp,self.Plane_Angle_rad],dtype=np.float32)
+        obs = np.array([Tau_CR,Theta_x,D_perp,self.Plane_Angle_rad],dtype=np.float32)
 
         return obs
     
@@ -393,9 +393,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY_PG)
-        text_Tau = my_font.render(f'Tau: {self._getObs()[0]:2.2f} [s]', True, BLACK_PG)
-        text_theta_x = my_font.render(f'Theta_x: {self._getObs()[1]:2.2f} [rad/s]', True, BLACK_PG)
-        text_D_perp = my_font.render(f'D_perp: {self._getObs()[2]:2.2f} [m]', True, BLACK_PG)
+        text_Tau = my_font.render(f'Tau: {self.Tau:2.2f} [s]', True, BLACK_PG)
+        text_theta_x = my_font.render(f'Theta_x: {self.Theta_x:2.2f} [rad/s]', True, BLACK_PG)
+        text_D_perp = my_font.render(f'D_perp: {self.D_perp:2.2f} [m]', True, BLACK_PG)
         text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle_deg:3.1f} [deg]', True, BLACK_PG)
 
         ## ACTIONS TEXT
