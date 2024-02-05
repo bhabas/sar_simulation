@@ -24,6 +24,7 @@ PURPLE_PG = (76,0,153)
 ORANGE_PG = (255,128,0)
 
 EPS = 1e-6 # Epsilon (Prevent division by zero)
+GRAM_2_NEWTON = 9.81/1000.0
 COORD_FLIP = -1  # Swap sign to match proper coordinate notation
 
 EPS = 1e-6 # Epsilon (Prevent division by zero)
@@ -40,6 +41,12 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
     def __init__(self,Render=True):
         SAR_Base_Interface.__init__(self)
+
+        ## PHYSICS PARAMETERS
+        self.g = 9.81       # Gravity [m/s^2]
+        self.dt = 1e-3      # [s]
+        self.t = 0          # [s]
+
 
         self.I_c = self.Ref_Iyy + self.Ref_Mass*self.L_eff**2
         self.initial_state = (np.array([0,0,0]),np.array([0,0,0]))
@@ -60,6 +67,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
 
         self.MomentCutoff = False
+        self.M_thrust_prev = np.full(4,self.Ref_Mass*self.g/4)
         
 
         ## SPECIAL CONFIGS
@@ -74,11 +82,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
 
 
-        ## PHYSICS PARAMETERS
-        self.g = 9.81       # Gravity [m/s^2]
-        self.dt = 1e-3      # [s]
-        self.t = 0          # [s]
-
+        
         ## RENDERING PARAMETERS
         self.world_width = 3.0      # [m]
         self.world_height = 2.0     # [m]
@@ -219,7 +223,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.D_perp_CR = D_perp_CR
 
         ## OBSERVATION VECTOR
-        obs = np.array([Tau_CR,Theta_x,D_perp,self.Plane_Angle_rad],dtype=np.float32)
+        obs = np.array([Tau,Theta_x,D_perp,self.Plane_Angle_rad],dtype=np.float32)
 
         return obs
     
@@ -227,7 +231,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self._setModelState()
 
     def Sim_VelTraj(self,pos,vel): 
-        self._setState(pos,np.random.uniform(-175,175)*DEG2RAD,vel,0)
+        self._setState(pos,0*DEG2RAD,vel,0)
         
 
     def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
@@ -474,6 +478,29 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ## UPDATE STATE
         r_B_O,Phi_B_O,V_B_O,dPhi_B_O = self._getState()
 
+        M_yd = self.Ref_Iyy*a_Rot
+        M_yd *= 2
+
+        M1_thrust_d = -M_yd/(2*self.Prop_Front[0])
+        M2_thrust_d =  M_yd/(2*self.Prop_Front[0])
+        M3_thrust_d =  M_yd/(2*self.Prop_Front[0])
+        M4_thrust_d = -M_yd/(2*self.Prop_Front[0])
+
+        M1_thrust_d = np.clip(M1_thrust_d/2,0,self.Thrust_max*GRAM_2_NEWTON)
+        M2_thrust_d = np.clip(M2_thrust_d/2,0,self.Thrust_max*GRAM_2_NEWTON)
+        M3_thrust_d = np.clip(M3_thrust_d/2,0,self.Thrust_max*GRAM_2_NEWTON)
+        M4_thrust_d = np.clip(M4_thrust_d/2,0,self.Thrust_max*GRAM_2_NEWTON)
+
+        M1_thrust = self.MotorFilter(M1_thrust_d,self.M_thrust_prev[0])
+        M2_thrust = self.MotorFilter(M2_thrust_d,self.M_thrust_prev[1])
+        M3_thrust = self.MotorFilter(M3_thrust_d,self.M_thrust_prev[2])
+        M4_thrust = self.MotorFilter(M4_thrust_d,self.M_thrust_prev[3])
+
+        self.M_thrust_prev = np.array([M1_thrust,M2_thrust,M3_thrust,M4_thrust])
+
+        M_y = self.Prop_Front[0]*(-M1_thrust + M2_thrust + M3_thrust - M4_thrust)
+        F_vec = np.array([0, 0, (M1_thrust + M2_thrust + M3_thrust + M4_thrust)]) # {X_B,Z_B}
+        F_vec = self.R_BW(F_vec, Phi_B_O) # {X_W,Z_W}
 
         ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
         if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
@@ -486,15 +513,15 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ## STEP UPDATE
         self.t += self.dt
 
-        x_Acc = 0.0
+        x_Acc = F_vec[0]/self.Ref_Mass
         r_B_O[0] = r_B_O[0] + self.dt*V_B_O[0]
         V_B_O[0] = V_B_O[0] + self.dt*x_Acc
 
-        z_Acc = -self.g*0
+        z_Acc = -self.g + F_vec[2]/self.Ref_Mass
         r_B_O[2] = r_B_O[2] + self.dt*V_B_O[2]
         V_B_O[2] = V_B_O[2] + self.dt*z_Acc
 
-        Phi_acc = Phi_acc
+        Phi_acc = M_y/self.Ref_Iyy
         Phi_B_O = Phi_B_O + self.dt*dPhi_B_O
         dPhi_B_O = dPhi_B_O + self.dt*Phi_acc
 
@@ -663,6 +690,18 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         return [pg.draw.line(surface, color, tuple(dash_knots[n]), tuple(dash_knots[n+1]), width)
                 for n in range(int(exclude_corners), dash_amount - int(exclude_corners), 2)]
+    
+    def MotorFilter(self,Thrust_input,Prev_Thrust):
+
+        if Thrust_input >= Prev_Thrust:
+
+            alpha_up = np.exp(-self.dt/self.Tau_up)
+            Thrust = alpha_up*Prev_Thrust + (1 - alpha_up)*Thrust_input
+            return Thrust
+        else:
+            alpha_down = np.exp(-self.dt/self.Tau_down)
+            Thrust = alpha_down*Prev_Thrust + (1 - alpha_down)*Thrust_input
+            return Thrust
 
     
 if __name__ == "__main__":

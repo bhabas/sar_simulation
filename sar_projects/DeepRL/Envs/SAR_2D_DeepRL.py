@@ -44,7 +44,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
         self.t_impact_max = 1.0     # [s]
         self.t_ep_max = 5.0         # [s]
-        self.t_real_max = 120      # [s]
+        self.t_real_max = 600000      # [s]
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
@@ -107,6 +107,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.obs_trg = np.full(self.obs_trg.shape[0],np.nan)
         self.State_trg = np.full(6,np.nan)
         self.State_Impact = np.full(6,np.nan)
+        self.M_thrust_prev = np.full(4,self.Ref_Mass*self.g/4)
 
         self.V_B_P_impact_Ext = np.full(3,np.nan)
         self.Eul_B_O_impact_Ext = np.full(3,np.nan)
@@ -216,7 +217,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
         
-        if self._getObs()[0] <= 0.12:
+        if self._getObs()[0] <= 0.30:
             a_Trg = 1
 
         ########## POLICY PRE-TRIGGER ##########
@@ -606,9 +607,9 @@ if __name__ == '__main__':
 
     for ep in range(50):
 
-        V_mag = 1.0
-        V_angle = None
-        Plane_Angle = 90
+        V_mag = 2.5
+        V_angle = 60
+        Plane_Angle = 0
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
 
@@ -618,7 +619,7 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = 0
+            action[1] = -0.5
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 
