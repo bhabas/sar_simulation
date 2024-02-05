@@ -55,6 +55,12 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.r_P_O = [1,0,0]
         self.Plane_Angle_deg = 0
         self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
+        self.V_mag = np.nan
+        self.V_angle = np.nan
+        self.Tau = np.nan
+        self.Theta_x = np.nan
+        self.D_perp = np.nan
+        self.Tau_CR = np.nan
 
         ## INITIAL LEARNING/REWARD CONFIGS
         self.Trg_Flag = False
@@ -78,9 +84,6 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.V_B_P_impact_Ext = np.full(3,np.nan)
         self.Eul_B_O_impact_Ext = np.full(3,np.nan)
         self.Rot_Sum_impact_Ext = 0
-
-
-
 
         
         ## RENDERING PARAMETERS

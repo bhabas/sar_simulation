@@ -646,16 +646,16 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    from sar_projects.DeepRL.Envs.SAR_2D_Env_Sim import SAR_Env_2D
+    from Envs.SAR_2D_DeepRL import SAR_2D_Env
 
 
     # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[2.5,2.5],V_angle_range=[60,60],Plane_Angle_range=[0,45])
-    log_name = f"{env.SAR_Config}--SAC_{current_time}" 
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[2.5,2.5],V_angle_range=[60,60],Plane_Angle_range=[0,45])
+    # log_name = f"{env.SAR_Config}--SAC_{current_time}" 
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    # env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[0,0],V_angle_range=[-175,-5],V_mag_range=[1,3],Render=False)
+    env = SAR_2D_Env(Ang_Acc_range=[0,100],V_mag_range=[2.5,2.5],V_angle_range=[60,60],Plane_Angle_range=[0,0],Render=True)
 
     current_datetime = datetime.now()
     current_time = current_datetime.strftime("%H:%M:%S")
