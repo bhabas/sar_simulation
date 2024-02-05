@@ -94,7 +94,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.screen_width = 1000    # [pixels]
         self.screen_height = self.screen_width*self.world_height/self.world_width # [pixels]
         
-        self.RENDER = Render
+        self.Render_Flag = Render
         self.screen = None
         self.clock = None
         self.isopen = True
@@ -282,6 +282,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 break
 
     def render(self):
+
+        if self.Render_Flag == False:
+            return
 
         ## SET DEFAULT WINDOW POSITION
         Win_Loc_z = 500

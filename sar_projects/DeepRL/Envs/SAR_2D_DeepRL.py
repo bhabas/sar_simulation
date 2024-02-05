@@ -194,7 +194,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         ######################
 
         # UPDATE RENDER
-        if self.RENDER:
+        if self.Render_Flag:
             self.render()
         
         return self._getObs(), {}
@@ -215,10 +215,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
         a_Trg = action[0]
-        a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
+        # a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
+        a_Rot = -50
         
-        if self._getObs()[0] <= 0.21:
-            a_Trg = 1
+        # if self._getObs()[0] <= 0.20:
+        #     a_Trg = 1
+
+        # else:
+        #     a_Trg = 0
 
         ########## POLICY PRE-TRIGGER ##########
         if a_Trg <= self.Pol_Trg_Threshold:
@@ -228,7 +232,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             t_now = self._getTime()
 
             # UPDATE RENDER
-            if self.RENDER:
+            if self.Render_Flag:
                 self.render()
 
             # GRAB NEXT OBS
@@ -376,6 +380,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 terminated = False
                 truncated = True
                 print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
+
+            elif self._getState()[2][2] <= -5:
+                self.error_str = "Episode Completed: Falling [Terminated]"
+                terminated = True
+                truncated = False
+                print(YELLOW,self.error_str,RESET)
 
             ## REAL-TIME TIMEOUT
             elif (time.time() - self.start_time_real) > self.t_real_max:
@@ -603,13 +613,13 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_2D_Env(Ang_Acc_range=[-200,200],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
+    env = SAR_2D_Env(Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
 
     for ep in range(50):
 
         V_mag = 2.5
         V_angle = 60
-        Plane_Angle = 45
+        Plane_Angle = 0
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
 
@@ -619,7 +629,7 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -0.25
+            action[1] = -0.50
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 

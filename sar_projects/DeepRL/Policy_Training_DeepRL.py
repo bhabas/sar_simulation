@@ -145,13 +145,6 @@ class Policy_Trainer_DeepRL():
             os.makedirs(self.model_dir,exist_ok=True)
 
     def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[16,16]):
-        """Create Soft Actor-Critic agent used in training
-
-        Args:
-            gamma (float, optional): Discount factor. Defaults to 0.999.
-            learning_rate (float, optional): Learning Rate. Defaults to 0.002.
-            net_arch (list, optional): Network layer sizes and architechure. Defaults to [12,12].
-        """        
 
         self.model = SAC(
             "MlpPolicy",
@@ -209,23 +202,14 @@ class Policy_Trainer_DeepRL():
         self.model.policy.actor = prev_model.actor
         self.model.policy.critic = prev_model.critic
    
-    def train_model(self,check_freq=10,save_freq=5e3,reset_timesteps=False,total_timesteps=2e6):
-        """Script to train model via DeepRL method
+    def train_model(self,check_freq=10,save_freq=5e3,reset_timesteps=True,total_timesteps=2e6):
 
-        Args:
-            check_freq (int): Number of episodes to average rewards over. Defaults to 10.
-            save_freq (int): Number of timesteps to save model. Defaults to 5e3.
-            reset_timesteps (bool, optional): Reset starting timestep to zero. Defaults to True. 
-                                              Set to False to resume training from previous model.
-            total_timesteps (int, optional): Timesteps to cutoff model training. Defaults to 2e6.
-        """        
-        
         reward_callback = RewardCallback(check_freq=check_freq,save_freq=save_freq,model_dir=self.model_dir)
 
         self.model.learn(
             total_timesteps=int(total_timesteps),
             tb_log_name=self.log_name,
-            callback=reward_callback,
+            # callback=reward_callback,
             reset_num_timesteps=reset_timesteps,
         )
 
@@ -655,7 +639,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_2D_Env(Ang_Acc_range=[0,100],V_mag_range=[2.5,2.5],V_angle_range=[60,60],Plane_Angle_range=[0,0],Render=True)
+    env = SAR_2D_Env(Ang_Acc_range=[0,100],V_mag_range=[2.5,2.5],V_angle_range=[60,60],Plane_Angle_range=[0,0],Render=False)
 
     current_datetime = datetime.now()
     current_time = current_datetime.strftime("%H:%M:%S")
@@ -667,7 +651,8 @@ if __name__ == '__main__':
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
-    PolicyTrainer.train_model(save_freq=5000,total_timesteps=600e3)
+    PolicyTrainer.train_model(total_timesteps=600e3,reset_timesteps=False)
+
 
 
     # ================================================================= ##
