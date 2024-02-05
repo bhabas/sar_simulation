@@ -186,7 +186,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
         
-        if self._get_obs()[0] <= 0.20:
+        if self._get_obs()[0] <= 0.21:
             a_Trg = 1
 
         ########## POLICY PRE-TRIGGER ##########
@@ -562,13 +562,13 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-200,200],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
 
     for ep in range(20):
 
-        V_mag = None
-        V_angle = None
-        Plane_Angle = None
+        V_mag = 2.5
+        V_angle = 60
+        Plane_Angle = 45
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
 
@@ -579,7 +579,7 @@ if __name__ == "__main__":
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -0.5
+            action[1] = -0.25
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 
