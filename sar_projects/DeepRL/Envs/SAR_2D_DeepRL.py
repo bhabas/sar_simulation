@@ -187,7 +187,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
-        self.t_trg_max = self.Tau_Body_start*1.5 # [s]
+        self.t_trg_max = self.Tau_Body_start*2.5 # [s]
 
         ######################
         #   2D ENV CONFIGS
@@ -217,7 +217,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
         
-        if self._getObs()[0] <= 0.30:
+        if self._getObs()[0] <= 0.26:
             a_Trg = 1
 
         ########## POLICY PRE-TRIGGER ##########
@@ -608,7 +608,7 @@ if __name__ == '__main__':
     for ep in range(50):
 
         V_mag = 2.5
-        V_angle = 60
+        V_angle = 150
         Plane_Angle = 0
 
         obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
@@ -619,7 +619,7 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -0.5
+            action[1] = 0.5
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 

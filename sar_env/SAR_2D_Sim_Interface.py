@@ -262,11 +262,11 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     self._checkTouchdown()
 
                 elif self.ForelegContact_Flag == True:
-                    self._iterStep_Swing()
+                    self._iterStep_Swing(a_Rot)
                     self._checkTouchdown()
                 
                 elif self.HindlegContact_Flag == True:
-                    self._iterStep_Swing()
+                    self._iterStep_Swing(a_Rot)
                     self._checkTouchdown()
 
 
@@ -478,18 +478,26 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ## UPDATE STATE
         r_B_O,Phi_B_O,V_B_O,dPhi_B_O = self._getState()
 
-        M_yd = self.Ref_Iyy*a_Rot
-        M_yd *= 2
+        ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+        if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
+            M_yd = self.Ref_Iyy*a_Rot
+            M_yd *= 2
 
-        M1_thrust_d = -M_yd/(2*self.Prop_Front[0])
-        M2_thrust_d =  M_yd/(2*self.Prop_Front[0])
-        M3_thrust_d =  M_yd/(2*self.Prop_Front[0])
-        M4_thrust_d = -M_yd/(2*self.Prop_Front[0])
+        else: 
 
-        M1_thrust_d = np.clip(M1_thrust_d/2,0,self.Thrust_max*GRAM_2_NEWTON)
-        M2_thrust_d = np.clip(M2_thrust_d/2,0,self.Thrust_max*GRAM_2_NEWTON)
-        M3_thrust_d = np.clip(M3_thrust_d/2,0,self.Thrust_max*GRAM_2_NEWTON)
-        M4_thrust_d = np.clip(M4_thrust_d/2,0,self.Thrust_max*GRAM_2_NEWTON)
+            M_yd = 0
+            self.MomentCutoff= True
+
+
+        M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
+        M2_thrust_d =  M_yd/(4*self.Prop_Front[0])
+        M3_thrust_d =  M_yd/(4*self.Prop_Front[0])
+        M4_thrust_d = -M_yd/(4*self.Prop_Front[0])
+
+        M1_thrust_d = np.clip(M1_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M2_thrust_d = np.clip(M2_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M3_thrust_d = np.clip(M3_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M4_thrust_d = np.clip(M4_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
 
         M1_thrust = self.MotorFilter(M1_thrust_d,self.M_thrust_prev[0])
         M2_thrust = self.MotorFilter(M2_thrust_d,self.M_thrust_prev[1])
@@ -498,17 +506,15 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         self.M_thrust_prev = np.array([M1_thrust,M2_thrust,M3_thrust,M4_thrust])
 
+        M1_thrust_vec = np.array([0,0,M1_thrust])   # {X_B,Z_B}
+        M2_thrust_vec = np.array([0,0,M2_thrust])   
+        M3_thrust_vec = np.array([0,0,M3_thrust])   
+        M4_thrust_vec = np.array([0,0,M4_thrust])   
+        F_vec = M1_thrust_vec + M2_thrust_vec + M3_thrust_vec + M4_thrust_vec # {X_B,Z_B}
+        F_vec = self.R_BW(F_vec, Phi_B_O)           # {X_W,Z_W}
+
         M_y = self.Prop_Front[0]*(-M1_thrust + M2_thrust + M3_thrust - M4_thrust)
-        F_vec = np.array([0, 0, (M1_thrust + M2_thrust + M3_thrust + M4_thrust)]) # {X_B,Z_B}
-        F_vec = self.R_BW(F_vec, Phi_B_O) # {X_W,Z_W}
 
-        ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
-        if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
-            Phi_acc = a_Rot
-
-        else: 
-            Phi_acc = 0
-            self.MomentCutoff= True
 
         ## STEP UPDATE
         self.t += self.dt
@@ -529,7 +535,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         self._setState(r_B_O,Phi_B_O,V_B_O,dPhi_B_O)
 
-    def _iterStep_Swing(self):
+    def _iterStep_Swing(self,a_Rot):
 
         if self.ForelegContact_Flag == True:
 
@@ -537,11 +543,59 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             M_g = -self.Ref_Mass * self.g * self.L_eff * np.cos(self.Beta) * np.cos(self.Plane_Angle_rad) \
                 + self.Ref_Mass * self.g * self.L_eff * np.sin(self.Beta) * np.sin(self.Plane_Angle_rad)
             
-            r_C1_O = self._getPose()[1] # {X_W,Z_W}
+
+            ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+            _,Phi_B_O,_,_ = self._getState()
+            if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
+                M_yd = self.Ref_Iyy*a_Rot
+                M_yd *= 2
+
+            else: 
+
+                M_yd = 0
+                self.MomentCutoff= True
+
+            ## THRUST MIXING
+            M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
+            M2_thrust_d =  M_yd/(4*self.Prop_Front[0])
+            M3_thrust_d =  M_yd/(4*self.Prop_Front[0])
+            M4_thrust_d = -M_yd/(4*self.Prop_Front[0])
+
+            M1_thrust_d = np.clip(M1_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+            M2_thrust_d = np.clip(M2_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+            M3_thrust_d = np.clip(M3_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+            M4_thrust_d = np.clip(M4_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+
+            M1_thrust = self.MotorFilter(M1_thrust_d,self.M_thrust_prev[0])
+            M2_thrust = self.MotorFilter(M2_thrust_d,self.M_thrust_prev[1])
+            M3_thrust = self.MotorFilter(M3_thrust_d,self.M_thrust_prev[2])
+            M4_thrust = self.MotorFilter(M4_thrust_d,self.M_thrust_prev[3])
+
+            self.M_thrust_prev = np.array([M1_thrust,M2_thrust,M3_thrust,M4_thrust])
+
+            M1_thrust_vec = np.array([0,0,M1_thrust])   # {X_B,Z_B}
+            M2_thrust_vec = np.array([0,0,M2_thrust])   
+            M3_thrust_vec = np.array([0,0,M3_thrust])   
+            M4_thrust_vec = np.array([0,0,M4_thrust])   
+
+            ## CALC MOMENTS DUE TO THRUST
+            r_C1_O = self._getPose()[1]             # {X_W,Z_W}
+            r_P1_O = self._getPose()[3]             # {X_W,Z_W}
+            r_P1_C1 = r_P1_O - r_C1_O               # {X_W,Z_W}
+            r_P1_C1 = self.R_WB(r_P1_C1,Phi_B_O)    # {X_B,Z_B}
+
+            r_P2_O = self._getPose()[4]             # {X_W,Z_W}
+            r_P2_C1 = r_P2_O - r_C1_O               # {X_W,Z_W}
+            r_P2_C1 = self.R_WB(r_P2_C1,Phi_B_O)    # {X_B,Z_B}
+            
+            My_1 = np.cross(r_P1_C1,M1_thrust_vec)[1]
+            My_2 = np.cross(r_P2_C1,M2_thrust_vec)[1]
+            My_3 = np.cross(r_P2_C1,M3_thrust_vec)[1]
+            My_4 = np.cross(r_P1_C1,M4_thrust_vec)[1]
 
             ## ITER STEP BETA
             self.t += self.dt
-            Beta_acc = M_g / self.I_c
+            Beta_acc = (M_g + My_1 + My_2 + My_3 + My_4) / self.I_c
             self.Beta = self.Beta + self.dt * self.dBeta
             self.dBeta = self.dBeta + self.dt * Beta_acc
 
@@ -565,14 +619,62 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
             r_C2_O = self._getPose()[2]
     
-
             ## GRAVITY MOMENT
             M_g = -self.Ref_Mass * self.g * self.L_eff * np.cos(self.Beta) * np.cos(self.Plane_Angle_rad) \
                 + self.Ref_Mass * self.g * self.L_eff * np.sin(self.Beta) * np.sin(self.Plane_Angle_rad)
             
+            ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+            _,Phi_B_O,_,_ = self._getState()
+            if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
+                M_yd = self.Ref_Iyy*a_Rot
+                M_yd *= 2
+
+            else: 
+
+                M_yd = 0
+                self.MomentCutoff= True
+
+            ## THRUST MIXING
+            M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
+            M2_thrust_d =  M_yd/(4*self.Prop_Front[0])
+            M3_thrust_d =  M_yd/(4*self.Prop_Front[0])
+            M4_thrust_d = -M_yd/(4*self.Prop_Front[0])
+
+            M1_thrust_d = np.clip(M1_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+            M2_thrust_d = np.clip(M2_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+            M3_thrust_d = np.clip(M3_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+            M4_thrust_d = np.clip(M4_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+
+            M1_thrust = self.MotorFilter(M1_thrust_d,self.M_thrust_prev[0])
+            M2_thrust = self.MotorFilter(M2_thrust_d,self.M_thrust_prev[1])
+            M3_thrust = self.MotorFilter(M3_thrust_d,self.M_thrust_prev[2])
+            M4_thrust = self.MotorFilter(M4_thrust_d,self.M_thrust_prev[3])
+
+            self.M_thrust_prev = np.array([M1_thrust,M2_thrust,M3_thrust,M4_thrust])
+
+            M1_thrust_vec = np.array([0,0,M1_thrust])   # {X_B,Z_B}
+            M2_thrust_vec = np.array([0,0,M2_thrust])   
+            M3_thrust_vec = np.array([0,0,M3_thrust])   
+            M4_thrust_vec = np.array([0,0,M4_thrust])   
+
+            ## CALC MOMENTS DUE TO THRUST
+            r_C2_O = self._getPose()[2]             # {X_W,Z_W}
+            r_P1_O = self._getPose()[3]             # {X_W,Z_W}
+            r_P1_C2 = r_P1_O - r_C2_O               # {X_W,Z_W}
+            r_P1_C2 = self.R_WB(r_P1_C2,Phi_B_O)    # {X_B,Z_B}
+
+            r_P2_O = self._getPose()[4]             # {X_W,Z_W}
+            r_P2_C2 = r_P2_O - r_C2_O               # {X_W,Z_W}
+            r_P2_C2 = self.R_WB(r_P2_C2,Phi_B_O)    # {X_B,Z_B}
+            
+            My_1 = np.cross(r_P1_C2,M1_thrust_vec)[1]
+            My_2 = np.cross(r_P2_C2,M2_thrust_vec)[1]
+            My_3 = np.cross(r_P2_C2,M3_thrust_vec)[1]
+            My_4 = np.cross(r_P1_C2,M4_thrust_vec)[1]
+            
             ## ITER STEP BETA
             self.t += self.dt
-            Beta_acc = M_g / self.I_c
+            Beta_acc =(M_g + My_1 + My_2 + My_3 + My_4) / self.I_c
             self.Beta = self.Beta + self.dt * self.dBeta
             self.dBeta = self.dBeta + self.dt * Beta_acc
 

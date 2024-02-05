@@ -628,6 +628,17 @@ class SAR_Base_Interface():
 
         return R_BW.dot(vec)
     
+    def R_WB(self,vec,phi):
+
+        R_WB = np.array([
+            [ np.cos(phi), 0,    -np.sin(phi)],
+            [     0,       1,         0      ],
+            [ np.sin(phi), 0,     np.cos(phi)],
+        ])
+
+        return R_WB.dot(vec)
+    
+    
     def R_WP(self,vec,theta):
 
         R_WP = np.array([
