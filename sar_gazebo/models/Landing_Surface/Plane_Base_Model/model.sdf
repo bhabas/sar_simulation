@@ -23,7 +23,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <sphere>
-            <radius>0.02</radius>
+            <radius>20.0e-3</radius>
           </sphere>
         </geometry>
         <material>
@@ -41,7 +41,7 @@
         <pose>0 0 0.025 0 0 0</pose>
         <geometry>
           <box>
-            <size>10 2 0.05</size>
+            <size>4 4 0.05</size>
           </box>
         </geometry>
       </collision>

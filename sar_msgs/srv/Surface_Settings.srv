@@ -1,4 +1,0 @@
-geometry_msgs/Vector3 Pos
-float64 Plane_Angle
----
-bool srv_Success

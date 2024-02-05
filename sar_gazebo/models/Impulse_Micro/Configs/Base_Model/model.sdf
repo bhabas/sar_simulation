@@ -1,0 +1,12 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Base_Model'>
+
+    <include>
+      <uri>model://SAR_Base</uri>
+    </include>
+
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

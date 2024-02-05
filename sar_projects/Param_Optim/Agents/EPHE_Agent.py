@@ -34,16 +34,18 @@ class EPHE_Agent():
         self.Kep_list_reward_avg = []
 
         ## PARAM OPTIM DATA
-        self.k_ep = 0                   # Episode number
-        self.k_run = 0                  # Run number
+        self.K_ep = 0                   # Episode number
+        self.K_run = 0                  # Run number
         self.error_str = ""
 
-        self.vel_d = [0.0,0.0,0.0]      # Desired velocity for trial
-        self.policy = [0.0,0.0,0.0]     # Policy sampled from Gaussian distribution
+        self.V_mag_rel = 0.0            # Relative velocity magnitude [m/s]
+        self.V_angle_rel = 0.0          # Relative velocity angle [deg]
+        self.Plane_Angle = 0.0          # Plane angle [deg]
+        self.policy = [0.0,0.0]         # Policy sampled from Gaussian distribution
 
         self.reward = 0.0               # Calculated reward from run
         self.reward_avg = 0.0           # Averaged rewards over episode
-        self.reward_vals = np.zeros(5)
+        self.reward_vals = np.zeros(6)
 
 
         self.trialComplete_flag = False
@@ -55,22 +57,23 @@ class EPHE_Agent():
         ## RL DATA
         RL_msg = RL_Data() ## Initialize RL_Data message
         
-        # RL_msg.n_rollouts = self.n_rollouts
+        RL_msg.n_rollouts = self.n_rollouts
 
-        RL_msg.k_ep = self.k_ep
-        RL_msg.k_run = self.k_run
+        RL_msg.K_ep = self.K_ep
+        RL_msg.K_run = self.K_run
         RL_msg.error_string = self.error_str
         RL_msg.n_rollouts = self.n_rollouts
 
         RL_msg.mu = list(self.mu.flatten())
         RL_msg.sigma = list(self.sigma.flatten())
-        RL_msg.policy = self.policy
+        # RL_msg.policy = self.policy
 
         RL_msg.reward = self.reward
         RL_msg.reward_avg = self.reward_avg
-        RL_msg.reward_vals = self.reward_vals
+        # RL_msg.reward_vals = self.reward_vals
 
-        RL_msg.vel_d = self.vel_d
+        RL_msg.V_mag_rel = self.V_mag_rel
+        RL_msg.V_angle_rel = self.V_angle_rel
 
         RL_msg.trialComplete_flag = self.trialComplete_flag
         self.RL_Data_Publisher.publish(RL_msg) ## Publish RL_Data message
@@ -101,24 +104,13 @@ class EPHE_Agent():
 
         theta = np.zeros((len(self.mu),self.n_rollouts))
         
-        ## SET UPPER AND LOWER LIMITS FOR TAU AND My
-        lower_limit = [0.0,-10.0]     # Lower and Upper limits for truncated normal distribution 
-        upper_limit = [6.0,10.0]    # 9.10 N*mm is the upper limit for My_d
-        eps = 1e-6 # Prevent divide by zero error
-                                
-        ## SAMPLE VALUES FROM TRUNCATED NORMAL DISTRIBUTION
         for ii,mu_ii in enumerate(self.mu):
-            theta[ii,:] = scipy.stats.truncnorm.rvs(
-                (lower_limit[ii]-mu_ii)/(self.sigma[ii]+eps),
-                (upper_limit[ii]-mu_ii)/(self.sigma[ii]+eps),
-                loc=mu_ii,
-                scale=self.sigma[ii],
-                size=self.n_rollouts
-            )      
+            theta[ii,:] = np.random.normal(mu_ii,self.sigma[ii],self.n_rollouts)
 
-        return theta
+        return np.tanh(theta)
+                                
 
-    def train(self,theta,reward,k=3):
+    def train(self,theta,reward,k=2):
         
         ## SORT THETA/REWARD ARRAYS (TODO: CLEAN LOGIC)
         reward = reward.reshape(-1,1)
@@ -136,18 +128,19 @@ class EPHE_Agent():
         S_diff = np.square(theta_h - self.mu).dot(R_h)
 
         ## CALC UPDATED MU AND SIGMA VECTORS
-        self.mu = S_theta/(S_reward + 1e-3)
-        self.sigma = np.sqrt(S_diff/(S_reward + 1e-3))
+        self.mu = S_theta/(S_reward + 1e-6)
+        self.sigma = np.sqrt(S_diff/(S_reward + 1e-6))
     
 
 if __name__ == "__main__":
     np.set_printoptions(precision=2, suppress=True)
-    mu = np.array([[1.0],[4.0]])
-    sigma = np.array([[0.1],[1.5]])
+    mu = np.array([[0.0],[0.0]])
+    sigma = np.array([[0.25],[0.5]])
 
     agent = EPHE_Agent(mu,sigma)
 
     theta = agent.get_theta()
-    reward = np.array([[11, 20, 11, 40, 32, 45, 80, 80]])
+    print(theta)
+    # reward = np.array([[11, 20, 11, 40, 32, 45, 80, 80]])
 
-    agent.train(theta,reward)
+    # agent.train(theta,reward)

@@ -11,11 +11,13 @@
 #include <thread>
 #include "gazebo_msgs/SetModelState.h"
 #include "geometry_msgs/WrenchStamped.h"
-#include "sar_msgs/Surface_Settings.h"
+#include "sar_msgs/Surface_Params.h"
 
 
 
 
+#define Deg2Rad M_PI/180
+#define Rad2Deg 180/M_PI
 
 namespace gazebo {
 
@@ -27,7 +29,7 @@ namespace gazebo {
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
             void Update_Pose();
             void OnUpdate();
-            bool Service_Callback(sar_msgs::Surface_Settings::Request &req, sar_msgs::Surface_Settings::Response &res);
+            bool Service_Callback(sar_msgs::Surface_Params::Request &req, sar_msgs::Surface_Params::Response &res);
 
 
         private:
@@ -62,7 +64,7 @@ namespace gazebo {
             double Pos_X;    // [m]
             double Pos_Y;    // [m]
             double Pos_Z;    // [m]
-            double Plane_Angle; // [deg]
+            double Plane_Angle_deg; // [deg]
 
             // FORCE TORQUE UPDATES
             ros::Publisher ForceTorque_Pub;

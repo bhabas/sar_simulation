@@ -51,7 +51,7 @@ typedef struct {
     uint32_t Theta_xy;  // [milli-rad/s]
 
     // Compressed Optical Flow Estimates
-    int16_t Tau_est;        // [ms]
+    int16_t Tau_Cam;        // [ms]
     uint32_t Theta_xy_est;  // [milli-rad/s]
 
     // Compressed Policy Actions
@@ -84,7 +84,7 @@ typedef struct {
     uint32_t Theta_xy;      // [milli-rad/s]
 
     // Compressed Optical Flow Estimates
-    int16_t Tau_est;        // [ms]
+    int16_t Tau_Cam;        // [ms]
     uint32_t Theta_xy_est;  // [milli-rad/s]
 
     // Compressed Policy Actions

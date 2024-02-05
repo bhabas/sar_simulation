@@ -7,24 +7,28 @@ import time
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
-def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
+def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max=15):
 
-    agent.vel_d = [V_d,phi,0.0]
+    # agent.V_mag_rel = V_mag_rel
+    # agent.V_angle_rel = V_angle_rel
+    # agent.Plane_angle = Plane_Angle
     env.createCSV(logName)
 
     # ============================
     ##          Episode         
     # ============================
 
-    for k_ep in range(0,K_ep_max):
+    for K_ep in range(0,K_ep_max):
 
-    
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
         reward_arr = np.zeros(shape=(agent.n_rollouts)) # Array of reward values for training
         theta = agent.get_theta()             # Generate sample policies from distribution
 
+        a_Trg_list = 0.5 * (theta[0,:] + 1) * (env.TauThr_range[1] - env.TauThr_range[0]) + env.TauThr_range[0]
+        a_Rot_list = 0.5 * (theta[1,:] + 1) * (env.Ang_Acc_range[1] - env.Ang_Acc_range[0]) + env.Ang_Acc_range[0]
+
         ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
-        agent.K_ep_list.append(k_ep)
+        agent.K_ep_list.append(K_ep)
 
         agent.mu_1_list.append(agent.mu[0,0])
         agent.mu_2_list.append(agent.mu[1,0])
@@ -34,7 +38,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
 
         ## PRINT EPISODE DATA
         print("=============================================")
-        print("STARTING Episode # %d" %k_ep)
+        print("STARTING Episode # %d" %K_ep)
         print("=============================================")
 
         print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
@@ -44,38 +48,46 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
         
 
         print("Theta_i = ")
-        print(theta[0,:], "--> Tau")
-        print(theta[1,:], "--> My")
+        print(theta[0,:])
+        print(theta[1,:])
+
+        print("Policy: ")
+        print("a_Trg: ", a_Trg_list)
+        print("a_Rot: ", np.round(a_Rot_list,0))
+        print("=============================================")
 
 
         # ============================
         ##          Run 
         # ============================
-        for k_run in range(0,agent.n_rollouts):
+        for K_run in range(0,agent.n_rollouts):
 
             ## UPDATE EPISODE/ROLLOUT NUMBER
-            agent.k_ep = k_ep
-            agent.k_run = k_run
+            agent.K_ep = K_ep
+            agent.K_run = K_run
             agent.RL_Publish()
 
             ## INITIALIZE POLICY PARAMETERS: 
-            Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
-            My = theta[1, k_run]         # Policy Moment Action [N*mm]
+            a_Trg = a_Trg_list[K_run]  
+            a_Rot = a_Rot_list[K_run] 
 
-            env.ParamOptim_reset()
+            print(f"Rollout # {K_run:d} Policy: a_Trg = {a_Trg:.3f}, a_Rot = {a_Rot:.3f}")
+            env.ParamOptim_reset(V_mag=Vel_mag_B_P,V_angle=Vel_angle_B_P,Plane_Angle=Plane_Angle)
             env.startLogging(logName)
-            obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
+
+            
+            obs,reward,done,info = env.ParamOptim_Flight(a_Trg,a_Rot)
             
             ## ADD VALID REWARD TO TRAINING ARRAY
-            reward_arr[k_run] = reward
+            reward_arr[K_run] = reward
 
             ## PUBLISH ROLLOUT DATA
-            agent.policy = [Tau_thr,My,0]
+            agent.policy = [a_Trg,a_Rot]
             agent.reward = reward
             agent.reward_vals = env.reward_vals
             agent.error_str = env.error_str
 
-            agent.K_run_list.append(k_ep)
+            agent.K_run_list.append(K_ep)
             agent.reward_list.append(reward)
 
             agent.RL_Publish()
@@ -86,113 +98,29 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
      
 
         ## =======  EPISODE COMPLETED  ======= ##
-        print(f"Episode # {k_ep:d} training, average reward {np.mean(reward_arr):.3f}")
+        print(f"Episode # {K_ep:d} training, average reward {np.mean(reward_arr):.3f}")
         agent.train(theta,reward_arr)
 
         ## PUBLISH AVERAGE REWARD DATA
-        agent.Kep_list_reward_avg.append(k_ep)
+        agent.Kep_list_reward_avg.append(K_ep)
         agent.reward_avg_list.append(np.mean(reward_arr))
         agent.reward_avg = np.mean(reward_arr)
         agent.RL_Publish()
 
-        if all(agent.sigma < 0.05):
-            break
 
-    # ============================
-    ##          Episode         
-    # ============================
-
-    for k_ep in range(K_ep_max,K_ep_max+3):
-
-    
-        ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
-        reward_arr = np.zeros(shape=(agent.n_rollouts)) # Array of reward values for training
-        theta = agent.get_theta()             # Generate sample policies from distribution
-
-        ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
-        agent.K_ep_list.append(k_ep)
-
-        agent.mu_1_list.append(agent.mu[0,0])
-        agent.mu_2_list.append(agent.mu[1,0])
-
-        agent.sigma_1_list.append(agent.sigma[0,0])
-        agent.sigma_2_list.append(agent.sigma[1,0])
-
-        ## PRINT EPISODE DATA
-        print("=============================================")
-        print("STARTING Episode # %d" %k_ep)
-        print("=============================================")
-
-        print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
-        print(f"mu_0 = {agent.mu[0,0]:.3f}, \t sig_0 = {agent.sigma[0,0]:.3f}")
-        print(f"mu_1 = {agent.mu[1,0]:.3f}, \t sig_1 = {agent.sigma[1,0]:.3f}")
-        print('\n')
-        
-
-        print("Theta_i = ")
-        print(theta[0,:], "--> Tau")
-        print(theta[1,:], "--> My")
-
-
-        # ============================
-        ##          Run 
-        # ============================
-        for k_run in range(0,agent.n_rollouts):
-
-            ## UPDATE EPISODE/ROLLOUT NUMBER
-            agent.k_ep = k_ep
-            agent.k_run = k_run
-            agent.RL_Publish()
-
-            ## INITIALIZE POLICY PARAMETERS: 
-            Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
-            My = theta[1, k_run]         # Policy Moment Action [N*mm]
-
-            # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-            # env.Iyy = rospy.get_param(f"/SAR_Type/{env.SAR_Type}/Config/{env.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
-            # env.mass = rospy.get_param(f"/SAR_Type/{env.SAR_Type}/Config/{env.SAR_Config}/Mass") + np.random.normal(0,0.0005)
-            # env.updateInertia()
-
-            env.ParamOptim_reset()
-            env.startLogging(logName)
-            obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
-            
-            ## ADD VALID REWARD TO TRAINING ARRAY
-            reward_arr[k_run] = reward
-
-            ## PUBLISH ROLLOUT DATA
-            agent.policy = [Tau_thr,My,0]
-            agent.reward = reward
-            # agent.reward_vals = env.reward_vals
-            agent.error_str = env.error_str
-
-            agent.K_run_list.append(k_ep)
-            agent.reward_list.append(reward)
-
-            agent.RL_Publish()
-
-
-            env.capLogging(logName)
-        
-        ## PUBLISH AVERAGE REWARD DATA
-        agent.Kep_list_reward_avg.append(k_ep)
-        agent.reward_avg_list.append(np.mean(reward_arr))
-        agent.reward_avg = np.mean(reward_arr)
-        agent.RL_Publish()
 
 
 if __name__ == '__main__':
-    from Envs.SAR_ParamOpt_Sim import SAR_ParamOpt_Sim
+    from Envs.SAR_ParamOpt_Env import SAR_ParamOpt_Sim
     from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
-    env.pause_physics(False)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
-    mu_0 =  np.array([2.5, 6.0])       # Initial mu starting point
-    sig_0 = np.array([1.0, 2.0])   # Initial sigma starting point
+    mu_0 =  np.array([0.0, 0.0])       # Initial mu starting point
+    sig_0 = np.array([0.4, 0.4])   # Initial sigma starting point
     agent = EPHE_Agent(mu_0,sig_0,n_rollouts=8)
 
 
@@ -201,14 +129,17 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.5 # [m/s]
-    phi = 60   # [deg]
+    V_mag = 2.5     # [m/s]
+    V_angle = 60    # [deg]
+    Plane_angle = 0 # [deg]
+    env.setAngAcc_range([-100,100])
+    env.TauThr_range = [0,0.5]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25
-    logName = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.SAR_Config}.csv"
+    logName = f"{agent.agent_type}--trial_{int(trial_num):02d}--{env.SAR_Config}.csv"
 
-    runTraining(env,agent,V_d,phi,logName,K_ep_max=25)
+    runTraining(env,agent,V_mag,V_angle,Plane_angle,logName,K_ep_max=25)
 
 
     

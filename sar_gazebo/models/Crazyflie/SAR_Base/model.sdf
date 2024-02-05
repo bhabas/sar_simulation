@@ -2,29 +2,29 @@
 <sdf version='1.7'>
   <model name='SAR_Base'>
     <link name='SAR_Body'>
+      <pose>0 0 0 0 0 0</pose>
       <inertial>
-        <mass>0.0343</mass>
+        <mass>37.0e-3</mass>
         <inertia>
-          <ixx>15.83e-6</ixx>
+          <ixx>17.20e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>17.00e-6</iyy>
+          <iyy>17.70e-6</iyy>
           <iyz>0</iyz>
-          <izz>31.19e-6</izz>
+          <izz>34.20e-6</izz>
         </inertia>
-        <pose>0 0 0 0 0 0</pose>
+        <pose>0 0 4.1e-3 0 0 0</pose>
       </inertial>
-      <pose>0 0 -2.0e-3 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
 
-      <visual name='CF_Body'>
+      <visual name='Crazyflie_Base_Assembly'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - CF_Body-1.STL</uri>
+            <uri>model://SAR_Base/meshes/Crazyflie_Base_Body.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -37,79 +37,11 @@
         </material>
       </visual>
 
-      <visual name='CF_Battery'>
+      <visual name='Crazyflie_Motor_Arms'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Battery_Small-1.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Grey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-      <visual name='CF_Battery_Holder'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Battery_Holder1-1.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-      <visual name='CF_Pins_1'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Pin_Headers-1.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Gold</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-      <visual name='CF_Pins_2'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Pin_Headers-2.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Gold</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-      <visual name='CF_Motor_Mount_4'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Motor_Mount-1.STL</uri>
+            <uri>model://SAR_Base/meshes/Crazyflie_Motor_Arms.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -122,12 +54,11 @@
         </material>
       </visual>
 
-
-      <visual name='CF_Motor_Mount_3'>
+      <!-- <visual name='Crazyflie_Mocap_Ball'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Motor_Mount-5.STL</uri>
+            <uri>model://SAR_Base/meshes/Crazyflie_Mocap_Ball.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -138,184 +69,192 @@
           </script>
           <lighting>1</lighting>
         </material>
-      </visual>
+      </visual> -->
 
-      <visual name='CF_Motor_Mount_2'>
-        <pose>0 0 0 0 0 0</pose>
+      <collision name='Body_Collision_Prop_1'>
+        <pose>33.0e-3 -33.0e-3 9.25e-3 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Motor_Mount-2.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
+          <cylinder>
+            <length>18.5e-3</length>
+            <radius>23.0e-3</radius>
+          </cylinder>
         </geometry>
-        <material>
-          <script>
-            <name>Gazebo/White</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-      <visual name='CF_Motor_Mount_1'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Motor_Mount-6.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/White</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-
-      <visual name='CF_Motor_4'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Motor-2.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Grey </name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-      <visual name='CF_Motor_3'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Motor-5.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Grey </name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-      <visual name='CF_Motor_2'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Motor-4.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Grey </name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-      <visual name='CF_Motor_1'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/CF_Assembly - Motor-3.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Grey </name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-
-
-      <collision name='body_collision'>
-        <max_contacts>1</max_contacts>
-        <pose>0 0 0.01 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>0.12 0.12 0.01</size>
-          </box>
-        </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1</mu>
-              <mu2>1</mu2>
-            </ode>
-          </friction>
-          <bounce>
-            <restitution_coefficient>0</restitution_coefficient>
-          </bounce>
-          <contact>
-            <ode>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.8</soft_erp>
-            </ode>
-            <bullet>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.8</soft_erp>
-            </bullet>
-          </contact>
-        </surface>
       </collision>
-      <collision name='base_collision'>
-        <max_contacts>1</max_contacts>
-        <pose>0 0 -0.005 0 0 0</pose>
+
+      <collision name='Body_Collision_Prop_2'>
+        <pose>-33.0e-3 -33.0e-3 9.25e-3 0 0 0</pose>
         <geometry>
-          <box>
-            <size>0.075 0.075 0.005</size>
-          </box>
+          <cylinder>
+            <length>18.5e-3</length>
+            <radius>23.0e-3</radius>
+          </cylinder>
         </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1</mu>
-              <mu2>1</mu2>
-            </ode>
-          </friction>
-          <bounce>
-            <restitution_coefficient>0</restitution_coefficient>
-          </bounce>
-          <contact>
-            <ode>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.2</soft_erp>
-            </ode>
-            <bullet>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.2</soft_erp>
-            </bullet>
-          </contact>
-        </surface>
       </collision>
+
+      <collision name='Body_Collision_Prop_3'>
+        <pose>-33.0e-3 33.0e-3 9.25e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>18.5e-3</length>
+            <radius>23.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <collision name='Body_Collision_Prop_4'>
+        <pose>33.0e-3 33.0e-3 9.25e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>18.5e-3</length>
+            <radius>23.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+    </link>
+
+    <link name='Prop_1'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>33.0e-3 -33.0e-3 16.0e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='Crazyflie_Propeller_1'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Crazyflie_Propeller.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/DarkGrey </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_2'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>-33.0e-3 -33.0e-3 16.0e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='Crazyflie_Propeller_2'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Crazyflie_Propeller.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/DarkGrey </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_3'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>-33.0e-3 33.0e-3 16.0e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='Crazyflie_Propeller_3'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Crazyflie_Propeller.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/DarkGrey </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_4'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>33.0e-3 33.0e-3 16.0e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='Crazyflie_Propeller_4'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Crazyflie_Propeller.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/DarkGrey </name>
+          </script>
+        </material>
+      </visual>
     </link>
 
     <link name='Camera'>
       <inertial>
         <mass>1e-6</mass>
         <inertia>
-          <ixx>1e-9</ixx>
+          <ixx>1e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>1e-9</iyy>
+          <iyy>1e-6</iyy>
           <iyz>0</iyz>
-          <izz>1e-9</izz>
+          <izz>1e-6</izz>
         </inertia>
         <pose>0 0 0 0 0 0</pose>
       </inertial>
@@ -331,8 +270,8 @@
           </save>
           <horizontal_fov>1.435</horizontal_fov>          <!-- 82.22 deg FoV to match AI Deck -->
           <image>
-            <width>160</width>
-            <height>160</height>
+            <width>64</width>
+            <height>64</height>
             <format>L8</format>
           </image>
           <clip>
@@ -345,7 +284,7 @@
                  That pixel's noise value is added to each of its color
                  channels, which at that point lie in the range [0,1]. -->
             <mean>0.0</mean>
-            <stddev>0.005</stddev>
+            <stddev>0.000</stddev>
           </noise>
           <lens>
             <type>sterographic</type>
@@ -387,234 +326,6 @@
       </visual>
     </link>
 
-    <joint name='Camera_Joint' type='fixed'>
-      <parent>SAR_Body</parent>
-      <child>Camera</child>
-    </joint>
-
-    <link name='Prop_1'>
-      <inertial>
-        <mass>1e-6</mass>
-        <inertia>
-          <ixx>1e-9</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>1e-9</iyy>
-          <iyz>0</iyz>
-          <izz>1e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 0 0</pose>
-      </inertial>
-      <pose>0.0325 -0.0325 0.014 0 0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <visual name='side_1'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Black</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-      <visual name='side_2'>
-        <pose>0 0 0 0 0 3.14</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Black</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-    </link>
-
-    <link name='Prop_2'>
-      <inertial>
-        <mass>1e-6</mass>
-        <inertia>
-          <ixx>1e-9</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>1e-9</iyy>
-          <iyz>0</iyz>
-          <izz>1e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 0 0</pose>
-      </inertial>
-      <pose>-0.0325 -0.0325 0.014 0 0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <visual name='side_1'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Black</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-      <visual name='side_2'>
-        <pose>0 0 0 0 0 3.14</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Black</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-    </link>
-
-    <link name='Prop_3'>
-      <inertial>
-        <mass>1e-6</mass>
-        <inertia>
-          <ixx>1e-9</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>1e-9</iyy>
-          <iyz>0</iyz>
-          <izz>1e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 0 0</pose>
-      </inertial>
-      <pose>-0.0325 0.0325 0.014 0 0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <visual name='side_1'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Black</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-      <visual name='side_2'>
-        <pose>0 0 0 0 0 3.14</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Black</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-    </link>
-
-    <link name='Prop_4'>
-      <inertial>
-        <mass>1e-6</mass>
-        <inertia>
-          <ixx>1e-9</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>1e-9</iyy>
-          <iyz>0</iyz>
-          <izz>1e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 0 0</pose>
-      </inertial>
-      <pose>0.0325 0.0325 0.014 0 0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <visual name='side_1'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Black</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-      <visual name='side_2'>
-        <pose>0 0 0 0 0 3.14</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Black</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-    </link>
 
     <joint name='Prop_1_Joint' type='revolute'>
       <parent>SAR_Body</parent>
@@ -692,14 +403,17 @@
       </axis>
     </joint>
 
-    
+    <joint name='Camera_Joint' type='fixed'>
+      <parent>SAR_Body</parent>
+      <child>Camera</child>
+    </joint>
 
     <plugin name='Motor_1_Plugin' filename='libMotor_Plugin.so'>
       <Motor_Number>1</Motor_Number>
       <Joint_Name>Prop_1_Joint</Joint_Name>
       <Link_Name>Prop_1</Link_Name>
       <Turning_Direction>ccw</Turning_Direction>
-      <Visual_Slowdown>100</Visual_Slowdown>
+      <Visual_Slowdown>200</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
@@ -707,7 +421,7 @@
       <Joint_Name>Prop_2_Joint</Joint_Name>
       <Link_Name>Prop_2</Link_Name>
       <Turning_Direction>cw</Turning_Direction>
-      <Visual_Slowdown>100</Visual_Slowdown>
+      <Visual_Slowdown>200</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
@@ -715,7 +429,7 @@
       <Joint_Name>Prop_3_Joint</Joint_Name>
       <Link_Name>Prop_3</Link_Name>
       <Turning_Direction>ccw</Turning_Direction>
-      <Visual_Slowdown>100</Visual_Slowdown>
+      <Visual_Slowdown>200</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
@@ -723,7 +437,7 @@
       <Joint_Name>Prop_4_Joint</Joint_Name>
       <Link_Name>Prop_4</Link_Name>
       <Turning_Direction>cw</Turning_Direction>
-      <Visual_Slowdown>100</Visual_Slowdown>
+      <Visual_Slowdown>200</Visual_Slowdown>
     </plugin>
 
     <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
@@ -748,13 +462,23 @@
       <bodyName>SAR_Body</bodyName>
       <topicName>SAR_Internal/IMU</topicName>
       <serviceName>imu_service</serviceName>
-      <gaussianNoise>0.0</gaussianNoise>
-      <xyzOffset>0 0 0</xyzOffset>
-      <rpyOffset>0 0 0</rpyOffset>
       <frameName>SAR_Body</frameName>
     </plugin>
 
-
+    <!-- <joint name='World_Joint' type='fixed'>
+      <parent>world</parent>
+      <child>SAR_Body</child>
+      <pose>0 0 0 0 0 0</pose>
+    </joint> -->
+    
+    <!-- <joint name='World_Joint' type='revolute'>
+      <parent>world</parent>
+      <child>SAR_Body</child>
+      <pose>0 0 -4.9e-3 0 0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+      </axis>
+    </joint> -->
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

@@ -28,24 +28,34 @@ extern "C" {
 
 
 
-// DECLARE SYSTEM PARAMETERS
-extern float m;         // [kg]
-extern float Ixx;       // [kg*m^2]
-extern float Iyy;       // [kg*m^2]
-extern float Izz;       // [kg*m^2]
-extern struct mat33 J;  // Rotational Inertia Matrix [kg*m^2]
+// =================================
+//    INITIAL SYSTEM PARAMETERS
+// =================================
+extern float m;                 // [kg]
+extern float Ixx;               // [kg*m^2]
+extern float Iyy;               // [kg*m^2]
+extern float Izz;               // [kg*m^2]
+extern struct mat33 J;          // Rotational Inertia Matrix [kg*m^2]
 
-extern float C_tf;  // Moment Coeff [Nm/N]
-extern float f_max; // Max thrust per motor [g]
+extern float C_tf;              // Moment Coeff [Nm/N]
+extern float Thrust_max;        // Max thrust per motor [g]
 
-extern float Prop_14_x; // Front Prop Distance - x-axis [m]
-extern float Prop_14_y; // Front Prop Distance - y-axis [m]
-extern float Prop_23_x; // Rear  Prop Distance - x-axis [m]
-extern float Prop_23_y; // Rear  Prop Distance - y-axis [m]
-
-extern float dt;    // Controller cycle time
+extern float dt;                // Controller cycle time
+extern uint32_t prev_tick;
 
 
+// =================================
+//       GEOMETRIC PARAMETERS
+// =================================
+
+extern float Prop_14_x;         // Front Prop Distance - x-axis [m]
+extern float Prop_14_y;         // Front Prop Distance - y-axis [m]
+extern float Prop_23_x;         // Rear  Prop Distance - x-axis [m]
+extern float Prop_23_y;         // Rear  Prop Distance - y-axis [m]
+
+extern float L_eff;             // Effective Leg Length [m]
+extern float Forward_Reach;     // Forward Reach [m]
+extern float Collision_Radius;  // Collision Radius [m]
 
 
 // =================================
@@ -77,49 +87,71 @@ extern float i_range_R_z;
 
 
 // DECLARE CTRL GAIN VECTORS 
-extern struct vec Kp_p; // Pos. Proportional Gains 
-extern struct vec Kd_p; // Pos. Derivative Gains
-extern struct vec Ki_p; // Pos. Integral Gains  
+extern struct vec Kp_p;     // Pos. Proportional Gains 
+extern struct vec Kd_p;     // Pos. Derivative Gains
+extern struct vec Ki_p;     // Pos. Integral Gains  
 
-extern struct vec Kp_R; // Rot. Proportional Gains
-extern struct vec Kd_R; // Rot. Derivative Gains
-extern struct vec Ki_R; // Rot. Integral Gains
+extern struct vec Kp_R;     // Rot. Proportional Gains
+extern struct vec Kd_R;     // Rot. Derivative Gains
+extern struct vec Ki_R;     // Rot. Integral Gains
 
 
 // DECLARE CTRL GAIN FLAGS
-extern float kp_xf; // Pos. Gain Flag
-extern float kd_xf; // Pos. Derivative Gain Flag
+extern float kp_xf;         // Pos. Gain Flag
+extern float kd_xf;         // Pos. Derivative Gain Flag
 
 
-// DECLARE STATE VALUES
-extern struct vec statePos;     // Pos [m]
-extern struct vec stateVel;     // Vel [m/s]
-extern struct quat stateQuat;   // Orientation
-extern struct vec stateEul;     // Orientation in Euler Angles [YZX Notation]
-extern struct vec stateOmega;   // Angular Rate [rad/s]
+// =================================
+//     BODY WRT ORIGIN STATES
+// =================================
+extern struct vec Pos_B_O;          // Pos [m]
+extern struct vec Vel_B_O;          // Vel [m/s]
+extern struct vec Accel_B_O;        // Linear Accel. [m/s^2]
+extern float Accel_B_O_Mag;         // Linear Accel. Magnitude [m/s^2]
 
-extern struct mat33 R;          // Orientation as rotation matrix
-extern struct vec b3;           // Current body z-axis in global coord.
+extern struct quat Quat_B_O;        // Orientation
+extern struct vec Omega_B_O;        // Angular Rate [rad/s]
+extern struct vec Omega_B_O_prev;   // Prev Angular Rate [rad/s^2]
+extern struct vec dOmega_B_O;       // Angular Accel [rad/s^2]
+
+extern struct mat33 R;              // Orientation as rotation matrix
+extern struct vec b3;               // Current body z-axis in global coord.
 
 
-// DECLARE DESIRED STATES
+// =================================
+//     BODY WRT PLANE STATES
+// =================================
+extern struct vec Pos_P_B;         // Pos [m]
+extern struct vec Vel_B_P;         // Vel [m/s]
+extern struct quat Quat_P_B;       // Orientation
+extern struct vec Omega_B_P;       // Angular Rate [rad/s]
+
+// RELATIVE STATES
+extern float D_perp;               // Distance from body to plane [m]
+extern float D_perp_CR;            // Distance from CR to plane [m]
+extern float Vel_mag_B_P;          // Velocity magnitude relative [m/s]
+extern float Vel_angle_B_P;        // Velocity angle relative [deg]
+
+
+// =================================
+//         DESIRED STATES
+// =================================
 extern struct vec x_d;          // Pos-desired [m]
 extern struct vec v_d;          // Vel-desired [m/s]
 extern struct vec a_d;          // Acc-desired [m/s^2]
-
-extern struct quat quat_d;      // Orientation-desired [qx,qy,qz,qw]
-extern struct vec eul_d;        // Euler Angle-desired [deg]
 
 extern struct vec b1_d;         // Desired body x-axis in global coord. 
 extern struct vec b2_d;         // Desired body y-axis in global coord.
 extern struct vec b3_d;         // Desired body z-axis in global coord.
 extern struct mat33 R_d;        // Desired rotational matrix from b_d vectors
 
-
+extern struct quat quat_d;      // Orientation-desired [qx,qy,qz,qw]
 extern struct vec omega_d;      // Omega-desired [rad/s]
 extern struct vec domega_d;     // Ang. Acc-desired [rad/s^2]
 
-// STATE ERRORS
+// =================================
+//         STATE ERRORS
+// =================================
 extern struct vec e_x;  // Pos-error [m]
 extern struct vec e_v;  // Vel-error [m/s]
 extern struct vec e_PI; // Pos. Integral-error [m*s]
@@ -129,19 +161,21 @@ extern struct vec e_w;  // Omega-error [rad/s]
 extern struct vec e_RI; // Rot. Integral-error [rad*s]
 
 
-// DECLARE CONTROLLER ACTUATIONS
+// =================================
+//       CONTROLLER ACTUATIONS
+// =================================
 extern struct vec F_thrust_ideal;   // Ideal thrust vector [N]
 extern float F_thrust;              // Implemented body thrust [N]
 extern struct vec M;                // Implemented body moments [N*m]
 extern struct vec M_d;              // Desired body moment [N*m]
 
-// DECLARE MOTOR THRUST ACTIONS
+// MOTOR THRUST ACTIONS
 extern float f_thrust_g;        // Motor thrust - Thrust [g]
 extern float f_roll_g;          // Motor thrust - Roll   [g]
 extern float f_pitch_g;         // Motor thrust - Pitch  [g]
 extern float f_yaw_g;           // Motor thrust - Yaw    [g]
 
-// DECLARE MOTOR THRUSTS
+// MOTOR THRUSTS
 extern float M1_thrust;
 extern float M2_thrust;
 extern float M3_thrust;
@@ -153,25 +187,25 @@ extern uint16_t M2_pwm;
 extern uint16_t M3_pwm; 
 extern uint16_t M4_pwm; 
 
-
 // CONTROL OVERRIDE VALUES
 extern uint16_t PWM_override[4];    // Motor PWM values
 extern float thrust_override[4];    // Motor thrusts [g] 
 
 
 // =================================
-//     OPTICAL FLOW ESTIMATION
+//        OPTICAL FLOW STATES
 // =================================
 
 // OPTICAL FLOW STATES (GROUND TRUTH)
 extern float Tau;           // [s]
+extern float Tau_CR;        // [s]
 extern float Theta_x;       // [rad/s] 
 extern float Theta_y;       // [rad/s]
 
 // OPTICAL FLOW STATES (CAMERA ESTIMATE)
-extern float Tau_est;      // [s]
-extern float Theta_x_est;  // [rad/s]
-extern float Theta_y_est;  // [rad/s]
+extern float Tau_Cam;      // [s]
+extern float Theta_x_Cam;  // [rad/s]
+extern float Theta_y_Cam;  // [rad/s]
 
 // CAMERA PARAMETERS
 extern float IW;            // Image Width [m]
@@ -189,17 +223,16 @@ extern bool isOFUpdated;
 // =================================
 
 // CONTROLLER FLAGS
-extern bool tumbled;
-extern bool tumble_detection;
-extern bool motorstop_flag;
-extern bool moment_flag;
-extern bool attCtrlEnable;
-extern bool safeModeEnable;
-extern bool customThrust_flag;
-extern bool customPWM_flag;
+extern bool Tumbled_Flag;
+extern bool TumbleDetect_Flag;
+extern bool MotorStop_Flag;
+extern bool AngAccel_Flag;
+extern bool SafeMode_Flag;
+extern bool CustomThrust_Flag;
+extern bool CustomPWM_Flag;
 
 // SENSOR FLAGS
-extern bool CamActive;
+extern bool CamActive_Flag;
 
 // =================================
 //       POLICY INITIALIZATION
@@ -217,13 +250,13 @@ extern nml_mat* X_input;    // STATE MATRIX TO BE INPUT INTO POLICY
 extern nml_mat* Y_output;   // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
-extern bool policy_armed_flag;
-extern bool flip_flag;
+extern bool Policy_Armed_Flag;
+extern bool Trg_Flag;
 extern bool onceFlag;
 
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Trg_Action;  
-extern float Policy_Flip_Action;
+extern float Policy_Rot_Action;
 
 extern float ACTION_MIN;
 extern float ACTION_MAX;
@@ -234,63 +267,74 @@ extern float ACTION_MAX;
 // ===============================
 
 extern NN NN_DeepRL;
-extern float Policy_Flip_threshold;
+extern float Policy_Rot_threshold;
 
 
 
 
-// ======================================
-//  RECORD SYSTEM STATES AT FLIP TRIGGER
-// ======================================
+// ==========================================
+//  RECORD SYSTEM STATES AT POLICY TRIGGER
+// ==========================================
 
-// CARTESIAN STATES
-extern struct vec statePos_trg;      // Pos [m]
-extern struct vec stateVel_trg;      // Vel [m/s]
-extern struct quat stateQuat_trg;    // Orientation
-extern struct vec stateOmega_trg;    // Angular Rate [rad/s]
-extern float D_perp_trg;             // [m/s]
+// BODY WRT ORIGIN STATES
+extern struct vec Pos_B_O_trg;     // Pos [m]
+extern struct vec Vel_B_O_trg;     // Vel [m/s]
+extern struct quat Quat_B_O_trg;   // Orientation
+extern struct vec Omega_B_O_trg;   // Angular Rate [rad/s]
+
+// BODY WRT PLANE STATES
+extern struct vec Pos_P_B_trg;              // Pos [m]
+extern struct vec Vel_B_P_trg;              // Vel [m/s]
+extern struct quat Quat_P_B_trg;            // Orientation
+extern struct vec Omega_B_P_trg;            // Angular Rate [rad/s]
+
+// RELATIVE STATES
+extern float D_perp_trg;                // Distance perp to plane [m]
+extern float D_perp_CR_trg;             // Distance from CR to plane [m]
+extern float Vel_mag_B_P_trg;           // Velocity magnitude relative [m/s]
+extern float Vel_angle_B_P_trg;         // Velocity angle relative [deg]
+
+
 
 // OPTICAL FLOW STATES
-extern float Tau_trg;                // [rad/s]
-extern float Theta_x_trg;            // [rad/s]
-extern float Theta_y_trg;            // [rad/s]
+extern float Tau_trg;                   // [rad/s]
+extern float Tau_CR_trg;                // [rad/s]
+extern float Theta_x_trg;               // [rad/s]
+extern float Theta_y_trg;               // [rad/s]
 
-// OPTICAL FLOW ESTIMATES
-extern float Tau_est_trg;            // [rad/s]
-extern float Theta_x_est_trg;        // [rad/s]
-extern float Theta_y_est_trg;        // [rad/s]
-
-// CONTROLLER STATES
-extern float F_thrust_flip;         // [N]
-extern float M_x_flip;              // [N*m]
-extern float M_y_flip;              // [N*m]
-extern float M_z_flip;              // [N*m]
+// OPTICAL FLOW CAMERA ESTIMATES
+extern float Tau_Cam_trg;               // [rad/s]
+extern float Theta_x_Cam_trg;           // [rad/s]
+extern float Theta_y_Cam_trg;           // [rad/s]
 
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Trg_Action_trg;    
-extern float Policy_Flip_Action_trg;
+extern float Policy_Rot_Action_trg;
+
+// =================================
+//  RECORD SYSTEM STATES AT IMPACT
+// =================================
+extern bool Impact_Flag_OB;
+extern float Accel_B_O_Mag_impact_OB;      // Linear Accel. Magnitude [m/s^2]
+extern struct vec Pos_B_O_impact_OB;       // Pos [m]
+extern struct quat Quat_B_O_impact_OB;     // Orientation
+
+extern struct vec Vel_B_P_impact_OB;       // Vel [m/s]
+extern struct vec Omega_B_P_impact_OB;     // Angular Rate [rad/s]
 
 // =================================
 //    LANDING SURFACE PARAMETERS
 // =================================
+extern float Plane_Angle_deg;   // Plane Angle [deg]
+extern struct vec r_P_O;        // Plane Position Vector        [m]
 
-// LANDING SURFACE PARAMETERS
-extern float Plane_Angle;
-extern struct vec t_x;          // Plane Unit Tangent Vector
-extern struct vec t_y;          // Plane Unit Tangent Vector
-extern struct vec n_hat;        // Plane Unit Normal Vector
 
-extern struct vec r_PO;         // Plane Position Vector        [m]
-extern struct vec r_BO;         // Quad Position Vector         [m]
-extern struct vec r_CB;         // Camera Position Vector       [m]
-extern struct vec r_PB;         // Quad-Plane Distance Vector   [m]
-extern struct vec V_BO;         // Quad Velocity Vector         [m/s]
+// =================================
+//         ROTATION MATRICES
+// =================================
+extern struct mat33 R_WP;       // Rotation matrix from world to plane
+extern struct mat33 R_PW;       // Rotation matrix from plane to world
 
-// RELATIVE STATES
-extern float D_perp;            // Distance perp to plane [m]
-extern float V_perp;            // Velocity perp to plane [m/s]
-extern float V_tx;              // Tangent_x velocity [m/s]
-extern float V_ty;              // Tangent_y velocity [m/s]
 
 
 
@@ -312,9 +356,10 @@ extern struct CTRL_CmdPacket CTRL_Cmd;
 void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 uint16_t thrust2PWM(float f);
-void updatePlaneNormal(float Plane_Angle);
+void updateRotationMatrices();
 bool updateOpticalFlowEst();
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);
+float firstOrderFilter(float newValue, float prevValue, float alpha);
 
 
 

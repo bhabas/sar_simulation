@@ -1,0 +1,494 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='SAR_Base'>
+    <link name='SAR_Body'>
+      <pose>0 0 0 0 0 0</pose>
+      <inertial>
+        <mass>275.0e-3</mass>
+        <inertia>
+          <ixx>6.17e-4</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>4.64e-4</iyy>
+          <iyz>0</iyz>
+          <izz>1.02e-3</izz>
+        </inertia>
+        <pose>0 0 18.0e-3 0 0 0</pose>
+      </inertial>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+
+      <visual name='Impulse_Micro_Base_Assembly'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Impulse_Micro_Base_Assembly.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+
+      <visual name='Impulse_Micro_Prop_Guards'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Impulse_Micro_Prop_Guards.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/White</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+
+      <visual name='Impulse_Micro_Prop_Guard_Standoffs'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Impulse_Micro_Prop_Guard_Standoffs.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+
+      <collision name='Body_Collision_Prop_1'>
+        <pose>44.5e-3 -58.6e-3 14.75e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>29.5e-3</length>
+            <radius>50.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <collision name='Body_Collision_Prop_2'>
+        <pose>-44.5e-3 -58.6e-3 14.75e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>29.5e-3</length>
+            <radius>50.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <collision name='Body_Collision_Prop_3'>
+        <pose>-44.5e-3 58.6e-3 14.75e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>29.5e-3</length>
+            <radius>50.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <collision name='Body_Collision_Prop_4'>
+        <pose>44.5e-3 58.6e-3 14.75e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>29.5e-3</length>
+            <radius>50.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <collision name='Body_Collision_Battery'>
+        <pose>-7.0e-3 0 44.5e-3 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>60.0e-3 22.0e-3 30.0e-3 </size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name='Prop_1'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>44.5e-3 -58.6e-3 17.2e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='Impulse_Micro_Prop_1'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Impulse_Micro_3-inch_Prop_CCW.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/GreyTransparent  </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_2'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>-44.5e-3 -58.6e-3 17.2e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='Impulse_Micro_Prop_2'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Impulse_Micro_3-inch_Prop_CW.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/GreyTransparent  </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_3'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>-44.5e-3 58.6e-3 17.2e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='Impulse_Micro_Prop_3'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Impulse_Micro_3-inch_Prop_CCW.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/GreyTransparent  </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_4'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>44.5e-3 58.6e-3 17.2e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='Impulse_Micro_Prop_4'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/Impulse_Micro_3-inch_Prop_CW.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/GreyTransparent  </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Camera'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+
+      <sensor type="camera" name="Camera">
+        <pose>0 0 0 0 0 0</pose>
+        <update_rate>100</update_rate>        <!--Changed to a nice number for FPS because message didn't contain enough precision -->
+        <visualize>false</visualize>
+        <camera name="head">
+          <save enabled="false">
+            <path>/home/bhabas/Downloads/Video_images</path>
+            <!--Convert Command: ffmpeg -framerate 60 -pattern_type glob -i '*.jpg' -c:v libx264 -pix_fmt yuv420p out.mp4 -->
+          </save>
+          <horizontal_fov>1.435</horizontal_fov>          <!-- 82.22 deg FoV to match AI Deck -->
+          <image>
+            <width>64</width>
+            <height>64</height>
+            <format>L8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>300</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <!-- Noise is sampled independently per pixel on each frame.
+                 That pixel's noise value is added to each of its color
+                 channels, which at that point lie in the range [0,1]. -->
+            <mean>0.0</mean>
+            <stddev>0.000</stddev>
+          </noise>
+          <lens>
+            <type>sterographic</type>
+          </lens>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>0.0</updateRate>
+          <cameraName>SAR_Internal/camera</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>camera_sensor</frameName>
+          <hackBaseline>0.0</hackBaseline>
+          <distortionK1>0.0</distortionK1>
+          <distortionK2>0.0</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionT1>0.0</distortionT1>
+          <distortionT2>0.0</distortionT2>
+        </plugin>
+      </sensor>
+
+      <visual name='camera_center'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.002</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+      </visual>
+    </link>
+
+
+    <joint name='Prop_1_Joint' type='revolute'>
+      <parent>SAR_Body</parent>
+      <child>Prop_1</child>
+      <pose>0 0 0 0 0 0</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name='Prop_2_Joint' type='revolute'>
+      <parent>SAR_Body</parent>
+      <child>Prop_2</child>
+      <pose>0 0 0 0 0 0</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name='Prop_3_Joint' type='revolute'>
+      <parent>SAR_Body</parent>
+      <child>Prop_3</child>
+      <pose>0 0 0 0 0 0</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name='Prop_4_Joint' type='revolute'>
+      <parent>SAR_Body</parent>
+      <child>Prop_4</child>
+      <pose>0 0 0 0 0 0</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name='Camera_Joint' type='fixed'>
+      <parent>SAR_Body</parent>
+      <child>Camera</child>
+    </joint>
+
+    <plugin name='Motor_1_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>1</Motor_Number>
+      <Joint_Name>Prop_1_Joint</Joint_Name>
+      <Link_Name>Prop_1</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+
+    <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>2</Motor_Number>
+      <Joint_Name>Prop_2_Joint</Joint_Name>
+      <Link_Name>Prop_2</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+
+    <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>3</Motor_Number>
+      <Joint_Name>Prop_3_Joint</Joint_Name>
+      <Link_Name>Prop_3</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+
+    <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>4</Motor_Number>
+      <Joint_Name>Prop_4_Joint</Joint_Name>
+      <Link_Name>Prop_4</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+
+    <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
+      <CameraJointName>Camera_Joint</CameraJointName>
+    </plugin>
+
+
+    <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>true</alwaysOn>
+      <updateRate>1000</updateRate>
+      <bodyName>SAR_Body</bodyName>
+      <topicName>SAR_External/ExtPosition</topicName>
+      <frameName>world</frameName>
+      <xyzOffsets>0 0 0</xyzOffsets>
+      <rpyOffsets>0 0 0</rpyOffsets>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+
+    <plugin name="IMU_plugin" filename="libgazebo_ros_imu.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>1000</updateRate>
+      <bodyName>SAR_Body</bodyName>
+      <topicName>SAR_Internal/IMU</topicName>
+      <serviceName>imu_service</serviceName>
+      <frameName>SAR_Body</frameName>
+    </plugin>
+
+    <!-- <joint name='World_Joint' type='fixed'>
+      <parent>world</parent>
+      <child>SAR_Body</child>
+      <pose>0 0 0 0 0 0</pose>
+    </joint> -->
+    
+    <!-- <joint name='World_Joint' type='revolute'>
+      <parent>world</parent>
+      <child>SAR_Body</child>
+      <pose>0 0 -6.3e-3 0 0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+      </axis>
+    </joint> -->
+
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

@@ -40,7 +40,7 @@
 #include "sar_msgs/Activate_Sticky_Pads.h"
 #include "sar_msgs/Logging_CMD.h"
 #include "sar_msgs/GenericLogData.h"
-#include "sar_msgs/Surface_Settings.h"
+#include "sar_msgs/Surface_Params.h"
 
 
 #include "quatcompress.h"
@@ -60,7 +60,7 @@ class SAR_DataConverter {
 
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-            Landing_Surface_Pose_Client = nh->serviceClient<sar_msgs::Surface_Settings>("/ENV/Landing_Surface_Pose");
+            Landing_Surface_Pose_Client = nh->serviceClient<sar_msgs::Surface_Params>("/ENV/Landing_Surface_Pose");
 
             Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_ForceTorque_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/SurfaceContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -114,7 +114,7 @@ class SAR_DataConverter {
         void activateStickyFeet();
         void checkSlowdown();
         void adjustSimSpeed(float speed_mult);
-        void Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle);
+        void setLandingSurfacePose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle_deg);
 
         // =======================
         //     GAZEBO CALLBACKS
@@ -144,7 +144,6 @@ class SAR_DataConverter {
         //     CTRL COMMAND CALLBACKS
         // =============================
         inline bool CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
-        inline bool Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &req);
 
 
         // =======================
@@ -154,7 +153,7 @@ class SAR_DataConverter {
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
-        void append_CSV_flip();
+        void append_CSV_Trg();
         void append_CSV_impact();
         void append_CSV_blank();
 
@@ -175,7 +174,11 @@ class SAR_DataConverter {
         // =======================
         inline void quat2euler(float quat[], float eul[]);
         inline void euler2quat(float quat[],float eul[]);
-        inline void LoadParams();
+        inline void loadInitParams();
+        inline void updateParams();
+        inline void resetStateData();
+        inline void resetTriggerData();
+        inline void resetImpactData();
 
 
         
@@ -193,7 +196,6 @@ class SAR_DataConverter {
         ros::Time Time_start;   // Initial time in UNIX notation
         int LOGGING_RATE = 20;  // Default Logging Rate
         bool SHOW_CONSOLE = true;
-        bool isInit = false;    // Load these params only on first start of SAR_DC
 
 
         // ==================
@@ -201,18 +203,26 @@ class SAR_DataConverter {
         // ==================
         std::string SAR_Type;
         std::string SAR_Config;
+        std::string SAR_Type_str;
+        std::string SAR_Config_str;
+        
         std::string POLICY_TYPE;
 
         // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
-        float Mass = 34.4e3; // [kg]
-        float Ixx = 15.83e-6f;  // [kg*m^2]
-        float Iyy = 17.00e-6f;  // [kg*m^2]
-        float Izz = 31.19e-6f;  // [kg*m^2]
+        float Mass = NAN; // [kg]
+        float Ixx = NAN;  // [kg*m^2]
+        float Iyy = NAN;  // [kg*m^2]
+        float Izz = NAN;  // [kg*m^2]
 
         float P_kp_xy,P_kd_xy,P_ki_xy;
         float P_kp_z,P_kd_z,P_ki_z;
         float R_kp_xy,R_kd_xy,R_ki_xy;     
         float R_kp_z,R_kd_z,R_ki_z;
+
+        float Gamma_eff = NAN;
+        float L_eff = NAN;
+        float K_Pitch = NAN;
+        float K_Yaw = NAN;
 
 
         // ============================
@@ -220,7 +230,7 @@ class SAR_DataConverter {
         // ============================
         std::string Plane_Config;
         geometry_msgs::Vector3 Plane_Pos; // Initial Plane Position
-        float Plane_Angle = 180.0; // Initial Plane Angle [Deg]
+        float Plane_Angle_deg = NAN; // Initial Plane Angle [Deg]
 
 
 
@@ -229,8 +239,8 @@ class SAR_DataConverter {
         // ====================
         int SLOWDOWN_TYPE = 0;
         bool LANDING_SLOWDOWN_FLAG;
-        float SIM_SPEED; 
-        float SIM_SLOWDOWN_SPEED;
+        float SIM_SPEED = 0.5; 
+        float SIM_SLOWDOWN_SPEED = 0.5;
 
 
         // =====================
@@ -291,91 +301,134 @@ class SAR_DataConverter {
         ros::Time Time;
         ros::Time Time_prev;
 
-        geometry_msgs::Pose Pose;
-        geometry_msgs::Twist Twist;
-        geometry_msgs::Vector3 Eul;
+        geometry_msgs::Pose Pose_B_O;
+        geometry_msgs::Twist Twist_B_O;
+        geometry_msgs::Accel Accel_B_O;
+        geometry_msgs::Vector3 Eul_B_O;
+        double Vel_mag_B_O = NAN;
+        double Vel_angle_B_O = NAN;
+        float Accel_B_O_Mag = NAN;
 
-        float Vel_mag = 0.0;
-        float Phi = 0.0;
-        float Alpha = 0.0;
+        geometry_msgs::Pose Pose_P_B;
+        geometry_msgs::Twist Twist_B_P;
+        geometry_msgs::Vector3 Eul_P_B;
 
-        double D_perp = 0.0;
-        double V_perp = 0.0;
-        double V_tx = 0.0;
-        double V_ty = 0.0;
+        double Vel_mag_B_P = NAN;
+        double Vel_angle_B_P = NAN;
+        double D_perp = NAN;
+        double D_perp_CR = NAN;
+        double D_perp_min = INFINITY;   
 
+        geometry_msgs::Vector3 Optical_Flow;
+        geometry_msgs::Vector3 Optical_Flow_Cam;
 
-        double Tau = 0.0;
-        double Theta_x = 0.0;
-        double Theta_y = 0.0;
+        double Tau = NAN;
+        double Tau_CR = NAN;
+        double Theta_x = NAN;
+        double Theta_y = NAN;
 
-        double Tau_est = 0.0;
-        double Theta_x_est = 0.0;
-        double Theta_y_est = 0.0;
+        double Tau_Cam = NAN;
+        double Theta_x_Cam = NAN;
+        double Theta_y_Cam = NAN;
 
-        boost::array<double,4> FM{0,0,0,0};
-        boost::array<double,4> MotorThrusts{0,0,0,0};
-        boost::array<uint16_t,4> MS_PWM{0,0,0,0};
-
-        double Policy_Trg_Action = 0.0;
-        double Policy_Flip_Action = 0.0;
 
         geometry_msgs::Vector3 x_d;
         geometry_msgs::Vector3 v_d;
         geometry_msgs::Vector3 a_d;
 
+
+        boost::array<double,4> FM{0,0,0,0};
+        boost::array<double,4> MotorThrusts{0,0,0,0};
+        boost::array<uint16_t,4> MS_PWM{0,0,0,0};
+
+        double Policy_Trg_Action = NAN;
+        double Policy_Rot_Action = NAN;
         double Rot_Sum = 0.0;
 
-        // ==================
-        //     FLIP DATA
-        // ==================
+        // ==========================
+        //  STATES AT POLICY TRIGGER
+        // ==========================
 
-        bool flip_flag = false;
-        bool OnceFlag_flip = false;
-
+        bool Trg_Flag = false;
+        bool OnceFlag_Trg = false;
         ros::Time Time_trg;
 
-        geometry_msgs::Pose Pose_trg;
-        geometry_msgs::Twist Twist_trg;
-        geometry_msgs::Vector3 Eul_trg;
+        geometry_msgs::Pose Pose_B_O_trg;
+        geometry_msgs::Twist Twist_B_O_trg;
+        geometry_msgs::Vector3 Eul_B_O_trg;
+        double Vel_mag_B_O_trg = NAN;
+        double Vel_angle_B_O_trg = NAN;
+
+        geometry_msgs::Pose Pose_P_B_trg;
+        geometry_msgs::Twist Twist_B_P_trg;
+        geometry_msgs::Vector3 Eul_P_B_trg;
+
+        double Vel_mag_B_P_trg = NAN;
+        double Vel_angle_B_P_trg = NAN;
+        double D_perp_trg = NAN;
+        double D_perp_CR_trg = NAN;
+
+        geometry_msgs::Vector3 Optical_Flow_trg;
+        double Tau_trg = NAN;
+        double Tau_CR_trg = NAN;
+        double Theta_x_trg = NAN;
+        double Theta_y_trg = NAN;
+
+        double Policy_Trg_Action_trg = NAN;
+        double Policy_Rot_Action_trg = NAN;
+
+        // =======================
+        //   ONBOARD IMPACT DATA
+        // =======================
+        bool Impact_Flag_OB = false;
+        bool OnceFlag_Impact_OB = false;
+        ros::Time Time_impact_OB;
+
+        geometry_msgs::Pose Pose_B_O_impact_OB;
+        geometry_msgs::Vector3 Eul_B_O_impact_OB;
+
+        geometry_msgs::Twist Twist_B_P_impact_OB;
+        geometry_msgs::Vector3 Eul_P_B_impact_OB;
+        float Accel_B_O_Mag_impact_OB = NAN;
 
 
-        double Tau_trg = 0.0;
-        double Theta_x_trg = 0.0;
-        double Theta_y_trg = 0.0;
-        double D_perp_trg = 0.0;
+        // ==========================
+        //    EXTERNAL IMPACT DATA
+        // ==========================
+        bool Impact_Flag_Ext = false;
+        ros::Time Time_impact_Ext;
 
-        boost::array<double,4> FM_trg{0,0,0,0};
+        geometry_msgs::Pose Pose_B_O_impact_Ext;
+        geometry_msgs::Vector3 Eul_B_O_impact_Ext;
 
-        double Policy_Trg_Action_trg = 0.0;
-        double Policy_Flip_Action_trg = 0.0;
+        geometry_msgs::Twist Twist_B_P_impact_Ext;
+        geometry_msgs::Vector3 Eul_P_B_impact_Ext;
+        float Rot_Sum_impact_Ext = NAN;
+
+        bool BodyContact_Flag = false;
+        bool ForelegContact_Flag = false;
+        bool HindlegContact_Flag = false;
+        bool OnceFlag_Impact = false;
+        std::string BodyCollision_str = "SAR_Body::Body_Collision_";
+        std::string LegCollision_str = "Leg_Collision_";
 
 
-        // ===================
-        //     IMPACT DATA
-        // ===================
-
-        bool impact_flag = false;
-        bool BodyContact_flag = false;
-        bool OnceFlag_impact = false;
-        std::string BodyCollision_str;  // String of Body Name
-
-
-        ros::Time Time_impact;
+        // ==========================
+        //    IMPACT FORCE DATA
+        // ==========================
+        bool Impact_Flag = false;
         geometry_msgs::Vector3 Force_impact;
-        geometry_msgs::Pose Pose_impact;
-        geometry_msgs::Twist Twist_impact;
-        geometry_msgs::Vector3 Eul_impact;
-
-
-        double impact_force_x = 0.0; // Max impact force in X-direction [N]
-        double impact_force_y = 0.0; // Max impact force in Y-direction [N]
-        double impact_force_z = 0.0; // Max impact force in Z-direction [N]
-        double impact_magnitude = 0.0; // Current impact force magnitude
+        double Force_Impact_x = 0.0; // Max impact force in X-direction [N]
+        double Force_Impact_y = 0.0; // Max impact force in Y-direction [N]
+        double Force_Impact_z = 0.0; // Max impact force in Z-direction [N]
+        double Impact_Magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
-        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {1};
-        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {4};
+        boost::circular_buffer<geometry_msgs::Vector3> Eul_B_O_impact_buff {4};
+
+        boost::circular_buffer<geometry_msgs::Twist> Twist_P_B_impact_buff {4};
+        boost::circular_buffer<geometry_msgs::Vector3> Eul_P_B_impact_buff {4};
 
         // ==================
         //     MISC DATA
@@ -388,48 +441,45 @@ class SAR_DataConverter {
         uint8_t Pad3_Contact = 0;
         uint8_t Pad4_Contact = 0;
 
-        uint8_t Pad_Connect_Sum = 0;
+        uint8_t Pad_Connections = 0;
 
         // ====================
         //     DEBUG VALUES
         // ====================
 
-        bool Motorstop_Flag = false;
-        bool Pos_Ctrl_Flag = false;
-        bool Vel_Ctrl_Flag = false;
-        bool Tumble_Detection = false;
         bool Tumbled_Flag = false;
-
-        bool AttCtrl_Flag = false;
-        bool Moment_Flag = false;
+        bool TumbleDetect_Flag = false;
+        bool MotorStop_Flag = false;
+        bool AngAccel_Flag = false;
+        bool SafeMode_Flag = false;
         bool CustomThrust_Flag = false;
         bool CustomPWM_Flag = false;
 
-        bool Traj_Active_Flag = false;
+        bool Pos_Ctrl_Flag = false;
+        bool Vel_Ctrl_Flag = false;
         bool Policy_Armed_Flag = false;
-        bool isCamActive = false;
+
+
+        bool CamActive_Flag = false;
 
         // SIM
         bool Sticky_Flag = false;
-
-        // EXPERIMENT
-        bool SafeModeEnable = false;
 
 
         // ===================
         //     RL DATA
         // ===================
         ros::Subscriber RL_Data_Sub;
-        uint8_t k_ep = 0;
-        uint8_t k_run = 0;
+        uint8_t K_ep = 0;
+        uint8_t K_run = 0;
         uint8_t n_rollouts = 8;
 
         boost::array<double,2> mu{0,0};
         boost::array<float,2> sigma{0,0};
-        boost::array<float,3> policy{0,0,0};
+        boost::array<float,2> policy{0,0};
 
         float reward = 0.0;
-        boost::array<float,5> reward_vals{0,0,0,0,0};
+        boost::array<float,6> reward_vals{0,0,0,0,0,0};
 
 
         boost::array<float,3> vel_d{0,0,0};
@@ -446,33 +496,55 @@ class SAR_DataConverter {
     
 };
 
-
-inline void SAR_DataConverter::LoadParams()
+inline void SAR_DataConverter::loadInitParams()
 {
     // SAR SETTINGS
+    ros::param::get("/DATA_TYPE",DATA_TYPE);
     ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
 
-    std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;
-    std::string SAR_Config_str = "/Config/" + SAR_Config;
+    SAR_Type_str = "/SAR_Type/" + SAR_Type;
+    SAR_Config_str = "/Config/" + SAR_Config;
 
     // UPDATE INTERTIAL PARAMETERS
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Iyy",Iyy);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Izz",Izz);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Mass",Mass);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Ixx",Ixx);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Iyy",Iyy);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Izz",Izz);
+
+    // UPDATE LEG PARAMETERS
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Gamma_eff",Gamma_eff);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/L_eff",L_eff);
+    ros::param::get(SAR_Type_str + "/Leg_Params/K_Pitch",K_Pitch);
+    ros::param::get(SAR_Type_str + "/Leg_Params/K_Yaw",K_Yaw);
+
 
 
     // PLANE SETTINGS
     ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
-    if (isInit == false)
+    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_deg);
+    ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos.x);
+    ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
+    ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
+
+    
+    // DATA SETTINGS
+    if(DATA_TYPE.compare("SIM") == 0)
     {
-        ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
-        ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos.x);
-        ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
-        ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
+        ros::param::set("/use_sim_time",true);
+    }
+    else
+    {
+        ros::param::set("/use_sim_time",false);
     }
 
+    // UPDATE REMAINING PARAMS
+    updateParams();
+}
+
+inline void SAR_DataConverter::updateParams()
+{
+    
     // UPDATE CTRL GAINS
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kd_xy",P_kd_xy);
@@ -494,7 +566,6 @@ inline void SAR_DataConverter::LoadParams()
 
 
     // DEBUG SETTINGS
-    ros::param::get("/DATA_TYPE",DATA_TYPE);
     ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
     ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
     ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
@@ -502,78 +573,98 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get("/SAR_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
     ros::param::get("/SAR_DC_SETTINGS/Console_Output",SHOW_CONSOLE);
 
-    if(DATA_TYPE.compare("SIM") == 0)
-    {
-        ros::param::set("/use_sim_time",true);
-    }
-    else
-    {
-        ros::param::set("/use_sim_time",false);
-    }
+}
+
+inline void SAR_DataConverter::resetStateData()
+{
+    D_perp_min = INFINITY;
+}
+
+inline void SAR_DataConverter::resetTriggerData()
+{
+    Trg_Flag = false;
+    OnceFlag_Trg = false;
+    Time_trg.sec = 0.0;
+    Time_trg.nsec = 0.0;
+
+    // STATES WRT ORIGIN
+    Pose_B_O_trg = geometry_msgs::Pose();
+    Twist_B_O_trg = geometry_msgs::Twist();
+    Eul_B_O_trg = geometry_msgs::Vector3();
+
+    // STATES WRT PLANE
+    Pose_P_B_trg = geometry_msgs::Pose();
+    Twist_B_P_trg = geometry_msgs::Twist();
+    Eul_P_B_trg = geometry_msgs::Vector3();
+    Vel_mag_B_P_trg = NAN;
+    Vel_angle_B_P_trg = NAN;
+    D_perp_trg = NAN;
+
+    // OPTICAL FLOW
+    Optical_Flow_trg = geometry_msgs::Vector3();
+    Tau_CR_trg = NAN;
+
+    // POLICY ACTIONS
+    Policy_Trg_Action_trg = NAN;
+    Policy_Rot_Action_trg = NAN;
+}
+
+inline void SAR_DataConverter::resetImpactData()
+{
+    Impact_Flag = false;
+
+    // ONBOARD IMPACT DATA
+    Impact_Flag_OB = false;
+    OnceFlag_Impact_OB = false;
+    Time_impact_OB.sec = 0.0;
+    Time_impact_OB.nsec = 0.0;
+
+    Pose_B_O_impact_OB = geometry_msgs::Pose();
+    Eul_B_O_impact_OB = geometry_msgs::Vector3();
+
+    Twist_B_P_impact_OB = geometry_msgs::Twist();
+    Eul_P_B_impact_OB = geometry_msgs::Vector3();
+    Accel_B_O_Mag_impact_OB = NAN;
+
+    // EXTERNAL IMPACT DATA
+    Impact_Flag_Ext = false;
+    Time_impact_Ext.sec = 0.0;
+    Time_impact_Ext.nsec = 0.0;
+
+    BodyContact_Flag = false;
+    ForelegContact_Flag = false;
+    HindlegContact_Flag = false;
+
+    Pose_B_O_impact_Ext = geometry_msgs::Pose();
+    Eul_B_O_impact_Ext = geometry_msgs::Vector3();
+
+    Twist_B_P_impact_Ext = geometry_msgs::Twist();
+    Eul_P_B_impact_Ext = geometry_msgs::Vector3();
+    Rot_Sum = 0.0;
+    Rot_Sum_impact_Ext = NAN;
+
+    // IMPACT FORCE DATA
+    Force_impact = geometry_msgs::Vector3();
+    Impact_Magnitude = 0.0;
+
+    // STICKY PAD CONTACTS
+    Pad_Connections = 0;
+    Pad1_Contact = 0;
+    Pad2_Contact = 0;
+    Pad3_Contact = 0;
+    Pad4_Contact = 0;
 
 }
 
 inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res)
 {
-    // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    SAR_DataConverter::Send_Cmd2Ctrl(req);
-    res.srv_Success = true;
-    return res.srv_Success;
-}
-
-inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &req)
-{
     switch (req.cmd_type)
     {
         case 0:
-            // RESET FLIP TIME
-            OnceFlag_flip = false;
-            Time_trg.sec = 0.0;
-            Time_trg.nsec = 0.0;
-            Rot_Sum = 0.0;
 
-            // RESET IMPACT TIME
-            impact_flag = false;
-            BodyContact_flag = false;
-            OnceFlag_impact = false;
-            Time_impact.sec = 0.0;
-            Time_impact.nsec = 0.0;
-
-            // RESET IMPACT VALUES
-            Pose_impact.position.x = 0.0;
-            Pose_impact.position.y = 0.0;
-            Pose_impact.position.z = 0.0;
-
-            Pose_impact.orientation.x = 0.0;
-            Pose_impact.orientation.y = 0.0;
-            Pose_impact.orientation.z = 0.0;
-            Pose_impact.orientation.w = 0.0;
-
-            Twist_impact.linear.x = 0.0;
-            Twist_impact.linear.y = 0.0;
-            Twist_impact.linear.z = 0.0;
-
-            Twist_impact.angular.x = 0.0;
-            Twist_impact.angular.y = 0.0;
-            Twist_impact.angular.z = 0.0;
-
-            Eul_impact.x = 0.0;
-            Eul_impact.y = 0.0;
-            Eul_impact.z = 0.0;
-
-            // RESET MAX IMPACT FORCE
-            impact_force_x = 0.0;
-            impact_force_y = 0.0;
-            impact_force_z = 0.0;
-            impact_magnitude = 0;
-
-            // RESET PAD CONTACTS FLAGS
-            Pad1_Contact = 0;
-            Pad2_Contact = 0;
-            Pad3_Contact = 0;
-            Pad4_Contact = 0;
-
-            Pad_Connect_Sum = 0;
+            resetStateData();
+            resetTriggerData();
+            resetImpactData();
 
             if (DATA_TYPE.compare("SIM") == 0)
             {
@@ -584,7 +675,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             break;
 
         case 21:  // UPDATE PARAMS IN SAR_DC 
-            SAR_DataConverter::LoadParams();
+            SAR_DataConverter::updateParams();
             break;
         
         case 92: // ACTIVATE STICKY FEET
@@ -605,12 +696,12 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             break;
 
         case 93: // UPDATE PLANE POSITION
-            SAR_DataConverter::Update_Landing_Surface_Pose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
+            SAR_DataConverter::setLandingSurfacePose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
 
             Plane_Pos.x = req.cmd_vals.x;
             Plane_Pos.y = req.cmd_vals.y;
             Plane_Pos.z = req.cmd_vals.z;
-            Plane_Angle = req.cmd_flag;
+            Plane_Angle_deg = req.cmd_flag;
             
             break;
 
@@ -619,16 +710,13 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
     }
 
 
-    // SIMULATION:
-    // SEND COMMAND VALUES TO SIM CONTROLLER
+    // SIMULATION: SEND COMMAND VALUES TO SIM CONTROLLER (SEND AS SERVICE REQUEST)
     sar_msgs::CTRL_Cmd_srv srv;
     srv.request = req;
     CMD_Output_Service.call(srv);
 
 
-    // EXPERIMENT: 
-    // SEND COMMAND VALUES TO PHYSICAL CONTROLLER
-    // BROADCAST CMD VALUES AS ROS MESSAGE
+    // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER (BROADCAST CMD VALUES AS ROS MESSAGE)
     sar_msgs::CTRL_Cmd cmd_msg;
     cmd_msg.cmd_type = req.cmd_type;
     cmd_msg.cmd_vals = req.cmd_vals;

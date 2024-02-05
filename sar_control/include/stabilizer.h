@@ -5,6 +5,7 @@
 #include <thread>
 #include <stdio.h>
 #include <string>
+#include <boost/circular_buffer.hpp>
 
 // FIRMWARE INCLUDES
 #include "app.h"
@@ -18,8 +19,11 @@
 #include <sensor_msgs/Imu.h>
 
 #include "sar_msgs/CTRL_Cmd_srv.h"
+#include "sar_msgs/CTRL_Get_Obs.h"
 #include "sar_msgs/CTRL_Data.h"
 #include "sar_msgs/CTRL_Debug.h"
+#include "sar_msgs/SAR_MiscData.h"
+
 
 
 
@@ -43,6 +47,8 @@ class Controller
             CTRL_Data_Publisher = nh->advertise<sar_msgs::CTRL_Data>("/CTRL/data",1);
             CTRL_Debug_Publisher = nh->advertise<sar_msgs::CTRL_Debug>("CTRL/debug",1);
             CTRL_CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
+            Get_Obs_Service = nh->advertiseService("/CTRL/Get_Obs",&Controller::Get_Obs_Resp,this);
+            SAR_DC_Subscriber = nh->subscribe("/SAR_DC/MiscData",1,&Controller::Plane_Pose_Callback,this,ros::TransportHints().tcpNoDelay());
 
 
 
@@ -60,12 +66,15 @@ class Controller
 
         // SERVICES
         ros::ServiceServer CTRL_CMD_Service;
+        ros::ServiceServer Get_Obs_Service;
         ros::Publisher CTRL_Data_Publisher;
         ros::Publisher CTRL_Debug_Publisher;
+        ros::Subscriber SAR_DC_Subscriber;
 
         // MESSAGES
         sar_msgs::CTRL_Data CtrlData_msg;
         sar_msgs::CTRL_Debug CtrlDebug_msg;
+        boost::circular_buffer<nav_msgs::Odometry> Ext_Position_msgBuffer {10};
 
 
         // DEFINE THREAD OBJECTS
@@ -77,7 +86,8 @@ class Controller
         sensorData_t sensorData;
         state_t state;
         control_t control;
-        uint32_t tick = 1;
+        uint32_t tick = 2;
+        bool ResetTickDelay_Flag = false;
 
         // ROS PARAMS
         std::string SAR_Type;
@@ -92,22 +102,46 @@ class Controller
 
 
 
+
+
+
         // FUNCTION PROTOTYPES
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         bool CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
+        bool Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res);
+        void Plane_Pose_Callback(const sar_msgs::SAR_MiscData::ConstPtr &msg);
 
 
         void appLoop();
         void stabilizerLoop();
 
-        void loadParams();
+        void loadInitParams();
         void publishCtrlData();
         void publishCtrlDebug();
 
 
 };
 
+void Controller::Plane_Pose_Callback(sar_msgs::SAR_MiscData::ConstPtr const &msg)
+{
+    Plane_Angle_deg = msg->Plane_Angle;
+    r_P_O.x = msg->Plane_Pos.x;
+    r_P_O.y = msg->Plane_Pos.y;
+    r_P_O.z = msg->Plane_Pos.z;
+}
+
+bool Controller::Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res)
+{
+    res.Tick = tick;
+    res.Tau = Tau;
+    res.Theta_x = Theta_x;
+    res.D_perp = D_perp;
+    res.Plane_Angle_deg = Plane_Angle_deg;
+    res.Tau_CR = Tau_CR;
+
+    return 1;
+}
 
 bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res)
 {
@@ -124,7 +158,7 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
 
     if(req.cmd_type == 21) // RESET ROS PARAM VALUES
     {
-        Controller::loadParams();
+        Controller::loadInitParams();
 
     }
 
@@ -135,8 +169,8 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
 // IMU VALUES FROM MODEL SENSOR PLUGIN
 void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 {
-    sensorData.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
-    sensorData.acc.y = msg->linear_acceleration.y/9.8066;
+    sensorData.acc.x = -msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
+    sensorData.acc.y = -msg->linear_acceleration.y/9.8066;
     sensorData.acc.z = msg->linear_acceleration.z/9.8066;
 
     sensorData.gyro.x = msg->angular_velocity.x*180.0/M_PI; // Convert to deg/s to match crazyflie sensors
@@ -148,25 +182,38 @@ void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
     state.attitudeQuaternion.z = msg->orientation.z;
     state.attitudeQuaternion.w = msg->orientation.w;
 
+    state.acc.x = -msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
+    state.acc.y = -msg->linear_acceleration.y/9.8066;
+    state.acc.z = msg->linear_acceleration.z/9.8066;
+
 }
 
 // POSE AND TWIST FROM "VICON" SYSTEM (GAZEBO WORLD FRAME)
 void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-    // UPDATE POSE FROM VICON SYSTEM
-    state.position.x = msg->pose.pose.position.x;
-    state.position.y = msg->pose.pose.position.y;
-    state.position.z = msg->pose.pose.position.z;
+    Ext_Position_msgBuffer.push_back(*msg);
 
-    // UPDATE VELOCITIES FROM VICON SYSTEM
-    state.velocity.x = msg->twist.twist.linear.x;
-    state.velocity.y = msg->twist.twist.linear.y;
-    state.velocity.z = msg->twist.twist.linear.z;
+    // Check if the buffer is full
+    if (Ext_Position_msgBuffer.full()) {
+        // The front of the queue is the 10th message from the past
+        nav_msgs::Odometry delayedMsg = Ext_Position_msgBuffer.front();
+
+        // UPDATE POSE FROM VICON SYSTEM
+        state.position.x = delayedMsg.pose.pose.position.x;
+        state.position.y = delayedMsg.pose.pose.position.y;
+        state.position.z = delayedMsg.pose.pose.position.z;
+
+        // UPDATE VELOCITIES FROM VICON SYSTEM
+        state.velocity.x = delayedMsg.twist.twist.linear.x;
+        state.velocity.y = delayedMsg.twist.twist.linear.y;
+        state.velocity.z = delayedMsg.twist.twist.linear.z;
+
+    }  
 
 }
 
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
-void Controller::loadParams()
+void Controller::loadInitParams()
 {
     printf("Updating Parameters\n");
 
@@ -174,40 +221,31 @@ void Controller::loadParams()
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
     ros::param::get("/CAM_SETTINGS/Cam_Config",Cam_Config);
 
-
-
-    ros::param::get("/Cam_Config/" + Cam_Config + "/X_Offset",r_CB.x);
-    ros::param::get("/Cam_Config/" + Cam_Config + "/Y_Offset",r_CB.y);
-    ros::param::get("/Cam_Config/" + Cam_Config + "/Z_Offset",r_CB.z);
-
-
     
     // UPDATE INERTIAL PARAMETERS
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Mass",m);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ixx",Ixx);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Iyy",Iyy);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Izz",Izz);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Mass",m);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Ixx",Ixx);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Iyy",Iyy);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Izz",Izz);
 
 
     // UPDATE SYSTEM PARAMETERS
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/f_max",f_max);
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/C_tf",C_tf);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Thrust_max",Thrust_max);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/C_tf",C_tf);
 
+    // UPDAT GEOMETRIC PARAMETERS
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Forward_Reach",Forward_Reach);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/L_eff",L_eff);
 
     // UPDATE PROP DISTANCES
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/Prop_Front",Prop_Front_Vec);
-    Prop_14_x,Prop_14_y = Prop_Front_Vec[0],Prop_Front_Vec[1];
-
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
-    Prop_23_x,Prop_23_y = Prop_Rear_Vec[0],Prop_Rear_Vec[1];
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Front",Prop_Front_Vec);
+    Prop_14_x = Prop_Front_Vec[0];
+    Prop_14_y = Prop_Front_Vec[1];
 
 
-
-    // UPDATE LANDING SURFACE PARAMETERS
-    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
-    ros::param::get("/PLANE_SETTINGS/Pos_X",r_PO.x);
-    ros::param::get("/PLANE_SETTINGS/Pos_Y",r_PO.y);
-    ros::param::get("/PLANE_SETTINGS/Pos_Z",r_PO.z);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
+    Prop_23_x = Prop_Rear_Vec[0];
+    Prop_23_y = Prop_Rear_Vec[1];
 
 
 
@@ -232,7 +270,7 @@ void Controller::loadParams()
     ros::param::get("/SAR_Type/" + SAR_Type + "/CtrlGains/R_ki_z",R_ki_z);
     ros::param::get("/SAR_Type/" + SAR_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
-    ros::param::get("/SAR_SETTINGS/Cam_Active",CamActive);
+    ros::param::get("/SAR_SETTINGS/Cam_Active",CamActive_Flag);
 
 
     // SIMULATION SETTINGS FROM CONFIG FILE
@@ -250,18 +288,27 @@ void Controller::loadParams()
         Policy = DEEP_RL_SB3;
     }    
 
+    int Vicon_Delay_ms;
+    ros::param::get("/SIM_SETTINGS/Vicon_Delay",Vicon_Delay_ms);
+    Ext_Position_msgBuffer.set_capacity(Vicon_Delay_ms);
+
 }
 
 
 void Controller::publishCtrlDebug()
 {
-    CtrlDebug_msg.Pos_Ctrl = (bool)kp_xf;
-    CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
-    CtrlDebug_msg.Tumble_Detection = tumble_detection;
-    CtrlDebug_msg.Tumbled_Flag = tumbled;
-    CtrlDebug_msg.Moment_Flag = moment_flag; 
-    CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
-    CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
+    CtrlDebug_msg.Tumbled_Flag = Tumbled_Flag;
+    CtrlDebug_msg.TumbleDetect_Flag = TumbleDetect_Flag;
+    CtrlDebug_msg.MotorStop_Flag = MotorStop_Flag;
+    CtrlDebug_msg.AngAccel_Flag = AngAccel_Flag; 
+    CtrlDebug_msg.SafeMode_Flag = SafeMode_Flag;
+    CtrlDebug_msg.CustomThrust_Flag = CustomThrust_Flag;
+    CtrlDebug_msg.CustomPWM_Flag = CustomPWM_Flag;
+
+    CtrlDebug_msg.Pos_Ctrl_Flag = (bool)kp_xf;
+    CtrlDebug_msg.Vel_Ctrl_Flag = (bool)kd_xf;
+    CtrlDebug_msg.Policy_Armed_Flag = Policy_Armed_Flag; 
+    CtrlDebug_msg.CamActive_Flag = CamActive_Flag;
 
     CTRL_Debug_Publisher.publish(CtrlDebug_msg);
 }
@@ -269,44 +316,77 @@ void Controller::publishCtrlDebug()
 // PUBLISH CONTROLLER DATA ON ROS TOPIC
 void Controller::publishCtrlData()
 {
-    // STATE DATA
-    CtrlData_msg.Pose.position.x = statePos.x;
-    CtrlData_msg.Pose.position.y = statePos.y;
-    CtrlData_msg.Pose.position.z = statePos.z;
+    CtrlData_msg.Tick = tick;
 
-    CtrlData_msg.Pose.orientation.x = stateQuat.x;
-    CtrlData_msg.Pose.orientation.y = stateQuat.y;
-    CtrlData_msg.Pose.orientation.z = stateQuat.z;
-    CtrlData_msg.Pose.orientation.w = stateQuat.w;
+    // STATE DATA WRT ORIGIN
+    CtrlData_msg.Pose_B_O.position.x = Pos_B_O.x;
+    CtrlData_msg.Pose_B_O.position.y = Pos_B_O.y;
+    CtrlData_msg.Pose_B_O.position.z = Pos_B_O.z;
 
-    CtrlData_msg.Twist.linear.x = stateVel.x;
-    CtrlData_msg.Twist.linear.y = stateVel.y;
-    CtrlData_msg.Twist.linear.z = stateVel.z;
+    CtrlData_msg.Pose_B_O.orientation.x = Quat_B_O.x;
+    CtrlData_msg.Pose_B_O.orientation.y = Quat_B_O.y;
+    CtrlData_msg.Pose_B_O.orientation.z = Quat_B_O.z;
+    CtrlData_msg.Pose_B_O.orientation.w = Quat_B_O.w;
 
-    CtrlData_msg.Twist.angular.x = stateOmega.x;
-    CtrlData_msg.Twist.angular.y = stateOmega.y;
-    CtrlData_msg.Twist.angular.z = stateOmega.z;
+    CtrlData_msg.Twist_B_O.linear.x = Vel_B_O.x;
+    CtrlData_msg.Twist_B_O.linear.y = Vel_B_O.y;
+    CtrlData_msg.Twist_B_O.linear.z = Vel_B_O.z;
+
+    CtrlData_msg.Twist_B_O.angular.x = Omega_B_O.x;
+    CtrlData_msg.Twist_B_O.angular.y = Omega_B_O.y;
+    CtrlData_msg.Twist_B_O.angular.z = Omega_B_O.z;
+
+    CtrlData_msg.Accel_B_O.linear.x = Accel_B_O.x;
+    CtrlData_msg.Accel_B_O.linear.y = Accel_B_O.y;
+    CtrlData_msg.Accel_B_O.linear.z = Accel_B_O.z;
+
+    CtrlData_msg.Accel_B_O.angular.x = dOmega_B_O.x;
+    CtrlData_msg.Accel_B_O.angular.y = dOmega_B_O.y;
+    CtrlData_msg.Accel_B_O.angular.z = dOmega_B_O.z;
+
+    CtrlData_msg.Accel_B_O_Mag = Accel_B_O_Mag;
+
+
+    // STATE DATA WRT PLANE
+    CtrlData_msg.Pose_P_B.position.x = Pos_P_B.x;
+    CtrlData_msg.Pose_P_B.position.y = Pos_P_B.y;
+    CtrlData_msg.Pose_P_B.position.z = Pos_P_B.z;
+
+    CtrlData_msg.Pose_P_B.orientation.x = Quat_P_B.x;
+    CtrlData_msg.Pose_P_B.orientation.y = Quat_P_B.y;
+    CtrlData_msg.Pose_P_B.orientation.z = Quat_P_B.z;
+    CtrlData_msg.Pose_P_B.orientation.w = Quat_P_B.w;
+
+    CtrlData_msg.Twist_B_P.linear.x = Vel_B_P.x;
+    CtrlData_msg.Twist_B_P.linear.y = Vel_B_P.y;
+    CtrlData_msg.Twist_B_P.linear.z = Vel_B_P.z;
+
+    CtrlData_msg.Twist_B_P.angular.x = Omega_B_P.x;
+    CtrlData_msg.Twist_B_P.angular.y = Omega_B_P.y;
+    CtrlData_msg.Twist_B_P.angular.z = Omega_B_P.z;
+
 
     // PLANE RELATIVE STATES
     CtrlData_msg.D_perp = D_perp;
-    CtrlData_msg.V_perp = V_perp;
-    CtrlData_msg.V_tx = V_tx;
-    CtrlData_msg.V_ty = V_ty;
+    CtrlData_msg.D_perp_CR = D_perp_CR;
+    CtrlData_msg.Vel_mag_B_P = Vel_mag_B_P;
+    CtrlData_msg.Vel_angle_B_P = Vel_angle_B_P;
 
     // OPTICAL FLOW DATA
-    CtrlData_msg.Tau = Tau;
-    CtrlData_msg.Theta_x = Theta_x;
-    CtrlData_msg.Theta_y = Theta_y;
+    CtrlData_msg.Optical_Flow.x = Theta_x;
+    CtrlData_msg.Optical_Flow.y = Theta_y;
+    CtrlData_msg.Optical_Flow.z = Tau;
+    CtrlData_msg.Tau_CR = Tau_CR;
     
 
     // ESTIMATED OPTICAL FLOW DATA
-    CtrlData_msg.Tau_est = Tau_est;
-    CtrlData_msg.Theta_x_est = Theta_x_est;
-    CtrlData_msg.Theta_y_est = Theta_y_est;
+    CtrlData_msg.Optical_Flow_Cam.x = Theta_x_Cam;
+    CtrlData_msg.Optical_Flow_Cam.y = Theta_y_Cam;
+    CtrlData_msg.Optical_Flow_Cam.z = Tau_Cam;
 
-    // NEURAL NETWORK DATA
+    // POLICY ACTIONS
     CtrlData_msg.Policy_Trg_Action = Policy_Trg_Action;
-    CtrlData_msg.Policy_Flip_Action = Policy_Flip_Action;
+    CtrlData_msg.Policy_Rot_Action = Policy_Rot_Action;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
@@ -327,41 +407,86 @@ void Controller::publishCtrlData()
 
 
 
-    // STATE DATA (FLIP)
-    CtrlData_msg.flip_flag = flip_flag;
+    // ==========================
+    //  STATES AT POLICY TRIGGER
+    // ==========================
+    CtrlData_msg.Trg_Flag = Trg_Flag;
 
-    // CtrlData_msg.Pose_trg.header.stamp = t_flip;             
-    CtrlData_msg.Pose_trg.position.x = statePos_trg.x;
-    CtrlData_msg.Pose_trg.position.y = statePos_trg.y;
-    CtrlData_msg.Pose_trg.position.z = statePos_trg.z;
+    // STATE DATA WRT ORIGIN
+    CtrlData_msg.Pose_B_O_trg.position.x = Pos_B_O_trg.x;
+    CtrlData_msg.Pose_B_O_trg.position.y = Pos_B_O_trg.y;
+    CtrlData_msg.Pose_B_O_trg.position.z = Pos_B_O_trg.z;
 
-    CtrlData_msg.Pose_trg.orientation.x = stateQuat_trg.x;
-    CtrlData_msg.Pose_trg.orientation.y = stateQuat_trg.y;
-    CtrlData_msg.Pose_trg.orientation.z = stateQuat_trg.z;
-    CtrlData_msg.Pose_trg.orientation.w = stateQuat_trg.w;
+    CtrlData_msg.Pose_B_O_trg.orientation.x = Quat_B_O_trg.x;
+    CtrlData_msg.Pose_B_O_trg.orientation.y = Quat_B_O_trg.y;
+    CtrlData_msg.Pose_B_O_trg.orientation.z = Quat_B_O_trg.z;
+    CtrlData_msg.Pose_B_O_trg.orientation.w = Quat_B_O_trg.w;
 
-    CtrlData_msg.Twist_trg.linear.x = stateVel_trg.x;
-    CtrlData_msg.Twist_trg.linear.y = stateVel_trg.y;
-    CtrlData_msg.Twist_trg.linear.z = stateVel_trg.z;
+    CtrlData_msg.Twist_B_O_trg.linear.x = Vel_B_O_trg.x;
+    CtrlData_msg.Twist_B_O_trg.linear.y = Vel_B_O_trg.y;
+    CtrlData_msg.Twist_B_O_trg.linear.z = Vel_B_O_trg.z;
 
-    CtrlData_msg.Twist_trg.angular.x = stateOmega_trg.x;
-    CtrlData_msg.Twist_trg.angular.y = stateOmega_trg.y;
-    CtrlData_msg.Twist_trg.angular.z = stateOmega_trg.z;
+    CtrlData_msg.Twist_B_O_trg.angular.x = Omega_B_O_trg.x;
+    CtrlData_msg.Twist_B_O_trg.angular.y = Omega_B_O_trg.y;
+    CtrlData_msg.Twist_B_O_trg.angular.z = Omega_B_O_trg.z;
 
-    // OPTICAL FLOW DATA (FLIP)
-    CtrlData_msg.Tau_trg = Tau_trg;
-    CtrlData_msg.Theta_x_trg = Theta_x_trg;
-    CtrlData_msg.Theta_y_trg = Theta_y_trg;
+    // STATE DATA WRT PLANE
+    CtrlData_msg.Pose_P_B_trg.position.x = Pos_P_B_trg.x;
+    CtrlData_msg.Pose_P_B_trg.position.y = Pos_P_B_trg.y;
+    CtrlData_msg.Pose_P_B_trg.position.z = Pos_P_B_trg.z;
+
+    CtrlData_msg.Pose_P_B_trg.orientation.x = Quat_P_B_trg.x;
+    CtrlData_msg.Pose_P_B_trg.orientation.y = Quat_P_B_trg.y;
+    CtrlData_msg.Pose_P_B_trg.orientation.z = Quat_P_B_trg.z;
+    CtrlData_msg.Pose_P_B_trg.orientation.w = Quat_P_B_trg.w;
+
+    CtrlData_msg.Twist_B_P_trg.linear.x = Vel_B_P_trg.x;
+    CtrlData_msg.Twist_B_P_trg.linear.y = Vel_B_P_trg.y;    
+    CtrlData_msg.Twist_B_P_trg.linear.z = Vel_B_P_trg.z;
+
+    CtrlData_msg.Twist_B_P_trg.angular.x = Omega_B_P_trg.x;
+    CtrlData_msg.Twist_B_P_trg.angular.y = Omega_B_P_trg.y;
+    CtrlData_msg.Twist_B_P_trg.angular.z = Omega_B_P_trg.z;
+
+    // PLANE RELATIVE STATES
     CtrlData_msg.D_perp_trg = D_perp_trg;
+    CtrlData_msg.D_perp_CR_trg = D_perp_CR_trg;
+    CtrlData_msg.Vel_mag_B_P_trg = Vel_mag_B_P_trg;
+    CtrlData_msg.Vel_angle_B_P_trg = Vel_angle_B_P_trg;
 
-    // POLICY ACTIONS (FLIP)
+
+    // OPTICAL FLOW DATA (TRIGGER)
+    CtrlData_msg.Optical_Flow_trg.x = Theta_x_trg;
+    CtrlData_msg.Optical_Flow_trg.y = Theta_y_trg;
+    CtrlData_msg.Optical_Flow_trg.z = Tau_trg;
+    CtrlData_msg.Tau_CR_trg = Tau_CR_trg;
+
+    // POLICY ACTIONS (TRIGGER)
     CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    CtrlData_msg.Policy_Flip_Action_trg = Policy_Flip_Action_trg;
+    CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
 
-    // CONTROL ACTIONS (FLIP)
-    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
+    // ==========================
+    //      STATES AT IMPACT
+    // ==========================
+    CtrlData_msg.Impact_Flag_OB = Impact_Flag_OB;
+    CtrlData_msg.Accel_B_O_Mag_impact_OB = Accel_B_O_Mag_impact_OB;
 
+    CtrlData_msg.Pose_B_O_impact_OB.position.x = Pos_B_O_impact_OB.x;
+    CtrlData_msg.Pose_B_O_impact_OB.position.y = Pos_B_O_impact_OB.y;
+    CtrlData_msg.Pose_B_O_impact_OB.position.z = Pos_B_O_impact_OB.z;
+
+    CtrlData_msg.Pose_B_O_impact_OB.orientation.x = Quat_B_O_impact_OB.x;
+    CtrlData_msg.Pose_B_O_impact_OB.orientation.y = Quat_B_O_impact_OB.y;
+    CtrlData_msg.Pose_B_O_impact_OB.orientation.z = Quat_B_O_impact_OB.z;
+    CtrlData_msg.Pose_B_O_impact_OB.orientation.w = Quat_B_O_impact_OB.w;
+
+    CtrlData_msg.Twist_B_P_impact_OB.linear.x = Vel_B_P_impact_OB.x;
+    CtrlData_msg.Twist_B_P_impact_OB.linear.y = Vel_B_P_impact_OB.y;
+    CtrlData_msg.Twist_B_P_impact_OB.linear.z = Vel_B_P_impact_OB.z;
+
+    CtrlData_msg.Twist_B_P_impact_OB.angular.x = Omega_B_P_impact_OB.x;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.y = Omega_B_P_impact_OB.y;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.z = Omega_B_P_impact_OB.z;
     
     CTRL_Data_Publisher.publish(CtrlData_msg);
-
 }

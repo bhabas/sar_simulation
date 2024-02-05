@@ -42,9 +42,11 @@ add_service_files(
   Surface_Params.srv
   
   CTRL_Cmd_srv.srv
+  CTRL_Get_Obs.srv
   Model_Move.srv
   Cam_Settings.srv
-  Surface_Settings.srv
+
+  World_Step.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

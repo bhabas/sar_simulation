@@ -127,7 +127,7 @@ Sim_Settings.yaml
 SAR_SETTINGS:
   SAR_Type - Quadrotor Classification
   SAR_Config -  Quadrotor Model/Configuration
-  Policy_Type - Policy Types [PARAM_OPTIM,SVL_POLICY,DEEP_RL_SB3,DEEP_RL_ONBD]
+  Policy_Type - Policy Types [PARAM_OPTIM,ML3_POLICY,DEEP_RL_SB3,DEEP_RL_ONBD]
 
 PLANE_SETTINGS:
   Plane_Config - Plane Model

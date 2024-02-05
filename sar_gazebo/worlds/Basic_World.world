@@ -5,9 +5,45 @@
     <!-- Default camera pose -->
     <gui>
       <camera name="user_camera">
-        <pose frame=''>1.4 -5 1.9 0 0.12 1.57</pose>
+        <pose>1.4 -5 1.9 0 0.12 1.57</pose>
       </camera>
     </gui>
+
+    <model name='camera'>
+      <static>true</static>
+      <pose>0 -2.3 1.9 0 0.2 1.57</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+        </visual>
+        <sensor name='my_camera' type='camera'>
+          <camera>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+          </camera>
+          <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+            <alwaysOn>true</alwaysOn>
+            <updateRate>0.0</updateRate>
+            <cameraName>ExternalCam</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          </plugin>
+          <always_on>1</always_on>
+          <update_rate>500</update_rate>
+        </sensor>
+      </link>
+    </model>
 
     <model name='World_Origin'>
       <static>1</static>
@@ -18,7 +54,7 @@
           <pose>0 0 0 0 0 0</pose>
           <geometry>
             <sphere>
-              <radius>0.01</radius>
+              <radius>5.0e-3</radius>
             </sphere>
           </geometry>
           <material>
@@ -98,33 +134,6 @@
         </bullet>
     </physics>
 
-    <!-- <physics type="dart">
-        <max_step_size>0.001</max_step_size>
-        <real_time_factor>1</real_time_factor>
-        <real_time_update_rate>1000</real_time_update_rate>
-
-        <gravity>0 0 -9.81</gravity>
-
-        <dart>
-            <solver>
-                <solver_type>PGS</solver_type>
-                <iterations>500</iterations>
-                <tolerance>1e-5</tolerance>
-                <alpha>1.0</alpha>
-                <threads>0</threads>
-            </solver>
-            <constraints>
-                <constraint_forces_merging>true</constraint_forces_merging>
-                <joint_position_limit>true</joint_position_limit>
-                <joint_velocity_limit>true</joint_velocity_limit>
-                <joint_coulomb_friction>true</joint_coulomb_friction>
-                <joint_limit_impulse>true</joint_limit_impulse>
-                <link_contact>true</link_contact>
-                <joint_contact>true</joint_contact>
-            </constraints>
-        </dart>
-    </physics> -->
-
 
     <scene>
       <sky>
@@ -133,6 +142,9 @@
         </clouds>
       </sky>
     </scene>
+
+    <plugin name='Step_World_Plugin' filename='libStep_World_Plugin.so'>
+    </plugin>
 
   </world>
 </sdf>

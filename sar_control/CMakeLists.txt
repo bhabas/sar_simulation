@@ -28,7 +28,6 @@ add_executable(SAR_Controller
     src/aideck_uart_comm.c
     src/nml.c 
     src/nml_util.c
-    src/cml.c
     )
 add_dependencies(SAR_Controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(SAR_Controller ${catkin_LIBRARIES})

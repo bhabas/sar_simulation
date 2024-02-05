@@ -5,11 +5,9 @@
 
 void SAR_DataConverter::MainInit()
 {
-    LoadParams();
+    loadInitParams();
     adjustSimSpeed(SIM_SPEED);
-    Time_start = ros::Time::now();
-    BodyCollision_str = SAR_Config + "::Base_Model::SAR_Body::body_collision"; 
-    isInit = true;
+    Time_start = ros::Time::now(); 
 
 }
 
