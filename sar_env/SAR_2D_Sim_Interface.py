@@ -251,10 +251,13 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         for _ in range(n_steps):
 
-            if self.Trg_Flag == False:
+            if self.Trg_Flag == False and self.Impact_Flag_Ext == False:
                 self._iterStep_Flight()
                 self._checkImpact()
-
+            
+            elif self.Trg_Flag == False and self.Impact_Flag_Ext == True:
+                self.Done = True
+                
             elif self.Trg_Flag == True and self.Impact_Flag_Ext == False:
                 self._iterStep_Rot(a_Rot)
                 self._checkImpact()

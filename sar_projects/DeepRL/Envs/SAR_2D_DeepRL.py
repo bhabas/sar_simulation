@@ -98,7 +98,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         self.start_time_real = time.time()
 
-        self.resetPose()
+        
 
         ##########   2D ENV CONFIGS  ##########
         #
@@ -130,11 +130,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             Plane_Angle_High = self.Plane_Angle_range[1]
             Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
             self._setPlanePose(self.r_P_O,Plane_Angle)
-            self._iterStep(n_steps=2)
 
         else:
             self._setPlanePose(self.r_P_O,Plane_Angle)
-            self._iterStep(n_steps=2)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or V_angle == None:
@@ -215,10 +213,10 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
         a_Trg = action[0]
-        # a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
-        a_Rot = -50
+        a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
+        # a_Rot = -50
         
-        # if self._getObs()[0] <= 0.20:
+        # if self._getObs()[0] <= 0.05:
         #     a_Trg = 1
 
         # else:
@@ -522,7 +520,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
+        R_tau_cr = self.Reward_Tau_CR_Trg(self.Tau_CR_trg,0.2,0.1)
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -541,6 +539,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         print(np.round(self.reward_vals,2))
 
         return R_t/self.W_max
+    
+    def Reward_Tau_CR_Trg(self,x,b,k=0.1):
+        return np.min([k/np.abs(x-b),1])
     
     def Reward_Exp_Decay(self,x,threshold,k=10):
         if x < threshold:

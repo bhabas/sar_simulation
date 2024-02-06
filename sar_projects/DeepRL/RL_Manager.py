@@ -88,7 +88,7 @@ if __name__ == '__main__':
         "V_mag_range": [2.5, 2.5],
         "V_angle_range": [60, 60],
         "Plane_Angle_range": [0, 0],
-        "Render": True
+        "Render": False
     }
 
 
