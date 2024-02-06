@@ -16,20 +16,20 @@ The '.' represents a sample is recorded. 5 steps will record 6 data rows (one fo
 
 var protocol = "dshot600";  // ESC protocol
 var escStart = 0;           // ESC start value [NULL THROTTLE DETECTION REQUIRED]
-var minVal = 150;           // Min. input value [150, 2047] 
-var maxVal = 300;           // Max. input value [150, 2047] 
+var minVal = 100;           // Min. input value [150, 2047] 
+var maxVal = 1800;          // Max. input value [150, 2047] 
 var samplesAvg = 100;       // Number of samples to average at each step
-var repeat = 1; // How many times to repeat the same sequence
+var repeat = 10;            // How many times to repeat the same sequence
 var filePrefix = "StepsTestV2";
 
 // step parameters
 var params = {
-    steps_qty: 5,               // Number of steps
-    settlingTime_s: 3,          // Settling time before measurement
+    steps_qty: 18,               // Number of steps
+    settlingTime_s: 2,          // Settling time before measurement
     cooldownTime_s: 0,          // If the motor needs to cool down between steps. Zero disables cooldown.
     cooldownThrottle_us: 1175,  // Cool down faster when slowly spinning
     cooldownMinThrottle: 1500,  // Only activates the cooldown time for high throttle
-    max_slew_rate_us_per_s: 50  // Limits torque from throttle changes
+    max_slew_rate_us_per_s: 75  // Limits torque from throttle changes
 };
    
 

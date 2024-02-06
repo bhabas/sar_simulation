@@ -18,7 +18,7 @@ NEWTON_2_GF = 1/GF_2_NEWTON
 
 ## DATAPATHS
 dataPath = f"{BASE_PATH}/sar_projects/System_Identification/Motor_Impulse_Micro/Logs/"
-fileName = f"StepsTestV2_2023-12-17_162536.csv"
+fileName = f"StepsTest_Collated.csv"
 filePath = os.path.join(dataPath,fileName)
 
 ## DEFINE FITTING FUNCTIONS AND SYSTEM CONSTANTS
@@ -55,7 +55,7 @@ def piecewise_func_inv(x, a, b):
 ## LOAD DATA
 df = pd.read_csv(filePath,comment="#")
 # df["Thrust (gf)"]+=2.4
-df = df.query("`Voltage (V)` >= 3.90*@NUM_BATT_CELLS")
+# df = df.query("`Voltage (V)` >= 3.90*@NUM_BATT_CELLS")
 
 
 ## INITIALIZE PLOTS
@@ -135,7 +135,7 @@ ax_ESC_Cmd.set_title("Thrust vs ESC Cmd\n" f"Params = {np.array2string(params, p
 ax_ESC_Cmd.set_ylabel("Thrust (gf)")
 ax_ESC_Cmd.set_xlabel("ESC Cmd")
 ax_ESC_Cmd.set_xlim(-200,2200)
-ax_ESC_Cmd.set_ylim(0,180)
+ax_ESC_Cmd.set_ylim(0,300)
 ax_ESC_Cmd.vlines(2047,0,ESC_data["Thrust (gf)"].max(),color="black",linestyles='--',label="ESC Max")
 ax_ESC_Cmd.grid(True)
 ax_ESC_Cmd.legend(loc="upper left")
@@ -153,7 +153,7 @@ ax_Thrust_Cmd.set_title("ESC Cmd vs Thrust")
 ax_Thrust_Cmd.set_xlabel("Thrust (gf)")
 ax_Thrust_Cmd.set_ylabel("ESC Cmd")
 ax_Thrust_Cmd.set_ylim(-200,2200)
-ax_Thrust_Cmd.set_xlim(0,180)
+ax_Thrust_Cmd.set_xlim(0,300)
 ax_Thrust_Cmd.hlines(2047,0,ESC_data["Thrust (gf)"].max(),color="black",linestyles='--',label="ESC Max")
 ax_Thrust_Cmd.grid(True)
 ax_Thrust_Cmd.legend(loc="upper left")
