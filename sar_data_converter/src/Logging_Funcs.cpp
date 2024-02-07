@@ -146,15 +146,17 @@ void SAR_DataConverter::append_CSV_misc()
 {
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",K_ep,K_run);  // K_ep,K_run
-    fprintf(fPtr,"% 6.2f,",Plane_Angle_deg); 
+    fprintf(fPtr,"--,"); 
     fprintf(fPtr,"%u,--,",n_rollouts);  // n_rollouts,--
     fprintf(fPtr,"[%.3f %.3f],[%.3f %.3f],[%.3f %.3f],",mu[0],mu[1],sigma[0],sigma[1],policy[0],policy[1]); // mu,sigma,policy
 
     // STATE DATA
-    fprintf(fPtr,"--,--,--,--,"); // D_perp,Tau,Tau_CR,Theta_x
+    fprintf(fPtr,"% 6.2f,% 6.2f,% 6.2f,% 6.2f,",Plane_Angle_deg,Plane_Pos.x,Plane_Pos.y,Plane_Pos.z); // D_perp,Tau,Tau_CR,Theta_x
     fprintf(fPtr,"--,--,--," ); // V_BO_Mag,V_BO_Angle,a_BO_Mag
     fprintf(fPtr,"--,--,--," ); // V_BP_Mag,V_BP_Angle,Phi_PB
     fprintf(fPtr,"--,--,--," ); // Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB
+
+    // ********************* ADD PLANE POSITION **************************
 
     // STATE DATA
     fprintf(fPtr,"--,--,--,"); // r_BO.x,r_BO.y,r_BO.z

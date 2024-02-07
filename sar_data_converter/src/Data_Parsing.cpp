@@ -225,7 +225,7 @@ void SAR_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
 
 
 
-void SAR_DataConverter::cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
+void SAR_DataConverter::cf1_States_B_O_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
     // ===================
     //     FLIGHT DATA
@@ -236,49 +236,54 @@ void SAR_DataConverter::cf1_FullState_Callback(const sar_msgs::GenericLogData::C
     float xy_arr[2];
     decompressXY(log_msg->values[0],xy_arr);
 
-    // Pose.position.x = xy_arr[0];
-    // Pose.position.y = xy_arr[1];
-    // Pose.position.z = log_msg->values[1]*1e-3;
+    Pose_B_O.position.x = xy_arr[0];
+    Pose_B_O.position.y = xy_arr[1];
+    Pose_B_O.position.z = log_msg->values[1]*1e-3;
 
-    // // VELOCITY
-    // float vxy_arr[2];
-    // decompressXY(log_msg->values[2],vxy_arr);
+
+    // VELOCITY
+    float vxy_arr[2];
+    decompressXY(log_msg->values[2],vxy_arr);
     
-    // Twist.linear.x = vxy_arr[0];
-    // Twist.linear.y = vxy_arr[1];
-    // Twist.linear.z = log_msg->values[3]*1e-3;
-    // Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
-    // Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
-    // Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
-
-    // // ORIENTATION
-    // float quat[4];
-    // uint32_t quatZ = (uint32_t)log_msg->values[4];
-    // quatdecompress(quatZ,quat);
-
-    // Pose.orientation.x = quat[0];
-    // Pose.orientation.y = quat[1];
-    // Pose.orientation.z = quat[2];
-    // Pose.orientation.w = quat[3]; 
-
-    // // PROCESS EULER ANGLES
-    // float eul[3];
-    // quat2euler(quat,eul);
-    // Eul_B_O.x = eul[0]*180/M_PI;
-    // Eul_B_O.y = eul[1]*180/M_PI;
-    // Eul_B_O.z = eul[2]*180/M_PI;
-
-    // // ANGULAR VELOCITY
-    // float wxy_arr[2];
-    // decompressXY(log_msg->values[5],wxy_arr);
+    Twist_B_O.linear.x = vxy_arr[0];
+    Twist_B_O.linear.y = vxy_arr[1];
+    Twist_B_O.linear.z = log_msg->values[3]*1e-3;
     
-    // Twist.angular.x = wxy_arr[0]*10;
-    // Twist.angular.y = wxy_arr[1]*10;
-    // Twist.angular.z = log_msg->values[6]*1e-3;
+    Vel_mag_B_O = sqrt(pow(Twist_B_O.linear.x,2)+pow(Twist_B_O.linear.z,2));
+    Vel_angle_B_O = atan2(Twist_B_O.linear.z,Twist_B_O.linear.x)*180/M_PI;
+
+    // ORIENTATION
+    float quat[4];
+    uint32_t quatZ = (uint32_t)log_msg->values[4];
+    quatdecompress(quatZ,quat);
+
+    Pose_B_O.orientation.x = quat[0];
+    Pose_B_O.orientation.y = quat[1];
+    Pose_B_O.orientation.z = quat[2];
+    Pose_B_O.orientation.w = quat[3]; 
+
+    // PROCESS EULER ANGLES
+    float eul[3];
+    quat2euler(quat,eul);
+    Eul_B_O.x = eul[0]*180/M_PI;
+    Eul_B_O.y = eul[1]*180/M_PI;
+    Eul_B_O.z = eul[2]*180/M_PI;
+
+    // ANGULAR VELOCITY
+    float omega_xy_arr[2];
+    decompressXY(log_msg->values[5],omega_xy_arr);
+    
+    Twist_B_O.angular.x = omega_xy_arr[0]*10;
+    Twist_B_O.angular.y = omega_xy_arr[1]*10;
+    Twist_B_O.angular.z = log_msg->values[6]*1e-3;
+
+    // ACCELERATION
+    Accel_B_O.angular.y = log_msg->values[7]*1e-3;
+
 
 }
 
-void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
+void SAR_DataConverter::cf1_States_B_P_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
     // // CEILING DISTANCE
     // D_perp = log_msg->values[0]*1e-3;

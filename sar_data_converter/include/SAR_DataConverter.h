@@ -67,8 +67,8 @@ class SAR_DataConverter {
             SAR_Sticky_Pad_Connect_Sub = nh->subscribe("/SAR_Internal/Leg_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
-            cf1_FullState_Sub = nh->subscribe("/cf1/FullState", 1, &SAR_DataConverter::cf1_FullState_Callback, this, ros::TransportHints().tcpNoDelay());
-            cf1_PolicyState_Sub = nh->subscribe("/cf1/PolicyState", 1, &SAR_DataConverter::cf1_PolicyState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_States_B_O_Sub = nh->subscribe("/cf1/States_B_O", 1, &SAR_DataConverter::cf1_States_B_O_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_States_B_P_Sub = nh->subscribe("/cf1/States_B_P", 1, &SAR_DataConverter::cf1_States_B_P_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_CTRL_Output_Sub = nh->subscribe("/cf1/CTRL_Output", 1, &SAR_DataConverter::cf1_CTRL_Output_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_SetPoints_Sub = nh->subscribe("/cf1/SetPoints", 1, &SAR_DataConverter::cf1_SetPoints_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_TrgState_Sub = nh->subscribe("/cf1/TrgState", 1, &SAR_DataConverter::cf1_TrgState_Callback, this, ros::TransportHints().tcpNoDelay());
@@ -131,8 +131,8 @@ class SAR_DataConverter {
         //     EXPERIMENT DATA CALLBACKS
         // =================================
         void decompressXY(uint32_t xy, float xy_arr[]);
-        void cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
-        void cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_States_B_O_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_States_B_P_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
@@ -280,8 +280,8 @@ class SAR_DataConverter {
         // ===================================
         //     EXP COMPRESSED DATA OBJECTS
         // ===================================
-        ros::Subscriber cf1_FullState_Sub;
-        ros::Subscriber cf1_PolicyState_Sub;
+        ros::Subscriber cf1_States_B_O_Sub;
+        ros::Subscriber cf1_States_B_P_Sub;
         ros::Subscriber cf1_CTRL_Output_Sub;
         ros::Subscriber cf1_SetPoints_Sub;
         ros::Subscriber cf1_TrgState_Sub;
