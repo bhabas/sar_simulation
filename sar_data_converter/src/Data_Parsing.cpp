@@ -248,7 +248,7 @@ void SAR_DataConverter::cf1_States_B_O_Callback(const sar_msgs::GenericLogData::
     Twist_B_O.linear.x = vxy_arr[0];
     Twist_B_O.linear.y = vxy_arr[1];
     Twist_B_O.linear.z = log_msg->values[3]*1e-3;
-    
+
     Vel_mag_B_O = sqrt(pow(Twist_B_O.linear.x,2)+pow(Twist_B_O.linear.z,2));
     Vel_angle_B_O = atan2(Twist_B_O.linear.z,Twist_B_O.linear.x)*180/M_PI;
 
@@ -269,6 +269,10 @@ void SAR_DataConverter::cf1_States_B_O_Callback(const sar_msgs::GenericLogData::
     Eul_B_O.y = eul[1]*180/M_PI;
     Eul_B_O.z = eul[2]*180/M_PI;
 
+    Eul_P_B.x = NAN;
+    Eul_P_B.y = Plane_Angle_deg - Eul_B_O.y;
+    Eul_P_B.z = NAN;
+
     // ANGULAR VELOCITY
     float omega_xy_arr[2];
     decompressXY(log_msg->values[5],omega_xy_arr);
@@ -285,40 +289,55 @@ void SAR_DataConverter::cf1_States_B_O_Callback(const sar_msgs::GenericLogData::
 
 void SAR_DataConverter::cf1_States_B_P_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // // CEILING DISTANCE
-    // D_perp = log_msg->values[0]*1e-3;
-
-    // // OPTICAL FLOW VALUES
-    // float Theta_xy_arr[2];
-    // decompressXY(log_msg->values[1],Theta_xy_arr);
-    
-    // Theta_x = Theta_xy_arr[0];
-    // Theta_y = Theta_xy_arr[1];
-    // Tau = log_msg->values[2]*1e-3;
+    // RELATIVE POSITION
+    float r_PB_arr[2];
+    decompressXY(log_msg->values[0],r_PB_arr);
+    Pose_P_B.position.x = r_PB_arr[0];
+    Pose_P_B.position.y = r_PB_arr[1];
+    Pose_P_B.position.z = log_msg->values[1]*1e-3;
 
 
-    // // OPTICAL FLOW ESTIMATES
-    // float Theta_xy_est_arr[2];
-    // decompressXY(log_msg->values[3],Theta_xy_est_arr);
-    
-    // Theta_x_Cam = Theta_xy_est_arr[0];
-    // Theta_y_Cam = Theta_xy_est_arr[1];
-    // Tau_Cam = log_msg->values[4]*1e-3;
+    // RELATIVE VELOCITY
+    float VelRel_BP_arr[2];
+    decompressXY(log_msg->values[2],VelRel_BP_arr);
+
+    Vel_mag_B_P = VelRel_BP_arr[0];
+    Vel_angle_B_P = VelRel_BP_arr[1];
+
+    Twist_B_P.linear.x = Vel_mag_B_P*cos(Vel_angle_B_P*M_PI/180);
+    Twist_B_P.linear.y = NAN;
+    Twist_B_P.linear.z = Vel_mag_B_P*sin(Vel_angle_B_P*M_PI/180);
 
 
-    // // POLICY ACTIONS
-    // float Policy_Action_arr[2];
-    // decompressXY(log_msg->values[5],Policy_Action_arr);
-    // Policy_Trg_Action = Policy_Action_arr[0];
-    // Policy_Rot_Action = Policy_Action_arr[1];
+    // LANDING SURFACE DISTANCE
+    float D_perp_arr[2];
+    decompressXY(log_msg->values[3],D_perp_arr);
+    D_perp = D_perp_arr[0];
+    D_perp_CR = D_perp_arr[1];
 
-    // // TRIGGER FLAG
-    // Trg_Flag = log_msg->values[6];
-    // if(Trg_Flag == true && OnceFlag_Trg == false)
-    // {
-    //     Time_trg = ros::Time::now();
-    //     OnceFlag_Trg = true;
-    // }
+    // TAU VALUES
+    float Tau_arr[2];
+    decompressXY(log_msg->values[4],Tau_arr);
+    Tau = Tau_arr[0];
+    Tau_CR = Tau_arr[1];
+
+    // THETA VALUES
+    Theta_x = log_msg->values[5]*1e-3;
+
+
+    // POLICY ACTIONS
+    float Policy_Action_arr[2];
+    decompressXY(log_msg->values[6],Policy_Action_arr);
+    Policy_Trg_Action = Policy_Action_arr[0];
+    Policy_Rot_Action = Policy_Action_arr[1];
+
+    // TRIGGER FLAG
+    Trg_Flag = log_msg->values[7];
+    if(Trg_Flag == true && OnceFlag_Trg == false)
+    {
+        Time_trg = ros::Time::now();
+        OnceFlag_Trg = true;
+    }
 
 }
 
