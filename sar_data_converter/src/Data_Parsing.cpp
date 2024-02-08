@@ -407,45 +407,61 @@ void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::C
 
 void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // // TRIGGER STATE - CEILING DISTANCE
-    // D_perp_trg = log_msg->values[0]*1e-3;
+        // LANDING SURFACE DISTANCE
+    float D_perp_arr[2];
+    decompressXY(log_msg->values[0],D_perp_arr);
+    D_perp_trg = D_perp_arr[0];
+    D_perp_CR_trg = D_perp_arr[1];
 
-    // // TRIGGER STATE - POSITION
-    // Pose_trg.position.x = NAN;
-    // Pose_trg.position.y = NAN;
-    // Pose_trg.position.z = log_msg->values[1]*1e-3;
+    // TAU VALUES
+    float Tau_arr[2];
+    decompressXY(log_msg->values[1],Tau_arr);
+    Tau_trg = Tau_arr[0];
+    Tau_CR_trg = Tau_arr[1];
+
+    // THETA VALUES
+    Theta_x_trg = log_msg->values[2]*1e-3;
+
+    // RELATIVE VELOCITY
+    float VelRel_BP_arr[2];
+    decompressXY(log_msg->values[3],VelRel_BP_arr);
+
+    Vel_mag_B_P_trg = VelRel_BP_arr[0];
+    Vel_angle_B_P_trg = VelRel_BP_arr[1];
+
+    Vel_mag_B_O_trg = Vel_mag_B_P_trg;
+    Vel_angle_B_O_trg = Plane_Angle_deg - Vel_angle_B_P_trg;
+
+    // ORIENTATION
+    float quat[4];
+    uint32_t quatZ = (uint32_t)log_msg->values[4];
+    quatdecompress(quatZ,quat);
+
+    Pose_B_O_trg.orientation.x = quat[0];
+    Pose_B_O_trg.orientation.y = quat[1];
+    Pose_B_O_trg.orientation.z = quat[2];
+    Pose_B_O_trg.orientation.w = quat[3]; 
+
+    // PROCESS EULER ANGLES
+    float eul[3];
+    quat2euler(quat,eul);
+    Eul_B_O_trg.x = eul[0]*180/M_PI;
+    Eul_B_O_trg.y = eul[1]*180/M_PI;
+    Eul_B_O_trg.z = eul[2]*180/M_PI;
+
+    Eul_P_B_trg.x = NAN;
+    Eul_P_B_trg.y = Plane_Angle_deg - Eul_B_O.y;
+    Eul_P_B_trg.z = NAN;
+
+    // ANGULAR VELOCITY
+    Twist_B_O_trg.angular.y = log_msg->values[5]*1e-3;
 
 
-    // // TRIGGER STATE - VELOCITY
-    // float vxy_arr[2];
-    // decompressXY(log_msg->values[2],vxy_arr);
-    
-    // Twist_trg.linear.x = vxy_arr[0];
-    // Twist_trg.linear.y = vxy_arr[1];
-    // Twist_trg.linear.z = log_msg->values[3]*1e-3;
-
-    // // TRIGGER STATE - OPTICAL FLOW
-    // float Theta_xy_arr[2];
-    // decompressXY(log_msg->values[4],Theta_xy_arr);
-    
-    // Theta_x_trg = Theta_xy_arr[0];
-    // Theta_y_trg = Theta_xy_arr[1];
-    // Tau_trg = log_msg->values[5]*1e-3;
-
-    // // TRIGGER STATE - OPTICAL FLOW ESTIMATE
-    // float Theta_xy_est_arr[2];
-    // decompressXY(log_msg->values[6],Theta_xy_est_arr);
-    
-    // Theta_x_trg = Theta_xy_est_arr[0];
-    // Theta_y_trg = Theta_xy_est_arr[1];
-    // Tau_trg = log_msg->values[7]*1e-3;
-
-    // // TRIGGER STATE - POLICY ACTIONS
-    // float Policy_Action_arr[2];
-    // decompressXY(log_msg->values[8],Policy_Action_arr);
-    // Policy_Trg_Action_trg = Policy_Action_arr[0];
-    // Policy_Rot_Action_trg = Policy_Action_arr[1];
-    
+    // POLICY ACTIONS
+    float Policy_Action_arr[2];
+    decompressXY(log_msg->values[6],Policy_Action_arr);
+    Policy_Trg_Action_trg = Policy_Action_arr[0];
+    Policy_Rot_Action_trg = Policy_Action_arr[1];
     
 }
 

@@ -69,9 +69,9 @@ class SAR_DataConverter {
             // CRAZYSWARM PIPELINE
             cf1_States_B_O_Sub = nh->subscribe("/cf1/States_B_O", 1, &SAR_DataConverter::cf1_States_B_O_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_States_B_P_Sub = nh->subscribe("/cf1/States_B_P", 1, &SAR_DataConverter::cf1_States_B_P_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_TrgState_Sub = nh->subscribe("/cf1/TrgState", 1, &SAR_DataConverter::cf1_TrgState_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_CTRL_Output_Sub = nh->subscribe("/cf1/CTRL_Output", 1, &SAR_DataConverter::cf1_CTRL_Output_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_SetPoints_Sub = nh->subscribe("/cf1/SetPoints", 1, &SAR_DataConverter::cf1_SetPoints_Callback, this, ros::TransportHints().tcpNoDelay());
-            cf1_TrgState_Sub = nh->subscribe("/cf1/TrgState", 1, &SAR_DataConverter::cf1_TrgState_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_Flags_Sub = nh->subscribe("/cf1/Flags", 1, &SAR_DataConverter::cf1_Flags_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_Misc_Sub = nh->subscribe("/cf1/Misc", 1, &SAR_DataConverter::cf1_Misc_Callback, this, ros::TransportHints().tcpNoDelay());
 
