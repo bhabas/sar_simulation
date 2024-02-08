@@ -33,7 +33,7 @@ geometry_msgs/Vector3 a_d
 ## CONTROL ACTIONS
 float64[4] FM
 float64[4] MotorThrusts
-uint32[4] MS_PWM
+uint32[4] Motor_CMD
 
 ## POLICY ACTIONS
 float64 Policy_Trg_Action

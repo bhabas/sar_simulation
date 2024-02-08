@@ -339,7 +339,7 @@ class SAR_DataConverter {
 
         boost::array<double,4> FM{0,0,0,0};
         boost::array<double,4> MotorThrusts{0,0,0,0};
-        boost::array<uint16_t,4> MS_PWM{0,0,0,0};
+        boost::array<uint16_t,4> Motor_CMD{0,0,0,0};
 
         double Policy_Trg_Action = NAN;
         double Policy_Rot_Action = NAN;

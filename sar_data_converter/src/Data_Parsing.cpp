@@ -83,7 +83,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     // CONTROL ACTIONS
     FM = ctrl_msg.FM;
     MotorThrusts = ctrl_msg.MotorThrusts;
-    MS_PWM = ctrl_msg.MS_PWM;
+    Motor_CMD = ctrl_msg.Motor_CMD;
 
 
     // NEURAL NETWORK DATA
@@ -343,65 +343,65 @@ void SAR_DataConverter::cf1_States_B_P_Callback(const sar_msgs::GenericLogData::
 
 void SAR_DataConverter::cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // // DECOMPRESS THRUST/MOMENT MOTOR VALUES [g]
-    // float M_xy[2];
-    // float FM_z[2];
+    // DECOMPRESS THRUST/MOMENT MOTOR VALUES [g]
+    float M_xy[2];
+    float FM_z[2];
 
-    // decompressXY(log_msg->values[0],M_xy); 
-    // decompressXY(log_msg->values[1],FM_z);
+    decompressXY(log_msg->values[0],M_xy); 
+    decompressXY(log_msg->values[1],FM_z);
 
-    // FM = {FM_z[0],M_xy[0],M_xy[1],FM_z[1]}; // [F,Mx,My,Mz]
+    FM = {FM_z[0],M_xy[0],M_xy[1],FM_z[1]}; // [F,Mx,My,Mz]
 
-    // // MOTOR THRUST VALUES
-    // float M_thrust12[2];
-    // float M_thrust34[2];
+    // MOTOR THRUST VALUES
+    float M_thrust12[2];
+    float M_thrust34[2];
 
-    // decompressXY(log_msg->values[2],M_thrust12);
-    // decompressXY(log_msg->values[3],M_thrust34);
+    decompressXY(log_msg->values[2],M_thrust12);
+    decompressXY(log_msg->values[3],M_thrust34);
 
-    // MotorThrusts = {M_thrust12[0],M_thrust12[1],M_thrust34[0],M_thrust34[1]};
+    MotorThrusts = {M_thrust12[0],M_thrust12[1],M_thrust34[0],M_thrust34[1]};
 
-    // // MOTOR PWM VALUES
-    // float MS_PWM12[2];
-    // float MS_PWM34[2];
+    // MOTOR PWM VALUES
+    float M_CMD12[2];
+    float M_CMD34[2];
 
-    // decompressXY(log_msg->values[4],MS_PWM12);
-    // decompressXY(log_msg->values[5],MS_PWM34);
+    decompressXY(log_msg->values[4],M_CMD12);
+    decompressXY(log_msg->values[5],M_CMD34);
 
-    // MS_PWM = {
-    //     (uint16_t)round(MS_PWM12[0]*2.0e3),
-    //     (uint16_t)round(MS_PWM12[1]*2.0e3), 
-    //     (uint16_t)round(MS_PWM34[0]*2.0e3),
-    //     (uint16_t)round(MS_PWM34[1]*2.0e3)
-    // };
+    Motor_CMD = {
+        (uint16_t)round(M_CMD12[0]*2.0e3),
+        (uint16_t)round(M_CMD12[1]*2.0e3), 
+        (uint16_t)round(M_CMD34[0]*2.0e3),
+        (uint16_t)round(M_CMD34[1]*2.0e3)
+    };
     
 }
 
 void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // // POSITION SETPOINTS
-    // float xd_xy[2];
-    // decompressXY(log_msg->values[0],xd_xy);
+    // POSITION SETPOINTS
+    float xd_xy[2];
+    decompressXY(log_msg->values[0],xd_xy);
 
-    // x_d.x = xd_xy[0];
-    // x_d.y = xd_xy[1];
-    // x_d.z = log_msg->values[1]*1e-3;
+    x_d.x = xd_xy[0];
+    x_d.y = xd_xy[1];
+    x_d.z = log_msg->values[1]*1e-3;
    
-    // // VELOCITY SETPOINTS
-    // float vd_xy[2];
-    // decompressXY(log_msg->values[2],vd_xy);
+    // VELOCITY SETPOINTS
+    float vd_xy[2];
+    decompressXY(log_msg->values[2],vd_xy);
 
-    // v_d.x = vd_xy[0];
-    // v_d.y = vd_xy[1];
-    // v_d.z = log_msg->values[3]*1e-3;
+    v_d.x = vd_xy[0];
+    v_d.y = vd_xy[1];
+    v_d.z = log_msg->values[3]*1e-3;
 
-    // // ACCELERATION SETPOINTS
-    // float ad_xy[2];
-    // decompressXY(log_msg->values[4],ad_xy);
+    // ACCELERATION SETPOINTS
+    float ad_xy[2];
+    decompressXY(log_msg->values[4],ad_xy);
 
-    // a_d.x = ad_xy[0];
-    // a_d.y = ad_xy[1];
-    // a_d.z = log_msg->values[5]*1e-3;
+    a_d.x = ad_xy[0];
+    a_d.y = ad_xy[1];
+    a_d.z = log_msg->values[5]*1e-3;
 
 }
 

@@ -64,7 +64,7 @@ void SAR_DataConverter::Publish_StateData()
     // CONTROL ACTIONS
     StateData_msg.FM = FM;
     StateData_msg.MotorThrusts = MotorThrusts;
-    StateData_msg.MS_PWM = MS_PWM;
+    StateData_msg.Motor_CMD = Motor_CMD;
 
     // POLICY ACTIONS
     StateData_msg.Policy_Trg_Action = Policy_Trg_Action;
