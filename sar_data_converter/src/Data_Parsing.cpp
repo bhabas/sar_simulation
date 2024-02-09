@@ -468,24 +468,21 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
 void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
 
-    // Pos_Ctrl_Flag = (bool)log_msg->values[0];
-    // Vel_Ctrl_Flag = (bool)log_msg->values[1];
-    // MotorStop_Flag = (bool)log_msg->values[2];
-    // AngAccel_Flag = (bool)log_msg->values[3];
-    // Tumbled_Flag = (bool)log_msg->values[4];
-    // TumbleDetect_Flag = (bool)log_msg->values[5];
-    // Policy_Armed_Flag = (bool)log_msg->values[6];
-    // CamActive_Flag = (bool)log_msg->values[7];
-
-    // // V_battery = log_msg->values[0];
+    Pos_Ctrl_Flag =     (bool)log_msg->values[0];
+    Vel_Ctrl_Flag =     (bool)log_msg->values[1];
+    MotorStop_Flag =    (bool)log_msg->values[2];
+    SafeMode_Flag =     (bool)log_msg->values[3];
+    Tumbled_Flag =      (bool)log_msg->values[4];
+    TumbleDetect_Flag = (bool)log_msg->values[5];
+    Policy_Armed_Flag = (bool)log_msg->values[6];
+    AngAccel_Flag =     (bool)log_msg->values[7];
+    // V_battery = log_msg->values[0];
 }
 
 
 void SAR_DataConverter::cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // CustomThrust_Flag = (bool)log_msg->values[0];
-    // CustomPWM_Flag = (bool)log_msg->values[1];
-    // SafeModeEnable = (bool)log_msg->values[2];
-    // AttCtrl_Flag = (bool)log_msg->values[3];
+    CustomThrust_Flag = (bool)log_msg->values[0];
+    CustomPWM_Flag = (bool)log_msg->values[1];
 
 }
