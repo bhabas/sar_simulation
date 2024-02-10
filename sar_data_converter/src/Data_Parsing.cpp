@@ -360,7 +360,7 @@ void SAR_DataConverter::cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData:
     decompressXY(log_msg->values[2],M_thrust12);
     decompressXY(log_msg->values[3],M_thrust34);
 
-    MotorThrusts = {M_thrust12[0],M_thrust12[1],M_thrust34[0],M_thrust34[1]};
+    MotorThrusts = {M_thrust12[0]*1.0e2,M_thrust12[1]*1.0e2,M_thrust34[0]*1.0e2,M_thrust34[1]*1.0e2};
 
     // MOTOR PWM VALUES
     float M_CMD12[2];
