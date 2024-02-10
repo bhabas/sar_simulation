@@ -303,7 +303,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.AngAccel_Flag = AngAccel_Flag; 
     CtrlDebug_msg.SafeMode_Flag = SafeMode_Flag;
     CtrlDebug_msg.CustomThrust_Flag = CustomThrust_Flag;
-    CtrlDebug_msg.CustomPWM_Flag = CustomPWM_Flag;
+    CtrlDebug_msg.CustomMotorCMD_Flag = CustomMotorCMD_Flag;
 
     CtrlDebug_msg.Pos_Ctrl_Flag = (bool)kp_xf;
     CtrlDebug_msg.Vel_Ctrl_Flag = (bool)kd_xf;
@@ -391,7 +391,7 @@ void Controller::publishCtrlData()
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
     CtrlData_msg.MotorThrusts = {M1_thrust,M2_thrust,M3_thrust,M4_thrust};
-    CtrlData_msg.Motor_CMD = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+    CtrlData_msg.Motor_CMD = {M1_CMD,M2_CMD,M3_CMD,M4_CMD};
 
     CtrlData_msg.x_d.x = x_d.x;
     CtrlData_msg.x_d.y = x_d.y;

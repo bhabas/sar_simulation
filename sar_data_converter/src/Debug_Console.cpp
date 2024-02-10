@@ -38,7 +38,7 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 
         mvprintw(5, 35,"Pos_Ctrl:       %u",Pos_Ctrl_Flag);
         mvprintw(6, 35,"Vel_Ctrl:       %u",Vel_Ctrl_Flag);
-        mvprintw(7, 35,"Custom_PWM:     %u",CustomPWM_Flag);
+        mvprintw(7, 35,"Custom_MotCMD:     %u",CustomMotorCMD_Flag);
         mvprintw(8, 35,"Custom_Thrust:  %u",CustomThrust_Flag);
 
         mvprintw(5, 55,"Ang_Accel:   %u",AngAccel_Flag);

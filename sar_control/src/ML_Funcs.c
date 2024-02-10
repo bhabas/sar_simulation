@@ -124,6 +124,18 @@ float Relu(float x)
     }
 }
 
+float Leaky_Relu(float x) {
+
+    float alpha = 0.01f;
+
+    if (x > 0.0f) {
+        return x;
+    } else {
+        return x * alpha;
+    }
+}
+
+
 // SCALES VALUE CLAMPED BY TANH TO SPECIFIED RANGE
 float scale_tanhAction(float action, float low, float high)
 {

@@ -17,10 +17,10 @@ extern "C" {
 #include "ML_Funcs.h"
 #include "Compress_States.h"
 
-// #include "ML_Params/NN_Layers_NL_DeepRL.h"
+#include "ML_Params/NN_Layers_NL_DeepRL.h"
 
 
-#define PWM_MAX 60000
+#define MOTOR_CMD_MAX 60000
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 #define Deg2Rad (float)M_PI/180.0f
@@ -181,14 +181,14 @@ extern float M2_thrust;
 extern float M3_thrust;
 extern float M4_thrust;
 
-// MOTOR PWM VALUES
-extern uint16_t M1_pwm; 
-extern uint16_t M2_pwm; 
-extern uint16_t M3_pwm; 
-extern uint16_t M4_pwm; 
+// MOTOR M_CMD VALUES
+extern uint16_t M1_CMD; 
+extern uint16_t M2_CMD; 
+extern uint16_t M3_CMD; 
+extern uint16_t M4_CMD; 
 
 // CONTROL OVERRIDE VALUES
-extern uint16_t PWM_override[4];    // Motor PWM values
+extern uint16_t M_CMD_override[4];    // Motor M_CMD values
 extern float thrust_override[4];    // Motor thrusts [g] 
 
 
@@ -229,7 +229,7 @@ extern bool MotorStop_Flag;
 extern bool AngAccel_Flag;
 extern bool SafeMode_Flag;
 extern bool CustomThrust_Flag;
-extern bool CustomPWM_Flag;
+extern bool CustomMotorCMD_Flag;
 
 // SENSOR FLAGS
 extern bool CamActive_Flag;
@@ -355,7 +355,7 @@ extern struct CTRL_CmdPacket CTRL_Cmd;
 
 void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
-uint16_t thrust2PWM(float f);
+uint16_t thrust2Motor_CMD(float f);
 void updateRotationMatrices();
 bool updateOpticalFlowEst();
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);

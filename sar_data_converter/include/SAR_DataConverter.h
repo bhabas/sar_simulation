@@ -453,7 +453,7 @@ class SAR_DataConverter {
         bool AngAccel_Flag = false;
         bool SafeMode_Flag = false;
         bool CustomThrust_Flag = false;
-        bool CustomPWM_Flag = false;
+        bool CustomMotorCMD_Flag = false;
 
         bool Pos_Ctrl_Flag = false;
         bool Vel_Ctrl_Flag = false;

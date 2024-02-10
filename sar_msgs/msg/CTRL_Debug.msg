@@ -4,7 +4,7 @@ bool MotorStop_Flag
 bool AngAccel_Flag
 bool SafeMode_Flag
 bool CustomThrust_Flag
-bool CustomPWM_Flag
+bool CustomMotorCMD_Flag
 
 bool Pos_Ctrl_Flag
 bool Vel_Ctrl_Flag

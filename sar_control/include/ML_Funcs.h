@@ -31,3 +31,4 @@ float Sigmoid(float x);
 float Elu(float x);
 float Pow2(float x);
 float Relu(float x);
+float Leaky_Relu(float x);

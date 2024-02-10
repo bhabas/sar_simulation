@@ -203,7 +203,7 @@ void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg)
     AngAccel_Flag = ctrl_msg.AngAccel_Flag;
     SafeMode_Flag = ctrl_msg.SafeMode_Flag;
     CustomThrust_Flag = ctrl_msg.CustomThrust_Flag;
-    CustomPWM_Flag = ctrl_msg.CustomPWM_Flag;
+    CustomMotorCMD_Flag = ctrl_msg.CustomMotorCMD_Flag;
     
     Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl_Flag;
     Vel_Ctrl_Flag = ctrl_msg.Vel_Ctrl_Flag;
@@ -362,7 +362,7 @@ void SAR_DataConverter::cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData:
 
     MotorThrusts = {M_thrust12[0]*1.0e2,M_thrust12[1]*1.0e2,M_thrust34[0]*1.0e2,M_thrust34[1]*1.0e2};
 
-    // MOTOR PWM VALUES
+    // MOTOR CMD VALUES
     float M_CMD12[2];
     float M_CMD34[2];
 
@@ -488,6 +488,6 @@ void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::Const
 void SAR_DataConverter::cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
     CustomThrust_Flag = (bool)log_msg->values[0];
-    CustomPWM_Flag = (bool)log_msg->values[1];
+    CustomMotorCMD_Flag = (bool)log_msg->values[1];
 
 }

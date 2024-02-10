@@ -8,43 +8,49 @@ SetPoints_Z_Struct SetPoints_Z;
 void compressStates(){
 
     // COMPRESS FULL STATE VALUES
-    States_Z.xy = compressXY(Pos_B_O.x,Pos_B_O.y);
-    States_Z.z = (int16_t)(Pos_B_O.z * 1000.0f);
+    States_Z.r_BOxy = compressXY(Pos_B_O.x,Pos_B_O.y);
+    States_Z.r_BOz = (int16_t)(Pos_B_O.z * 1000.0f);
 
-    States_Z.D_perp = (int16_t)(D_perp * 1000.0f);
+    States_Z.V_BOxy = compressXY(Vel_B_O.x, Vel_B_O.y);
+    States_Z.V_BOz = (int16_t)(Vel_B_O.z * 1000.0f);
 
-    States_Z.vxy = compressXY(Vel_B_O.x, Vel_B_O.y);
-    States_Z.vz = (int16_t)(Vel_B_O.z * 1000.0f);
-
-    States_Z.wxy = compressXY(Omega_B_O.x/10,Omega_B_O.y/10);
-    States_Z.wz = (int16_t)(Omega_B_O.z * 1000.0f);
+    States_Z.Acc_BOxy = compressXY(Accel_B_O.x, Accel_B_O.y);
+    States_Z.Acc_BOz = (int16_t)(Accel_B_O.z * 1000.0f);
 
     float const q[4] = {
         Quat_B_O.x,
         Quat_B_O.y,
         Quat_B_O.z,
         Quat_B_O.w};
-    States_Z.quat = quatcompress(q);
+    States_Z.Quat_BO = quatcompress(q);
+
+    States_Z.Omega_BOxy = compressXY(Omega_B_O.x/10,Omega_B_O.y/10);
+    States_Z.Omega_BOz = (int16_t)(Omega_B_O.z * 1000.0f);
+
+    States_Z.dOmega_BOy = (int16_t)(dOmega_B_O.y * 1000.0f);
+
+    States_Z.VelRel_BP = compressXY(Vel_mag_B_P, Vel_angle_B_P);
+
+    States_Z.D_perp = compressXY(D_perp,D_perp_CR);
+    States_Z.Tau = compressXY(Tau,Tau_CR);
+    States_Z.Theta_x = (int16_t)(Theta_x * 1000.0f);
+
+    States_Z.r_PBxy = compressXY(Pos_P_B.x,Pos_P_B.y);
+    States_Z.r_PBz = (int16_t)(Pos_P_B.z * 1000.0f);
+
 
     // COMPRESS THRUST/MOMENT VALUES
     States_Z.FMz = compressXY(F_thrust,M.z*1000.0f);
     States_Z.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
 
     // COMPRESS MOTOR THRUST VALUES
-    States_Z.M_thrust12 = compressXY(M1_thrust,M2_thrust);
-    States_Z.M_thrust34 = compressXY(M3_thrust,M4_thrust);
+    States_Z.M_thrust12 = compressXY(M1_thrust*1.0e-2f,M2_thrust*1.0e-2f);
+    States_Z.M_thrust34 = compressXY(M3_thrust*1.0e-2f,M4_thrust*1.0e-2f);
 
-    // COMPRESS PWM VALUES
-    States_Z.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
-    States_Z.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
+    // COMPRESS MS CMD VALUES
+    States_Z.M_CMD12 = compressXY(M1_CMD*0.5e-3f,M2_CMD*0.5e-3f);
+    States_Z.M_CMD34 = compressXY(M3_CMD*0.5e-3f,M4_CMD*0.5e-3f);
 
-    // COMPRESS OPTICAL FLOW VALUES
-    States_Z.Theta_xy = compressXY(Theta_x,Theta_y);
-    States_Z.Tau = (int16_t)(Tau * 1000.0f); 
-
-    // COMPRESS OPTICAL FLOW ESTIMATES
-    States_Z.Theta_xy_est = compressXY(Theta_x_Cam,Theta_y_Cam);
-    States_Z.Tau_Cam = (int16_t)(Tau_Cam * 1000.0f); 
 
     // COMPRESS POLICY ACTIONS
     States_Z.Policy_Actions = compressXY(Policy_Trg_Action,Policy_Rot_Action);
@@ -53,31 +59,30 @@ void compressStates(){
 void compressTrgStates(){
 
     // COMPRESS FULL STATE VALUES
-    TrgStates_Z.xy = compressXY(Pos_B_O_trg.x,Pos_B_O_trg.y);
-    TrgStates_Z.z = (int16_t)(Pos_B_O_trg.z * 1000.0f);
+    TrgStates_Z.r_BOxy = compressXY(Pos_B_O_trg.x,Pos_B_O_trg.y);
+    TrgStates_Z.r_BOz = (int16_t)(Pos_B_O_trg.z * 1000.0f);
 
-    TrgStates_Z.D_perp = (int16_t)(D_perp_trg * 1000.0f);
-
-    TrgStates_Z.vxy = compressXY(Vel_B_O_trg.x, Vel_B_O_trg.y);
-    TrgStates_Z.vz = (int16_t)(Vel_B_O_trg.z * 1000.0f);
-
-    TrgStates_Z.wxy = compressXY(Omega_B_O_trg.x,Omega_B_O_trg.y);
-    TrgStates_Z.wz = (int16_t)(Omega_B_O_trg.z * 1000.0f);
+    TrgStates_Z.V_BOxy = compressXY(Vel_B_O_trg.x, Vel_B_O_trg.y);
+    TrgStates_Z.V_BOz = (int16_t)(Vel_B_O_trg.z * 1000.0f);
 
     float const q[4] = {
         Quat_B_O_trg.x,
         Quat_B_O_trg.y,
         Quat_B_O_trg.z,
         Quat_B_O_trg.w};
-    TrgStates_Z.quat = quatcompress(q);
+    TrgStates_Z.Quat_BO = quatcompress(q);
 
-    // COMPRESS OPTICAL FLOW VALUES
-    TrgStates_Z.Theta_xy = compressXY(Theta_x_trg,Theta_y_trg);
-    TrgStates_Z.Tau = (int16_t)(Tau_trg * 1000.0f); 
+    TrgStates_Z.Omega_BOy = (int16_t)(Omega_B_O_trg.y * 1000.0f);
 
-    // COMPRESS OPTICAL FLOW ESTIMATES
-    TrgStates_Z.Theta_xy_est = compressXY(Theta_x_Cam_trg,Theta_y_Cam_trg);
-    TrgStates_Z.Tau_Cam = (int16_t)(Tau_Cam_trg * 1000.0f); 
+    TrgStates_Z.VelRel_BP = compressXY(Vel_mag_B_P_trg, Vel_angle_B_P_trg);
+
+    TrgStates_Z.D_perp = compressXY(D_perp_trg,D_perp_CR_trg);
+    TrgStates_Z.Tau = compressXY(Tau_trg,Tau_CR_trg);
+    TrgStates_Z.Theta_x = (int16_t)(Theta_x_trg * 1000.0f);
+
+    TrgStates_Z.r_PBxy = compressXY(Pos_P_B_trg.x,Pos_P_B_trg.y);
+    TrgStates_Z.r_PBz = (int16_t)(Pos_P_B_trg.z * 1000.0f);
+
 
     // COMPRESS POLICY ACTIONS
     TrgStates_Z.Policy_Actions = compressXY(Policy_Trg_Action_trg,Policy_Rot_Action_trg);

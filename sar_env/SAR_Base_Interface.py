@@ -153,7 +153,7 @@ class SAR_Base_Interface():
             'Cap_Logging':22,
 
             'Thrust':30,
-            'PWM':31,
+            'MotorCMD':31,
 
             'GZ_Pose_Reset':90,
             'GZ_Const_Vel_Traj':91,
