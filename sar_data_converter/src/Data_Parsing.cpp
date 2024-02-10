@@ -423,6 +423,10 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
     // THETA VALUES
     Theta_x_trg = log_msg->values[2]*1e-3;
 
+    Optical_Flow_trg.x = Theta_x_trg;
+    Optical_Flow_trg.y = NAN;
+    Optical_Flow_trg.z = Tau_trg;
+
     // RELATIVE VELOCITY
     float VelRel_BP_arr[2];
     decompressXY(log_msg->values[3],VelRel_BP_arr);
@@ -451,7 +455,7 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
     Eul_B_O_trg.z = eul[2]*180/M_PI;
 
     Eul_P_B_trg.x = NAN;
-    Eul_P_B_trg.y = Plane_Angle_deg - Eul_B_O.y;
+    Eul_P_B_trg.y = Plane_Angle_deg - Eul_B_O_trg.y;
     Eul_P_B_trg.z = NAN;
 
     // ANGULAR VELOCITY

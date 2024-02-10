@@ -711,24 +711,31 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
 
 
     // SIMULATION: SEND COMMAND VALUES TO SIM CONTROLLER (SEND AS SERVICE REQUEST)
-    sar_msgs::CTRL_Cmd_srv srv;
-    srv.request = req;
-    CMD_Output_Service.call(srv);
-
-
-    // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER (BROADCAST CMD VALUES AS ROS MESSAGE)
-    sar_msgs::CTRL_Cmd cmd_msg;
-    cmd_msg.cmd_type = req.cmd_type;
-    cmd_msg.cmd_vals = req.cmd_vals;
-    cmd_msg.cmd_flag = req.cmd_flag;
-    cmd_msg.cmd_rx = req.cmd_rx;
-
-    for (int i = 0; i < 3; i++)
+    if (DATA_TYPE.compare("SIM") == 0)
     {
-        CMD_Output_Topic.publish(cmd_msg);
+        sar_msgs::CTRL_Cmd_srv srv;
+        srv.request = req;
+        CMD_Output_Service.call(srv);
+        return srv.response.srv_Success; // Return if service request successful (true/false)
+    }
+    else
+    {
+        // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER (BROADCAST CMD VALUES AS ROS MESSAGE)
+        sar_msgs::CTRL_Cmd cmd_msg;
+        cmd_msg.cmd_type = req.cmd_type;
+        cmd_msg.cmd_vals = req.cmd_vals;
+        cmd_msg.cmd_flag = req.cmd_flag;
+        cmd_msg.cmd_rx = req.cmd_rx;
+
+        for (int i = 0; i < 3; i++)
+        {
+            CMD_Output_Topic.publish(cmd_msg);
+        }
+
+        return true;
     }
     
-    return srv.response.srv_Success; // Return if service request successful (true/false)
+    
 }
 
 
