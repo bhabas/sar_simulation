@@ -144,7 +144,7 @@ class Policy_Trainer_DeepRL():
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
 
-    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[16,16]):
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[6,6]):
 
         self.model = SAC(
             "MlpPolicy",
@@ -544,7 +544,7 @@ class Policy_Trainer_DeepRL():
         f.write(f"// Filename: {FileName} Time: {date_time}\n")
         f.write("static char NN_Params_DeepRL[] = {\n")
         
-        NN_Num_Layers = np.array([3]).reshape(-1,1)
+        NN_Num_Layers = np.array([4]).reshape(-1,1)
 
         ## SAVE SCALER ARRAY VALUES
         np.savetxt(f,NN_Num_Layers,
@@ -650,9 +650,9 @@ if __name__ == '__main__':
 
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
+    PolicyTrainer.create_model(net_arch=[16,16,16])
     PolicyTrainer.save_NN_Params()
-    PolicyTrainer.train_model(total_timesteps=600e3,reset_timesteps=False)
+    # PolicyTrainer.train_model(total_timesteps=600e3,reset_timesteps=False)
 
 
 
