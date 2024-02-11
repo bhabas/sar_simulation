@@ -16,7 +16,6 @@ void NN_init(NN* NN, char str[])
     array_str = strtok_r(NULL,"*",&save_ptr);
     NN->scaler_std = nml_mat_fromstr(array_str);
 
-
     // INITIALIZE NETWORK WEIGHTS AND BIASES FROM HEADER FILE VALUES
     for (int i = 0; i < NN->num_layers; i++)
     {
@@ -40,16 +39,16 @@ void NN_forward(nml_mat* X_input, nml_mat* Y_output, NN* NN)
     }
 
     // LAYER 1
-    // a = Relu(W*X+b)
+    // a = Leaky_Relu(W*X+b)
     nml_mat *WX1 = nml_mat_dot(NN->W[0],X_copy); 
     nml_mat_add_r(WX1,NN->b[0]);
-    nml_mat *a1 = nml_mat_funcElement(WX1,Relu);
+    nml_mat *a1 = nml_mat_funcElement(WX1,Leaky_Relu);
 
     // LAYER 2
-    // a = Relu(W*X+b)
+    // a = Leaky_Relu(W*X+b)
     nml_mat *WX2 = nml_mat_dot(NN->W[1],a1); 
     nml_mat_add_r(WX2,NN->b[1]);
-    nml_mat *a2 = nml_mat_funcElement(WX2,Relu);
+    nml_mat *a2 = nml_mat_funcElement(WX2,Leaky_Relu);
 
     // LAYER 3
     // a = W*X+b

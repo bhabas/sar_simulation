@@ -50,11 +50,13 @@ void controllerOutOfTreeInit() {
     controllerOutOfTreeTest();
 
     // INIT DEEP RL NN POLICY
-    X_input = nml_mat_new(3,1);
+    X_input = nml_mat_new(4,1);
     Y_output = nml_mat_new(4,1);
 
     // INIT DEEP RL NN POLICY
     NN_init(&NN_DeepRL,NN_Params_DeepRL);
+    NN_forward(X_input,Y_output,&NN_DeepRL);
+    nml_mat_print(Y_output);
 
     consolePrintf("GTC Controller Initiated\n");
 }
@@ -314,7 +316,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             X_input->data[0][0] = Tau_Cam;
             X_input->data[1][0] = Theta_x_Cam;
             X_input->data[2][0] = D_perp; 
-
+            X_input->data[3][0] = Plane_Angle_deg; 
         }
         else
         {
@@ -325,6 +327,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             X_input->data[0][0] = Tau;
             X_input->data[1][0] = Theta_x;
             X_input->data[2][0] = D_perp; 
+            X_input->data[3][0] = Plane_Angle_deg;
         }
     }
     

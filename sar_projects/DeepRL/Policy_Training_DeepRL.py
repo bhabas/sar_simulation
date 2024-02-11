@@ -544,19 +544,19 @@ class Policy_Trainer_DeepRL():
         f.write(f"// Filename: {FileName} Time: {date_time}\n")
         f.write("static char NN_Params_DeepRL[] = {\n")
         
-        NN_size = np.array([3]).reshape(-1,1)
+        NN_Num_Layers = np.array([3]).reshape(-1,1)
 
         ## SAVE SCALER ARRAY VALUES
-        np.savetxt(f,NN_size,
+        np.savetxt(f,NN_Num_Layers,
                     fmt='"%.0f,"',
                     delimiter='\t',
                     comments='',
-                    header=f'"{NN_size.shape[0]},"\t"{NN_size.shape[1]},"',
+                    header=f'"{NN_Num_Layers.shape[0]},"\t"{NN_Num_Layers.shape[1]},"',
                     footer='"*"\n')
 
         ## EXTEND SCALER ARRAY DIMENSIONS
-        scaler_means = np.zeros(3).reshape(-1,1)
-        scaler_stds = np.ones(3).reshape(-1,1)
+        scaler_means = np.zeros(4).reshape(-1,1)
+        scaler_stds = np.ones(4).reshape(-1,1)
         
         ## SAVE SCALER ARRAY VALUES
         np.savetxt(f,scaler_means,
@@ -651,6 +651,7 @@ if __name__ == '__main__':
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
+    PolicyTrainer.save_NN_Params()
     PolicyTrainer.train_model(total_timesteps=600e3,reset_timesteps=False)
 
 
