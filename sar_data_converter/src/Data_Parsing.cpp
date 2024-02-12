@@ -351,7 +351,7 @@ void SAR_DataConverter::cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData:
     decompressXY(log_msg->values[1],M_xy); 
 
 
-    FM = {FM_z[0],M_xy[0]/1e3,M_xy[1]/1e3,FM_z[1]/1e3}; // [F,Mx,My,Mz]
+    FM = {FM_z[0],M_xy[0],M_xy[1],FM_z[1]}; // [F,Mx,My,Mz]
 
     // MOTOR THRUST VALUES
     float M_thrust12[2];
