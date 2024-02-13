@@ -56,11 +56,11 @@ class SAR_Base_Interface():
         self.Collision_Radius = max(self.L_eff,self.Forward_Reach)
 
         ## SYSTEM AND FLIGHT PARAMETERS
-        self.Thrust_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Thrust_max")
         self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")
         self.Tau_up = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Tau_up")
         self.Tau_down = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Tau_down")
         self.Thrust_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Thrust_max")
+        self.C_tf = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/C_tf")
         self.Ang_Acc_max = (9.81*self.Thrust_max*1e-3*self.Prop_Front[0])*2/self.Ref_Iyy
         self.setAngAcc_range([-self.Ang_Acc_max, self.Ang_Acc_max])
         
@@ -139,26 +139,28 @@ class SAR_Base_Interface():
             'Ctrl_Reset':0,
             'Pos':1,
             'Vel':2,
-            'Yaw':3,
+
             'Stop':5,
-            'dOmega':7,
+            'Ang_Accel':7,
             'Policy':8,
+            'Plane_Pose':9,
 
             'P2P_traj':10,
             'Vel_traj':11,
             'Impact_traj':12,
 
-            'Tumble':20,
+            'Tumble_Detect':20,
             'Load_Params':21,
-            'Cap_Logging':22,
+            'Start_Logging':22,
+            'Cap_Logging':23,
+            'Safe_Mode':24,
 
-            'Thrust':30,
-            'MotorCMD':31,
+            'Thrust_CMD':30,
+            'Motor_CMD':31,
 
             'GZ_Pose_Reset':90,
             'GZ_Const_Vel_Traj':91,
             'GZ_StickyPads':92,
-            'GZ_Plane_Pose':93,
         }
         
 

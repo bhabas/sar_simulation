@@ -107,7 +107,7 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(34,0,"a_d: % 7.3f  % 7.3f  % 7.3f",a_d.x,a_d.y,a_d.z);
 
         mvprintw(36,0,"==== Controller Actions ====");
-        mvprintw(37,0,"FM [N/N*mm]:       % 7.3f  % 7.3f  % 7.3f  % 7.3f",FM[0],FM[1],FM[2],FM[3]);
+        mvprintw(37,0,"FM [g/g*m]:       % 7.3f  % 7.3f  % 7.3f  % 7.3f",FM[0],FM[1],FM[2],FM[3]);
         mvprintw(38,0,"Motor Thrusts [g]: % 7.3f  % 7.3f  % 7.3f  % 7.3f",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
         mvprintw(39,0,"MS_Cmd: %u  %u  %u  %u",Motor_CMD[0],Motor_CMD[1],Motor_CMD[2],Motor_CMD[3]);
 

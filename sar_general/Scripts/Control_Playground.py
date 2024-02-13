@@ -11,32 +11,35 @@ def cmd_send(env,logName):
             0:'Ctrl_Reset',
             1:'Pos',
             2:'Vel',
-            3:'Yaw',
+
             5:'Stop',
             7:'Ang_Accel',
             8:'Policy',
+            9:'Plane_Pose',
 
             10:'P2P_traj',
             11:'Vel_traj',
             12:'Impact_traj',
 
-            20:'Tumble',
+            20:'Tumble_Detect',
             21:'Load_Params',
             22:'Start_Logging',
             23:'Cap_Logging',
+            24:'Safe_Mode',
 
             90:'GZ_Pose_Reset',
             91:'GZ_Const_Vel_Traj',
             92:'GZ_StickyPads',
-            93:'GZ_Plane_Pose',
         }
 
         try:
             print("========== Command Types ==========")
-            print("0:Ctrl_Reset, \t1:Pos, \t\t2:Vel, \t3:Yaw, \t5:Stop, \t8:Policy")
-            print("10:P2P_traj, \t11:Vel_traj, \t12:Impact_traj,")
-            print("20:Tumble, \t21:Load_Params, 22:Start_Logging, 23:Cap_Logging,")
-            print("90:GZ_Pose_Reset, \t91:GZ_Const_Vel_Traj, \t92:GZ_StickyPads, \t93:GZ_Plane_Pose")
+            print("0: Ctrl_Reset \t1: Pos \t2: Vel \t5: Stop")
+            print("7: Ang_Accel \t8: Policy \t9: Plane_Pose")
+            print("10: P2P_traj \t11: Vel_traj \t12: Impact_traj")
+            print("20: Tumble_Detect \t21: Load_Params \t22: Start_Logging \t23: Cap_Logging \t24: Safe_Mode")
+            print("90: GZ_Pose_Reset \t91: GZ_Const_Vel_Traj \t92: GZ_StickyPads")
+ 
             val = env.userInput("\nCmd: ",int)
             print()
             action = cmd_dict[val]

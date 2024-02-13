@@ -674,6 +674,16 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
             }
             break;
 
+        case 9: // UPDATE PLANE POSITION
+            SAR_DataConverter::setLandingSurfacePose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
+
+            Plane_Pos.x = req.cmd_vals.x;
+            Plane_Pos.y = req.cmd_vals.y;
+            Plane_Pos.z = req.cmd_vals.z;
+            Plane_Angle_deg = req.cmd_flag;
+            
+            break;
+
         case 21:  // UPDATE PARAMS IN SAR_DC 
             SAR_DataConverter::updateParams();
             break;
@@ -695,15 +705,7 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
             }
             break;
 
-        case 93: // UPDATE PLANE POSITION
-            SAR_DataConverter::setLandingSurfacePose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
-
-            Plane_Pos.x = req.cmd_vals.x;
-            Plane_Pos.y = req.cmd_vals.y;
-            Plane_Pos.z = req.cmd_vals.z;
-            Plane_Angle_deg = req.cmd_flag;
-            
-            break;
+        
 
         default:
             break;

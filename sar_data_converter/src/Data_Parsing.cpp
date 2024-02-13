@@ -1,5 +1,8 @@
 #include "SAR_DataConverter.h"
 
+#define g2Newton (9.81f/1000.0f)
+#define Newton2g (1000.0f/9.81f)
+
 void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 {
     // ===================
@@ -82,6 +85,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // CONTROL ACTIONS
     FM = ctrl_msg.FM;
+    FM[0] = FM[0]*g2Newton;
+    FM[1] = FM[1]*g2Newton*1.0e-3;
+    FM[2] = FM[2]*g2Newton*1.0e-3;
+    FM[3] = FM[3]*g2Newton*1.0e-3;
     MotorThrusts = ctrl_msg.MotorThrusts;
     Motor_CMD = ctrl_msg.Motor_CMD;
 
@@ -351,7 +358,7 @@ void SAR_DataConverter::cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData:
     decompressXY(log_msg->values[1],M_xy); 
 
 
-    FM = {FM_z[0],M_xy[0],M_xy[1],FM_z[1]}; // [F,Mx,My,Mz]
+    FM = {FM_z[0]*Newton2g,M_xy[0]*Newton2g*1.0e-3,M_xy[1]*Newton2g*1.0e-3,FM_z[1]*Newton2g*1.0e-3}; // [F,Mx,My,Mz]
 
     // MOTOR THRUST VALUES
     float M_thrust12[2];

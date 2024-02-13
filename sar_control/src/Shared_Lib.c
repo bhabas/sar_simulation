@@ -381,6 +381,17 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             Policy_Armed_Flag = (bool)CTRL_Cmd->cmd_flag;
             break;
 
+        case 9: // UPDATE PLANE POSITION
+
+            r_P_O.x = CTRL_Cmd->cmd_val1;
+            r_P_O.y = CTRL_Cmd->cmd_val2;
+            r_P_O.z = CTRL_Cmd->cmd_val3;
+            Plane_Angle_deg = CTRL_Cmd->cmd_flag;
+
+            updateRotationMatrices();
+            
+            break;
+
         case 10: // Point-to-Point Trajectory
 
             Traj_Type = P2P;
@@ -529,16 +540,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
         
 
-        case 93: // UPDATE PLANE POSITION
 
-            r_P_O.x = CTRL_Cmd->cmd_val1;
-            r_P_O.y = CTRL_Cmd->cmd_val2;
-            r_P_O.z = CTRL_Cmd->cmd_val3;
-            Plane_Angle_deg = CTRL_Cmd->cmd_flag;
-
-            updateRotationMatrices();
-            
-            break;
     }
 
 }
