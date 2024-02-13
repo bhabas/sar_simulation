@@ -301,7 +301,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.TumbleDetect_Flag = TumbleDetect_Flag;
     CtrlDebug_msg.MotorStop_Flag = MotorStop_Flag;
     CtrlDebug_msg.AngAccel_Flag = AngAccel_Flag; 
-    CtrlDebug_msg.SafeMode_Flag = SafeMode_Flag;
+    CtrlDebug_msg.Armed_Flag = Armed_Flag;
     CtrlDebug_msg.CustomThrust_Flag = CustomThrust_Flag;
     CtrlDebug_msg.CustomMotorCMD_Flag = CustomMotorCMD_Flag;
 

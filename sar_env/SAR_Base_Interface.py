@@ -153,7 +153,7 @@ class SAR_Base_Interface():
             'Load_Params':21,
             'Start_Logging':22,
             'Cap_Logging':23,
-            'Safe_Mode':24,
+            'Arm_Quad':24,
 
             'Thrust_CMD':30,
             'Motor_CMD':31,

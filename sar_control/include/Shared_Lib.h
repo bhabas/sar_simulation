@@ -227,7 +227,7 @@ extern bool Tumbled_Flag;
 extern bool TumbleDetect_Flag;
 extern bool MotorStop_Flag;
 extern bool AngAccel_Flag;
-extern bool SafeMode_Flag;
+extern bool Armed_Flag;
 extern bool CustomThrust_Flag;
 extern bool CustomMotorCMD_Flag;
 

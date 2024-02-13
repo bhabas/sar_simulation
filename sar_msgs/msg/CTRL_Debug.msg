@@ -2,7 +2,7 @@ bool Tumbled_Flag
 bool TumbleDetect_Flag
 bool MotorStop_Flag
 bool AngAccel_Flag
-bool SafeMode_Flag
+bool Armed_Flag
 bool CustomThrust_Flag
 bool CustomMotorCMD_Flag
 

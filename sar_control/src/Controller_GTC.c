@@ -441,7 +441,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
 
         #ifdef CONFIG_SAR_EXP
-        if(SafeMode_Flag)
+        if(Armed_Flag)
         {
             motorsSetRatio(MOTOR_M1, 0);
             motorsSetRatio(MOTOR_M2, 0);
@@ -486,7 +486,7 @@ PARAM_ADD(PARAM_FLOAT, L_eff, &L_eff)
 PARAM_ADD(PARAM_FLOAT, Fwd_Reach, &Forward_Reach)
 
 
-PARAM_ADD(PARAM_UINT8, SafeMode, &SafeMode_Flag)
+PARAM_ADD(PARAM_UINT8, Armed, &Armed_Flag)
 PARAM_ADD(PARAM_UINT8, PolicyType, &Policy)
 PARAM_GROUP_STOP(System_Params)
 
@@ -590,7 +590,7 @@ LOG_ADD(LOG_UINT8, Motorstop,       &MotorStop_Flag)
 LOG_ADD(LOG_UINT8, Tumbled_Flag,    &Tumbled_Flag)
 LOG_ADD(LOG_UINT8, Tumble_Detect,   &TumbleDetect_Flag)
 LOG_ADD(LOG_UINT8, AngAccel_Flag,   &AngAccel_Flag)
-LOG_ADD(LOG_UINT8, SafeMode_Flag,   &SafeMode_Flag)
+LOG_ADD(LOG_UINT8, Armed_Flag,   &Armed_Flag)
 LOG_ADD(LOG_UINT8, Policy_Armed,    &Policy_Armed_Flag)
 LOG_ADD(LOG_UINT8, CustomThrust,    &CustomThrust_Flag)
 LOG_ADD(LOG_UINT8, CustomM_CMD,     &CustomMotorCMD_Flag)

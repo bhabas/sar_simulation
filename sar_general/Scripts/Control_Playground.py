@@ -25,7 +25,7 @@ def cmd_send(env,logName):
             21:'Load_Params',
             22:'Start_Logging',
             23:'Cap_Logging',
-            24:'Safe_Mode',
+            24:'Arm_Quad',
 
             90:'GZ_Pose_Reset',
             91:'GZ_Const_Vel_Traj',

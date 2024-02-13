@@ -223,7 +223,7 @@ bool Tumbled_Flag = false;
 bool TumbleDetect_Flag = true;
 bool MotorStop_Flag = false;
 bool AngAccel_Flag = false;
-bool SafeMode_Flag = true;
+bool Armed_Flag = true;
 bool CustomThrust_Flag = false;
 bool CustomMotorCMD_Flag = false;
 
