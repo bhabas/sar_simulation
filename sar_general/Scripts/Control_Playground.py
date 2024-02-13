@@ -96,6 +96,11 @@ def cmd_send(env,logName):
 
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
+            elif action=='Arm_Quad':
+                cmd_vals = [0,0,0]
+                cmd_flag = env.userInput("Arm Quad On/Off (1,0): ",int)
+                env.sendCmd(action,cmd_vals,cmd_flag)
+
             elif action=='dOmega':
                 cmd_vals = env.userInput("Set desired dOmega values (x,y,z) rad/s^2: ",float)
                 cmd_flag = env.userInput("dOmega control On/Off (1,0): ",int)
@@ -203,7 +208,7 @@ def cmd_send(env,logName):
                 env.resetPose()
 
 
-            elif action=='GZ_Plane_Pose':
+            elif action=='Plane_Pose':
                 cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
                 cmd_flag = env.userInput("Set desired plane angle [deg]: ",float)
                 print()
