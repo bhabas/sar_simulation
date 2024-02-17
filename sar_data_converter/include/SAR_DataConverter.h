@@ -98,6 +98,7 @@ class SAR_DataConverter {
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
             ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
             Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
+            CrazyswarmPing_Thread = std::thread(&SAR_DataConverter::CrazyswarmPingLoop, this);
 
 
         }
@@ -106,6 +107,7 @@ class SAR_DataConverter {
         void MainLoop();
         void ConsoleLoop();
         void LoggingLoop();
+        void CrazyswarmPingLoop();
 
 
         // =======================
@@ -188,6 +190,7 @@ class SAR_DataConverter {
         std::thread SAR_DC_Thread;
         std::thread ConsoleOutput_Thread;
         std::thread Logging_Thread;
+        std::thread CrazyswarmPing_Thread;
 
         // =====================
         //     SYSTEM PARAMS
@@ -739,6 +742,8 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
     
     
 }
+
+
 
 
 // CONVERT QUATERNION TO EULER ANGLES (YZX NOTATION)
