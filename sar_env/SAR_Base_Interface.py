@@ -270,9 +270,9 @@ class SAR_Base_Interface():
 
         return x_0,z_0
     
-    def setPlanePose(self,Position=[0,0,2.0],Plane_Angle=180):
+    def _setPlanePose(self,Position=[0,0,2.0],Plane_Angle=180):
         
-        self.sendCmd("GZ_Plane_Pose",Position,Plane_Angle)
+        self.sendCmd("Plane_Pose",Position,Plane_Angle)
 
     def _sampleFlightConditions(self,V_mag_range=[0.5,1.5],V_angle_range=[0,90]):
 
