@@ -1,4 +1,0 @@
-<launch>
-    <node name="debug_node" pkg="crazyflie_control" type="controller" />
-
-</launch>

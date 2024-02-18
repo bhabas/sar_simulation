@@ -29,7 +29,7 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(5, 0,"Quad_Armed: %u",Armed_Flag);
         mvprintw(6, 0,"MotorStop:  %u",MotorStop_Flag);
         mvprintw(7, 0,"Tumble:     %u",Tumbled_Flag);
-        mvprintw(8, 0,"Tumbl_Det:  %u",TumbleDetect_Flag);
+        mvprintw(8, 0,"Tumble_Det: %u",TumbleDetect_Flag);
 
         mvprintw(5, 15,"Policy_Armed:    %u",Policy_Armed_Flag);
         mvprintw(6, 15,"Trg_Flag:        %u",Trg_Flag);

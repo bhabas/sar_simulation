@@ -17,68 +17,26 @@ from rosgraph_msgs.msg import Clock
 YELLOW = '\033[93m'
 RED = '\033[91m'
 GREEN = '\033[92m'
-BLUE = "\033[34m"  # Blue text
+BLUE = "\033[34m"  
 RESET = "\033[0m"  # Reset to default color
 
 class SAR_Base_Interface():
 
-    def __init__(self,Exp_Flag=False):
+    def __init__(self,Experiment_Setup=False):
         
-        if not Exp_Flag:   
-            os.system("roslaunch sar_launch Load_Params.launch")
+        if not Experiment_Setup:   
             rospy.init_node("SAR_Env_Node")
+            os.system("roslaunch sar_launch Load_Params.launch")
+            self.loadParams()
+            
+        else:
+            os.system("roslaunch sar_launch_exp Load_Params.launch")
+            self.loadParams()
 
-        ## SAR PARAMETERS
-        self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
-        self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
 
+        
+                
         self.Pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
-
-
-        ## INERTIAL PARAMETERS
-        self.Ref_Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Mass")
-        self.Ref_Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Ixx")
-        self.Ref_Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Iyy")
-        self.Ref_Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Izz")
-
-        ## GEOMETRIC PARAMETERS
-        self.Forward_Reach = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Forward_Reach")
-        self.Leg_Length = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Length")
-        self.Leg_Angle = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Angle")
-        self.Prop_Front = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Front")
-        self.Prop_Rear = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Rear")
-
-        ## EFFECTIVE-GEOEMTRIC PARAMETERS
-        self.L_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/L_eff")
-        self.Gamma_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Gamma_eff")
-        self.Lx_eff = self.L_eff*np.sin(np.radians(self.Gamma_eff))
-        self.Lz_eff = self.L_eff*np.cos(np.radians(self.Gamma_eff))
-        self.Collision_Radius = max(self.L_eff,self.Forward_Reach)
-
-        ## SYSTEM AND FLIGHT PARAMETERS
-        self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")
-        self.Tau_up = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Tau_up")
-        self.Tau_down = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Tau_down")
-        self.Thrust_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Thrust_max")
-        self.C_tf = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/C_tf")
-        self.Ang_Acc_max = (9.81*self.Thrust_max*1e-3*self.Prop_Front[0])*2/self.Ref_Iyy
-        self.setAngAcc_range([-self.Ang_Acc_max, self.Ang_Acc_max])
-        
-        self.Beta_Min_deg = -(self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff)))
-        self.Phi_P_B_impact_Min_deg = -self.Beta_Min_deg - self.Gamma_eff + 90
-
-        # self.Phi_impact_B_O_Min_deg = self.Beta_Min_deg + self.Gamma_eff + self.Plane_Angle_deg - 90 
-
-
-        ## CAM PARAMETERS
-        self.Cam_Config = rospy.get_param('/CAM_SETTINGS/Cam_Config')
-        self.Cam_Active = rospy.get_param('/CAM_SETTINGS/Cam_Active')
-        
-
-        ## PLANE PARAMETERS
-        self.Plane_Type = rospy.get_param('/PLANE_SETTINGS/Plane_Type')
-        self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
-        
 
         ## LOGGING PARAMETERS
         self.Username = getpass.getuser()
@@ -116,6 +74,54 @@ class SAR_Base_Interface():
         ## RL DATA PUBLISHERS
         self.RL_Data_Pub = rospy.Publisher('/RL/Data',RL_Data,queue_size=10)
         self.RL_History_Pub = rospy.Publisher('/RL/History',RL_History,queue_size=10)
+
+    def loadParams(self):
+
+        ## SAR PARAMETERS
+        self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
+        self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
+
+        ## INERTIAL PARAMETERS
+        self.Ref_Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Mass")
+        self.Ref_Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Ixx")
+        self.Ref_Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Iyy")
+        self.Ref_Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Izz")
+
+        ## GEOMETRIC PARAMETERS
+        self.Forward_Reach = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Forward_Reach")
+        self.Leg_Length = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Length")
+        self.Leg_Angle = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Angle")
+        self.Prop_Front = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Front")
+        self.Prop_Rear = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Prop_Rear")
+
+        ## EFFECTIVE-GEOEMTRIC PARAMETERS
+        self.L_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/L_eff")
+        self.Gamma_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Gamma_eff")
+        self.Lx_eff = self.L_eff*np.sin(np.radians(self.Gamma_eff))
+        self.Lz_eff = self.L_eff*np.cos(np.radians(self.Gamma_eff))
+        self.Collision_Radius = max(self.L_eff,self.Forward_Reach)
+
+        ## SYSTEM AND FLIGHT PARAMETERS
+        self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")
+        self.Tau_up = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Tau_up")
+        self.Tau_down = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Tau_down")
+        self.Thrust_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Thrust_max")
+        self.C_tf = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/C_tf")
+        self.Ang_Acc_max = (9.81*self.Thrust_max*1e-3*self.Prop_Front[0])*2/self.Ref_Iyy
+        self.setAngAcc_range([-self.Ang_Acc_max, self.Ang_Acc_max])
+        
+        self.Beta_Min_deg = -(self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff)))
+        self.Phi_P_B_impact_Min_deg = -self.Beta_Min_deg - self.Gamma_eff + 90
+
+        ## CAM PARAMETERS
+        self.Cam_Config = rospy.get_param('/CAM_SETTINGS/Cam_Config')
+        self.Cam_Active = rospy.get_param('/CAM_SETTINGS/Cam_Active')
+        
+
+        ## PLANE PARAMETERS
+        self.Plane_Type = rospy.get_param('/PLANE_SETTINGS/Plane_Type')
+        self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
+
 
     def _getTime(self):
         """Returns current known time.

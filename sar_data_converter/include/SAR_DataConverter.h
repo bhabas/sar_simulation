@@ -688,7 +688,7 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
             break;
 
         case 21:  // UPDATE PARAMS IN SAR_DC 
-            SAR_DataConverter::updateParams();
+            SAR_DataConverter::loadInitParams();
             break;
         
         case 92: // ACTIVATE STICKY FEET

@@ -5,6 +5,7 @@ import numpy as np
 
        
 def cmd_send(env,logName):
+
     while True:
         # Converts input number into action name
         cmd_dict = {
@@ -45,7 +46,7 @@ def cmd_send(env,logName):
             action = cmd_dict[val]
             
 
-
+            ## CONTROLLER RESET
             if action=='Ctrl_Reset': # Execute Ctrl_Reset or Stop action
                 cmd_vals = [0,0,0]
                 cmd_flag = 1
@@ -54,58 +55,100 @@ def cmd_send(env,logName):
                 env.sendCmd('GZ_StickyPads',cmd_vals,0)
                 env.sendCmd(action,cmd_vals,cmd_flag)
             
-            elif action=='Start_Logging':
-                env.startLogging(logName)
-
-            elif action=='Cap_Logging':
-                env.capLogging(logName)
 
             elif action=='Pos':
                 cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
                 cmd_flag = env.userInput("Pos control On/Off (1,0): ",int)
-                print()
-
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Vel':
                 cmd_vals = env.userInput("Set desired velocity values (x,y,z): ",float)
                 cmd_flag = env.userInput("Vel control On/Off (1,0): ",int)
-                print()
-
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
-            elif action=='Yaw':
-                yaw = env.userInput("Set desired yaw value: ",float)
-                cmd_vals = [yaw,0,0]
-                print()
+            elif action=='Stop': # Execute Ctrl_Reset or Stop action
+                cmd_vals = [0,0,0]
+                cmd_flag = 1
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
-                env.sendCmd(action,cmd_vals)
+            elif action=='Ang_Accel':
+                cmd_vals = env.userInput("Set desired angular acceleration values (x,y,z): ",float)
+                cmd_flag = env.userInput("Ang_Accel control On/Off (1,0): ",int)
+                env.sendCmd(action,cmd_vals,cmd_flag)
 
-            elif action=='Tumble': # Turn on Tumble detection
+            elif action=='Policy':
+                cmd_vals = env.userInput("Set desired (Tau,My_d) Policy: ",float)
+                cmd_vals.append(0) # Append extra value to match framework
+                cmd_flag = 1
+                env.sendCmd(action,cmd_vals,cmd_flag)
+
+
+            elif action=='Plane_Pose':
+                cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
+                cmd_flag = env.userInput("Set desired plane angle [deg]: ",float)
+                env._setPlanePose(cmd_vals,cmd_flag)
+
+
+            ## ========== TRAJECTORY FUNCTIONS ==========
+
+            elif action=='P2P_traj':
+                x_d = env.userInput("Desired position (x,y,z):",float)
+                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],x_d[0],env.TrajAcc_Max[0]],cmd_flag=0)
+                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],x_d[1],env.TrajAcc_Max[1]],cmd_flag=1)
+                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],x_d[2],env.TrajAcc_Max[2]],cmd_flag=2)
+
+            # elif action=='Vel_traj':
+
+            #     ## GET INPUT VALUES
+            #     V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
+
+            #     ## DEFINE CARTESIAN VELOCITIES
+            #     phi_rad = np.radians(phi)
+
+            #     Vx_d = V_d*np.cos(phi_rad)
+            #     Vz_d = V_d*np.sin(phi_rad)
+
+            #     env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
+            #     env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
+
+            # elif action=='Impact_traj':
+
+            #     ## GET VEL CONDITIONS 
+            #     V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
+                
+            #     ## DEFINE CARTESIAN VELOCITIES
+            #     phi_rad = np.radians(phi)
+
+            #     Vx_d = V_d*np.cos(phi_rad)
+            #     Vz_d = V_d*np.sin(phi_rad)
+
+            #     x_impact = env.userInput("Desired impact position (x):",float)
+
+            #     x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d])
+
+            #     print(f"Desired start position x_0: {x_0:.2f} y_0: {0.0:.2f} z_0: {z_0:.2f}")
+            #     str_input = env.userInput("Approve start position (y/n): ",str)
+
+            #     if str_input == 'y':
+            #         env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],x_0,env.TrajAcc_Max[0]],cmd_flag=0)
+            #         env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],0.0,env.TrajAcc_Max[1]],cmd_flag=1)
+            #         env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],z_0,env.TrajAcc_Max[2]],cmd_flag=2)
+
+            #         str_input = env.userInput("Approve flight (y/n): ",str)
+            #         if str_input == 'y':
+            #             env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
+            #             env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
+
+            #     else:
+            #         print(f"Try again")
+
+
+            ## ========== SYSTEM FUNCTIONS ==========
+            elif action=='Tumble_Detect': # Turn on Tumble detection
 
                 cmd_vals = [0,0,0]
                 cmd_flag = env.userInput("Tumble Detection On/Off (1,0): ",int)
-                print()
-
                 env.sendCmd('Tumble',cmd_vals,cmd_flag)
-
-            if action=='Stop': # Execute Ctrl_Reset or Stop action
-                cmd_vals = [0,0,0]
-                cmd_flag = 1
-                print("Rotors turned off\n")
-
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-            elif action=='Arm_Quad':
-                cmd_vals = [0,0,0]
-                cmd_flag = env.userInput("Arm Quad On/Off (1,0): ",int)
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-            elif action=='dOmega':
-                cmd_vals = env.userInput("Set desired dOmega values (x,y,z) rad/s^2: ",float)
-                cmd_flag = env.userInput("dOmega control On/Off (1,0): ",int)
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
 
             elif action=='Load_Params': # Updates gain values from config file
                 cmd_vals = [0,0,0]
@@ -115,68 +158,21 @@ def cmd_send(env,logName):
                 env.setParams()
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
-            elif action=='Policy':
-                cmd_vals = env.userInput("Set desired (Tau,My_d) Policy: ",float)
-                cmd_vals.append(0) # Append extra value to match framework
-                cmd_flag = 1
-                print()
 
+            elif action=='Start_Logging':
+                env.startLogging(logName)
+
+            elif action=='Cap_Logging':
+                env.capLogging(logName)
+
+            elif action=='Arm_Quad':
+                cmd_vals = [0,0,0]
+                cmd_flag = env.userInput("Arm Quad On/Off (1,0): ",int)
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
-            elif action=='Vel_traj':
+            
 
-                ## GET INPUT VALUES
-                V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
-
-                ## DEFINE CARTESIAN VELOCITIES
-                phi_rad = np.radians(phi)
-
-                Vx_d = V_d*np.cos(phi_rad)
-                Vz_d = V_d*np.sin(phi_rad)
-
-                env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
-                env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
-
-            elif action=='Impact_traj':
-
-                ## GET VEL CONDITIONS 
-                V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
-                
-                ## DEFINE CARTESIAN VELOCITIES
-                phi_rad = np.radians(phi)
-
-                Vx_d = V_d*np.cos(phi_rad)
-                Vz_d = V_d*np.sin(phi_rad)
-
-                x_impact = env.userInput("Desired impact position (x):",float)
-
-                x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d])
-
-                print(f"Desired start position x_0: {x_0:.2f} y_0: {0.0:.2f} z_0: {z_0:.2f}")
-                str_input = env.userInput("Approve start position (y/n): ",str)
-
-                if str_input == 'y':
-                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],x_0,env.TrajAcc_Max[0]],cmd_flag=0)
-                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],0.0,env.TrajAcc_Max[1]],cmd_flag=1)
-                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],z_0,env.TrajAcc_Max[2]],cmd_flag=2)
-
-                    str_input = env.userInput("Approve flight (y/n): ",str)
-                    if str_input == 'y':
-                        env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
-                        env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
-
-                else:
-                    print(f"Try again")
-
-
-            elif action=='P2P_traj':
-                ## GET INPUT VALUES
-                x_d = env.userInput("Desired position (x,y,z):",float)
-                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],x_d[0],env.TrajAcc_Max[0]],cmd_flag=0)
-                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],x_d[1],env.TrajAcc_Max[1]],cmd_flag=1)
-                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],x_d[2],env.TrajAcc_Max[2]],cmd_flag=2)
-
-
+            ## ========== GAZEBO FUNCTIONS ==========
             elif action=='GZ_StickyPads':
                 cmd_vals = [0,0,0]
                 cmd_flag = env.userInput("Turn sticky pads On/Off (1,0): ",int)
@@ -208,12 +204,6 @@ def cmd_send(env,logName):
                 env.resetPose()
 
 
-            elif action=='Plane_Pose':
-                cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
-                cmd_flag = env.userInput("Set desired plane angle [deg]: ",float)
-                print()
-
-                env._setPlanePose(cmd_vals,cmd_flag)
 
             else:
                 print("Please try another command")
