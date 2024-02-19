@@ -75,7 +75,7 @@ void NN_forward(nml_mat* X_input, nml_mat* Y_output, NN* NN)
 
 float uniform_sample()
 {
-    return (double)rand()/(double)RAND_MAX;
+    return (float)rand()/(float)RAND_MAX;
 }
 
 float GaussianSample(float mu, float std)

@@ -42,8 +42,7 @@ bool controllerOutOfTreeTest() {
 void controllerOutOfTreeInit() {
 
     #ifdef CONFIG_SAR_EXP
-    ledSet(LED_BLUE_L, 0);
-    ledSet(LED_BLUE_NRF, 0);
+    
     #endif
 
     controllerOutOfTreeReset();
@@ -54,9 +53,11 @@ void controllerOutOfTreeInit() {
     Y_output = nml_mat_new(4,1);
 
     // INIT DEEP RL NN POLICY
+    // DEBUG_PRINT("Free heap: %d bytes\n", xPortGetFreeHeapSize());
     NN_init(&NN_DeepRL,NN_Params_DeepRL);
-    NN_forward(X_input,Y_output,&NN_DeepRL);
-    nml_mat_print(Y_output);
+    // DEBUG_PRINT("Free heap: %d bytes\n", xPortGetFreeHeapSize());
+
+    
 
     consolePrintf("GTC Controller Initiated\n");
 }
@@ -65,6 +66,7 @@ void controllerOutOfTreeInit() {
 void controllerOutOfTreeReset() {
 
     consolePrintf("GTC Controller Reset\n");
+    consolePrintf("SAR_Type: %d\n",SAR_Type);
     consolePrintf("Policy_Type: %d\n",Policy);
     J = mdiag(Ixx,Iyy,Izz);
 
@@ -130,6 +132,19 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const state_t *state, 
                                             const uint32_t tick) 
 {
+
+    // CHECK FOR CRAZYSWARM SIGNAL
+    #ifdef CONFIG_SAR_EXP
+    if (RATE_DO_EXECUTE(RATE_25_HZ, tick))
+    {
+        uint32_t now = xTaskGetTickCount();
+        if (now - PrevCrazyswarmTick > 3000)
+        {
+            Armed_Flag = false;
+        }
+    }
+    #endif
+
     // POLICY UPDATES
     if (isOFUpdated == true) {
 
@@ -244,8 +259,20 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         updateRotationMatrices();
     }
 
+    // if (RATE_DO_EXECUTE(100, tick))
+    // {
+    //     NN_forward(X_input,Y_output,&NN_DeepRL);
+    //     NN_forward(X_input,Y_output,&NN_DeepRL);
+    //     NN_forward(X_input,Y_output,&NN_DeepRL);
+
+    //     Policy_Trg_Action = Y_output->data[0][0]+0.00001f*tick;
+    //     // nml_mat_print_CF(Y_output);
+    // }
+
     
 
+
+    
     // STATE UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
@@ -271,9 +298,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         state->attitudeQuaternion.y,
                         state->attitudeQuaternion.z,
                         state->attitudeQuaternion.w);
-
-        
-
 
         // CALC STATES WRT PLANE
         Pos_P_B = mvmul(R_WP,vsub(r_P_O,Pos_B_O)); 
@@ -323,11 +347,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             // UPDATE AT THE ABOVE FREQUENCY
             isOFUpdated = true;
 
-            // UPDATE POLICY VECTOR
-            X_input->data[0][0] = Tau;
-            X_input->data[1][0] = Theta_x;
-            X_input->data[2][0] = D_perp; 
-            X_input->data[3][0] = Plane_Angle_deg;
+            // // UPDATE POLICY VECTOR
+            // X_input->data[0][0] = Tau;
+            // X_input->data[1][0] = Theta_x;
+            // X_input->data[2][0] = D_perp; 
+            // X_input->data[3][0] = Plane_Angle_deg;
         }
     }
     
@@ -380,34 +404,26 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
         M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
 
-
-
         // TUMBLE DETECTION
         if(b3.z <= 0 && TumbleDetect_Flag == true){ // If b3 axis has a negative z-component (Quadrotor is inverted)
             Tumbled_Flag = true;
         }
 
-
-        // UPDATE THRUST COMMANDS
-        if(MotorStop_Flag || Tumbled_Flag) // STOP MOTOR COMMANDS
-        { 
+        if (!Armed_Flag || MotorStop_Flag || Tumbled_Flag)
+        {
             M1_thrust = 0.0f;
             M2_thrust = 0.0f;
             M3_thrust = 0.0f;
             M4_thrust = 0.0f;
-
         }
         else if(CustomThrust_Flag) // REPLACE THRUST VALUES WITH CUSTOM VALUES
         {
-            
             M1_thrust = thrust_override[0];
             M2_thrust = thrust_override[1];
             M3_thrust = thrust_override[2];
             M4_thrust = thrust_override[3];
-
         }
-
-        // UPDATE M_CMD COMMANDS
+        
         if(CustomMotorCMD_Flag)
         {
             M1_CMD = M_CMD_override[0]; 
@@ -429,36 +445,36 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         compressStates();
         compressSetpoints();
         compressTrgStates();
-        
-        if (RATE_DO_EXECUTE(2, tick))
-        {   
-            // F_thrust = 1;
-            // M = mkvec(1.0f,2.0f,3.0f);
-            // consolePrintf("F_thrust: %.3f M.x: %.3f M.y: %.3f M.z: %.3f\n",(double)F_thrust,(double)M.x,(double)M.y,(double)M.z);
-            // consolePrintf("States_Z.FMz: %d\n", States_Z.FMz);
-            // consolePrintf("States_Z.Mxy: %d\n", States_Z.Mxy);
-            
-        }
 
         #ifdef CONFIG_SAR_EXP
         if(Armed_Flag)
         {
+            // SEND CMD VALUES TO MOTORS
+            motorsSetRatio(MOTOR_M1, M1_CMD);
+            motorsSetRatio(MOTOR_M2, M2_CMD);
+            motorsSetRatio(MOTOR_M3, M3_CMD);
+            motorsSetRatio(MOTOR_M4, M4_CMD);
+            
+            // TURN ON ARMING LEDS
+            ledSet(LED_BLUE_L, 1);
+            ledSet(LED_BLUE_NRF, 1);
+        }
+        else{
             motorsSetRatio(MOTOR_M1, 0);
             motorsSetRatio(MOTOR_M2, 0);
             motorsSetRatio(MOTOR_M3, 0);
             motorsSetRatio(MOTOR_M4, 0);
-        }
-        else{
-            // SEND M_CMD VALUES TO MOTORS
-            motorsSetRatio(MOTOR_M1, M4_CMD);
-            motorsSetRatio(MOTOR_M2, M3_CMD);
-            motorsSetRatio(MOTOR_M3, M2_CMD);
-            motorsSetRatio(MOTOR_M4, M1_CMD);
+            
+            // TURN OFF ARMING LEDS
+            ledSet(LED_BLUE_L, 0);
+            ledSet(LED_BLUE_NRF, 0);
         }
         #endif
 
 
     }
+
+    
  
 
 }
@@ -488,6 +504,7 @@ PARAM_ADD(PARAM_FLOAT, Fwd_Reach, &Forward_Reach)
 
 PARAM_ADD(PARAM_UINT8, Armed, &Armed_Flag)
 PARAM_ADD(PARAM_UINT8, PolicyType, &Policy)
+PARAM_ADD(PARAM_UINT8, SAR_Type, &SAR_Type)
 PARAM_GROUP_STOP(System_Params)
 
 
@@ -590,7 +607,7 @@ LOG_ADD(LOG_UINT8, Motorstop,       &MotorStop_Flag)
 LOG_ADD(LOG_UINT8, Tumbled_Flag,    &Tumbled_Flag)
 LOG_ADD(LOG_UINT8, Tumble_Detect,   &TumbleDetect_Flag)
 LOG_ADD(LOG_UINT8, AngAccel_Flag,   &AngAccel_Flag)
-LOG_ADD(LOG_UINT8, Armed_Flag,   &Armed_Flag)
+LOG_ADD(LOG_UINT8, Armed_Flag,      &Armed_Flag)
 LOG_ADD(LOG_UINT8, Policy_Armed,    &Policy_Armed_Flag)
 LOG_ADD(LOG_UINT8, CustomThrust,    &CustomThrust_Flag)
 LOG_ADD(LOG_UINT8, CustomM_CMD,     &CustomMotorCMD_Flag)

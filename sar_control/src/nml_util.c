@@ -1,8 +1,8 @@
 #include "nml_util.h"
 
-double nml_rand_interval(double min, double max) {
-  double d;
-  d = (double) rand() / ((double) RAND_MAX + 1);
+float nml_rand_interval(float min, float max) {
+  float d;
+  d = (float) rand() / ((float) RAND_MAX + 1);
   return (min + d * (max - min));
 }
 

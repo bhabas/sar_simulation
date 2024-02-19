@@ -5,10 +5,10 @@
 // =================================
 //    INITIAL SYSTEM PARAMETERS
 // =================================
-float m = 0.0f;             // [kg]
-float Ixx = 0.0f;           // [kg*m^2]
-float Iyy = 0.0f;           // [kg*m^2]
-float Izz = 0.0f;           // [kg*m^2]
+float m = 0.00f;            // [kg]
+float Ixx = 0.00f;          // [kg*m^2]
+float Iyy = 0.00f;          // [kg*m^2]
+float Izz = 0.00f;          // [kg*m^2]
 struct mat33 J;             // Rotational Inertia Matrix [kg*m^2]
 
 float C_tf = 0.0f;          // Moment Coeff [Nm/N]
@@ -18,8 +18,10 @@ const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
 
 float dt = (float)(1.0f/RATE_100_HZ);
+uint32_t PrevCrazyswarmTick = 0;
 uint32_t prev_tick = 0;
 struct CTRL_CmdPacket CTRL_Cmd;
+SAR_Types SAR_Type = SAR_NONE;
 
 
 // =================================
@@ -223,7 +225,7 @@ bool Tumbled_Flag = false;
 bool TumbleDetect_Flag = true;
 bool MotorStop_Flag = false;
 bool AngAccel_Flag = false;
-bool Armed_Flag = true;
+bool Armed_Flag = false;
 bool CustomThrust_Flag = false;
 bool CustomMotorCMD_Flag = false;
 
@@ -518,6 +520,10 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             TumbleDetect_Flag = CTRL_Cmd->cmd_flag;
             break;
 
+        case 24: // Quad Arming
+            Armed_Flag = CTRL_Cmd->cmd_flag;
+            break;
+
         case 30: // Custom Thrust Values
 
             CustomThrust_Flag = true;
@@ -538,8 +544,12 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
             break;
 
-        
-
+        case 99: // Crazyswarm Check
+            
+            #ifdef CONFIG_SAR_EXP
+            PrevCrazyswarmTick = xTaskGetTickCount(); 
+            #endif
+            break;
 
     }
 
@@ -643,47 +653,99 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
 
     F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
     M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
-
 }
 
 // Converts thrust in grams to their respective M_CMD values
 uint16_t thrust2Motor_CMD(float f) 
 {
-    // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST M_CMD TO MEET VOLTAGE NEED
-    // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
-
     float a,b,c;
+    float y0;
+    float Motor_CMD;
 
-    if(f<=5.2f)
+    switch (SAR_Type)
     {
-        a = 1.28533f;
-        b = 1.51239;
-        c = 0.0f;
+        case SAR_NONE:
+
+            return 0;
+
+        case CRAZYFLIE:
+
+            // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST M_CMD TO MEET VOLTAGE NEED
+            // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
+
+            if(f<=5.2f)
+            {
+                a = 1.28533f;
+                b = 1.51239;
+                c = 0.0f;
+            }
+            else
+            {
+                a = 3.23052f;
+                b = -5.46911f;
+                c = 5.97889f;
+            }
+            float voltage_needed = -b/(2*a) + sqrtf(4*a*(f-c) + b*b)/(2*a);
+
+
+            // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
+            float supply_voltage = pmGetBatteryVoltage();
+            float percentage = voltage_needed / supply_voltage;
+            percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
+
+            // CONVERT RATIO TO M_CMD OF MOTOR_CMD_MAX
+            Motor_CMD = percentage * (float)UINT16_MAX; // Remap percentage back to M_CMD range
+
+            // IF MINIMAL THRUST ENSURE M_CMD = 0
+            if(f <= 0.25f)
+            {
+                Motor_CMD = 0.0f;
+            }
+            return Motor_CMD;
+    
+
+        case IMPULSE_MICRO:
+            
+            a = 600.0f;
+            b = 9.93e-5f;
+            c = 2.00e-1f;
+
+            // Calculate the command threshold
+            y0 = b * a * a;
+            
+            // Conditionally calculate the inverse
+            if (f < y0) {
+                Motor_CMD = sqrtf(f / b); // Use sqrtf for float
+            } 
+            else {
+                Motor_CMD = (f - (b * a * a - c * a)) / c;
+            }
+
+            return Motor_CMD;
+
+        case SO_V5:
+
+            a = 500.0f;
+            b = 5.35e-4f;
+            c = 7.78e-1f;
+
+            // Calculate the command threshold
+            y0 = b * a * a;
+            
+            // Conditionally calculate the inverse
+            if (f < y0) {
+                Motor_CMD = sqrtf(f / b); // Use sqrtf for float
+            } 
+            else {
+                Motor_CMD = (f - (b * a * a - c * a)) / c;
+            }
+
+            return Motor_CMD;
+
+        default:
+            return 0;
     }
-    else
-    {
-        a = 3.23052f;
-        b = -5.46911f;
-        c = 5.97889f;
-    }
-    float voltage_needed = -b/(2*a) + sqrtf(4*a*(f-c) + b*b)/(2*a);
 
-
-    // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
-    float supply_voltage = pmGetBatteryVoltage();
-    float percentage = voltage_needed / supply_voltage;
-    percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
-
-    // CONVERT RATIO TO M_CMD OF MOTOR_CMD_MAX
-    float M_CMD = percentage * (float)UINT16_MAX; // Remap percentage back to M_CMD range
-
-    // IF MINIMAL THRUST ENSURE M_CMD = 0
-    if(f <= 0.25f)
-    {
-        M_CMD = 0.0f;
-    }
-
-    return M_CMD;
 }
 
 
@@ -728,40 +790,40 @@ bool updateOpticalFlowEst()
     if (UpdateOpticalFlow)
     {
 
-        double spatial_Grad_mat[9] = {
-            3, 1,-1,
-            2,-2, 1,
-            1, 1, 1,
-        };
+        // double spatial_Grad_mat[9] = {
+        //     3, 1,-1,
+        //     2,-2, 1,
+        //     1, 1, 1,
+        // };
 
-        double temp_Grad_vec[3] = {
-             9,
-            -3,
-             7,
-        };
+        // double temp_Grad_vec[3] = {
+        //      9,
+        //     -3,
+        //      7,
+        // };
 
 
-        // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR
-        nml_mat* A_mat = nml_mat_from(3,3,9,spatial_Grad_mat);
-        nml_mat* b_vec = nml_mat_from(3,1,3,temp_Grad_vec);
-        nml_mat_lup* LUP = nml_mat_lup_solve(A_mat);
-        nml_mat* OF_vec = nml_ls_solve(LUP,b_vec);
+        // // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR
+        // nml_mat* A_mat = nml_mat_from(3,3,9,spatial_Grad_mat);
+        // nml_mat* b_vec = nml_mat_from(3,1,3,temp_Grad_vec);
+        // nml_mat_lup* LUP = nml_mat_lup_solve(A_mat);
+        // nml_mat* OF_vec = nml_ls_solve(LUP,b_vec);
 
         // CLAMP OPTICAL FLOW VALUES
         // Theta_x_Cam = clamp(OF_vec->data[0][0],-20.0f,20.0f);
         // Theta_y_Cam = clamp(OF_vec->data[1][0],-20.0f,20.0f);
         // Tau_Cam = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
 
-        Theta_x_Cam = OF_vec->data[0][0];
-        Theta_y_Cam = OF_vec->data[1][0];
-        Tau_Cam = 1/(OF_vec->data[2][0] + 1.0e-6);
+        // Theta_x_Cam = OF_vec->data[0][0];
+        // Theta_y_Cam = OF_vec->data[1][0];
+        // Tau_Cam = 1/(OF_vec->data[2][0] + 1.0e-6);
         // Tau_Cam = (float)UART_arr[0];
 
 
-        nml_mat_lup_free(LUP);
-        nml_mat_free(A_mat);
-        nml_mat_free(b_vec);
-        nml_mat_free(OF_vec);
+        // nml_mat_lup_free(LUP);
+        // nml_mat_free(A_mat);
+        // nml_mat_free(b_vec);
+        // nml_mat_free(OF_vec);
 
 
         return true;
