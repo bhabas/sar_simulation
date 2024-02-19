@@ -41,12 +41,13 @@ def cmd_send(env,logName):
 
         try:
             print("========== Command Types ==========")
-            print("0: Ctrl_Reset \t1: Pos \t2: Vel \t5: Stop")
-            print("7: Ang_Accel \t8: Policy \t9: Plane_Pose")
-            print("10: P2P_traj \t11: Vel_traj \t12: Impact_traj")
-            print("20: Tumble_Detect \t21: Load_Params \t22: Start_Logging \t23: Cap_Logging \t24: Safe_Mode")
-            print("90: GZ_Pose_Reset \t91: GZ_Const_Vel_Traj \t92: GZ_StickyPads")
- 
+            print("0: Ctrl_Reset  7: Ang_Accel    10: P2P_traj          20: Tumble_Detect    90: GZ_Pose_Reset")
+            print("1: Pos         8: Policy       11: Global_Vel_traj   21: Load_Params      91: GZ_Const_Vel_Traj")
+            print("2: Vel         9: Plane_Pose   12: Rel_Vel_traj      22: Start_Logging    92: GZ_StickyPads")
+            print("5: Stop                        13: Impact_traj       23: Cap_Logging      24: Arm_Quad")
+
+
+
             val = env.userInput("\nCmd: ",int)
             print()
             action = cmd_dict[val]
@@ -83,7 +84,7 @@ def cmd_send(env,logName):
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Policy':
-                cmd_vals = env.userInput("Set desired (Tau,My_d) Policy: ",float)
+                cmd_vals = env.userInput("Set desired (Tau,AngAcc_y) Policy: ",float)
                 cmd_vals.append(0) # Append extra value to match framework
                 cmd_flag = 1
                 env.sendCmd(action,cmd_vals,cmd_flag)
@@ -152,6 +153,7 @@ def cmd_send(env,logName):
                 ## POS VELOCITY CONDITIONS MET
                 r_B_O = env.startPos_ImpactTraj(V_B_P,Acc=None,Tau_CR_start=None)
 
+                ## APPROVE START POSITION
                 print(YELLOW,f"Start Position: ({r_B_O[0]:.2f},{env.r_B_O[1]:.2f},{r_B_O[2]:.2f})",RESET)
                 str_input = env.userInput("Approve start position (y/n): ",str)
                 if str_input == 'y':
@@ -160,7 +162,13 @@ def cmd_send(env,logName):
                     env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],r_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
                 else:
                     continue
+                
+                ## POLICY SENDING
+                cmd_vals = env.userInput("Set desired (Tau,AngAcc) Policy: ",float)
+                cmd_vals.append(0) # Append extra value to match framework
+                env.sendCmd('Policy',cmd_vals,cmd_flag=1)
 
+                ## APPROVE FLIGHT
                 str_input = env.userInput("Approve flight (y/n): ",str)
                 if str_input == 'y':
                     env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[0],V_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
@@ -221,7 +229,7 @@ def cmd_send(env,logName):
                          V_B_O_mag*np.sin(V_B_O_angle)]
 
                 ## ESTIMATE IMPACT POINT
-                env.GZ_VelTraj(env.r_B_O,V_B_O)
+                env.Sim_VelTraj(env.r_B_O,V_B_O)
                 env.pausePhysics(False)
                 
                     

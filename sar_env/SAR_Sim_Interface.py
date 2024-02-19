@@ -52,6 +52,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         ## WAIT TILL TOPIC DATA STARTS COMING IN
         rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData)
+        self.sendCmd("Arm_Quad",cmd_flag=1)
 
 
         print("[INITIATING] Gazebo simulation started")
