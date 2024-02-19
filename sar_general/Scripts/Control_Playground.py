@@ -3,6 +3,11 @@ import threading,os
 import rospy
 import numpy as np
 
+YELLOW = '\033[93m'
+RED = '\033[91m'
+GREEN = '\033[92m'
+BLUE = "\033[34m"  
+RESET = "\033[0m"  # Reset to default color
        
 def cmd_send(env,logName):
 
@@ -19,8 +24,9 @@ def cmd_send(env,logName):
             9:'Plane_Pose',
 
             10:'P2P_traj',
-            11:'Vel_traj',
-            12:'Impact_traj',
+            11:'Global_Vel_traj',
+            12:'Rel_Vel_traj',
+            13:'Impact_traj',
 
             20:'Tumble_Detect',
             21:'Load_Params',
@@ -97,52 +103,72 @@ def cmd_send(env,logName):
                 env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],x_d[1],env.TrajAcc_Max[1]],cmd_flag=1)
                 env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],x_d[2],env.TrajAcc_Max[2]],cmd_flag=2)
 
-            # elif action=='Vel_traj':
+            elif action=='Global_Vel_traj':
 
-            #     ## GET INPUT VALUES
-            #     V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
+                ## GET GLOBAL VEL CONDITIONS 
+                V_mag,V_angle = env.userInput("Flight Velocity (V_mag,V_angle):",float)
 
-            #     ## DEFINE CARTESIAN VELOCITIES
-            #     phi_rad = np.radians(phi)
+                ## CALC GLOBAL VELOCITIES
+                Vx = V_mag*np.cos(np.radians(V_angle))
+                Vy = 0
+                Vz = V_mag*np.sin(np.radians(V_angle))
+                V_B_O = [Vx,Vy,Vz]
 
-            #     Vx_d = V_d*np.cos(phi_rad)
-            #     Vz_d = V_d*np.sin(phi_rad)
+                ## EXECUTE TRAJECTORY
+                env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[0],V_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
+                env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[2],V_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
 
-            #     env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
-            #     env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
+            elif action=='Rel_Vel_traj':
 
-            # elif action=='Impact_traj':
+                ## GET RELATIVE VEL CONDITIONS 
+                V_mag,V_angle = env.userInput("Flight Velocity (V_mag,V_angle):",float)
 
-            #     ## GET VEL CONDITIONS 
-            #     V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
-                
-            #     ## DEFINE CARTESIAN VELOCITIES
-            #     phi_rad = np.radians(phi)
+                ## CALC RELATIVE VELOCITIES
+                V_tx = V_mag*np.cos(np.radians(V_angle))
+                V_ty = 0
+                V_perp = V_mag*np.sin(np.radians(V_angle))
 
-            #     Vx_d = V_d*np.cos(phi_rad)
-            #     Vz_d = V_d*np.sin(phi_rad)
+                ## CALCULATE GLOBAL VELOCITIES
+                V_B_O = env.R_PW(np.array([V_tx,V_ty,V_perp]),env.Plane_Angle_rad)
 
-            #     x_impact = env.userInput("Desired impact position (x):",float)
+                ## EXECUTE TRAJECTORY
+                env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[0],V_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
+                env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[2],V_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
 
-            #     x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d])
+            elif action=='Impact_traj':
 
-            #     print(f"Desired start position x_0: {x_0:.2f} y_0: {0.0:.2f} z_0: {z_0:.2f}")
-            #     str_input = env.userInput("Approve start position (y/n): ",str)
+                ## GET RELATIVE VEL CONDITIONS 
+                V_mag,V_angle = env.userInput("Flight Velocity (V_mag,V_angle):",float)
 
-            #     if str_input == 'y':
-            #         env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],x_0,env.TrajAcc_Max[0]],cmd_flag=0)
-            #         env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],0.0,env.TrajAcc_Max[1]],cmd_flag=1)
-            #         env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],z_0,env.TrajAcc_Max[2]],cmd_flag=2)
+                ## CALC RELATIVE VELOCITIES
+                V_tx = V_mag*np.cos(np.radians(V_angle))
+                V_ty = 0
+                V_perp = V_mag*np.sin(np.radians(V_angle))
+                V_B_P = np.array([V_tx,V_ty,V_perp])
 
-            #         str_input = env.userInput("Approve flight (y/n): ",str)
-            #         if str_input == 'y':
-            #             env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[0],Vx_d,env.TrajAcc_Max[0]],cmd_flag=0)
-            #             env.sendCmd('Vel_traj',cmd_vals=[env.r_B_O[2],Vz_d,env.TrajAcc_Max[2]],cmd_flag=2)
+                ## CALCULATE GLOBAL VELOCITIES
+                V_B_O = env.R_PW(V_B_P,env.Plane_Angle_rad)
 
-            #     else:
-            #         print(f"Try again")
+                ## POS VELOCITY CONDITIONS MET
+                r_B_O = env.startPos_ImpactTraj(V_B_P,Acc=None,Tau_CR_start=None)
 
+                print(YELLOW,f"Start Position: ({r_B_O[0]:.2f},{env.r_B_O[1]:.2f},{r_B_O[2]:.2f})",RESET)
+                str_input = env.userInput("Approve start position (y/n): ",str)
+                if str_input == 'y':
+                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],r_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
+                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],r_B_O[1],env.TrajAcc_Max[1]],cmd_flag=1)
+                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],r_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
+                else:
+                    continue
 
+                str_input = env.userInput("Approve flight (y/n): ",str)
+                if str_input == 'y':
+                    env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[0],V_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
+                    env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[2],V_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
+                else:
+                    continue
+
+            
             ## ========== SYSTEM FUNCTIONS ==========
             elif action=='Tumble_Detect': # Turn on Tumble detection
 
@@ -202,6 +228,7 @@ def cmd_send(env,logName):
             elif action == 'GZ_Pose_Reset':
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
                 env.resetPose()
+                env.pausePhysics(pause_flag=False)
 
 
 

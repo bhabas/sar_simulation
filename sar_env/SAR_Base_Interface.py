@@ -152,8 +152,9 @@ class SAR_Base_Interface():
             'Plane_Pose':9,
 
             'P2P_traj':10,
-            'Vel_traj':11,
-            'Impact_traj':12,
+            'Global_Vel_traj':11,
+            'Rel_Vel_traj':12,
+            'Impact_traj':13,
 
             'Tumble_Detect':20,
             'Load_Params':21,
@@ -227,48 +228,49 @@ class SAR_Base_Interface():
             self.Ang_Acc_range = Ang_Acc_range
                 
 
-    def startPos_VelTraj(self,x_impact,V_d,accel_d=None,Tau_0=0.5):
-        """Returns the required start position (x_0,z_0) to intercept the 180 deg ceiling 
-        at a specific x-location; while also achieving the desired velocity conditions 
-        at by a certain distance from the ceiling.
+    def startPos_ImpactTraj(self,V_B_P,Acc=None,Tau_CR_start=None):
 
-        Args:
-            x_impact (float): X-location to impact the ceiling
-            V_d (list): List of desired velocity components [Vx,Vy,Vz]
-            accel_d (list, optional): List of acceleration components [ax,ay,az]. Defaults to env values if (None).
-            d_vz (float, optional): Distance from ceiling at which velocity conditions are met. Defaults to 0.6 m.
+        ## DESIRED RELATIVE VELOCITY VALUES
+        V_tx,_,V_perp = V_B_P
 
-        Returns:
-            x_0: Start x-location for trajectory
-            z_0: Start z-location for trajectory
-        """        
+        ## CALCULATE STARTING TAU VALUE
+        if Tau_CR_start == None:
+            t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
+            Tau_CR_start = t_rot_max*np.random.uniform(1.9,2.1) # Add noise to starting condition
+            Tau_Body_start = (Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
+            Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
 
-        ## DESIRED VELOCITY VALUES
-        Vx = V_d[0]
-        Vz = V_d[2]
+        ## CALC STARTING POSITION IN GLOBAL COORDS
+        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
+        r_P_O = np.array(self.Plane_Pos)                        # Plane Position wrt to Origin - {X_W,Y_W,Z_W}
+        r_P_B = np.array([(Tau_CR_start + Tau_Accel_start)*V_tx,
+                          0,
+                          (Tau_Body_start + Tau_Accel_start)*V_perp])             # Body Position wrt to Plane - {t_x,t_y,n_p}
+        r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)   # Body Position wrt to Origin - {X_W,Y_W,Z_W}
 
-        ## DEFAULT TO TAU BASED MIN DISTANCE
-        d_vz = Tau_0*Vz
 
-        ## DEFAULT TO CLASS VALUES
-        if accel_d == None:
-            accel_d = self.TrajAcc_Max
+
+        ## DESIRED GLOBAL VELOCITY VALUES
+        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)           # Body Velocity wrt to Origin - {X_W,Y_W,Z_W}
+
+
+        ## DESIRED ACCELERATION VALUES
+        if Acc == None:
+            Acc = self.TrajAcc_Max
     
-        a_x = accel_d[0]
-        a_z = accel_d[2]
+        a_x = Acc[0]
+        a_z = Acc[2]
 
 
         ## CALC OFFSET POSITIONS
-        t_x = Vx/a_x    # Time required to reach Vx
-        t_z = Vz/a_z    # Time required to reach Vz
+        t_x = V_B_O[0]/a_x    # Time required to reach Vx
+        t_z = V_B_O[2]/a_z    # Time required to reach Vz
 
-        z_vz = 0.5*a_z*(t_z)**2                 # Height Vz reached
-        z_0 = (2.10 - d_vz) - z_vz    # Offset to move z_vz to d_vz
-        
-        x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)     # X-position Vz reached
-        x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left
+        x_0 = r_B_O[0] - V_B_O[0]**2/(2*a_x) - V_B_O[0]*t_z     # X-position Vel reached
+        y_0 = r_B_O[1]                                          # Y-position Vel reached
+        z_0 = r_B_O[2] - V_B_O[2]**2/(2*a_z)                    # Z-position Vel reached    
 
-        return x_0,z_0
+        return [x_0,y_0,z_0]
     
     def _setPlanePose(self,Position=[0,0,2.0],Plane_Angle=180):
         
