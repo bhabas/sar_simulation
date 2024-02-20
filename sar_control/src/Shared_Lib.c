@@ -364,7 +364,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             break;        
 
         case 5: // Hard Set All Motorspeeds to Zero
-            MotorStop_Flag = true;
+            MotorStop_Flag = !MotorStop_Flag;
             break;
 
         case 7: // Execute Moment Corresponding to Angular Acceleration

@@ -494,7 +494,7 @@ void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::Const
 
 void SAR_DataConverter::cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    CustomThrust_Flag = (bool)log_msg->values[0];
-    CustomMotorCMD_Flag = (bool)log_msg->values[1];
+    CustomThrust_Flag = (bool)log_msg->values[1];
+    CustomMotorCMD_Flag = (bool)log_msg->values[2];
 
 }

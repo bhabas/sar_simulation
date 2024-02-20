@@ -34,6 +34,9 @@ def cmd_send(env,logName):
             23:'Cap_Logging',
             24:'Arm_Quad',
 
+            30:'Thrust_CMD',
+            31:'Motor_CMD',
+
             90:'GZ_Pose_Reset',
             91:'GZ_Const_Vel_Traj',
             92:'GZ_StickyPads',
@@ -41,10 +44,10 @@ def cmd_send(env,logName):
 
         try:
             print("========== Command Types ==========")
-            print("0: Ctrl_Reset  7: Ang_Accel    10: P2P_traj          20: Tumble_Detect    90: GZ_Pose_Reset")
-            print("1: Pos         8: Policy       11: Global_Vel_traj   21: Load_Params      91: GZ_Const_Vel_Traj")
-            print("2: Vel         9: Plane_Pose   12: Rel_Vel_traj      22: Start_Logging    92: GZ_StickyPads")
-            print("5: Stop                        13: Impact_traj       23: Cap_Logging      24: Arm_Quad")
+            print("0: Ctrl_Reset  7: Ang_Accel    10: P2P_traj          20: Tumble_Detect    24: Arm_Quad    90: GZ_Pose_Reset")
+            print("1: Pos         8: Policy       11: Global_Vel_traj   21: Load_Params      30: Thrust_CMD  91: GZ_Const_Vel_Traj")
+            print("2: Vel         9: Plane_Pose   12: Rel_Vel_traj      22: Start_Logging    31: Motor_CMD   92: GZ_StickyPads")
+            print("5: Stop                        13: Impact_traj       23: Cap_Logging")
 
 
 
@@ -204,7 +207,14 @@ def cmd_send(env,logName):
                 cmd_flag = env.userInput("Arm Quad On/Off (1,0): ",int)
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
-            
+
+            elif action=='Thrust_CMD':
+                vals = env.userInput("Set desired thrust values (f1,f2,f3,f4): ",float)
+                env.sendCmd(action,vals[:3],vals[3])
+
+            elif action=='Motor_CMD':
+                vals = env.userInput("Set desired motor values (m1,m2,m3,m4): ",float)
+                env.sendCmd(action,vals[:3],vals[3])
 
             ## ========== GAZEBO FUNCTIONS ==========
             elif action=='GZ_StickyPads':

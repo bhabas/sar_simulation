@@ -86,7 +86,6 @@ void controllerOutOfTreeReset() {
 
     // RESET SYSTEM FLAGS
     Tumbled_Flag = false;
-    MotorStop_Flag = false;
     CustomThrust_Flag = false;
     CustomMotorCMD_Flag = false;
     AngAccel_Flag = false;
@@ -409,22 +408,21 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             Tumbled_Flag = true;
         }
 
-        if (!Armed_Flag || MotorStop_Flag || Tumbled_Flag)
-        {
-            M1_thrust = 0.0f;
-            M2_thrust = 0.0f;
-            M3_thrust = 0.0f;
-            M4_thrust = 0.0f;
-        }
-        else if(CustomThrust_Flag) // REPLACE THRUST VALUES WITH CUSTOM VALUES
+        
+        if(CustomThrust_Flag) // REPLACE THRUST VALUES WITH CUSTOM VALUES
         {
             M1_thrust = thrust_override[0];
             M2_thrust = thrust_override[1];
             M3_thrust = thrust_override[2];
             M4_thrust = thrust_override[3];
+
+            // CONVERT THRUSTS TO M_CMD SIGNALS
+            M1_CMD = (int32_t)thrust2Motor_CMD(M1_thrust); 
+            M2_CMD = (int32_t)thrust2Motor_CMD(M2_thrust);
+            M3_CMD = (int32_t)thrust2Motor_CMD(M3_thrust);
+            M4_CMD = (int32_t)thrust2Motor_CMD(M4_thrust);
         }
-        
-        if(CustomMotorCMD_Flag)
+        else if(CustomMotorCMD_Flag)
         {
             M1_CMD = M_CMD_override[0]; 
             M2_CMD = M_CMD_override[1];
@@ -440,11 +438,21 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             M4_CMD = (int32_t)thrust2Motor_CMD(M4_thrust);
         }
 
+        if (!Armed_Flag || MotorStop_Flag || Tumbled_Flag)
+        {
+            M1_thrust = 0.0f;
+            M2_thrust = 0.0f;
+            M3_thrust = 0.0f;
+            M4_thrust = 0.0f;
 
-        // COMPRESS STATES
-        compressStates();
-        compressSetpoints();
-        compressTrgStates();
+            M1_CMD = 0.0f; 
+            M2_CMD = 0.0f;
+            M3_CMD = 0.0f;
+            M4_CMD = 0.0f;
+        }
+
+
+        
 
         #ifdef CONFIG_SAR_EXP
         if(Armed_Flag)
@@ -470,6 +478,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             ledSet(LED_BLUE_NRF, 0);
         }
         #endif
+
+        // COMPRESS STATES
+        compressStates();
+        compressSetpoints();
+        compressTrgStates();
 
 
     }
