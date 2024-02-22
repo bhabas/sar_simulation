@@ -15,42 +15,66 @@ float t_traj[3] = {0.0f, 0.0f, 0.0f};  // Traj time counter [s]
 
 void point2point_Traj()
 {
-
+    // ITERATE THROUGH EACH AXIS
     for(int i = 0; i<3; i++)
     {
         // CALCULATE ONLY DESIRED TRAJECTORIES
         if(Traj_Active[i] == true)
         {
             float t = t_traj[i];
+            float S = s_f_t[i] - s_0_t[i];
 
-            if(t_traj[i] <= T[i] && T[i] != 0.0f) // SKIP CALC IF ALREADY AT END POSITION
+
+            float v_max = 1.0f;
+            float a_sign = (S >= 0) ? 1.0f : -1.0f; // Determine the direction of acceleration
+            float t_acc = v_max / fabsf(a_t[i]);
+
+            float s_acc = 0.5f * a_t[i] * fsqr(t_acc);
+            float s_const = S - 2 * s_acc;
+            float t_const = s_const / v_max;
+            T[i] = 2 * t_acc + t_const;
+
+        
+            float pos_val = 0.0f;
+            float vel_val = 0.0f;
+            float acc_val = 0.0f;
+
+            printf("s_const: %.2f s_acc: %.2f S: %.2f\n", s_const, s_acc, S);
+
+            if (a_sign*s_const > 0) // CONSTANT VELOCITY PROFILE
             {
-                // CALCULATE TIME SCALING VALUE S(t)
-                float s_t = (3*powf(t,2)/powf(T[i],2) - 2*powf(t,3)/powf(T[i],3));
-                float ds_t = (6*t/powf(T[i],2) - 6*powf(t,2)/powf(T[i],3));
-                float dds_t = (6/powf(T[i],2) - 12*t/powf(T[i],3));
+                if (t <= t_acc)
+                {
+                    pos_val = s_0_t[i] + 0.5f * a_sign * a_t[i] * fsqr(t);
+                    vel_val = a_sign * a_t[i] * t;
+                    acc_val = a_sign * a_t[i];
 
-                // CONVERT PATH VALUES X(S) TO TRAJECTORY VALUES X(S(t))
-                float pos_val = s_0_t[i] +  s_t * (s_f_t[i] - s_0_t[i]);
-                float vel_val = ds_t * (s_f_t[i] - s_0_t[i]);
-                float acc_val = dds_t * (s_f_t[i] - s_0_t[i]);
+                }
+                else if (t_acc < t && t <= T[i] - t_acc)
+                {
+                    pos_val = s_0_t[i] + s_acc + a_sign * v_max * (t - t_acc);
+                    vel_val = a_sign * v_max;
+                    acc_val = 0.0f;
+                }
+                else if (T[i] - t_acc < t && t <= T[i])
+                {
+                    pos_val = s_f_t[i] - 0.5f * a_sign * a_t[i] * fsqr(T[i] - t);
+                    vel_val = a_sign * (v_max - a_t[i] * (t - (T[i] - t_acc)));
+                    acc_val = -a_sign * a_t[i];
+
+                }
+                else
+                {
+                    pos_val = s_f_t[i];
+                    vel_val = 0.0f;
+                    acc_val = 0.0f;
+                }
 
                 // UPDATE DESIRED STATE VECTORS
                 set_vec_element(&x_d, i, pos_val);
                 set_vec_element(&v_d, i, vel_val);
                 set_vec_element(&a_d, i, acc_val);
-            }
-            else
-            {
-                // CONVERT PATH VALUES X(S) TO TRAJECTORY VALUES X(S(t))
-                float pos_val = s_f_t[i];
-                float vel_val = 0.0f;
-                float acc_val = 0.0f;
-                
-                // UPDATE DESIRED STATE VECTORS
-                set_vec_element(&x_d, i, pos_val);
-                set_vec_element(&v_d, i, vel_val);
-                set_vec_element(&a_d, i, acc_val);
+               
             }
 
             // INCREMENT TIME COUNTER FOR TRAJECTORY CALCULATIONS

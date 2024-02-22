@@ -407,9 +407,8 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
                     s_0_t[0] = CTRL_Cmd->cmd_val1;  // Starting position [m]
                     s_f_t[0] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[0] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
-
-                    T[0] = sqrtf(6.0f/a_t[0]*fabsf(s_f_t[0] - s_0_t[0])); // Calc trajectory manuever time [s]
                     t_traj[0] = 0.0f; // Reset timer
+
                     break;
 
                 case y_axis:
@@ -418,9 +417,8 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
                     s_0_t[1] = CTRL_Cmd->cmd_val1;  // Starting position [m]
                     s_f_t[1] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[1] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
-
-                    T[1] = sqrtf(6.0f/a_t[1]*fabsf(s_f_t[1] - s_0_t[1])); // Calc trajectory manuever time [s]
                     t_traj[1] = 0.0f; // Reset timer
+
                     break;
 
                 case z_axis:
@@ -429,11 +427,9 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
                     s_0_t[2] = CTRL_Cmd->cmd_val1;  // Starting position [m]
                     s_f_t[2] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[2] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
-
-                    T[2] = sqrtf(6.0f/a_t[2]*fabsf(s_f_t[2] - s_0_t[2])); // Calc trajectory manuever time [s]
                     t_traj[2] = 0.0f; // Reset timer
+
                     break;
-                    
             }
 
             break;
