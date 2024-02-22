@@ -721,7 +721,7 @@ uint16_t thrust2Motor_CMD(float f)
                 Motor_CMD = (f - (b * a * a - c * a)) / c;
             }
 
-            return Motor_CMD;
+            return Motor_CMD*32.0f;
 
         case SO_V5:
 
@@ -740,7 +740,7 @@ uint16_t thrust2Motor_CMD(float f)
                 Motor_CMD = (f - (b * a * a - c * a)) / c;
             }
 
-            return Motor_CMD;
+            return Motor_CMD*32.0f;
 
         default:
             return 0;

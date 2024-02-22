@@ -539,6 +539,12 @@ SAR_Type:
           Ref_Iyy: 0.464e-3         # [kg*m^2]
           Ref_Izz: 1.02e-3          # [kg*m^2] 
 
+          Leg_Angle:  0              # [deg]
+          Leg_Length:  0       # [m]
+  
+          Gamma_eff:  0           # [deg]
+          L_eff:  0            # [m]
+
         # ============================================================== # 
         A15_L50:
           Ref_Mass:  345.45E-3        # [kg]

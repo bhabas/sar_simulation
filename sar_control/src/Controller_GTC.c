@@ -134,10 +134,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
     // CHECK FOR CRAZYSWARM SIGNAL
     #ifdef CONFIG_SAR_EXP
-    if (RATE_DO_EXECUTE(RATE_25_HZ, tick))
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick))
     {
         uint32_t now = xTaskGetTickCount();
-        if (now - PrevCrazyswarmTick > 3000)
+        if (now - PrevCrazyswarmTick > 1000)
         {
             Armed_Flag = false;
         }
@@ -283,8 +283,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         Accel_B_O = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
         Accel_B_O_Mag = firstOrderFilter(vmag(Accel_B_O),Accel_B_O_Mag,0.5f);
 
-        
-
         Omega_B_O = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
 
         // CALC AND FILTER ANGULAR ACCELERATION
@@ -382,6 +380,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
 
         controlOutput(state,sensors);
+        // consolePrintf("Thrust_max: %f\n",Thrust_max);
+        F_thrust = clamp(F_thrust,0.0f,Thrust_max*g2Newton*4*0.85f);
 
         if(AngAccel_Flag == true || Trg_Flag == true)
         {
@@ -389,19 +389,19 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             M = vscl(2.0f,M_d);
         }
 
-        
-        // MOTOR MIXING (GTC_Derivation_V2.pdf) 
-        M1_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
-        M2_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
-        M3_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
-        M4_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
+        // MOTOR MIXING (GTC_Derivation_V2.pdf) (Assume Symmetric Quadrotor)
+        // F_thrust = clamp(F_thrust,0.0f,(Thrust_max*4.0f*g2Newton)*0.85f);
+        M1_thrust = (F_thrust - 1/Prop_14_y * M.x - 1/Prop_14_x * M.y - 1/C_tf * M.z) * 1/4.0f;
+        M2_thrust = (F_thrust - 1/Prop_14_y * M.x + 1/Prop_14_x * M.y + 1/C_tf * M.z) * 1/4.0f;
+        M3_thrust = (F_thrust + 1/Prop_14_y * M.x + 1/Prop_14_x * M.y - 1/C_tf * M.z) * 1/4.0f;
+        M4_thrust = (F_thrust + 1/Prop_14_y * M.x - 1/Prop_14_x * M.y + 1/C_tf * M.z) * 1/4.0f;
 
 
         // CLAMP AND CONVERT THRUST FROM [N] AND [N*M] TO [g]
-        M1_thrust = clamp((M1_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
-        M2_thrust = clamp((M2_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
-        M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
-        M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,Thrust_max);
+        M1_thrust = clamp(M1_thrust*Newton2g,0.0f,Thrust_max);
+        M2_thrust = clamp(M2_thrust*Newton2g,0.0f,Thrust_max);
+        M3_thrust = clamp(M3_thrust*Newton2g,0.0f,Thrust_max);
+        M4_thrust = clamp(M4_thrust*Newton2g,0.0f,Thrust_max);
 
         // TUMBLE DETECTION
         if(b3.z <= 0 && TumbleDetect_Flag == true){ // If b3 axis has a negative z-component (Quadrotor is inverted)
@@ -440,10 +440,12 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         if (!Armed_Flag || MotorStop_Flag || Tumbled_Flag)
         {
+            #ifndef CONFIG_SAR_EXP
             M1_thrust = 0.0f;
             M2_thrust = 0.0f;
             M3_thrust = 0.0f;
             M4_thrust = 0.0f;
+            #endif
 
             M1_CMD = 0.0f; 
             M2_CMD = 0.0f;
@@ -487,6 +489,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
     }
 
+    // if (RATE_DO_EXECUTE(2, tick))
+    // {
+    //     printvec(e_v);
+    //     // consolePrintf("%d\n",States_Z.r_BOxy);
+    // }
     
  
 
@@ -500,7 +507,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 // NOTE: CANNOT HAVE A LOG AND A PARAM ACCESS THE SAME VALUE
 PARAM_GROUP_START(System_Params)
 PARAM_ADD(PARAM_FLOAT, Mass, &m)
-PARAM_ADD(PARAM_FLOAT, Ixx, &Ixx)
+PARAM_ADD(PARAM_FLOAT, I_xx, &Ixx)
 PARAM_ADD(PARAM_FLOAT, Iyy, &Iyy)
 PARAM_ADD(PARAM_FLOAT, Izz, &Izz)
 
@@ -510,7 +517,7 @@ PARAM_ADD(PARAM_FLOAT, Prop_23_x, &Prop_23_x)
 PARAM_ADD(PARAM_FLOAT, Prop_23_y, &Prop_23_y)
 
 PARAM_ADD(PARAM_FLOAT, C_tf, &C_tf)
-PARAM_ADD(PARAM_FLOAT, Thrust_max, &Thrust_max)
+PARAM_ADD(PARAM_FLOAT, THrust_max, &Thrust_max)
 PARAM_ADD(PARAM_FLOAT, L_eff, &L_eff)
 PARAM_ADD(PARAM_FLOAT, Fwd_Reach, &Forward_Reach)
 
@@ -528,7 +535,7 @@ PARAM_ADD(PARAM_FLOAT, P_ki_xy, &P_ki_xy)
 PARAM_ADD(PARAM_FLOAT, i_range_xy, &i_range_xy)
 
 PARAM_ADD(PARAM_FLOAT, P_kp_z,  &P_kp_z)
-PARAM_ADD(PARAM_FLOAT, P_kd_z,  &P_kd_z)
+PARAM_ADD(PARAM_FLOAT, P_Kd_z,  &P_kd_z)
 PARAM_ADD(PARAM_FLOAT, P_ki_z,  &P_ki_z)
 PARAM_ADD(PARAM_FLOAT, i_range_z, &i_range_z)
 
@@ -547,7 +554,7 @@ PARAM_GROUP_STOP(CTRL_Params)
 
 LOG_GROUP_START(Z_States)
 
-LOG_ADD(LOG_UINT32, r_BOxy,         &States_Z.r_BOxy)
+LOG_ADD(LOG_UINT32, r_BO,           &States_Z.r_BOxy)
 LOG_ADD(LOG_INT16,  r_BOz,          &States_Z.r_BOz)
 LOG_ADD(LOG_UINT32, V_BOxy,         &States_Z.V_BOxy)
 LOG_ADD(LOG_INT16,  V_BOz,          &States_Z.V_BOz)
@@ -580,7 +587,7 @@ LOG_GROUP_START(Z_SetPoints)
 LOG_ADD(LOG_UINT32, x_xy,         &SetPoints_Z.xy)
 LOG_ADD(LOG_INT16,  x_z,          &SetPoints_Z.z)
 
-LOG_ADD(LOG_UINT32, v_xy,        &SetPoints_Z.vxy)
+LOG_ADD(LOG_UINT32, v_xy,         &SetPoints_Z.vxy)
 LOG_ADD(LOG_INT16,  v_z,         &SetPoints_Z.vz)
 
 LOG_ADD(LOG_UINT32, a_xy,        &SetPoints_Z.axy)
@@ -625,6 +632,5 @@ LOG_ADD(LOG_UINT8, Policy_Armed,    &Policy_Armed_Flag)
 LOG_ADD(LOG_UINT8, CustomThrust,    &CustomThrust_Flag)
 LOG_ADD(LOG_UINT8, CustomM_CMD,     &CustomMotorCMD_Flag)
 LOG_ADD(LOG_FLOAT, Plane_Angle,     &Plane_Angle_deg)
-
 LOG_GROUP_STOP(Misc)
 #endif
