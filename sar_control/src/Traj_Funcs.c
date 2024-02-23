@@ -10,7 +10,7 @@ float s_0_t[3] = {0.0f, 0.0f, 0.0f};   // Traj Start Point [m]
 float s_f_t[3] = {0.0f, 0.0f, 0.0f};   // Traj End Point [m]
 float v_t[3] = {0.0f, 0.0f, 0.0f};     // Traj Vel [m/s]
 float a_t[3] = {0.0f, 0.0f, 0.0f};     // Traj Accel [m/s^2]
-float j_t[3] = {2.0f, 2.0f, 2.0f};        // Jerk [m/s^3]
+float j_t[3] = {5.0f, 5.0f, 5.0f};        // Jerk [m/s^3]
 float T[3] = {0.0f, 0.0f, 0.0f};       // Traj completion time [s]
 float t_traj[3] = {0.0f, 0.0f, 0.0f};  // Traj time counter [s]
 
@@ -27,27 +27,17 @@ void point2point_Traj()
             float a_sign = (S) >= 0 ? 1.0f : -1.0f; // Determine the direction of movement
 
             float t_jerk = a_t[i]/j_t[i]; // Time to reach max acceleration
-            float v_max = sqrtf(0.5f * a_t[i] * fabsf(S) - 4.0f * 1/6.0f * j_t[i] * a_t[i] * powf(t_jerk,3)); // Max velocity 
-            float t_acc = (v_max - 2.0f * 0.5f * j_t[i] * fsqr(t_jerk)) / a_t[i];
 
-            float s_jerk = 1/6.0f * j_t[i] * powf(t_jerk,3);
-            float v_jerk = 0.5f * j_t[i] * fsqr(t_jerk);
-
-            float s_acc = 0.5f * a_t[i] * fsqr(t_acc);
-            float v_acc = a_t[i] * t_acc;
-
-            float s_const = fabsf(S) - 2.0f * s_acc - 4.0f * s_jerk;
-            float t_const = s_const / v_max;
-            T[i] = t_jerk + t_acc + t_jerk + t_const + t_jerk + t_acc + t_jerk;
+            float A = 0.5f*a_t[i];
+            float B = 0.5f*j_t[i]*fsqr(t_jerk) + a_t[i]*t_jerk;
+            float C = 0.5f*a_t[i]*fsqr(t_jerk) + 0.5*j_t[i]*powf(t_jerk,3) - 0.25f*S;
+            float t_acc = (-B + sqrtf(B*B - 4*A*C))/(2.0f*A);
 
 
             float t_1 = t_jerk;
             float t_2 = t_jerk + t_acc;
             float t_3 = t_jerk + t_acc + t_jerk;
-            float t_4 = t_jerk + t_acc + t_jerk + t_const;
-            float t_5 = t_jerk + t_acc + t_jerk + t_const + t_jerk;
-            float t_6 = t_jerk + t_acc + t_jerk + t_const + t_jerk + t_acc;
-            float t_7 = t_jerk + t_acc + t_jerk + t_const + t_jerk + t_acc + t_jerk;
+            
 
             float dds_1 = j_t[i]*t_1;
             float ds_1 = 0.5f*j_t[i]*fsqr(t_1);
@@ -60,6 +50,15 @@ void point2point_Traj()
             float dds_3 = a_t[i] - j_t[i]*(t_3-t_2);
             float ds_3 = ds_2 + a_t[i]*(t_3-t_2) - 0.5f*j_t[i]*fsqr(t_3-t_2);
             float s_3 = s_2 + ds_2*(t_3-t_2) + 0.5f*a_t[i]*fsqr(t_3-t_2) - 1/6.0f*j_t[i]*powf(t_3-t_2,3);
+
+
+            float s_const = 0.5f*S;
+            float t_const = s_const / ds_3;
+
+            float t_4 = t_jerk + t_acc + t_jerk + t_const;
+            float t_5 = t_jerk + t_acc + t_jerk + t_const + t_jerk;
+            float t_6 = t_jerk + t_acc + t_jerk + t_const + t_jerk + t_acc;
+            float t_7 = t_jerk + t_acc + t_jerk + t_const + t_jerk + t_acc + t_jerk;
 
             float dds_4 = 0.0f;
             float ds_4 = ds_3;
@@ -127,12 +126,12 @@ void point2point_Traj()
             }
             else
             {
-                // acc_val = 0.0f;
-                // vel_val = 0.0f;
-                // pos_val = 0.0f;
+                acc_val = 0.0f;
+                vel_val = 0.0f;
+                pos_val = s_f_t[i];
             }
             
-            // pos_val += s_0_t[i];
+            pos_val += s_0_t[i];
 
             // UPDATE DESIRED STATE VECTORS
             set_vec_element(&x_d, i, pos_val);
