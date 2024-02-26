@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import threading,os
 import rospy
+import time
 import numpy as np
 
 YELLOW = '\033[93m'
@@ -173,6 +174,7 @@ def cmd_send(env,logName):
 
                 ## APPROVE FLIGHT
                 str_input = env.userInput("Approve flight (y/n): ",str)
+                time.sleep(1.0)
                 if str_input == 'y':
                     env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[0],V_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
                     env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[2],V_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
