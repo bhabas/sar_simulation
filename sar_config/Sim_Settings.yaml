@@ -28,7 +28,7 @@ SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: False
   Sim_Speed: 0.5
-  Sim_Slowdown_Speed: 0.5
+  Sim_Slowdown_Speed: 0.2
   Landing_Slowdown_Flag: True
   Vicon_Delay: 15 # [ms]
 

@@ -18,7 +18,7 @@ BLUE = '\033[34m'
 RESET = '\033[0m'  # Reset to default color
 
 
-class SAR_ParamOpt_Sim(SAR_Sim_Interface):
+class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
 
     def __init__(self,GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
         SAR_Sim_Interface.__init__(self,GZ_Timeout=GZ_Timeout)    
@@ -172,7 +172,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             self._iterStep(n_steps=n_steps)
 
         a_Trg = action[0]
-        a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
+        a_Rot = action[1]
 
         ########## POLICY PRE-TRIGGER ##########
         if self._get_obs()[0] >= a_Trg:
@@ -592,7 +592,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
 if __name__ == "__main__":
 
-    env = SAR_ParamOpt_Sim(GZ_Timeout=False,Ang_Acc_range=[-200,200],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
+    env = SAR_ParamOpt_Sim_SS(GZ_Timeout=False,Ang_Acc_range=[-200,200],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
 
     for ep in range(20):
 

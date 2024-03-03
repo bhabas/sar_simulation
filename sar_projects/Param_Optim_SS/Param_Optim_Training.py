@@ -72,11 +72,19 @@ def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max
             a_Rot = a_Rot_list[K_run] 
 
             print(f"Rollout # {K_run:d} Policy: a_Trg = {a_Trg:.3f}, a_Rot = {a_Rot:.3f}")
-            env.ParamOptim_reset(V_mag=Vel_mag_B_P,V_angle=Vel_angle_B_P,Plane_Angle=Plane_Angle)
+            env.reset(V_mag=Vel_mag_B_P,V_angle=Vel_angle_B_P,Plane_Angle=Plane_Angle)
             env.startLogging(logName)
 
             
-            obs,reward,done,info = env.ParamOptim_Flight(a_Trg,a_Rot)
+            Done = False
+            while not Done:
+                
+                action = env.action_space.sample() # obs gets passed in here
+                action[0] = a_Trg
+                action[1] = a_Rot
+
+                obs,reward,terminated,truncated,_ = env.step(action)
+                Done = terminated or truncated
             
             ## ADD VALID REWARD TO TRAINING ARRAY
             reward_arr[K_run] = reward
@@ -111,11 +119,11 @@ def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max
 
 
 if __name__ == '__main__':
-    from Envs.SAR_ParamOpt_Env import SAR_ParamOpt_Sim
+    from Envs.SAR_ParamOpt_Env import SAR_ParamOpt_Sim_SS
     from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
-    env = SAR_ParamOpt_Sim(GZ_Timeout=False)
+    env = SAR_ParamOpt_Sim_SS(GZ_Timeout=False)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
