@@ -156,8 +156,6 @@ void SAR_DataConverter::append_CSV_misc()
     fprintf(fPtr,"--,--,--," ); // V_BP_Mag,V_BP_Angle,Phi_PB
     fprintf(fPtr,"--,--,--," ); // Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB
 
-    // ********************* ADD PLANE POSITION **************************
-
     // STATE DATA
     fprintf(fPtr,"--,--,--,"); // r_BO.x,r_BO.y,r_BO.z
     fprintf(fPtr,"--,--,--,"); // V_BO.x,V_BO.y,V_BO.z

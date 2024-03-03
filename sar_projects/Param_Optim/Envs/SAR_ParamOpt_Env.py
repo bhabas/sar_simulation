@@ -14,6 +14,9 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     def __init__(self,GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
         SAR_Sim_Interface.__init__(self,GZ_Timeout=GZ_Timeout)        
 
+        if self.Policy_Type != "PARAM_OPTIM":
+            raise Exception('[ERROR] Incorrect Policy Type Activated')
+
         ######################
         #    GENERAL CONFIGS
         ######################

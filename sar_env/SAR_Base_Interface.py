@@ -80,6 +80,7 @@ class SAR_Base_Interface():
         ## SAR PARAMETERS
         self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
+        self.Policy_Type = rospy.get_param('/SAR_SETTINGS/Policy_Type')
 
         ## INERTIAL PARAMETERS
         self.Ref_Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Mass")

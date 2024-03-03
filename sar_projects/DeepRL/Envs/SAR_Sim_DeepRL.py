@@ -27,6 +27,9 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         SAR_Sim_Interface.__init__(self, GZ_Timeout=GZ_Timeout)
         gym.Env.__init__(self)
 
+        if self.Policy_Type != "DEEP_RL_SB3":
+            raise Exception('[ERROR] Incorrect Policy Type Activated')
+
         ######################
         #    GENERAL CONFIGS
         ######################
@@ -273,8 +276,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 {},
             )
         
-
-        return obs, reward, terminated, truncated, {}
 
 
     def render(self):

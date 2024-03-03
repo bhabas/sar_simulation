@@ -1,16 +1,15 @@
+#!/usr/bin/env python3
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
+import numpy as np
 import time
-import math
-import pygame as pg
-import os
-import rospy
+import warnings
+import math 
+from sar_env import SAR_Sim_Interface
 
-EPS = 1e-6 # Epsilon (Prevent division by zero)
 COORD_FLIP = -1  # Swap sign to match proper coordinate notation
-
 EPS = 1e-6 # Epsilon (Prevent division by zero)
 YELLOW = '\033[93m'
 RED = '\033[91m'
@@ -18,23 +17,21 @@ GREEN = '\033[92m'
 BLUE = '\033[34m'  
 RESET = '\033[0m'  # Reset to default color
 
-from sar_env import SAR_2D_Sim_Interface
 
-class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
+class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
-    def __init__(self,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True):
-        SAR_2D_Sim_Interface.__init__(self,Render)
-        gym.Env.__init__(self)
+    def __init__(self,GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
+        SAR_Sim_Interface.__init__(self,GZ_Timeout=GZ_Timeout)    
 
         if self.Policy_Type != "DEEP_RL_SB3":
             raise Exception('[ERROR] Incorrect Policy Type Activated')
-        
+
         ######################
         #    GENERAL CONFIGS
         ######################
         
         ## ENV CONFIG SETTINGS
-        self.Env_Name = "SAR_Env_2D"
+        self.Env_Name = "SAR_ParamOptim_Env_SS"
 
         ## TESTING CONDITIONS     
         self.V_mag_range = V_mag_range  
@@ -42,17 +39,15 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Plane_Angle_range = Plane_Angle_range
         self.setAngAcc_range(Ang_Acc_range)
 
-
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
         self.t_impact_max = 1.0     # [s]
-        self.t_ep_max = 5.0         # [s]
-        self.t_real_max = 600000      # [s]
+        self.t_run_max = 5.0        # [s]
+        self.t_real_max = 600.0      # [s]
 
-
+   
         ## INITIAL LEARNING/REWARD CONFIGS
         self.K_ep = 0
-        self.Pol_Trg_Threshold = 0.5
         self.Done = False
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
@@ -74,21 +69,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Base_Iyy_std = 0.1
         self.Base_Mass_std = 0.1
 
-        ## DEFINE OBSERVATION SPACE
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
-        self.obs_trg = np.zeros(self.observation_space.shape,dtype=np.float32) # Obs values at triggering
-
         ## DEFINE ACTION SPACE
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-        
 
-    def reset(self, seed=None, options=None, V_mag=None,V_angle=None,Plane_Angle=None):
-
-        ######################
-        #    GENERAL CONFIGS
-        ######################
+    def reset(self,V_mag=None,V_angle=None,Plane_Angle=None):
 
         ## RESET LEARNING/REWARD CONDITIONS
         self.K_ep += 1
@@ -99,32 +85,10 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
+        
         self.start_time_real = time.time()
 
-        
-
-        ##########   2D ENV CONFIGS  ##########
-        #
-        self.Trg_Flag = False
-        self.action_trg = np.full(self.action_trg.shape[0],np.nan)
-        self.obs_trg = np.full(self.obs_trg.shape[0],np.nan)
-        self.State_trg = np.full(6,np.nan)
-        self.State_Impact = np.full(6,np.nan)
-        self.M_thrust_prev = np.full(4,self.Ref_Mass*self.g/4)
-
-        self.V_B_P_impact_Ext = np.full(3,np.nan)
-        self.Eul_B_O_impact_Ext = np.full(3,np.nan)
-        self.Rot_Sum_impact_Ext = 0
-
-        self.Impact_Flag_Ext = False
-        self.BodyContact_Flag = False
-        self.ForelegContact_Flag = False
-        self.HindlegContact_Flag = False
-        self.Pad_Connections = 0
-        self.MomentCutoff = False
-
-        #
-        #######################################
+        self.resetPose()
 
         ## SET PLANE POSE
         if Plane_Angle == None:
@@ -132,10 +96,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             Plane_Angle_Low = self.Plane_Angle_range[0]
             Plane_Angle_High = self.Plane_Angle_range[1]
             Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-            self._setPlanePose(self.r_P_O,Plane_Angle)
+            self._setPlanePose(self.Plane_Pos,Plane_Angle)
+            self._iterStep(n_steps=2)
 
         else:
-            self._setPlanePose(self.r_P_O,Plane_Angle)
+            self._setPlanePose(self.Plane_Pos,Plane_Angle)
+            self._iterStep(n_steps=2)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or V_angle == None:
@@ -162,14 +128,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
-        r_P_O = np.array(self.r_P_O)                                        # Plane Position wrt to Origin - {X_W,Z_W}
+        r_P_O = np.array(self.Plane_Pos)                                        # Plane Position wrt to Origin - {X_W,Z_W}
         r_P_B = np.array([(self.Tau_CR_start + self.Tau_Accel_start)*V_tx,
                           0,
                           (self.Tau_Body_start + self.Tau_Accel_start)*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                   # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self.initial_state = (r_B_O.copy(),V_B_O.copy())
+        self.initial_state = (r_B_O,V_B_O)
         self.Sim_VelTraj(pos=r_B_O,vel=V_B_O)
         self._iterStep(n_steps=1000)
 
@@ -178,30 +144,21 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
         # self.setModelInertia()
 
-        # ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
-        # if self._getTick()%10 != 0:
-        #     n_steps = 10 - (self._getTick()%10)
-        #     self._iterStep(n_steps=n_steps)
+        ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
+        if self._getTick()%10 != 0:
+            n_steps = 10 - (self._getTick()%10)
+            self._iterStep(n_steps=n_steps)
 
         ## RESET/UPDATE TIME CONDITIONS
-        self.start_time_ep = self._getTime()
+        self.start_time_run = self._getTime()
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
-        self.t_trg_max = self.Tau_Body_start*2.5 # [s]
-
-        ######################
-        #   2D ENV CONFIGS
-        ######################
-
-        # UPDATE RENDER
-        if self.Render_Flag:
-            self.render()
+        self.t_trg_max = self.Tau_Body_start*1.5 # [s]
         
-        return self._getObs(), {}
-
-
-    def step(self, action):
+        return self._get_obs(), {}
+    
+    def step(self,action):
 
         # 1. TAKE ACTION
         # 2. UPDATE STATE
@@ -209,36 +166,23 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
 
-        # ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
-        # if self._getTick()%10 != 0:
-        #     n_steps = 10 - (self._getTick()%10)
-        #     self._iterStep(n_steps=n_steps)
-
+        ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
+        if self._getTick()%10 != 0:
+            n_steps = 10 - (self._getTick()%10)
+            self._iterStep(n_steps=n_steps)
 
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
-        # a_Rot = -50
-        
-        # if self._getObs()[0] <= 0.05:
-        #     a_Trg = 1
-
-        # else:
-        #     a_Trg = 0
 
         ########## POLICY PRE-TRIGGER ##########
-        if a_Trg <= self.Pol_Trg_Threshold:
+        if self._get_obs()[0] >= a_Trg:
 
             ## 2) UPDATE STATE
             self._iterStep(n_steps=10)
             t_now = self._getTime()
 
-            # UPDATE RENDER
-            if self.Render_Flag:
-                self.render()
-
             # GRAB NEXT OBS
-            next_obs = self._getObs()
-
+            next_obs = self._get_obs()
 
             # 3) CALCULATE REWARD
             reward = 0.0
@@ -263,7 +207,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 print(YELLOW,self.error_str,RESET)
 
             ## EPISODE TIMEOUT
-            elif (t_now - self.start_time_ep) > self.t_flight_max:
+            elif (t_now - self.start_time_run) > self.t_flight_max:
                 self.error_str = "Episode Completed: Time Exceeded [Truncated]"
                 terminated = False
                 truncated = True
@@ -271,7 +215,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
             ## REAL-TIME TIMEOUT
             elif (time.time() - self.start_time_real) > self.t_real_max:
-                self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
+                self.error_str = "Episode Completed: Episode Time Exceeded [Truncated]"
                 terminated = False
                 truncated = True
                 print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
@@ -290,18 +234,11 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             )
 
         ########## POLICY POST-TRIGGER ##########
-        elif a_Trg >= self.Pol_Trg_Threshold:
+        elif self._get_obs()[0] <= a_Trg:
 
             # GRAB TERMINAL OBS/ACTION
-            self.obs_trg = self._getObs()
+            self.obs_trg = self._get_obs()
             self.action_trg = action
-
-            ## *** 2D Env ***
-            self.Trg_Flag = True
-            self.Tau_trg = self.obs_trg[0]
-            self.Tau_CR_trg = self.obs_trg[0]
-            self.State_trg = self._getState()
-            ## ***
 
             # 2) FINISH EPISODE
             self.start_time_trg = self._getTime()
@@ -310,7 +247,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
             # 3) CALC REWARD
             reward = self._CalcReward()  
-            # reward = 0
 
 
             # 5) RETURN VALUES
@@ -322,10 +258,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 {},
             )
         
-
-        return obs, reward, terminated, truncated, {}
-
-    
     def _finishSim(self,a_Rot):
 
         OnceFlag_Trg = False
@@ -333,19 +265,17 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         terminated = False
         truncated = False
-
+        
         ## SEND TRIGGER ACTION TO CONTROLLER
-        # self.sendCmd("Policy",[0,a_Rot,0],cmd_flag=1)
+        self.sendCmd("Policy",[0,a_Rot,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
-        # self.pausePhysics(False)
+        self.pausePhysics(False)
 
         while not (terminated or truncated):
 
             t_now = self._getTime()
-            self._iterStep(a_Rot=a_Rot)
-            self.render()
-            
+
             ## START TRIGGER AND IMPACT TERMINATION TIMERS
             if (self.Trg_Flag == True and OnceFlag_Trg == False):
                 self.start_time_trg = t_now     # Starts countdown for when to reset run
@@ -382,27 +312,80 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 truncated = True
                 print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
 
-            elif self._getState()[2][2] <= -5:
-                self.error_str = "Episode Completed: Falling [Terminated]"
-                terminated = True
-                truncated = False
-                print(YELLOW,self.error_str,RESET)
-
             ## REAL-TIME TIMEOUT
             elif (time.time() - self.start_time_real) > self.t_real_max:
                 self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
-                terminated = False
-                truncated = True
-                print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
-
-            else:
-                terminated = False
-                truncated = False
 
         return terminated,truncated
 
 
+    def ParamOptim_Flight(self,Tau_CR_trg,Rot_acc):
 
+        ## RESET LOGGING CONDITIONS 
+        OnceFlag_Trg = False    # Ensures Rot data recorded only once
+        OnceFlag_Impact = False   # Ensures impact data recorded only once 
+        self.sendCmd("Policy",cmd_vals=[Tau_CR_trg,Rot_acc,0.0],cmd_flag=1)
+        self.pausePhysics(pause_flag=False)
+
+
+        while not self.Done: 
+
+            t_now = self._getTime()
+
+            ## RECORD LOWEST D_perp VALUE
+            if self.D_perp < self.D_perp_min:
+                self.D_perp_min = self.D_perp 
+
+            ## START TRIGGER AND IMPACT TERMINATION TIMERS
+            if (self.Trg_Flag == True and OnceFlag_Trg == False):
+                self.start_time_trg = t_now     # Starts countdown for when to reset run
+                OnceFlag_Trg = True             # Turns on to make sure this only runs once per rollout
+
+            if (self.Impact_Flag_Ext and OnceFlag_Impact == False):
+                self.start_time_impact = t_now
+                OnceFlag_Impact = True
+
+            # ============================
+            ##    Termination Criteria 
+            # ============================
+
+            ## TRIGGER TIMEOUT  
+            if (t_now-self.start_time_trg) > self.t_trg_max:
+                self.error_str = "Run Completed: Pitch Timeout"
+                self.Done = True
+                # print(self.error_str)
+
+
+            ## IMPACT TIMEOUT
+            elif (t_now-self.start_time_impact) > self.t_impact_max:
+                self.error_str = "Run Completed: Impact Timeout"
+                self.Done = True
+                # print(self.error_str)
+
+
+            ## ROLLOUT TIMEOUT
+            elif (t_now - self.start_time_run) > self.t_run_max:
+                self.error_str = "Run Completed: Time Exceeded"
+                self.Done = True
+                # print(self.error_str)
+
+            ## FREE FALL TERMINATION
+            # elif self.vel[2] <= -0.5 and self.pos[2] <= 1.5: 
+            #     self.error_str = "Run Completed: Falling Drone"
+            #     self.Done = True
+            #     # print(self.error_str)
+
+
+            # if (time.time() - self.start_time_real) > self.t_real_max and self.GZ_Timeout == True:
+            #     print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
+            #     self.Done = True
+            #     self._restart_Sim()
+
+
+        reward = self._CalcReward()
+
+        return None,reward,self.Done,None
+    
     def _CalcReward(self):
 
         if self.Impact_Flag_Ext:
@@ -518,12 +501,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius*0.8)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Tau_CR_Trg(self.Tau_CR_trg,0.2,0.1)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -543,18 +526,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         return R_t/self.W_max
     
-    def Reward_Tau_CR_Trg(self,x,b,k=0.1):
-        return np.min([k/np.abs(x-b),1])
-    
-    def Reward_Exp_Decay(self,x,threshold,k=10):
-        if x < threshold:
+    def Reward_Exp_Decay(self,x,threshold,k=5):
+        if -0.1 < x < threshold:
             return 1
         elif threshold <= x:
             return np.exp(-k*(x-threshold))
         else:
             return 0
-    
-        
+      
     def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
 
         if Impact_condition == -1:
@@ -611,36 +590,32 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
 
+if __name__ == "__main__":
 
+    env = SAR_ParamOpt_Sim(GZ_Timeout=False,Ang_Acc_range=[-200,200],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
 
-
-
-
-if __name__ == '__main__':
-    env = SAR_2D_Env(Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
-
-    for ep in range(50):
+    for ep in range(20):
 
         V_mag = 2.5
         V_angle = 60
         Plane_Angle = 0
 
-        obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+        for run in range(6):
+
+            obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+
+            Done = False
+            while not Done:
+
+                action = env.action_space.sample() # obs gets passed in here
+                action[0] = 0.22
+                action[1] = -0.25
+
+                obs,reward,terminated,truncated,_ = env.step(action)
+                Done = terminated or truncated
+
+            print(f"Episode: {ep} \t Reward: {reward:.3f} \t Reward_vec: ",end='')
+            print(' '.join(f"{val:.2f}" for val in env.reward_vals))
 
 
-        Done = False
-        while not Done:
 
-            action = env.action_space.sample() # obs gets passed in here
-            action[0] = 0
-            action[1] = -0.50
-            obs,reward,terminated,truncated,_ = env.step(action)
-            Done = terminated or truncated
-
-        print(f"Episode: {ep} \t Reward: {reward:.3f} \t Reward_vec: ",end='')
-        print(' '.join(f"{val:.2f}" for val in env.reward_vals))
-
-
-
-
-                
