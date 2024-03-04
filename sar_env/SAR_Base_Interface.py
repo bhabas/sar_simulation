@@ -243,7 +243,7 @@ class SAR_Base_Interface():
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
-        r_P_O = np.array(self.Plane_Pos)                        # Plane Position wrt to Origin - {X_W,Y_W,Z_W}
+        r_P_O = np.array(self.r_P_O)                        # Plane Position wrt to Origin - {X_W,Y_W,Z_W}
         r_P_B = np.array([(Tau_CR_start + Tau_Accel_start)*V_tx,
                           0,
                           (Tau_Body_start + Tau_Accel_start)*V_perp])             # Body Position wrt to Plane - {t_x,t_y,n_p}
@@ -502,6 +502,12 @@ class SAR_Base_Interface():
             self.Tau_trg = np.round(TriggerData_msg.Optical_Flow_trg.z,3)
             self.Tau_CR_trg = np.round(TriggerData_msg.Tau_CR_trg,3)
 
+            self.Vel_mag_B_O_trg = np.round(TriggerData_msg.Vel_mag_B_O_trg,3)
+            self.Vel_angle_B_O_trg = np.round(TriggerData_msg.Vel_angle_B_O_trg,3)
+
+            self.Vel_mag_B_P_trg = np.round(TriggerData_msg.Vel_mag_B_P_trg,3)
+            self.Vel_angle_B_P_trg = np.round(TriggerData_msg.Vel_angle_B_P_trg,3)
+
             ## POLICY TRIGGERING CONDITIONS
             self.Policy_Trg_Action_trg = np.round(TriggerData_msg.Policy_Trg_Action_trg,3)
             self.Policy_Rot_Action_trg = np.round(TriggerData_msg.Policy_Rot_Action_trg,3)
@@ -595,7 +601,7 @@ class SAR_Base_Interface():
 
         self.Plane_Angle_deg = MiscData_msg.Plane_Angle
         self.Plane_Angle_rad = np.deg2rad(self.Plane_Angle_deg)
-        self.Plane_Pos = [
+        self.r_P_O = [
             MiscData_msg.Plane_Pos.x,
             MiscData_msg.Plane_Pos.y,
             MiscData_msg.Plane_Pos.z,

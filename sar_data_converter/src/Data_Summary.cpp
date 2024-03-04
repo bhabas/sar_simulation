@@ -90,6 +90,9 @@ void SAR_DataConverter::Publish_TriggerData()
     TriggerData_msg.Twist_B_O_trg = Twist_B_O_trg;
     TriggerData_msg.Eul_B_O_trg = Eul_B_O_trg;
 
+    TriggerData_msg.Vel_mag_B_O_trg = Vel_mag_B_O_trg;
+    TriggerData_msg.Vel_angle_B_O_trg = Vel_angle_B_O_trg;
+
     // STATES WRT PLANE
     TriggerData_msg.Pose_P_B_trg = Pose_P_B_trg;
     TriggerData_msg.Twist_B_P_trg = Twist_B_P_trg;

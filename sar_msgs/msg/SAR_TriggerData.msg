@@ -7,6 +7,8 @@ std_msgs/Time Time_trg
 geometry_msgs/Pose Pose_B_O_trg
 geometry_msgs/Twist Twist_B_O_trg
 geometry_msgs/Vector3 Eul_B_O_trg
+float64 Vel_mag_B_O_trg
+float64 Vel_angle_B_O_trg
 
 ## STATES WRT PLANE
 geometry_msgs/Pose Pose_P_B_trg
