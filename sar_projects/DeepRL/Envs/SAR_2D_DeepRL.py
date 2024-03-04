@@ -84,7 +84,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         
 
-    def reset(self, seed=None, options=None, V_mag=None,V_angle=None,Plane_Angle=None):
+    def reset(self,seed=None,options=None,V_mag=None,V_angle=None,Plane_Angle=None):
 
         ######################
         #    GENERAL CONFIGS
@@ -253,28 +253,28 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 self.error_str = "Episode Completed: Done [Terminated]"
                 terminated = True
                 truncated = False
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
             
             ## IMPACT TERMINATION
             elif self.Impact_Flag_Ext == True:
                 self.error_str = "Episode Completed: Impact [Terminated]"
                 terminated = True
                 truncated = False
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
 
             ## EPISODE TIMEOUT
             elif (t_now - self.start_time_ep) > self.t_flight_max:
                 self.error_str = "Episode Completed: Time Exceeded [Truncated]"
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
 
             ## REAL-TIME TIMEOUT
             elif (time.time() - self.start_time_real) > self.t_real_max:
                 self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
 
             else:
                 terminated = False
@@ -366,34 +366,34 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 self.error_str = "Episode Completed: Done [Terminated] "
                 terminated = True
                 truncated = False
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
 
             ## TRIGGER TIMEOUT  
             elif (t_now - self.start_time_trg) > self.t_trg_max:
                 self.error_str = "Episode Completed: Pitch Timeout [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(t_now - self.start_time_trg):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(t_now - self.start_time_trg):.3f} s",RESET)
 
             ## IMPACT TIMEOUT
             elif (t_now - self.start_time_impact) > self.t_impact_max:
                 self.error_str = "Episode Completed: Impact Timeout [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
 
             elif self._getState()[2][2] <= -5:
                 self.error_str = "Episode Completed: Falling [Terminated]"
                 terminated = True
                 truncated = False
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
 
             ## REAL-TIME TIMEOUT
             elif (time.time() - self.start_time_real) > self.t_real_max:
                 self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
 
             else:
                 terminated = False
@@ -538,8 +538,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
-        print(f"R_t_norm: {R_t/self.W_max:.3f}")
-        print(np.round(self.reward_vals,2))
+        # print(f"R_t_norm: {R_t/self.W_max:.3f}")
+        # print(np.round(self.reward_vals,2))
 
         return R_t/self.W_max
     

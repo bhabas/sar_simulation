@@ -22,7 +22,7 @@ RESET = '\033[0m'  # Reset to default color
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
-    def __init__(self,GZ_Timeout=True,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180]):
+    def __init__(self,GZ_Timeout=True,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True):
 
         SAR_Sim_Interface.__init__(self, GZ_Timeout=GZ_Timeout)
         gym.Env.__init__(self)
