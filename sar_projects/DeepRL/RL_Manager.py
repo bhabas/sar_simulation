@@ -80,9 +80,10 @@ class RL_Training_Manager():
             reset_num_timesteps=reset_timesteps,
         )
 
-    def test_policy(self,V_mag=None,V_angle=None,Plane_Angle=None,episodes=10):
+    def test_policy(self,V_mag=None,V_angle=None,Plane_Angle=None):
 
         # self.vec_env.Render_Flag = True
+        self.vec_env.envs[0].unwrapped.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         obs = self.vec_env.reset()
         terminated = False
  
@@ -90,7 +91,18 @@ class RL_Training_Manager():
             action,_ = self.model.predict(obs)
             obs,reward,terminated,_ = self.vec_env.step(action)
 
-        return obs,reward
+        return obs[0],reward[0]
+    
+    def sweep_policy(self,Plane_Angle_range=[180,180,4],V_angle_range=[-45,-135,4],V_mag_range=[1.0,2.0,4],n=1):
+        
+        for Plane_Angle in np.linspace(Plane_Angle_range[0],Plane_Angle_range[1],Plane_Angle_range[2]):
+            for V_mag in np.linspace(V_mag_range[0],V_mag_range[1],V_mag_range[2]):
+                for V_angle in np.linspace(V_angle_range[0],V_angle_range[1],V_angle_range[2]):
+                    for _ in range(n):
+
+                        obs,reward = self.test_policy(V_mag,V_angle,Plane_Angle)
+                        print(f"Plane_Angle: {Plane_Angle:.2f}  V_mag: {V_mag:.2f}  V_angle: {V_angle:.2f}")
+                        print(f"Reward: {reward:.3f} \t Tau_CR: {obs[0]:.2f}  Theta_x: {obs[1]:.2f}  D_perp: {obs[2]:.2f}\n\n")
 
 class RewardCallback(BaseCallback):
     def __init__(self, check_freq: int, save_freq: int, model_dir: str, verbose=1):
@@ -163,8 +175,8 @@ if __name__ == '__main__':
     log_name = "DeepRL_Policy_09:02:31"
     model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
     # RL_Manager.create_model()
     RL_Manager.load_model(model_dir,t_step=20e3)
-    RL_Manager.test_policy()
+    RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[60,60,1],V_mag_range=[1.0,3.0,5],n=3)
     # RL_Manager.train_model()

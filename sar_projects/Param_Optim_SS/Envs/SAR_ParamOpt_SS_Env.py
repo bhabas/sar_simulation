@@ -73,6 +73,29 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
+    def setTestingConditions(self,V_mag=None,V_angle=None,Plane_Angle=None):
+
+        ## SET PLANE POSE
+        if Plane_Angle == None:
+
+            Plane_Angle_Low = self.Plane_Angle_range[0]
+            Plane_Angle_High = self.Plane_Angle_range[1]
+            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+            self._setPlanePose(self.r_P_O,Plane_Angle)
+
+        else:
+            self._setPlanePose(self.r_P_O,Plane_Angle)
+
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
+        if V_mag == None or V_angle == None:
+            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
+
+        else:
+            V_mag = V_mag       # Flight velocity
+            V_angle = V_angle   # Flight angle  
+
+        self.V_mag = V_mag
+        self.V_angle = V_angle
 
     def reset(self,V_mag=None,V_angle=None,Plane_Angle=None):
 
@@ -90,33 +113,9 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
 
         self.resetPose()
 
-        ## SET PLANE POSE
-        if Plane_Angle == None:
-
-            Plane_Angle_Low = self.Plane_Angle_range[0]
-            Plane_Angle_High = self.Plane_Angle_range[1]
-            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-            self._setPlanePose(self.Plane_Pos,Plane_Angle)
-            self._iterStep(n_steps=2)
-
-        else:
-            self._setPlanePose(self.Plane_Pos,Plane_Angle)
-            self._iterStep(n_steps=2)
-
-        ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if V_mag == None or V_angle == None:
-            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
-
-        else:
-            V_mag = V_mag       # Flight velocity
-            V_angle = V_angle   # Flight angle  
-
-        self.V_mag = V_mag
-        self.V_angle = V_angle
-
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
-        V_tx = V_mag*np.cos(np.deg2rad(V_angle))
-        V_perp = V_mag*np.sin(np.deg2rad(V_angle))
+        V_tx = self.V_mag*np.cos(np.deg2rad(self.V_angle))
+        V_perp = self.V_mag*np.sin(np.deg2rad(self.V_angle))
         V_B_P = np.array([V_tx,0,V_perp])               # {t_x,n_p}
         V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
 
@@ -542,7 +541,8 @@ if __name__ == "__main__":
             action[0] = 0.15
             action[1] = -100
 
-            obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+            env.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+            obs,_ = env.reset()
 
 
             Done = False
