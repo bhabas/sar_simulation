@@ -337,7 +337,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius*0.8)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius*0.5)
         else:
             R_dist = 0
 
@@ -363,7 +363,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         return R_t/self.W_max
     
     def Reward_Exp_Decay(self,x,threshold,k=5):
-        if -0.1 < x < threshold:
+        if x < threshold:
             return 1
         elif threshold <= x:
             return np.exp(-k*(x-threshold))
@@ -432,10 +432,10 @@ if __name__ == "__main__":
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
-        Tau_CR_trg = 0.23
-        Rot_acc = -50
-        V_mag = 2.5
-        V_angle = 60
+        Tau_CR_trg = 0.15
+        Rot_acc = -100
+        V_mag = 1.0
+        V_angle = 30
         Plane_Angle = 0
         env.ParamOptim_reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         obs,reward,done,info = env.ParamOptim_Flight(Tau_CR_trg,Rot_acc)

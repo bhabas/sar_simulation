@@ -240,6 +240,9 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
             self.obs_trg = self._get_obs()
             self.action_trg = action
 
+            print("Obs_Trg: ",np.round(self.obs_trg,3))
+            print("Act: ",np.round(self.action_trg,3))
+
             # 2) FINISH EPISODE
             self.start_time_trg = self._getTime()
             terminated,truncated = self._finishSim(a_Rot)
@@ -296,21 +299,21 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
                 self.error_str = "Episode Completed: Done [Terminated] "
                 terminated = True
                 truncated = False
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
 
             ## TRIGGER TIMEOUT  
             elif (t_now - self.start_time_trg) > self.t_trg_max:
                 self.error_str = "Episode Completed: Pitch Timeout [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(t_now - self.start_time_trg):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(t_now - self.start_time_trg):.3f} s",RESET)
 
             ## IMPACT TIMEOUT
             elif (t_now - self.start_time_impact) > self.t_impact_max:
                 self.error_str = "Episode Completed: Impact Timeout [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
 
             ## REAL-TIME TIMEOUT
             elif (time.time() - self.start_time_real) > self.t_real_max:
@@ -318,74 +321,6 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
 
         return terminated,truncated
 
-
-    def ParamOptim_Flight(self,Tau_CR_trg,Rot_acc):
-
-        ## RESET LOGGING CONDITIONS 
-        OnceFlag_Trg = False    # Ensures Rot data recorded only once
-        OnceFlag_Impact = False   # Ensures impact data recorded only once 
-        self.sendCmd("Policy",cmd_vals=[Tau_CR_trg,Rot_acc,0.0],cmd_flag=1)
-        self.pausePhysics(pause_flag=False)
-
-
-        while not self.Done: 
-
-            t_now = self._getTime()
-
-            ## RECORD LOWEST D_perp VALUE
-            if self.D_perp < self.D_perp_min:
-                self.D_perp_min = self.D_perp 
-
-            ## START TRIGGER AND IMPACT TERMINATION TIMERS
-            if (self.Trg_Flag == True and OnceFlag_Trg == False):
-                self.start_time_trg = t_now     # Starts countdown for when to reset run
-                OnceFlag_Trg = True             # Turns on to make sure this only runs once per rollout
-
-            if (self.Impact_Flag_Ext and OnceFlag_Impact == False):
-                self.start_time_impact = t_now
-                OnceFlag_Impact = True
-
-            # ============================
-            ##    Termination Criteria 
-            # ============================
-
-            ## TRIGGER TIMEOUT  
-            if (t_now-self.start_time_trg) > self.t_trg_max:
-                self.error_str = "Run Completed: Pitch Timeout"
-                self.Done = True
-                # print(self.error_str)
-
-
-            ## IMPACT TIMEOUT
-            elif (t_now-self.start_time_impact) > self.t_impact_max:
-                self.error_str = "Run Completed: Impact Timeout"
-                self.Done = True
-                # print(self.error_str)
-
-
-            ## ROLLOUT TIMEOUT
-            elif (t_now - self.start_time_run) > self.t_run_max:
-                self.error_str = "Run Completed: Time Exceeded"
-                self.Done = True
-                # print(self.error_str)
-
-            ## FREE FALL TERMINATION
-            # elif self.vel[2] <= -0.5 and self.pos[2] <= 1.5: 
-            #     self.error_str = "Run Completed: Falling Drone"
-            #     self.Done = True
-            #     # print(self.error_str)
-
-
-            # if (time.time() - self.start_time_real) > self.t_real_max and self.GZ_Timeout == True:
-            #     print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-            #     self.Done = True
-            #     self._restart_Sim()
-
-
-        reward = self._CalcReward()
-
-        return None,reward,self.Done,None
-    
     def _CalcReward(self):
 
         if self.Impact_Flag_Ext:
@@ -523,11 +458,12 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
         print(f"R_t_norm: {R_t/self.W_max:.3f}")
         print(np.round(self.reward_vals,2))
+        print("\n\n")
 
         return R_t/self.W_max
     
     def Reward_Exp_Decay(self,x,threshold,k=5):
-        if -0.1 < x < threshold:
+        if x < threshold:
             return 1
         elif threshold <= x:
             return np.exp(-k*(x-threshold))
@@ -596,20 +532,21 @@ if __name__ == "__main__":
 
     for ep in range(20):
 
-        V_mag = 2.5
-        V_angle = 60
+        V_mag = 1.0
+        V_angle = 30
         Plane_Angle = 0
 
         for run in range(6):
 
+            action = env.action_space.sample() # obs gets passed in here
+            action[0] = 0.15
+            action[1] = -100
+
             obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+
 
             Done = False
             while not Done:
-
-                action = env.action_space.sample() # obs gets passed in here
-                action[0] = 0.22
-                action[1] = -0.25
 
                 obs,reward,terminated,truncated,_ = env.step(action)
                 Done = terminated or truncated

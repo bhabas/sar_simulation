@@ -4,9 +4,6 @@ import os
 import time
 
 
-os.system("clear")
-np.set_printoptions(precision=2, suppress=True)
-
 def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max=15):
 
     # agent.V_mag_rel = V_mag_rel
@@ -42,19 +39,29 @@ def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max
         print("=============================================")
 
         print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
+
+        print("Theta Space")
         print(f"mu_0 = {agent.mu[0,0]:.3f}, \t sig_0 = {agent.sigma[0,0]:.3f}")
-        print(f"mu_1 = {agent.mu[1,0]:.3f}, \t sig_1 = {agent.sigma[1,0]:.3f}")
-        print('\n')
-        
+        print(f"mu_1 = {agent.mu[1,0]:.3f}, \t sig_1 = {agent.sigma[1,0]:.3f}\n")
 
         print("Theta_i = ")
-        print(theta[0,:])
-        print(theta[1,:])
+        print(np.round(theta[0,:],4))
+        print(np.round(theta[1,:],4))
+        print('\n')
 
-        print("Policy: ")
-        print("a_Trg: ", a_Trg_list)
-        print("a_Rot: ", np.round(a_Rot_list,0))
-        print("=============================================")
+        mu_Trg = 0.5 * (agent.mu[0,0] + 1) * (env.TauThr_range[1] - env.TauThr_range[0]) + env.TauThr_range[0]
+        mu_Rot = 0.5 * (agent.mu[1,0] + 1) * (env.Ang_Acc_range[1] - env.Ang_Acc_range[0]) + env.Ang_Acc_range[0]
+
+        sig_Trg = 0.5 * (agent.sigma[0,0] + 1) * (env.TauThr_range[1] - env.TauThr_range[0]) + env.TauThr_range[0]
+        sig_Rot = 0.5 * (agent.sigma[1,0] + 1) * (env.Ang_Acc_range[1] - env.Ang_Acc_range[0]) + env.Ang_Acc_range[0]
+
+        print("Policy Space")
+        print(f"mu_Trg = {mu_Trg:.3f}, \t sig_Trg = {np.std(a_Trg_list):.3f}")
+        print(f"mu_Rot = {mu_Rot:.3f}, \t sig_Rot = {np.std(a_Rot_list):.3f}\n")
+
+        print("a_Trg_List: ", np.round(a_Trg_list,4))
+        print("a_Rot_List: ", np.round(a_Rot_list,1))
+        print("\n=============================================\n")
 
 
         # ============================
@@ -82,6 +89,10 @@ def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max
                 action = env.action_space.sample() # obs gets passed in here
                 action[0] = a_Trg
                 action[1] = a_Rot
+
+                # action[0] = 0.243
+                # action[1] = -47
+
 
                 obs,reward,terminated,truncated,_ = env.step(action)
                 Done = terminated or truncated
@@ -119,14 +130,13 @@ def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max
 
 
 if __name__ == '__main__':
-    from Envs.SAR_ParamOpt_Env import SAR_ParamOpt_Sim_SS
+    from Envs.SAR_ParamOpt_SS_Env import SAR_ParamOpt_Sim_SS
     from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
     env = SAR_ParamOpt_Sim_SS(GZ_Timeout=False)
 
     ## INIT LEARNING AGENT
-    # Mu_Tau value is multiplied by 10 so complete policy is more normalized
     mu_0 =  np.array([0.0, 0.0])       # Initial mu starting point
     sig_0 = np.array([0.4, 0.4])   # Initial sigma starting point
     agent = EPHE_Agent(mu_0,sig_0,n_rollouts=8)
@@ -137,11 +147,11 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_mag = 2.5     # [m/s]
-    V_angle = 60    # [deg]
+    V_mag = 1.0     # [m/s]
+    V_angle = 30    # [deg]
     Plane_angle = 0 # [deg]
     env.setAngAcc_range([-100,100])
-    env.TauThr_range = [0,0.5]
+    env.TauThr_range = [0.0,0.5]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25

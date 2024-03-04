@@ -102,10 +102,7 @@ class EPHE_Agent():
 
     def get_theta(self):
 
-        theta = np.zeros((len(self.mu),self.n_rollouts))
-        
-        for ii,mu_ii in enumerate(self.mu):
-            theta[ii,:] = np.random.normal(mu_ii,self.sigma[ii],self.n_rollouts)
+        theta = np.random.normal(self.mu,self.sigma,(self.dim,self.n_rollouts))
 
         return np.tanh(theta)
                                 
@@ -133,7 +130,7 @@ class EPHE_Agent():
     
 
 if __name__ == "__main__":
-    np.set_printoptions(precision=2, suppress=True)
+    # np.set_printoptions(precision=2, suppress=True)
     mu = np.array([[0.0],[0.0]])
     sigma = np.array([[0.25],[0.5]])
 

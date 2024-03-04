@@ -5,7 +5,7 @@ import time
 
 
 os.system("clear")
-np.set_printoptions(precision=2, suppress=True)
+# np.set_printoptions(precision=2, suppress=True)
 
 def runTraining(env,agent,Vel_mag_B_P,Vel_angle_B_P,Plane_Angle,logName,K_ep_max=15):
 
@@ -118,7 +118,6 @@ if __name__ == '__main__':
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     ## INIT LEARNING AGENT
-    # Mu_Tau value is multiplied by 10 so complete policy is more normalized
     mu_0 =  np.array([0.0, 0.0])       # Initial mu starting point
     sig_0 = np.array([0.4, 0.4])   # Initial sigma starting point
     agent = EPHE_Agent(mu_0,sig_0,n_rollouts=8)
@@ -129,11 +128,11 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_mag = 2.5     # [m/s]
-    V_angle = 60    # [deg]
+    V_mag = 1.5     # [m/s]
+    V_angle = 30    # [deg]
     Plane_angle = 0 # [deg]
     env.setAngAcc_range([-100,100])
-    env.TauThr_range = [0,0.5]
+    env.TauThr_range = [-0.1,0.5]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25
