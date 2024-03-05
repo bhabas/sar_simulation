@@ -239,14 +239,48 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                 case DEEP_RL_ONBOARD:
 
-                    // // PASS OBSERVATION THROUGH POLICY NN
-                    // NN_forward(X_input,Y_output,&NN_DeepRL);
 
-                    // // SAMPLE POLICY TRIGGER ACTION
-                    // Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
+                    // PASS OBSERVATION THROUGH POLICY NN
+                    NN_forward(X_input,Y_output,&NN_DeepRL);
 
-             
-                    //     }
+                    // SAMPLE POLICY TRIGGER ACTION
+                    Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
+                    Policy_Rot_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
+                    Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,-100.0f,0.0f);
+
+                    // EXECUTE POLICY IF TRIGGERED
+                    if(Policy_Trg_Action >= 0.5f && onceFlag == false && abs(Tau_CR) <= 1.0f)
+                    {
+
+                        onceFlag = true;
+
+                        // UPDATE AND RECORD TRIGGER VALUES
+                        Trg_Flag = true;  
+                        Pos_B_O_trg = Pos_B_O;
+                        Vel_B_O_trg = Vel_B_O;
+                        Quat_B_O_trg = Quat_B_O;
+                        Omega_B_O_trg = Omega_B_O;
+
+                        Pos_P_B_trg = Pos_P_B;
+                        Vel_B_P_trg = Vel_B_P;
+                        Quat_P_B_trg = Quat_P_B;
+                        Omega_B_P_trg = Omega_B_P;
+
+                        Tau_trg = Tau;
+                        Tau_CR_trg = Tau_CR;
+                        Theta_x_trg = Theta_x;
+                        Theta_y_trg = Theta_y;
+                        D_perp_trg = D_perp;
+                        D_perp_CR_trg = D_perp_CR;
+
+
+                        Policy_Trg_Action_trg = Policy_Trg_Action;
+                        Policy_Rot_Action_trg = Policy_Rot_Action;
+
+                        M_d.x = 0.0f;
+                        M_d.y = Policy_Rot_Action*Iyy;
+                        M_d.z = 0.0f;
+                    }
                         
                     break;
 
