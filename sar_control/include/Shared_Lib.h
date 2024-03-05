@@ -17,7 +17,7 @@ extern "C" {
 #include "ML_Funcs.h"
 #include "Compress_States.h"
 
-#include "ML_Params/NN_Layers_NL_DeepRL.h"
+#include "ML_Params/NN_Params_DeepRL.h"
 
 
 

@@ -39,9 +39,6 @@ class RL_Training_Manager():
         os.makedirs(self.log_dir, exist_ok=True)
         os.makedirs(self.model_dir, exist_ok=True)
 
-
-
-
     def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[12,12,12]):
 
         self.model = SAC(
@@ -210,6 +207,120 @@ class RL_Training_Manager():
                             TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
                             print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
 
+    def save_NN_to_C_header(self):
+
+        FileName = f"NN_Params_DeepRL.h"
+        f = open(os.path.join(self.log_dir,FileName),'a')
+        f.truncate(0) ## Clears contents of file
+
+        f.write(f"// Model: {self.log_name}\n")
+        f.write("static char NN_Params_DeepRL[] = {\n")
+
+        num_hidden_layers = np.array([3]).reshape(-1,1)
+
+        ## SAVE SCALER ARRAY VALUES
+        np.savetxt(f,num_hidden_layers,
+                    fmt='"%.0f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{num_hidden_layers.shape[0]},"\t"{num_hidden_layers.shape[1]},"',
+                    footer='"*"\n')
+        
+        ## SCALER ARRAY DIMENSIONS
+        obs_len = self.model.observation_space.shape[0]
+        scaling_means = np.zeros(obs_len).reshape(-1,1)
+        scaling_std = np.ones(obs_len).reshape(-1,1)
+
+        ## SAVE SCALER ARRAY VALUES
+        np.savetxt(f,scaling_means,
+                    fmt='"%.5f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{scaling_means.shape[0]},"\t"{scaling_means.shape[1]},"',
+                    footer='"*"\n')
+
+        np.savetxt(f,scaling_std,
+                    fmt='"%.5f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{scaling_std.shape[0]},"\t"{scaling_std.shape[1]},"',
+                    footer='"*"\n')
+        
+        ## SAVE PARAMETERS OF LATENT_PI LAYERS
+        for module in self.model.actor.latent_pi.modules():
+            if isinstance(module, th.nn.modules.linear.Linear):
+                W = module.weight.detach().numpy()
+                np.savetxt(f,W,
+                    fmt='"%.5f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
+                    footer='"*"\n')
+
+
+                b = module.bias.detach().numpy().reshape(-1,1)
+                np.savetxt(f,b,
+                    fmt='"%.5f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
+                    footer='"*"\n')
+                
+        ## SAVE PARAMETERS FOR MU/LOG_STD LAYER
+        for module in self.model.actor.mu.modules():
+            W_mu = module.weight.detach().numpy()
+            b_mu = module.bias.detach().numpy().reshape(-1,1)
+
+        for module in self.model.actor.log_std.modules():
+            W_log_std = module.weight.detach().numpy()
+            b_log_std = module.bias.detach().numpy().reshape(-1,1)
+
+        ## STACK WEIGHTS AND BIASES TO MAKE ONE COHESIVE LAYER INSTEAD OF SB3 DEFAULT SPLIT
+        W = np.vstack((W_mu,W_log_std))
+        b = np.vstack((b_mu,b_log_std))
+
+        np.savetxt(f,W,
+            fmt='"%.5f,"',
+            delimiter='\t',
+            comments='',
+            header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
+            footer='"*"\n')
+
+        np.savetxt(f,b,
+            fmt='"%.5f,"',
+            delimiter='\t',
+            comments='',
+            header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
+            footer='"*"\n')
+
+
+        f.write("};")
+        f.close()
+
+    def policy_output(self,obs):
+ 
+        # CAP THE STANDARD DEVIATION OF THE ACTOR
+        LOG_STD_MAX = 2
+        LOG_STD_MIN = -20
+        actor = self.model.policy.actor
+        obs = th.FloatTensor([obs])
+
+        ## PASS OBS THROUGH NN
+        latent_pi = actor.latent_pi(obs)
+        mean_actions = actor.mu(latent_pi)
+        log_std = actor.log_std(latent_pi)
+        log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
+
+        ## CONVERT LOG_STD TO STD
+        action_log_std = log_std
+        action_log_std = action_log_std.detach().numpy()[0]
+
+        ## GRAB ACTION DISTRIBUTION MEAN
+        action_mean = mean_actions
+        action_mean = action_mean.detach().numpy()[0]
+
+        return action_mean,action_log_std
+
 
 
 
@@ -284,15 +395,22 @@ if __name__ == '__main__':
     log_name = "DeepRL_Policy_09:02:31"
     model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
     # RL_Manager.create_model()
     RL_Manager.load_model(model_dir,t_step=20e3)
+    # RL_Manager.save_NN_to_C_header()
+    obs = [-0.3,-0.1,0.1,0.3]
+    RL_Manager.policy_output(obs)
+
+
+
+
     # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[60,60,1],V_mag_range=[1.0,3.0,5],n=3)
-    RL_Manager.collect_landing_performance(
-        fileName="PolicyPerformance_Data.csv",
-        V_mag_step=0.5,
-        V_angle_step=5,
-        Plane_Angle_step=45,
-        n_episodes=3
-        )
+    # RL_Manager.collect_landing_performance(
+    #     fileName="PolicyPerformance_Data.csv",
+    #     V_mag_step=0.5,
+    #     V_angle_step=5,
+    #     Plane_Angle_step=45,
+    #     n_episodes=3
+    #     )
     # RL_Manager.train_model()
