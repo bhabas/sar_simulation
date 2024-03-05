@@ -30,17 +30,9 @@ void NN_init(NN* NN, char str[])
 
 void NN_forward(nml_mat* X_input, nml_mat* Y_output, NN* NN)
 {
-    // SCALE INPUT DATA
-    nml_mat* X_copy = nml_mat_cp(X_input);
-    for(int i=0;i<4;i++)
-    {
-        // Scale data to zero-mean and unit variance
-        X_copy->data[i][0] = (X_input->data[i][0] - NN->scaler_mean->data[i][0]) / NN->scaler_std->data[i][0];
-    }
-
     // LAYER 1
     // a = Leaky_Relu(W*X+b)
-    nml_mat *WX1 = nml_mat_dot(NN->W[0],X_copy); 
+    nml_mat *WX1 = nml_mat_dot(NN->W[0],X_input); 
     nml_mat_add_r(WX1,NN->b[0]);
     nml_mat *a1 = nml_mat_funcElement(WX1,Leaky_Relu);
 
@@ -64,11 +56,13 @@ void NN_forward(nml_mat* X_input, nml_mat* Y_output, NN* NN)
 
 
     // SAVE NN OUTPUT
-    nml_mat_cp_r(a4,Y_output);
+    Y_output->data[0][0] = a4->data[0][0];
+    Y_output->data[1][0] = a4->data[1][0];
+    Y_output->data[2][0] = a4->data[2][0];
+    Y_output->data[3][0] = a4->data[3][0];
 
 
     // FREE MATRICES FROM HEAP
-    nml_mat_free(X_copy);
     nml_mat_free(WX1);
     nml_mat_free(WX2);
     nml_mat_free(WX3);
