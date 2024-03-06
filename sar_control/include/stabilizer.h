@@ -385,6 +385,7 @@ void Controller::publishCtrlData()
     CtrlData_msg.Optical_Flow_Cam.z = Tau_Cam;
 
     // POLICY ACTIONS
+    CtrlData_msg.NN_Output = {Y_output->data[0][0],Y_output->data[1][0],Y_output->data[2][0],Y_output->data[3][0]};
     CtrlData_msg.a_Trg = a_Trg;
     CtrlData_msg.a_Rot = a_Rot;
 
@@ -462,6 +463,7 @@ void Controller::publishCtrlData()
     CtrlData_msg.Tau_CR_trg = Tau_CR_trg;
 
     // POLICY ACTIONS (TRIGGER)
+    CtrlData_msg.NN_Output_trg = {Y_output_trg[0],Y_output_trg[1],Y_output_trg[2],Y_output_trg[3]};
     CtrlData_msg.a_Trg_trg = a_Trg_trg;
     CtrlData_msg.a_Rot_trg = a_Rot_trg;
 

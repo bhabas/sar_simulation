@@ -256,8 +256,10 @@ typedef enum {
 }PolicyType;
 extern PolicyType Policy;
 
-extern nml_mat* X_input;    // STATE MATRIX TO BE INPUT INTO POLICY
-extern nml_mat* Y_output;   // POLICY OUTPUT MATRIX
+extern nml_mat* X_input;        // STATE MATRIX TO BE INPUT INTO POLICY
+extern nml_mat* Y_output;       // POLICY OUTPUT MATRIX
+extern float Y_output_trg[4];   // POLICY OUTPUT ARRAY
+
 
 // POLICY FLAGS
 extern bool Policy_Armed_Flag;

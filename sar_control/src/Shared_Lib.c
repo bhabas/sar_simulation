@@ -240,8 +240,9 @@ bool CamActive_Flag = false;
 
 // DEFINE POLICY TYPE ACTIVATED
 PolicyType Policy = PARAM_OPTIM;
-nml_mat* X_input;   // STATE MATRIX TO BE INPUT INTO POLICY
-nml_mat* Y_output;  // POLICY OUTPUT MATRIX
+nml_mat* X_input;       // STATE MATRIX TO BE INPUT INTO POLICY
+nml_mat* Y_output;      // POLICY OUTPUT MATRIX
+float Y_output_trg[4];  // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 bool Policy_Armed_Flag = false;

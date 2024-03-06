@@ -52,20 +52,8 @@ void controllerOutOfTreeInit() {
     X_input = nml_mat_new(4,1);
     Y_output = nml_mat_new(4,1);
 
- 
-    X_input->data[0][0] = -0.3f;
-    X_input->data[1][0] = -0.1f;
-    X_input->data[2][0] = 0.1f;
-    X_input->data[3][0] = 0.3f;
-
     // INIT DEEP RL NN POLICY
-    // DEBUG_PRINT("Free heap: %d bytes\n", xPortGetFreeHeapSize());
     NN_init(&NN_DeepRL,NN_Params_DeepRL);
-    // NN_forward(X_input,Y_output,&NN_DeepRL);
-    // nml_mat_print(Y_output);
-    // DEBUG_PRINT("Free heap: %d bytes\n", xPortGetFreeHeapSize());
-
-    
 
     consolePrintf("GTC Controller Initiated\n");
 }
@@ -130,9 +118,13 @@ void controllerOutOfTreeReset() {
     Tau_trg = 0.0f;
     Tau_CR_trg = 0.0f;
 
+    Y_output_trg[0] = 0.0f;
+    Y_output_trg[1] = 0.0f;
+    Y_output_trg[2] = 0.0f;
+    Y_output_trg[3] = 0.0f;
+
     a_Trg_trg = 0.0f;
     a_Rot_trg = 0.0f;
-
 
 }
 
@@ -259,7 +251,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     // EXECUTE POLICY IF TRIGGERED
                     if(a_Trg >= 0.5f && onceFlag == false && abs(Tau_CR) <= 1.0f)
                     {
-
                         onceFlag = true;
 
                         // UPDATE AND RECORD TRIGGER VALUES
@@ -281,6 +272,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         D_perp_trg = D_perp;
                         D_perp_CR_trg = D_perp_CR;
 
+                        Y_output_trg[0] = Y_output->data[0][0];
+                        Y_output_trg[1] = Y_output->data[1][0];
+                        Y_output_trg[2] = Y_output->data[2][0];
+                        Y_output_trg[3] = Y_output->data[3][0];
 
                         a_Trg_trg = a_Trg;
                         a_Rot_trg = a_Rot;
