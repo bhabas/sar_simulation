@@ -121,6 +121,7 @@ class RL_Training_Manager():
         idx = 0
         t_delta = 0
         t_delta_prev = 0
+        start_time = time.time()
 
         if not os.path.exists(filePath):
             with open(filePath,'w') as file:
@@ -140,7 +141,7 @@ class RL_Training_Manager():
                     "Vel_mag_B_P_trg","Vel_angle_B_P_trg",
 
                     "Tau_CR_trg",
-                    "Tau_trg"
+                    "Tau_trg",
                     "Theta_x_trg",
                     "D_perp_trg",
 
@@ -165,7 +166,7 @@ class RL_Training_Manager():
                 for V_mag in V_mag_arr:
                     for trial in range(n_episodes):
 
-                        start_time = time.time()
+                        t_init = time.time() - start_time
 
                         ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
                         self.test_policy(V_mag,V_angle,Plane_Angle)
@@ -199,13 +200,14 @@ class RL_Training_Manager():
                             ])
 
                             ## CALCULATE AVERAGE TIME PER EPISODE
-                            t_delta = time.time() - start_time
-                            t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.01)
+                            t_delta = time.time() - t_init
+                            t_now = time.time() - start_time
+                            t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.15)
                             t_delta_prev = t_delta_avg
                             idx += 1
 
                             TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
-                            print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
+                            print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg, {Plane_Angle:.02f} deg)\t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t TTC: {str(timedelta(seconds=TTC))} \t Time Elapsed: {str(timedelta(seconds=t_now))}")
 
     def save_NN_to_C_header(self):
 
@@ -385,7 +387,7 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [1.0, 2.5],
+        "V_mag_range": [2.5, 2.5],
         "V_angle_range": [60, 60],
         "Plane_Angle_range": [0, 0],
         "Render": True
@@ -395,7 +397,7 @@ if __name__ == '__main__':
     log_name = "DeepRL_Policy_09:02:31"
     model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
     # RL_Manager.create_model(net_arch=[14,14,14])
     RL_Manager.load_model(model_dir,t_step=20e3)
     # RL_Manager.save_NN_to_C_header()
@@ -403,18 +405,18 @@ if __name__ == '__main__':
     
     # print(RL_Manager.policy_output(obs))
 
-    RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
-    RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
-    RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
+    # RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
+    # RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
+    # RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
 
 
 
     # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[60,60,1],V_mag_range=[1.0,3.0,5],n=3)
-    # RL_Manager.collect_landing_performance(
-    #     fileName="PolicyPerformance_Data.csv",
-    #     V_mag_step=0.5,
-    #     V_angle_step=5,
-    #     Plane_Angle_step=45,
-    #     n_episodes=3
-    #     )
+    RL_Manager.collect_landing_performance(
+        fileName="PolicyPerformance_Data.csv",
+        V_mag_step=0.5,
+        V_angle_step=5,
+        Plane_Angle_step=45,
+        n_episodes=100
+        )
     # RL_Manager.train_model()
