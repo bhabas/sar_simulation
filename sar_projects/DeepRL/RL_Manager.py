@@ -399,10 +399,13 @@ if __name__ == '__main__':
     # RL_Manager.create_model(net_arch=[14,14,14])
     RL_Manager.load_model(model_dir,t_step=20e3)
     # RL_Manager.save_NN_to_C_header()
-    obs = [0.214436,1.837226,0.68069,0]
+    # obs = [0.214436,1.837226,0.68069,0]
     
-    print(RL_Manager.policy_output(obs))
+    # print(RL_Manager.policy_output(obs))
 
+    RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
+    RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
+    RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
 
 
 

@@ -243,9 +243,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     // PASS OBSERVATION THROUGH POLICY NN
                     NN_forward(X_input,Y_output,&NN_DeepRL);
 
+                    printf("X_input: %.5f %.5f %.5f %.5f\n",X_input->data[0][0],X_input->data[1][0],X_input->data[2][0],X_input->data[3][0]);
+                    printf("Y_output: %.5f %.5f %.5f %.5f\n\n",Y_output->data[0][0],Y_output->data[1][0],Y_output->data[2][0],Y_output->data[3][0]);
+
+
                     // SAMPLE POLICY TRIGGER ACTION
-                    Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
-                    Policy_Rot_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
+                    Policy_Trg_Action = GaussianSample(Y_output->data[0][0],expf(Y_output->data[2][0]));
+                    Policy_Rot_Action = GaussianSample(Y_output->data[1][0],expf(Y_output->data[3][0]));
                     Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,-100.0f,0.0f);
 
                     // EXECUTE POLICY IF TRIGGERED
@@ -384,11 +388,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             // UPDATE AT THE ABOVE FREQUENCY
             isOFUpdated = true;
 
-            // // UPDATE POLICY VECTOR
-            // X_input->data[0][0] = Tau;
-            // X_input->data[1][0] = Theta_x;
-            // X_input->data[2][0] = D_perp; 
-            // X_input->data[3][0] = Plane_Angle_deg;
+            // UPDATE POLICY VECTOR
+            X_input->data[0][0] = Tau_CR;
+            X_input->data[1][0] = Theta_x;
+            X_input->data[2][0] = D_perp; 
+            X_input->data[3][0] = Plane_Angle_deg;
         }
     }
     
