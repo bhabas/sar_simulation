@@ -244,8 +244,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
 
                     // SAMPLE POLICY TRIGGER ACTION
-                    a_Trg = GaussianSample(Y_output->data[0][0],expf(Y_output->data[2][0]));
-                    a_Rot = GaussianSample(Y_output->data[1][0],expf(Y_output->data[3][0]));
+                    a_Trg = GaussianSample(Y_output->data[0][0],Y_output->data[2][0]);
+                    a_Rot = GaussianSample(Y_output->data[1][0],Y_output->data[3][0]);
                     a_Rot = scale_tanhAction(a_Rot,-100.0f,0.0f);
 
                     // EXECUTE POLICY IF TRIGGERED

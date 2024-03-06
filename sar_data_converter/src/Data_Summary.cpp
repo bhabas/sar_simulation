@@ -67,6 +67,7 @@ void SAR_DataConverter::Publish_StateData()
     StateData_msg.Motor_CMD = Motor_CMD;
 
     // POLICY ACTIONS
+    StateData_msg.NN_Output = NN_Output;
     StateData_msg.a_Trg = a_Trg;
     StateData_msg.a_Rot = a_Rot;
 
@@ -108,6 +109,7 @@ void SAR_DataConverter::Publish_TriggerData()
     TriggerData_msg.Tau_CR_trg = Tau_CR_trg;
 
     // POLICY ACTIONS
+    TriggerData_msg.NN_Output_trg = NN_Output_trg;
     TriggerData_msg.a_Trg_trg = a_Trg_trg;
     TriggerData_msg.a_Rot_trg = a_Rot_trg;
 

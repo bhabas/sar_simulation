@@ -95,6 +95,7 @@ class RL_Training_Manager():
             action,_ = self.model.predict(obs)
             obs,reward,terminated,truncated,_ = self.env.step(action)
 
+        self.policy_output(obs)
         return obs,reward
     
     def sweep_policy(self,Plane_Angle_range=[180,180,4],V_angle_range=[-45,-135,4],V_mag_range=[1.0,2.0,4],n=1):
@@ -323,12 +324,13 @@ class RL_Training_Manager():
         ## CONVERT LOG_STD TO STD
         action_log_std = log_std
         action_log_std = action_log_std.detach().numpy()[0]
+        action_std = np.exp(action_log_std)
 
         ## GRAB ACTION DISTRIBUTION MEAN
         action_mean = mean_actions
         action_mean = action_mean.detach().numpy()[0]
 
-        return action_mean,action_log_std
+        return action_mean,action_std
 
 
 

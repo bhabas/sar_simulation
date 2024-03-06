@@ -42,8 +42,8 @@ void SAR_DataConverter::MainLoop()
 {
 
     MainInit();
-    int loopRate = 1000;     // [Hz]
-    ros::Rate rate(loopRate);
+    const int refresh_rate = 50; // 20 Hz
+    const int delay_time_us = 1000000 / refresh_rate;
 
     
     while(ros::ok)
@@ -56,7 +56,7 @@ void SAR_DataConverter::MainLoop()
         Publish_ImpactData();
         Publish_MiscData();
 
-        // rate.sleep();
+        usleep(delay_time_us);
     }
 
 

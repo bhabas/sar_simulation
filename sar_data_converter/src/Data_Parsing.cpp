@@ -94,6 +94,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
 
     // NEURAL NETWORK DATA
+    NN_Output = ctrl_msg.NN_Output;
     a_Trg = ctrl_msg.a_Trg;
     a_Rot = ctrl_msg.a_Rot;
 
@@ -176,6 +177,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
 
     // POLICY ACTION DATA
+    NN_Output_trg = ctrl_msg.NN_Output_trg;
     a_Trg_trg = ctrl_msg.a_Trg_trg;
     a_Rot_trg = ctrl_msg.a_Rot_trg;
 

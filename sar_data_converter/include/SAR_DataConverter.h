@@ -344,6 +344,7 @@ class SAR_DataConverter {
         boost::array<double,4> MotorThrusts{0,0,0,0};
         boost::array<uint16_t,4> Motor_CMD{0,0,0,0};
 
+        boost::array<double,4> NN_Output{NAN,NAN,NAN,NAN};
         double a_Trg = NAN;
         double a_Rot = NAN;
         double Rot_Sum = 0.0;
@@ -377,6 +378,7 @@ class SAR_DataConverter {
         double Theta_x_trg = NAN;
         double Theta_y_trg = NAN;
 
+        boost::array<double,4> NN_Output_trg{NAN,NAN,NAN,NAN};
         double a_Trg_trg = NAN;
         double a_Rot_trg = NAN;
 
