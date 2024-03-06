@@ -48,7 +48,7 @@ class Data_Parser:
             self.remove_FailedRuns()
 
         ## COLLECT BASIC TRIAL INFO
-        self.n_rollouts = int(self.trial_df.iloc[-3]['Policy_Trg_Action'])
+        self.n_rollouts = int(self.trial_df.iloc[-3]['a_Trg'])
         self.k_epMax = int(self.trial_df.iloc[-3]['K_ep'])
         self.k_runMax = int(self.trial_df.iloc[-3]['K_run'])
 

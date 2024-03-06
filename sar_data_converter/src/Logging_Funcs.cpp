@@ -111,7 +111,7 @@ void SAR_DataConverter::append_CSV_states()
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",K_ep,K_run);                                                                          // K_ep,K_run
     fprintf(fPtr,"% 5.3f,",(Time-Time_start).toSec());                                                          // t
-    fprintf(fPtr,"% 5.3f,%.1f,",Policy_Trg_Action,Policy_Rot_Action);                                           // Trg_Action,Rot_Action
+    fprintf(fPtr,"% 5.3f,%.1f,",a_Trg,a_Rot);                                           // Trg_Action,Rot_Action
     fprintf(fPtr,"--,--,--,");                                                                                  // Mu,Sigma,Policy
 
     fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,% 6.3f,",D_perp,Tau,Tau_CR,Theta_x);                                     // D_perp,Tau,Tau_CR,Theta_x
@@ -186,7 +186,7 @@ void SAR_DataConverter::append_CSV_Trg()
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",K_ep,K_run);                                                                          // K_ep,K_run
     fprintf(fPtr,"% 5.3f,",(Time_trg-Time_start).toSec());                                                          // t
-    fprintf(fPtr,"% 5.3f,%.1f,",Policy_Trg_Action_trg,Policy_Rot_Action_trg);                                           // Trg_Action,Rot_Action
+    fprintf(fPtr,"% 5.3f,%.1f,",a_Trg_trg,a_Rot_trg);                                           // Trg_Action,Rot_Action
     fprintf(fPtr,"--,--,--,");                                                                                  // Mu,Sigma,Policy
 
     fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,% 6.3f,",D_perp_trg,Tau_trg,Tau_CR_trg,Theta_x_trg);                                     // D_perp,Tau,Tau_CR,Theta_x

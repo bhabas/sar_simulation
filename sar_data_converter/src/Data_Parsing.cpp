@@ -94,8 +94,8 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
 
     // NEURAL NETWORK DATA
-    Policy_Trg_Action = ctrl_msg.Policy_Trg_Action;
-    Policy_Rot_Action = ctrl_msg.Policy_Rot_Action;
+    a_Trg = ctrl_msg.a_Trg;
+    a_Rot = ctrl_msg.a_Rot;
 
     Pose_B_O_impact_buff.push_back(Pose_B_O);
     Eul_B_O_impact_buff.push_back(Eul_B_O);
@@ -176,8 +176,8 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
 
     // POLICY ACTION DATA
-    Policy_Trg_Action_trg = ctrl_msg.Policy_Trg_Action_trg;
-    Policy_Rot_Action_trg = ctrl_msg.Policy_Rot_Action_trg;
+    a_Trg_trg = ctrl_msg.a_Trg_trg;
+    a_Rot_trg = ctrl_msg.a_Rot_trg;
 
     // =======================
     //   ONBOARD IMPACT DATA
@@ -335,8 +335,8 @@ void SAR_DataConverter::cf1_States_B_P_Callback(const sar_msgs::GenericLogData::
     // POLICY ACTIONS
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[6],Policy_Action_arr);
-    Policy_Trg_Action = Policy_Action_arr[0];
-    Policy_Rot_Action = Policy_Action_arr[1];
+    a_Trg = Policy_Action_arr[0];
+    a_Rot = Policy_Action_arr[1];
 
     // TRIGGER FLAG
     Trg_Flag = log_msg->values[7];
@@ -472,8 +472,8 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
     // POLICY ACTIONS
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[6],Policy_Action_arr);
-    Policy_Trg_Action_trg = Policy_Action_arr[0];
-    Policy_Rot_Action_trg = Policy_Action_arr[1];
+    a_Trg_trg = Policy_Action_arr[0];
+    a_Rot_trg = Policy_Action_arr[1];
     
 }
 

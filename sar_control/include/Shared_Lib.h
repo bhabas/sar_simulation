@@ -265,8 +265,8 @@ extern bool Trg_Flag;
 extern bool onceFlag;
 
 // POLICY TRIGGER/ACTION VALUES
-extern float Policy_Trg_Action;  
-extern float Policy_Rot_Action;
+extern float a_Trg;  
+extern float a_Rot;
 
 extern float ACTION_MIN;
 extern float ACTION_MAX;
@@ -319,8 +319,8 @@ extern float Theta_x_Cam_trg;           // [rad/s]
 extern float Theta_y_Cam_trg;           // [rad/s]
 
 // POLICY TRIGGER/ACTION VALUES
-extern float Policy_Trg_Action_trg;    
-extern float Policy_Rot_Action_trg;
+extern float a_Trg_trg;    
+extern float a_Rot_trg;
 
 // =================================
 //  RECORD SYSTEM STATES AT IMPACT

@@ -344,8 +344,8 @@ class SAR_DataConverter {
         boost::array<double,4> MotorThrusts{0,0,0,0};
         boost::array<uint16_t,4> Motor_CMD{0,0,0,0};
 
-        double Policy_Trg_Action = NAN;
-        double Policy_Rot_Action = NAN;
+        double a_Trg = NAN;
+        double a_Rot = NAN;
         double Rot_Sum = 0.0;
 
         // ==========================
@@ -377,8 +377,8 @@ class SAR_DataConverter {
         double Theta_x_trg = NAN;
         double Theta_y_trg = NAN;
 
-        double Policy_Trg_Action_trg = NAN;
-        double Policy_Rot_Action_trg = NAN;
+        double a_Trg_trg = NAN;
+        double a_Rot_trg = NAN;
 
         // =======================
         //   ONBOARD IMPACT DATA
@@ -609,8 +609,8 @@ inline void SAR_DataConverter::resetTriggerData()
     Tau_CR_trg = NAN;
 
     // POLICY ACTIONS
-    Policy_Trg_Action_trg = NAN;
-    Policy_Rot_Action_trg = NAN;
+    a_Trg_trg = NAN;
+    a_Rot_trg = NAN;
 }
 
 inline void SAR_DataConverter::resetImpactData()

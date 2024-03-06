@@ -70,8 +70,8 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(19, 20,"Theta_x: % 6.3f",Theta_x);
         mvprintw(20, 20,"D_perp:  % 6.3f",D_perp);
 
-        mvprintw(19, 42,"Trg_Act: % 6.3f",Policy_Trg_Action);
-        mvprintw(20, 42,"Rot_Act: % 6.3f",Policy_Rot_Action);
+        mvprintw(19, 42,"Trg_Act: % 6.3f",a_Trg);
+        mvprintw(20, 42,"Rot_Act: % 6.3f",a_Rot);
 
         mvprintw(22, 0,"============= Trigger States ============");
         mvprintw(23, 0,"Tau_trg:    % 6.3f",Tau_trg);
@@ -80,8 +80,8 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(23, 20,"Theta_x_trg: % 6.3f",Theta_x_trg);
         mvprintw(24, 20,"D_perp_trg:  % 6.3f",D_perp_trg);
 
-        mvprintw(23, 42,"Trg_Act_trg: % 6.3f",Policy_Trg_Action_trg);
-        mvprintw(24, 42,"Rot_Act_trg: % 6.3f",Policy_Rot_Action_trg);
+        mvprintw(23, 42,"Trg_Act_trg: % 6.3f",a_Trg_trg);
+        mvprintw(24, 42,"Rot_Act_trg: % 6.3f",a_Rot_trg);
 
         mvprintw(25, 0,"V_B_O_trg:  (% 5.2f % 6.2f)",Vel_mag_B_O_trg,Vel_angle_B_O_trg);
         mvprintw(25, 0,"Eul_P_B_trg [deg]:   % 6.2f",Eul_P_B_trg.y);

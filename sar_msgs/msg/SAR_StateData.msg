@@ -36,6 +36,6 @@ float64[4] MotorThrusts
 uint32[4] Motor_CMD
 
 ## POLICY ACTIONS
-float64 Policy_Trg_Action
-float64 Policy_Rot_Action
+float64 a_Trg
+float64 a_Rot
 

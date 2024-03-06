@@ -67,8 +67,8 @@ void SAR_DataConverter::Publish_StateData()
     StateData_msg.Motor_CMD = Motor_CMD;
 
     // POLICY ACTIONS
-    StateData_msg.Policy_Trg_Action = Policy_Trg_Action;
-    StateData_msg.Policy_Rot_Action = Policy_Rot_Action;
+    StateData_msg.a_Trg = a_Trg;
+    StateData_msg.a_Rot = a_Rot;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CONTROLLER
@@ -108,8 +108,8 @@ void SAR_DataConverter::Publish_TriggerData()
     TriggerData_msg.Tau_CR_trg = Tau_CR_trg;
 
     // POLICY ACTIONS
-    TriggerData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    TriggerData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
+    TriggerData_msg.a_Trg_trg = a_Trg_trg;
+    TriggerData_msg.a_Rot_trg = a_Rot_trg;
 
     TriggerData_Pub.publish(TriggerData_msg);
 }

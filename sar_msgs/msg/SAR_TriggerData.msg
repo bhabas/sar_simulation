@@ -24,5 +24,5 @@ geometry_msgs/Vector3 Optical_Flow_trg
 float64 Tau_CR_trg
 
 ## POLICY ACTIONS
-float64 Policy_Trg_Action_trg
-float64 Policy_Rot_Action_trg
+float64 a_Trg_trg
+float64 a_Rot_trg

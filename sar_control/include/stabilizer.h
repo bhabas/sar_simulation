@@ -385,8 +385,8 @@ void Controller::publishCtrlData()
     CtrlData_msg.Optical_Flow_Cam.z = Tau_Cam;
 
     // POLICY ACTIONS
-    CtrlData_msg.Policy_Trg_Action = Policy_Trg_Action;
-    CtrlData_msg.Policy_Rot_Action = Policy_Rot_Action;
+    CtrlData_msg.a_Trg = a_Trg;
+    CtrlData_msg.a_Rot = a_Rot;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
@@ -462,8 +462,8 @@ void Controller::publishCtrlData()
     CtrlData_msg.Tau_CR_trg = Tau_CR_trg;
 
     // POLICY ACTIONS (TRIGGER)
-    CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
+    CtrlData_msg.a_Trg_trg = a_Trg_trg;
+    CtrlData_msg.a_Rot_trg = a_Rot_trg;
 
     // ==========================
     //      STATES AT IMPACT

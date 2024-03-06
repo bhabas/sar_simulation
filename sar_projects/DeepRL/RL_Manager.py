@@ -88,6 +88,7 @@ class RL_Training_Manager():
         self.env.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         obs,_ = self.env.reset()
         terminated = False
+         
         truncated = False
  
         while not (terminated or truncated):
@@ -140,8 +141,8 @@ class RL_Training_Manager():
                     "BodyContact","ForelegContact","HindlegContact",
 
                     "--",
-                    "Policy_Trg_Action_trg",
-                    "Policy_Rot_Action_trg",
+                    "a_Trg_trg",
+                    "a_Rot_trg",
                     "Vel_mag_B_O_trg","Vel_angle_B_O_trg",
                     "Vel_mag_B_P_trg","Vel_angle_B_P_trg",
 
@@ -185,8 +186,8 @@ class RL_Training_Manager():
                                 self.env.Pad_Connections,
                                 self.env.BodyContact_Flag,self.env.ForelegContact_Flag,self.env.HindlegContact_Flag,
                                 "--",
-                                self.env.Policy_Trg_Action_trg,
-                                self.env.Policy_Rot_Action_trg,
+                                self.env.a_Trg_trg,
+                                self.env.a_Rot_trg,
                                 self.env.Vel_mag_B_O_trg,self.env.Vel_angle_B_O_trg,
                                 self.env.Vel_mag_B_P_trg,self.env.Vel_angle_B_P_trg,
                                 self.env.Tau_CR_trg,
@@ -194,9 +195,9 @@ class RL_Training_Manager():
                                 self.env.Theta_x_trg,
                                 self.env.D_perp_CR_trg,
                                 "--",
-                                self.env.Eul_B_O_impact_Ext[2],
-                                self.env.Eul_P_B_impact_Ext[2],
-                                self.env.Omega_B_P_impact_Ext[2],
+                                self.env.Eul_B_O_impact_Ext[1],
+                                self.env.Eul_P_B_impact_Ext[1],
+                                self.env.Omega_B_P_impact_Ext[1],
                                 self.env.V_B_P_impact_Ext[0],self.env.V_B_P_impact_Ext[2],
                                 self.env.Impact_Magnitude,
                                 self.env.Force_impact_x,self.env.Force_impact_y,self.env.Force_impact_z,

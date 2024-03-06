@@ -249,8 +249,8 @@ bool Trg_Flag = false;
 bool onceFlag = false;
 
 // POLICY TRIGGER/ACTION VALUES
-float Policy_Trg_Action = 0.0f;  
-float Policy_Rot_Action = 0.0f;
+float a_Trg = 0.0f;  
+float a_Rot = 0.0f;
 
 float ACTION_MIN = 0.0f;
 float ACTION_MAX = 8.0f;
@@ -299,8 +299,8 @@ float Theta_x_Cam_trg = 0.0f;       // [rad/s]
 float Theta_y_Cam_trg = 0.0f;       // [rad/s]
 
 // POLICY TRIGGER/ACTION VALUES
-float Policy_Trg_Action_trg = 0.0f;    
-float Policy_Rot_Action_trg = 0.0f;
+float a_Trg_trg = 0.0f;    
+float a_Rot_trg = 0.0f;
 
 // =================================
 //  RECORD SYSTEM STATES AT IMPACT
@@ -377,8 +377,8 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             break;
 
         case 8: // Arm Policy Maneuver
-            Policy_Trg_Action = CTRL_Cmd->cmd_val1;
-            Policy_Rot_Action = CTRL_Cmd->cmd_val2;
+            a_Trg = CTRL_Cmd->cmd_val1;
+            a_Rot = CTRL_Cmd->cmd_val2;
 
             Policy_Armed_Flag = (bool)CTRL_Cmd->cmd_flag;
             break;

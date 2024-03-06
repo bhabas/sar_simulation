@@ -53,7 +53,7 @@ void compressStates(){
 
 
     // COMPRESS POLICY ACTIONS
-    States_Z.Policy_Actions = compressXY(Policy_Trg_Action,Policy_Rot_Action);
+    States_Z.Policy_Actions = compressXY(a_Trg,a_Rot);
 }
 
 void compressTrgStates(){
@@ -85,7 +85,7 @@ void compressTrgStates(){
 
 
     // COMPRESS POLICY ACTIONS
-    TrgStates_Z.Policy_Actions = compressXY(Policy_Trg_Action_trg,Policy_Rot_Action_trg);
+    TrgStates_Z.Policy_Actions = compressXY(a_Trg_trg,a_Rot_trg);
 
 }
 

@@ -28,8 +28,8 @@ float64[4] FM
 float64[4] MotorThrusts
 uint32[4] Motor_CMD
 
-float64 Policy_Trg_Action
-float64 Policy_Rot_Action
+float64 a_Trg
+float64 a_Rot
 
 
 # ==========================
@@ -49,8 +49,8 @@ float64 D_perp_CR_trg
 
 geometry_msgs/Vector3 Optical_Flow_trg
 float64 Tau_CR_trg
-float64 Policy_Trg_Action_trg
-float64 Policy_Rot_Action_trg
+float64 a_Trg_trg
+float64 a_Rot_trg
 
 # =========================
 #      STATES AT IMPACT

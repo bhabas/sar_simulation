@@ -468,8 +468,8 @@ class SAR_Base_Interface():
         self.Vel_mag_B_P_trg = np.nan
         self.Vel_angle_B_P_trg = np.nan
 
-        self.Policy_Trg_Action_trg = np.nan
-        self.Policy_Rot_Action_trg = np.nan
+        self.a_Trg_trg = np.nan
+        self.a_Rot_trg = np.nan
 
         ## IMPACT DATA VALUES
         self.Impact_Flag = False
@@ -626,8 +626,8 @@ class SAR_Base_Interface():
         self.Vel_angle_B_P_trg = np.round(TriggerData_msg.Vel_angle_B_P_trg,3)
 
         ## POLICY TRIGGERING CONDITIONS
-        self.Policy_Trg_Action_trg = np.round(TriggerData_msg.Policy_Trg_Action_trg,3)
-        self.Policy_Rot_Action_trg = np.round(TriggerData_msg.Policy_Rot_Action_trg,3)
+        self.a_Trg_trg = np.round(TriggerData_msg.a_Trg_trg,3)
+        self.a_Rot_trg = np.round(TriggerData_msg.a_Rot_trg,3)
 
     def _SAR_ImpactDataCallback(self,ImpactData_msg):
 

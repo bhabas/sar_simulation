@@ -130,8 +130,8 @@ void controllerOutOfTreeReset() {
     Tau_trg = 0.0f;
     Tau_CR_trg = 0.0f;
 
-    Policy_Trg_Action_trg = 0.0f;
-    Policy_Rot_Action_trg = 0.0f;
+    a_Trg_trg = 0.0f;
+    a_Rot_trg = 0.0f;
 
 
 }
@@ -168,7 +168,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 case PARAM_OPTIM:
 
                     // EXECUTE POLICY IF TRIGGERED
-                    if(Tau_CR <= Policy_Trg_Action && onceFlag == false && abs(Tau_CR) <= 3.0f){
+                    if(Tau_CR <= a_Trg && onceFlag == false && abs(Tau_CR) <= 3.0f){
 
                         onceFlag = true;
 
@@ -194,11 +194,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         D_perp_trg = D_perp;
                         D_perp_CR_trg = D_perp_CR;
 
-                        Policy_Trg_Action_trg = Policy_Trg_Action;
-                        Policy_Rot_Action_trg = Policy_Rot_Action;
+                        a_Trg_trg = a_Trg;
+                        a_Rot_trg = a_Rot;
 
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Rot_Action*Iyy;
+                        M_d.y = a_Rot*Iyy;
                         M_d.z = 0.0f;
                         }
                         
@@ -231,11 +231,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         D_perp_CR_trg = D_perp_CR;
 
 
-                        Policy_Trg_Action_trg = Policy_Trg_Action;
-                        Policy_Rot_Action_trg = Policy_Rot_Action;
+                        a_Trg_trg = a_Trg;
+                        a_Rot_trg = a_Rot;
 
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Rot_Action*Iyy;
+                        M_d.y = a_Rot*Iyy;
                         M_d.z = 0.0f;
                     }
 
@@ -252,12 +252,12 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
 
                     // SAMPLE POLICY TRIGGER ACTION
-                    Policy_Trg_Action = GaussianSample(Y_output->data[0][0],expf(Y_output->data[2][0]));
-                    Policy_Rot_Action = GaussianSample(Y_output->data[1][0],expf(Y_output->data[3][0]));
-                    Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,-100.0f,0.0f);
+                    a_Trg = GaussianSample(Y_output->data[0][0],expf(Y_output->data[2][0]));
+                    a_Rot = GaussianSample(Y_output->data[1][0],expf(Y_output->data[3][0]));
+                    a_Rot = scale_tanhAction(a_Rot,-100.0f,0.0f);
 
                     // EXECUTE POLICY IF TRIGGERED
-                    if(Policy_Trg_Action >= 0.5f && onceFlag == false && abs(Tau_CR) <= 1.0f)
+                    if(a_Trg >= 0.5f && onceFlag == false && abs(Tau_CR) <= 1.0f)
                     {
 
                         onceFlag = true;
@@ -282,11 +282,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         D_perp_CR_trg = D_perp_CR;
 
 
-                        Policy_Trg_Action_trg = Policy_Trg_Action;
-                        Policy_Rot_Action_trg = Policy_Rot_Action;
+                        a_Trg_trg = a_Trg;
+                        a_Rot_trg = a_Rot;
 
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Rot_Action*Iyy;
+                        M_d.y = a_Rot*Iyy;
                         M_d.z = 0.0f;
                     }
                         
@@ -312,7 +312,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     // {
     //     NN_forward(X_input,Y_output,&NN_DeepRL);
 
-    //     // Policy_Trg_Action = Y_output->data[0][0]+0.00001f*tick;
+    //     // a_Trg = Y_output->data[0][0]+0.00001f*tick;
     //     // nml_mat_print_CF(Y_output);
     // }
 
