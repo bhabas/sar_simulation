@@ -56,7 +56,7 @@ void SAR_DataConverter::MainLoop()
         Publish_ImpactData();
         Publish_MiscData();
 
-        rate.sleep();
+        // rate.sleep();
     }
 
 
