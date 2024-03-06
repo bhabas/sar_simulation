@@ -59,6 +59,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.K_ep = 0
         self.Pol_Trg_Threshold = 0.5
         self.Done = False
+        self.initStep = False
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
@@ -126,10 +127,14 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
-        
         self.start_time_real = time.time()
 
         self.resetPose()
+        self.initStep = False
+        
+        return self._get_obs(), {}
+    
+    def _initialStep(self):
 
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
         V_tx = self.V_mag*np.cos(np.deg2rad(self.V_angle))
@@ -171,8 +176,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
         self.t_trg_max = self.Tau_Body_start*1.5 # [s]
-        
-        return self._get_obs(), {}
+
     
     def step(self, action):
 
@@ -181,6 +185,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # 3. CALC REWARD
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
+
+        ## INITIALIZE FIRST STEP
+        if self.initStep == False:
+            self._initialStep()
+            self.initStep = True
 
         ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         if self._getTick()%10 != 0:
@@ -263,7 +272,10 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             self.Done = terminated 
 
             # 3) CALC REWARD
-            reward = self._CalcReward()  
+            try:
+                reward = self._CalcReward()  
+            except (UnboundLocalError,ValueError):
+                reward = 0.0
 
 
             # 5) RETURN VALUES
@@ -568,7 +580,7 @@ if __name__ == "__main__":
 
         V_mag = 2.5
         V_angle = 60
-        Plane_Angle = 45
+        Plane_Angle = 0
 
         env.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         obs,_ = env.reset()

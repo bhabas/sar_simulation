@@ -161,8 +161,8 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Eul_P_B_trg.y = Plane_Angle_deg - Eul_B_O_trg.y;
     Eul_P_B_trg.z = NAN;
 
-    Vel_mag_B_P_trg = ctrl_msg.Vel_mag_B_P_trg;
-    Vel_angle_B_P_trg = ctrl_msg.Vel_angle_B_P_trg;
+    Vel_mag_B_P_trg = sqrt(pow(Twist_B_P_trg.linear.x,2)+pow(Twist_B_P_trg.linear.z,2));;
+    Vel_angle_B_P_trg = atan2(Twist_B_P_trg.linear.z,Twist_B_P_trg.linear.x)*180/M_PI;
 
 
     // OPTICAL FLOW

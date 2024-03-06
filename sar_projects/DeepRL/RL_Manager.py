@@ -54,11 +54,14 @@ class RL_Training_Manager():
         )
         
     def load_model(self,model_dir,t_step: int):
-
-        model_path = os.path.join(model_dir, f"model_{int(t_step)}_steps")
-        replay_buffer_path = os.path.join(model_dir, f"replay_buffer_{int(t_step)}_steps")
+        
+        model_str = f"model_{int(t_step)}_steps"
+        replay_buffer_str = f"replay_buffer_{int(t_step)}_steps"
+        model_path = os.path.join(model_dir, model_str)
+        replay_buffer_path = os.path.join(model_dir,replay_buffer_str)
 
         ## LOAD MODEL AND REPLAY BUFFER
+        print(f"Loading Model: {model_str}...")
         self.model = SAC.load(
             model_path,
             env=self.vec_env,
@@ -66,6 +69,7 @@ class RL_Training_Manager():
             tensorboard_log=self.log_dir,
         )
         self.model.load_replay_buffer(replay_buffer_path)
+        print("Model Loaded Successfully!\n")
 
     def train_model(self,check_freq=10,save_freq=1e3,reset_timesteps=True,total_timesteps=2e6):
 
@@ -82,14 +86,15 @@ class RL_Training_Manager():
 
         # self.vec_env.Render_Flag = True
         self.env.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-        obs = self.vec_env.reset()
+        obs,_ = self.env.reset()
         terminated = False
+        truncated = False
  
-        while not terminated:
+        while not (terminated or truncated):
             action,_ = self.model.predict(obs)
-            obs,reward,terminated,_ = self.vec_env.step(action)
+            obs,reward,terminated,truncated,_ = self.env.step(action)
 
-        return obs[0],reward[0]
+        return obs,reward
     
     def sweep_policy(self,Plane_Angle_range=[180,180,4],V_angle_range=[-45,-135,4],V_mag_range=[1.0,2.0,4],n=1):
         

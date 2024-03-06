@@ -54,6 +54,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.K_ep = 0
         self.Pol_Trg_Threshold = 0.5
         self.Done = False
+        self.initStep = False
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
@@ -123,8 +124,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         self.start_time_real = time.time()
 
-        
+        self.initStep = False
 
+        
         ##########   2D ENV CONFIGS  ##########
         #
         self.Trg_Flag = False
@@ -147,6 +149,20 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         #
         #######################################
+
+        
+
+        ######################
+        #   2D ENV CONFIGS
+        ######################
+
+        # UPDATE RENDER
+        if self.Render_Flag:
+            self.render()
+        
+        return self._getObs(), {}
+    
+    def _initialStep(self):
 
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
         V_tx = self.V_mag*np.cos(np.deg2rad(self.V_angle))
@@ -190,16 +206,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
         self.t_trg_max = self.Tau_Body_start*2.5 # [s]
 
-        ######################
-        #   2D ENV CONFIGS
-        ######################
-
-        # UPDATE RENDER
-        if self.Render_Flag:
-            self.render()
-        
-        return self._getObs(), {}
-
 
     def step(self, action):
 
@@ -209,21 +215,18 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
 
+        ## INITIALIZE FIRST STEP
+        if self.initStep == False:
+            self._initialStep()
+            self.initStep = True
+
         # ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         # if self._getTick()%10 != 0:
         #     n_steps = 10 - (self._getTick()%10)
         #     self._iterStep(n_steps=n_steps)
 
-
         a_Trg = action[0]
         a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
-        # a_Rot = -50
-        
-        # if self._getObs()[0] <= 0.05:
-        #     a_Trg = 1
-
-        # else:
-        #     a_Trg = 0
 
         ########## POLICY PRE-TRIGGER ##########
         if a_Trg <= self.Pol_Trg_Threshold:
