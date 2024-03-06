@@ -468,6 +468,7 @@ class SAR_Base_Interface():
         self.Vel_mag_B_P_trg = np.nan
         self.Vel_angle_B_P_trg = np.nan
 
+        self.NN_Output_trg = np.full([4],np.nan)
         self.a_Trg_trg = np.nan
         self.a_Rot_trg = np.nan
 
@@ -626,6 +627,7 @@ class SAR_Base_Interface():
         self.Vel_angle_B_P_trg = np.round(TriggerData_msg.Vel_angle_B_P_trg,3)
 
         ## POLICY TRIGGERING CONDITIONS
+        self.NN_Output_trg = np.round(TriggerData_msg.NN_Output_trg,3)
         self.a_Trg_trg = np.round(TriggerData_msg.a_Trg_trg,3)
         self.a_Rot_trg = np.round(TriggerData_msg.a_Rot_trg,3)
 

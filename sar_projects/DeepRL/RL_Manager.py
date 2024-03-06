@@ -142,6 +142,7 @@ class RL_Training_Manager():
                     "BodyContact","ForelegContact","HindlegContact",
 
                     "--",
+                    "NN_Output_trg",
                     "a_Trg_trg",
                     "a_Rot_trg",
                     "Vel_mag_B_O_trg","Vel_angle_B_O_trg",
@@ -178,6 +179,14 @@ class RL_Training_Manager():
                         ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
                         self.test_policy(V_mag,V_angle,Plane_Angle)
 
+                        if self.env.Policy_Type == "DEEP_RL_SB3":
+                            NN_Output_trg = self.policy_output(self.env.obs_trg)
+                            a_Trg_trg = self.env.action_trg[0]
+
+                        else:
+                            NN_Output_trg = self.env.NN_Output_trg
+                            a_Trg_trg = self.env.a_Trg_trg
+
                         ## APPEND RECORDED VALUES TO CSV FILE
                         with open(filePath,'a') as file:
                             writer = csv.writer(file,delimiter=',',quoting=csv.QUOTE_NONE,escapechar='\\')
@@ -187,7 +196,8 @@ class RL_Training_Manager():
                                 self.env.Pad_Connections,
                                 self.env.BodyContact_Flag,self.env.ForelegContact_Flag,self.env.HindlegContact_Flag,
                                 "--",
-                                self.env.a_Trg_trg,
+                                np.round(NN_Output_trg,3),
+                                np.round(a_Trg_trg,3),
                                 self.env.a_Rot_trg,
                                 self.env.Vel_mag_B_O_trg,self.env.Vel_angle_B_O_trg,
                                 self.env.Vel_mag_B_P_trg,self.env.Vel_angle_B_P_trg,
@@ -308,29 +318,33 @@ class RL_Training_Manager():
         f.close()
 
     def policy_output(self,obs):
- 
-        # CAP THE STANDARD DEVIATION OF THE ACTOR
-        LOG_STD_MAX = 2
-        LOG_STD_MIN = -20
-        actor = self.model.policy.actor
+        
+        ## CONVERT OBS TO TENSOR
         obs = th.FloatTensor([obs])
 
         ## PASS OBS THROUGH NN
+        actor = self.model.policy.actor
         latent_pi = actor.latent_pi(obs)
         mean_actions = actor.mu(latent_pi)
         log_std = actor.log_std(latent_pi)
+
+        # CLAMP THE LOG STANDARD DEVIATION OF THE ACTOR (FOR STABILITY)
+        LOG_STD_MAX = 2
+        LOG_STD_MIN = -20
         log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
 
         ## CONVERT LOG_STD TO STD
         action_log_std = log_std
         action_log_std = action_log_std.detach().numpy()[0]
         action_std = np.exp(action_log_std)
+        # squished_action_std = np.tanh(action_std) ## THIS OPERATION IS INVALID (TANH IS NON-LINEAR)
 
         ## GRAB ACTION DISTRIBUTION MEAN
         action_mean = mean_actions
         action_mean = action_mean.detach().numpy()[0]
+        squished_action_mean = np.tanh(action_mean) ## MEAN POSITION SCALES APPROPRIATELY THOUGH
 
-        return action_mean,action_std
+        return np.hstack((squished_action_mean,action_std))
 
 
 

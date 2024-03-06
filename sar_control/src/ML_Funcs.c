@@ -58,8 +58,8 @@ void NN_forward(nml_mat* X_input, nml_mat* Y_output, NN* NN)
     // SAVE NN OUTPUT
     Y_output->data[0][0] = a4->data[0][0];
     Y_output->data[1][0] = a4->data[1][0];
-    Y_output->data[2][0] = expf(a4->data[2][0]);
-    Y_output->data[3][0] = expf(a4->data[3][0]);
+    Y_output->data[2][0] = expf(a4->data[2][0]);    // CONVERT LOG_STD TO STANDARD STD
+    Y_output->data[3][0] = expf(a4->data[3][0]);    // *
 
 
     // FREE MATRICES FROM HEAP
@@ -136,8 +136,7 @@ float Leaky_Relu(float x) {
     }
 }
 
-
-// SCALES VALUE CLAMPED BY TANH TO SPECIFIED RANGE
+// CLAMP WITH TANH AND SCALE TO APPROPRIATE RANGE
 float scale_tanhAction(float action, float low, float high)
 {
     action = tanhf(action);

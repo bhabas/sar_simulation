@@ -46,7 +46,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
 
         ## START MONITORING NODES
-        self._start_monitoring_subprocesses()
+        # self._start_monitoring_subprocesses()
         if GZ_Timeout == True:
             self._startMonitoringClockTopic()
 

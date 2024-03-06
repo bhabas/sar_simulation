@@ -235,17 +235,19 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                 case DEEP_RL_ONBOARD:
 
-
                     // PASS OBSERVATION THROUGH POLICY NN
                     NN_forward(X_input,Y_output,&NN_DeepRL);
 
-                    printf("X_input: %.5f %.5f %.5f %.5f\n",X_input->data[0][0],X_input->data[1][0],X_input->data[2][0],X_input->data[3][0]);
-                    printf("Y_output: %.5f %.5f %.5f %.5f\n\n",Y_output->data[0][0],Y_output->data[1][0],Y_output->data[2][0],Y_output->data[3][0]);
+                    // printf("X_input: %.5f %.5f %.5f %.5f\n",X_input->data[0][0],X_input->data[1][0],X_input->data[2][0],X_input->data[3][0]);
+                    // printf("Y_output: %.5f %.5f %.5f %.5f\n\n",Y_output->data[0][0],Y_output->data[1][0],Y_output->data[2][0],Y_output->data[3][0]);
 
 
                     // SAMPLE POLICY TRIGGER ACTION
                     a_Trg = GaussianSample(Y_output->data[0][0],Y_output->data[2][0]);
                     a_Rot = GaussianSample(Y_output->data[1][0],Y_output->data[3][0]);
+
+                    // SCALE ACTIONS
+                    a_Trg = scale_tanhAction(a_Trg,-1.0f,1.0f);
                     a_Rot = scale_tanhAction(a_Rot,-100.0f,0.0f);
 
                     // EXECUTE POLICY IF TRIGGERED
