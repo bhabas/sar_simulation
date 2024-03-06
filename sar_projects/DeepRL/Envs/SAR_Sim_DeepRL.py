@@ -22,7 +22,7 @@ RESET = '\033[0m'  # Reset to default color
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
-    def __init__(self,GZ_Timeout=True,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True):
+    def __init__(self,GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True):
 
         SAR_Sim_Interface.__init__(self, GZ_Timeout=GZ_Timeout)
         gym.Env.__init__(self)
@@ -121,7 +121,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## RESET LEARNING/REWARD CONDITIONS
         self.K_ep += 1
         self.Done = False
-        self.reward = 0
 
         self.D_perp_min = np.inf
         self.Tau_trg = np.inf
@@ -492,6 +491,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
+        self.reward = R_t/self.W_max
         # print(f"R_t_norm: {R_t/self.W_max:.3f}")
         # print(np.round(self.reward_vals,2))
 

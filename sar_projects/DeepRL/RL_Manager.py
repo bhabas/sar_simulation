@@ -143,7 +143,7 @@ class RL_Training_Manager():
                     "Tau_CR_trg",
                     "Tau_trg",
                     "Theta_x_trg",
-                    "D_perp_trg",
+                    "D_perp_CR_trg",
 
                     "--",
 
@@ -187,7 +187,7 @@ class RL_Training_Manager():
                                 self.env.Tau_CR_trg,
                                 self.env.Tau_trg,
                                 self.env.Theta_x_trg,
-                                self.env.D_perp_trg,
+                                self.env.D_perp_CR_trg,
                                 "--",
                                 self.env.Eul_B_O_impact_Ext[2],
                                 self.env.Eul_P_B_impact_Ext[2],
@@ -196,7 +196,7 @@ class RL_Training_Manager():
                                 self.env.Impact_Magnitude,
                                 self.env.Force_impact_x,self.env.Force_impact_y,self.env.Force_impact_z,
                                 "--",
-                                self.env.reward,np.round(self.env.reward_vals,3),
+                                np.round(self.env.reward,3),np.round(self.env.reward_vals,3),
                             ])
 
                             ## CALCULATE AVERAGE TIME PER EPISODE
@@ -206,7 +206,8 @@ class RL_Training_Manager():
                             t_delta_prev = t_delta_avg
                             idx += 1
 
-                            TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
+                            TTC = np.round(t_delta_avg*(num_trials-idx)) # Time to completion
+                            t_now = np.round(t_now)
                             print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg, {Plane_Angle:.02f} deg)\t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t TTC: {str(timedelta(seconds=TTC))} \t Time Elapsed: {str(timedelta(seconds=t_now))}")
 
     def save_NN_to_C_header(self):
@@ -390,7 +391,8 @@ if __name__ == '__main__':
         "V_mag_range": [2.5, 2.5],
         "V_angle_range": [60, 60],
         "Plane_Angle_range": [0, 0],
-        "Render": True
+        "Render": True,
+        "GZ_Timeout": False,
     }
 
 
@@ -404,12 +406,6 @@ if __name__ == '__main__':
     # obs = [0.214436,1.837226,0.68069,0]
     
     # print(RL_Manager.policy_output(obs))
-
-    # RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
-    # RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
-    # RL_Manager.test_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
-
-
 
     # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[60,60,1],V_mag_range=[1.0,3.0,5],n=3)
     RL_Manager.collect_landing_performance(

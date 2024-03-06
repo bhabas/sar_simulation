@@ -122,6 +122,9 @@ void controllerOutOfTreeReset() {
     Quat_P_B_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
     Omega_B_P_trg = vzero();
 
+    D_perp_trg = 0.0f;
+    D_perp_CR_trg = 0.0f;
+
     Theta_x_trg = 0.0f;
     Theta_y_trg = 0.0f;
     Tau_trg = 0.0f;
@@ -181,7 +184,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Quat_P_B_trg = Quat_P_B;
                         Omega_B_P_trg = Omega_B_P;
 
-                        D_perp_trg = D_perp;
                         Vel_mag_B_P_trg = Vel_mag_B_P;
                         Vel_angle_B_P_trg = Vel_angle_B_P;
 
@@ -189,6 +191,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         Tau_CR_trg = Tau_CR;
                         Theta_x_trg = Theta_x;
                         Theta_y_trg = Theta_y;
+                        D_perp_trg = D_perp;
+                        D_perp_CR_trg = D_perp_CR;
 
                         Policy_Trg_Action_trg = Policy_Trg_Action;
                         Policy_Rot_Action_trg = Policy_Rot_Action;

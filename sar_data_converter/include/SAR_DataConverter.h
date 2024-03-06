@@ -602,6 +602,7 @@ inline void SAR_DataConverter::resetTriggerData()
     Vel_mag_B_P_trg = NAN;
     Vel_angle_B_P_trg = NAN;
     D_perp_trg = NAN;
+    D_perp_CR_trg = NAN;
 
     // OPTICAL FLOW
     Optical_Flow_trg = geometry_msgs::Vector3();
