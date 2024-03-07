@@ -59,7 +59,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.K_ep = 0
         self.Pol_Trg_Threshold = 0.5
         self.Done = False
-        self.initStep = False
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
@@ -124,13 +123,15 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Done = False
 
         self.D_perp_min = np.inf
-        self.Tau_trg = np.inf
-        self.Tau_CR_trg = np.inf
+        self.Tau_trg = np.nan
+        self.Tau_CR_trg = np.nan
+        self.obs_trg = np.full(self.observation_space.shape,np.nan,dtype=np.float32) # Obs values at triggering
+        self.action_trg = np.full(self.action_space.shape,np.nan,dtype=np.float32) # Action values at triggering
 
         self.start_time_real = time.time()
 
         self.resetPose()
-        self.initStep = False
+        self._initialStep()
         
         return self._get_obs(), {}
     
@@ -185,11 +186,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # 3. CALC REWARD
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
-
-        ## INITIALIZE FIRST STEP
-        if self.initStep == False:
-            self._initialStep()
-            self.initStep = True
 
         ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         if self._getTick()%10 != 0:

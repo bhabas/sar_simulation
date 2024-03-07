@@ -128,7 +128,7 @@ class RL_Training_Manager():
         idx = 0
         t_delta = 0
         t_delta_prev = 0
-        start_time = time.time()
+        t_init = time.time()
 
         if not os.path.exists(filePath):
             with open(filePath,'w') as file:
@@ -174,7 +174,7 @@ class RL_Training_Manager():
                 for V_mag in V_mag_arr:
                     for trial in range(n_episodes):
 
-                        t_init = time.time() - start_time
+                        t_trial_start = time.time()
 
                         ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
                         self.test_policy(V_mag,V_angle,Plane_Angle)
@@ -217,8 +217,8 @@ class RL_Training_Manager():
                             ])
 
                             ## CALCULATE AVERAGE TIME PER EPISODE
-                            t_delta = time.time() - t_init
-                            t_now = time.time() - start_time
+                            t_now = time.time() - t_init
+                            t_delta = time.time() - t_trial_start
                             t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.15)
                             t_delta_prev = t_delta_avg
                             idx += 1
