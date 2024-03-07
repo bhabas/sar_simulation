@@ -16,9 +16,11 @@ ENV_SETTINGS:
   - 0
   - 0
   Ang_Acc_Limits:
-  - -20
+  - -100
   - 0
 MODEL_SETTINGS:
+  Mass_Std: 0.0156226
+  Iyy_Std: 0.0005290000000000001
   Ref_Mass: 0.78113
   Ref_Ixx: 0.00575
   Ref_Iyy: 0.00529

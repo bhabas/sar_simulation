@@ -76,9 +76,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Tau_CR_trg = np.inf
 
         ## DOMAIN RANDOMIZATION
-        self.Base_Iyy_std = 0.1
-        self.Base_Mass_std = 0.1
-
+        self.Mass_std = 0.03*self.Base_Mass
+        self.Iyy_std = 0.05*self.Base_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -137,6 +136,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
     
     def _initialStep(self):
 
+        ## DOMAIN RANDOMIZATION (UPDATE INERTIAL VALUES)
+        Iyy = self.Base_Iyy + np.random.normal(0,self.Iyy_std)
+        Mass = self.Base_Mass + np.random.normal(0,self.Mass_std)
+        self._setModelInertia(Mass,[self.Base_Ixx,Iyy,self.Base_Izz])
+
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
         V_tx = self.V_mag*np.cos(np.deg2rad(self.V_angle))
         V_perp = self.V_mag*np.sin(np.deg2rad(self.V_angle))
@@ -160,11 +164,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.initial_state = (r_B_O,V_B_O)
         self.Sim_VelTraj(pos=r_B_O,vel=V_B_O)
         self._iterStep(n_steps=1000)
-
-        # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
-        # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
-        # self.setModelInertia()
 
         ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         if self._getTick()%10 != 0:

@@ -349,8 +349,8 @@ class RL_Training_Manager():
             ),
 
             MODEL_SETTINGS = dict(
-                # Mass_Std = self.env.Mass_std,
-                # Iyy_Std = self.env.Iyy_std,
+                Mass_Std = self.env.Mass_std,
+                Iyy_Std = self.env.Iyy_std,
                 Ref_Mass = self.env.Ref_Mass,
                 Ref_Ixx = self.env.Ref_Ixx,
                 Ref_Iyy = self.env.Ref_Iyy,
@@ -500,10 +500,6 @@ if __name__ == '__main__':
     # RL_Manager.create_model(net_arch=[14,14,14])
     RL_Manager.load_model(model_dir,t_step=20e3)
     # RL_Manager.save_NN_to_C_header()
-    # obs = [0.214436,1.837226,0.68069,0]
-    
-    # print(RL_Manager.policy_output(obs))
-
     # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[60,60,1],V_mag_range=[1.0,3.0,5],n=3)
     RL_Manager.collect_landing_performance(
         fileName="PolicyPerformance_Data.csv",

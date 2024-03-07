@@ -86,6 +86,11 @@ class SAR_Base_Interface():
         self.Ref_Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Iyy")
         self.Ref_Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Izz")
 
+        self.Base_Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Base_Mass")
+        self.Base_Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Base_Ixx")
+        self.Base_Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Base_Iyy")
+        self.Base_Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Base_Izz")
+
         ## GEOMETRIC PARAMETERS
         self.Forward_Reach = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Forward_Reach")
         self.Leg_Length = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Length")
