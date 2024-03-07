@@ -269,9 +269,7 @@ extern bool onceFlag;
 // POLICY TRIGGER/ACTION VALUES
 extern float a_Trg;  
 extern float a_Rot;
-
-extern float ACTION_MIN;
-extern float ACTION_MAX;
+extern float a_Rot_bounds[2];
 
 
 // ===============================

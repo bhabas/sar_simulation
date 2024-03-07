@@ -88,9 +88,10 @@ def cmd_send(env,logName):
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Policy':
-                cmd_vals = env.userInput("Set desired (Tau,AngAcc_y) Policy: ",float)
-                cmd_vals.append(0) # Append extra value to match framework
-                cmd_flag = 1
+                action_vals = env.userInput("Set desired policy actions (a_Trg,a_Rot): ",float)
+                scale_vals = env.userInput("Set desired a_Rot scaling (a_Rot_low,a_Rot_high): ",float)
+                cmd_vals = [action_vals[0],action_vals[1],scale_vals[0]]
+                cmd_flag = scale_vals[1]
                 env.sendCmd(action,cmd_vals,cmd_flag)
 
 

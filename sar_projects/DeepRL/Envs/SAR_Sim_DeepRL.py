@@ -304,7 +304,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         truncated = False
         
         ## SEND TRIGGER ACTION TO CONTROLLER
-        self.sendCmd("Policy",[0,a_Rot,0],cmd_flag=1)
+        self.sendCmd("Policy",[0,a_Rot,self.Ang_Acc_range[0]],cmd_flag=self.Ang_Acc_range[1])
 
         ## RUN REMAINING STEPS AT FULL SPEED
         self.pausePhysics(False)

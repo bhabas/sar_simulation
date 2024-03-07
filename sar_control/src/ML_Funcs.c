@@ -137,8 +137,7 @@ float Leaky_Relu(float x) {
 }
 
 // CLAMP WITH TANH AND SCALE TO APPROPRIATE RANGE
-float scale_tanhAction(float action, float low, float high)
+float scale_Action(float action, float low, float high)
 {
-    action = tanhf(action);
     return low + (0.5f * (action + 1.0f) * (high - low));
 }

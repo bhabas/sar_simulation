@@ -252,9 +252,7 @@ bool onceFlag = false;
 // POLICY TRIGGER/ACTION VALUES
 float a_Trg = 0.0f;  
 float a_Rot = 0.0f;
-
-float ACTION_MIN = 0.0f;
-float ACTION_MAX = 8.0f;
+float a_Rot_bounds[2] = {-1.0f,1.0f};
 
 // ===============================
 //  DEEP RL POLICY INITIALIZATION
@@ -380,8 +378,10 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
         case 8: // Arm Policy Maneuver
             a_Trg = CTRL_Cmd->cmd_val1;
             a_Rot = CTRL_Cmd->cmd_val2;
+            a_Rot_bounds[0] = CTRL_Cmd->cmd_val3;
+            a_Rot_bounds[1] = CTRL_Cmd->cmd_flag;
 
-            Policy_Armed_Flag = (bool)CTRL_Cmd->cmd_flag;
+            Policy_Armed_Flag = !Policy_Armed_Flag;
             break;
 
         case 9: // UPDATE PLANE POSITION
