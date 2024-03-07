@@ -52,6 +52,8 @@ class RL_Training_Manager():
             device='cpu',
             tensorboard_log=self.log_dir
         )
+
+        self.write_config_file()
         
     def load_model(self,model_dir,t_step: int):
         
@@ -317,6 +319,63 @@ class RL_Training_Manager():
         f.write("};")
         f.close()
 
+    def write_config_file(self):
+        config_path = os.path.join(self.log_dir,"Config.yaml")
+
+        General_Dict = dict(
+
+            SAR_SETTINGS = dict(
+                SAR_Type = self.env.SAR_Type,
+                SAR_Config = self.env.SAR_Config,
+            ),
+
+            PLANE_SETTINGS = dict(
+                Plane_Type = self.env.Plane_Type,
+                Plane_Config = self.env.Plane_Config,
+            ),
+
+            ENV_SETTINGS = dict(
+                Env_Name = self.env.Env_Name,
+                V_mag_Limts = self.env.V_mag_range,
+                V_angle_Limits = self.env.V_angle_range,
+                Plane_Angle_Limits = self.env.Plane_Angle_range,
+                Ang_Acc_Limits = self.env.Ang_Acc_range,
+            ),
+
+            MODEL_SETTINGS = dict(
+                # Mass_Std = self.env.Mass_std,
+                # Iyy_Std = self.env.Iyy_std,
+                Ref_Mass = self.env.Ref_Mass,
+                Ref_Ixx = self.env.Ref_Ixx,
+                Ref_Iyy = self.env.Ref_Iyy,
+                Ref_Izz = self.env.Ref_Izz,
+                L_eff = self.env.L_eff,
+                Gamma_eff = float(self.env.Gamma_eff),
+                Forward_Reach = self.env.Forward_Reach,
+            ),
+
+            LEARNING_MODEL = dict(
+                Policy = self.model.policy.__class__.__name__,
+                Observation_Layer = self.model.policy.observation_space.shape[0],
+                Network_Layers = self.model.policy.net_arch,
+                Action_Layer = self.model.policy.action_space.shape[0]*2,
+                Action_Space_High = self.model.policy.action_space.high.tolist(),
+                Action_Space_Low = self.model.policy.action_space.low.tolist(),
+                Gamma = self.model.gamma,
+                Learning_Rate = self.model.learning_rate,
+            ),
+
+            REWARD_SETTINGS=self.env.reward_weights
+        )
+
+        with open(config_path, 'w') as outfile:
+            yaml.dump(General_Dict,outfile,default_flow_style=False,sort_keys=False)
+
+
+
+    def load_config_file(self):
+        pass
+
     def policy_output(self,obs):
         
         ## CONVERT OBS TO TENSOR
@@ -401,7 +460,7 @@ if __name__ == '__main__':
 
 
     current_datetime = datetime.now()
-    current_time = current_datetime.strftime("%H:%M:%S")
+    current_time = current_datetime.strftime("%m-%d--%H:%M:%S")
     log_name = f"DeepRL_Policy_{current_time}"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL" 
 
@@ -418,12 +477,12 @@ if __name__ == '__main__':
     }
 
 
-    log_name = "DeepRL_Policy_09:02:31"
-    model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
+    # log_name = "DeepRL_Policy_09:02:31"
+    # model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
     
     RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.create_model(net_arch=[14,14,14])
-    RL_Manager.load_model(model_dir,t_step=20e3)
+    RL_Manager.create_model(net_arch=[14,14,14])
+    # RL_Manager.load_model(model_dir,t_step=20e3)
     # RL_Manager.save_NN_to_C_header()
     # obs = [0.214436,1.837226,0.68069,0]
     
