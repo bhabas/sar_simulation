@@ -14,35 +14,32 @@ def cmd_send(env,logName):
 
     while True:
         # Converts input number into action name
-        cmd_dict = {
-            0:'Ctrl_Reset',
-            1:'Pos',
-            2:'Vel',
 
-            5:'Stop',
-            7:'Ang_Accel',
-            8:'Policy',
-            9:'Plane_Pose',
+        command_handlers = {
+            'Ctrl_Reset': env.handle_Ctrl_Reset,
+            'Pos': env.handle_Pos_Cmd,
+            'Vel': env.handle_Vel_Cmd,
+            'Stop': env.handle_Stop,
+            'Ang_Accel': env.handle_Ang_Accel,
+            'Policy': env.handle_Policy,
+            'Plane_Pose': env.handle_Plane_Pose,
+            'P2P_traj': env.handle_P2P_traj,
+            'Global_Vel_traj': env.handle_Global_Vel_traj,
+            'Rel_Vel_traj': env.handle_Rel_Vel_traj,
+            'Impact_traj': env.handle_Impact_traj,
+            'Tumble_Detect': env.handle_Tumble_Detect,
+            'Arm_Quad': env.handle_Arm_Quad,
+            'Load_Params': env.handle_Load_Params,
+            'Start_Logging': env.handle_Start_Logging,
+            'Cap_Logging': env.handle_Cap_Logging,
+            'Thrust_CMD': env.handle_Thrust_CMD,
+            'Motor_CMD': env.handle_Motor_CMD,
+            'GZ_Pose_Reset': env.handle_GZ_Pose_Reset,
+            'GZ_Const_Vel_Traj': env.handle_GZ_Const_Vel_Traj,
+            'GZ_StickyPads': env.handle_GZ_StickyPads,
 
-            10:'P2P_traj',
-            11:'Global_Vel_traj',
-            12:'Rel_Vel_traj',
-            13:'Impact_traj',
-
-            20:'Tumble_Detect',
-            21:'Load_Params',
-            22:'Start_Logging',
-            23:'Cap_Logging',
-            24:'Arm_Quad',
-
-            30:'Thrust_CMD',
-            31:'Motor_CMD',
-
-            90:'GZ_Pose_Reset',
-            91:'GZ_Const_Vel_Traj',
-            92:'GZ_StickyPads',
         }
-
+        
         try:
             print("========== Command Types ==========")
             print("0: Ctrl_Reset  7: Ang_Accel    10: P2P_traj          20: Tumble_Detect    24: Arm_Quad    90: GZ_Pose_Reset")
@@ -51,213 +48,16 @@ def cmd_send(env,logName):
             print("5: Stop                        13: Impact_traj       23: Cap_Logging")
 
 
-
             val = env.userInput("\nCmd: ",int)
-            print()
-            action = cmd_dict[val]
-            
-
-            ## CONTROLLER RESET
-            if action=='Ctrl_Reset': # Execute Ctrl_Reset or Stop action
-                cmd_vals = [0,0,0]
-                cmd_flag = 1
-                print("Reset controller to default values\n")
-
-                env.sendCmd('GZ_StickyPads',cmd_vals,0)
-                env.sendCmd(action,cmd_vals,cmd_flag)
-            
-
-            elif action=='Pos':
-                cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
-                cmd_flag = env.userInput("Pos control On/Off (1,0): ",int)
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-            elif action=='Vel':
-                cmd_vals = env.userInput("Set desired velocity values (x,y,z): ",float)
-                cmd_flag = env.userInput("Vel control On/Off (1,0): ",int)
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-            elif action=='Stop': # Execute Ctrl_Reset or Stop action
-                cmd_vals = [0,0,0]
-                cmd_flag = 1
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-            elif action=='Ang_Accel':
-                cmd_vals = env.userInput("Set desired angular acceleration values (x,y,z): ",float)
-                cmd_flag = env.userInput("Ang_Accel control On/Off (1,0): ",int)
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-            elif action=='Policy':
-                action_vals = env.userInput("Set desired policy actions (a_Trg,a_Rot): ",float)
-                scale_vals = env.userInput("Set desired a_Rot scaling (a_Rot_low,a_Rot_high): ",float)
-                cmd_vals = [action_vals[0],action_vals[1],scale_vals[0]]
-                cmd_flag = scale_vals[1]
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-
-            elif action=='Plane_Pose':
-                cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
-                cmd_flag = env.userInput("Set desired plane angle [deg]: ",float)
-                env._setPlanePose(cmd_vals,cmd_flag)
-
-
-            ## ========== TRAJECTORY FUNCTIONS ==========
-
-            elif action=='P2P_traj':
-                x_d = env.userInput("Desired position (x,y,z):",float)
-                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],x_d[0],env.TrajAcc_Max[0]],cmd_flag=0)
-                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],x_d[1],env.TrajAcc_Max[1]],cmd_flag=1)
-                env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],x_d[2],env.TrajAcc_Max[2]],cmd_flag=2)
-
-            elif action=='Global_Vel_traj':
-
-                ## GET GLOBAL VEL CONDITIONS 
-                V_mag,V_angle = env.userInput("Flight Velocity (V_mag,V_angle):",float)
-
-                ## CALC GLOBAL VELOCITIES
-                Vx = V_mag*np.cos(np.radians(V_angle))
-                Vy = 0
-                Vz = V_mag*np.sin(np.radians(V_angle))
-                V_B_O = [Vx,Vy,Vz]
-
-                ## EXECUTE TRAJECTORY
-                env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[0],V_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
-                env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[2],V_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
-
-            elif action=='Rel_Vel_traj':
-
-                ## GET RELATIVE VEL CONDITIONS 
-                V_mag,V_angle = env.userInput("Flight Velocity (V_mag,V_angle):",float)
-
-                ## CALC RELATIVE VELOCITIES
-                V_tx = V_mag*np.cos(np.radians(V_angle))
-                V_ty = 0
-                V_perp = V_mag*np.sin(np.radians(V_angle))
-
-                ## CALCULATE GLOBAL VELOCITIES
-                V_B_O = env.R_PW(np.array([V_tx,V_ty,V_perp]),env.Plane_Angle_rad)
-
-                ## EXECUTE TRAJECTORY
-                env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[0],V_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
-                env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[2],V_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
-
-            elif action=='Impact_traj':
-
-                ## GET RELATIVE VEL CONDITIONS 
-                V_mag,V_angle = env.userInput("Flight Velocity (V_mag,V_angle):",float)
-
-                ## CALC RELATIVE VELOCITIES
-                V_tx = V_mag*np.cos(np.radians(V_angle))
-                V_ty = 0
-                V_perp = V_mag*np.sin(np.radians(V_angle))
-                V_B_P = np.array([V_tx,V_ty,V_perp])
-
-                ## CALCULATE GLOBAL VELOCITIES
-                V_B_O = env.R_PW(V_B_P,env.Plane_Angle_rad)
-
-                ## POS VELOCITY CONDITIONS MET
-                r_B_O = env.startPos_ImpactTraj(V_B_P,Acc=None,Tau_CR_start=None)
-
-                ## APPROVE START POSITION
-                print(YELLOW,f"Start Position: ({r_B_O[0]:.2f},{env.r_B_O[1]:.2f},{r_B_O[2]:.2f})",RESET)
-                str_input = env.userInput("Approve start position (y/n): ",str)
-                if str_input == 'y':
-                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[0],r_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
-                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[1],r_B_O[1],env.TrajAcc_Max[1]],cmd_flag=1)
-                    env.sendCmd('P2P_traj',cmd_vals=[env.r_B_O[2],r_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
-                else:
-                    continue
-                
-                ## POLICY SENDING
-                cmd_vals = env.userInput("Set desired (Tau,AngAcc) Policy: ",float)
-                cmd_vals.append(0) # Append extra value to match framework
-                env.sendCmd('Policy',cmd_vals,cmd_flag=1)
-
-                ## APPROVE FLIGHT
-                str_input = env.userInput("Approve flight (y/n): ",str)
-                time.sleep(1.0)
-                if str_input == 'y':
-                    env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[0],V_B_O[0],env.TrajAcc_Max[0]],cmd_flag=0)
-                    env.sendCmd('Global_Vel_traj',cmd_vals=[env.r_B_O[2],V_B_O[2],env.TrajAcc_Max[2]],cmd_flag=2)
-                else:
-                    continue
-
-            
-            ## ========== SYSTEM FUNCTIONS ==========
-            elif action=='Tumble_Detect': # Turn on Tumble detection
-
-                cmd_vals = [0,0,0]
-                cmd_flag = env.userInput("Tumble Detection On/Off (1,0): ",int)
-                env.sendCmd('Tumble',cmd_vals,cmd_flag)
-
-            elif action=='Load_Params': # Updates gain values from config file
-                cmd_vals = [0,0,0]
-                cmd_flag = 1
-                print("Reset ROS Parameters\n")
-
-                env.setParams()
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-
-            elif action=='Start_Logging':
-                env.startLogging(logName)
-
-            elif action=='Cap_Logging':
-                env.capLogging(logName)
-
-            elif action=='Arm_Quad':
-                cmd_vals = [0,0,0]
-                cmd_flag = env.userInput("Arm Quad On/Off (1,0): ",int)
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-
-            elif action=='Thrust_CMD':
-                vals = env.userInput("Set desired thrust values (f1,f2,f3,f4): ",float)
-                env.sendCmd(action,vals[:3],vals[3])
-
-            elif action=='Motor_CMD':
-                vals = env.userInput("Set desired motor values (m1,m2,m3,m4): ",float)
-                env.sendCmd(action,vals[:3],vals[3])
-
-            ## ========== GAZEBO FUNCTIONS ==========
-            elif action=='GZ_StickyPads':
-                cmd_vals = [0,0,0]
-                cmd_flag = env.userInput("Turn sticky pads On/Off (1,0): ",int)
-                print()
-
-                env.sendCmd(action,cmd_vals,cmd_flag)
-
-
-
-            elif action=='GZ_Const_Vel_Traj':
-
-
-                ## GET INPUT VALUES
-                V_B_O_mag,V_B_O_angle = env.userInput("Flight Velocity (V_B_O_mag,V_B_O_angle):",float)
-
-                ## DEFINE CARTESIAN VELOCITIES
-                V_B_O_angle = np.radians(V_B_O_angle)
-                V_B_O = [V_B_O_mag*np.cos(V_B_O_angle),
-                         0,
-                         V_B_O_mag*np.sin(V_B_O_angle)]
-
-                ## ESTIMATE IMPACT POINT
-                env.Sim_VelTraj(env.r_B_O,V_B_O)
-                env.pausePhysics(False)
-                
-                    
-            elif action == 'GZ_Pose_Reset':
-                print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
-                env.resetPose()
-                env.pausePhysics(pause_flag=False)
-
-
-
+            cmd_action = env.inv_cmd_dict[val]
+            if cmd_action in command_handlers:
+                command_handlers[cmd_action]()
             else:
-                print("Please try another command")
-
-        except (ValueError, KeyError,TypeError,AttributeError):
-            print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
+                print("Invalid Command: Try again")
+        
+        except Exception as e:
+            print(f"Error: {e}")
+            print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[ 0m')
             continue
 
 

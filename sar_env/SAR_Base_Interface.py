@@ -28,16 +28,13 @@ class SAR_Base_Interface():
             rospy.init_node("SAR_Env_Node")
             os.system("roslaunch sar_launch Load_Params.launch")
             self.loadParams()
+            self._preInit()
             
         else:
             os.system("roslaunch sar_launch_exp Load_Params.launch")
             self.loadParams()
             self._preInit()
 
-
-        
-                
-        self.Pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
 
         ## LOGGING PARAMETERS
         self.Username = getpass.getuser()
@@ -124,7 +121,6 @@ class SAR_Base_Interface():
         self.Plane_Type = rospy.get_param('/PLANE_SETTINGS/Plane_Type')
         self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
 
-
     def _getTime(self):
         """Returns current known time.
 
@@ -143,40 +139,10 @@ class SAR_Base_Interface():
             cmd_flag (float, optional): Used as either a on/off flag for command or an extra float value if needed. Defaults to 1.
         """        
 
-        cmd_dict = {
-            'Ctrl_Reset':0,
-            'Pos':1,
-            'Vel':2,
-
-            'Stop':5,
-            'Ang_Accel':7,
-            'Policy':8,
-            'Plane_Pose':9,
-
-            'P2P_traj':10,
-            'Global_Vel_traj':11,
-            'Rel_Vel_traj':12,
-            'Impact_traj':13,
-
-            'Tumble_Detect':20,
-            'Load_Params':21,
-            'Start_Logging':22,
-            'Cap_Logging':23,
-            'Arm_Quad':24,
-
-            'Thrust_CMD':30,
-            'Motor_CMD':31,
-
-            'GZ_Pose_Reset':90,
-            'GZ_Const_Vel_Traj':91,
-            'GZ_StickyPads':92,
-        }
-        
-
         ## CREATE SERVICE REQUEST MSG
         srv = CTRL_Cmd_srvRequest() 
         
-        srv.cmd_type = cmd_dict[action]
+        srv.cmd_type = self.cmd_dict[action]
         srv.cmd_vals.x = cmd_vals[0]
         srv.cmd_vals.y = cmd_vals[1]
         srv.cmd_vals.z = cmd_vals[2]
@@ -184,8 +150,6 @@ class SAR_Base_Interface():
         srv.cmd_rx = True
 
         self.callService('/SAR_DC/CMD_Input',srv,CTRL_Cmd_srv)    
-
-        
 
     def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):
 
@@ -229,7 +193,6 @@ class SAR_Base_Interface():
         else:
             self.Ang_Acc_range = Ang_Acc_range
                 
-
     def startPos_ImpactTraj(self,V_B_P,Acc=None,Tau_CR_start=None):
 
         ## DESIRED RELATIVE VELOCITY VALUES
@@ -301,50 +264,186 @@ class SAR_Base_Interface():
        
         return V_mag,Flight_Angle
 
-    def _RL_Publish(self):
+    def userInput(self,input_string,dataType=float):
+        """Processes user input and return values as either indiviual value or list
 
-        ## RL DATA
-        RL_msg = RL_Data() ## Initialize RL_Data message
+        Args:
+            input_string (string): String received from user
+            dataType (dataType, optional): Datatype to parse string to. Defaults to float.
+
+        Returns:
+            vals: Values parsed by ','. If multiple values then return list
+        """        
+
+        while True:
+            try:
+                vals = [dataType(i) for i in input(input_string).split(',')]
+            except:
+                continue
         
-        RL_msg.K_ep = self.K_ep
-        RL_msg.K_run = self.K_run
-        RL_msg.error_string = self.Error_Str
-        RL_msg.n_rollouts = self.n_rollouts
+            ## RETURN MULTIPLE VALUES IF MORE THAN ONE
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
 
+    # ============================
+    ##      Command Handlers 
+    # ============================
+    def handle_Ctrl_Reset(self):
+        print("Reset controller to default values\n")
+        self.sendCmd("GZ_StickyPads",cmd_flag=0)
+        self.sendCmd("Ctrl_Reset")
 
-        RL_msg.policy = self.policy
+    def handle_Pos_Cmd(self):
+        cmd_vals = self.userInput("Set desired position values (x,y,z): ",float)
+        cmd_flag = self.userInput("Pos control On/Off (1,0): ",int)
+        self.sendCmd("Pos",cmd_vals,cmd_flag)
 
-        RL_msg.reward = self.reward
-        RL_msg.reward_avg = self.reward_avg
-        RL_msg.reward_vals = self.reward_vals
+    def handle_Vel_Cmd(self):
+        cmd_vals = self.userInput("Set desired velocity values (x,y,z): ",float)
+        cmd_flag = self.userInput("Vel control On/Off (1,0): ",int)
+        self.sendCmd("Vel",cmd_vals,cmd_flag)
 
-        RL_msg.vel_d = self.vel_d
+    def handle_Ang_Accel(self):
+        cmd_vals = self.userInput("Set desired angular acceleration values (x,y,z): ",float)
+        cmd_flag = self.userInput("Ang_Accel control On/Off (1,0): ",int)
+        self.sendCmd("Ang_Accel",cmd_vals,cmd_flag)
 
-        RL_msg.trialComplete_flag = self.trialComplete_flag
-        self.RL_Data_Pub.publish(RL_msg) ## Publish RL_Data message
+    def handle_Policy(self):
+        action_vals = self.userInput("Set desired policy actions (a_Trg,a_Rot): ",float)
+        scale_vals = self.userInput("Set desired a_Rot scaling (a_Rot_low,a_Rot_high): ",float)
+        cmd_vals = [action_vals[0],action_vals[1],scale_vals[0]]
+        cmd_flag = scale_vals[1]
+        self.sendCmd("Policy",cmd_vals,cmd_flag)
+
+    def handle_Plane_Pose(self):
+        cmd_vals = self.userInput("Set desired position values (x,y,z): ",float)
+        cmd_flag = self.userInput("Set desired plane angle [deg]: ",float)
+        self._setPlanePose(cmd_vals,cmd_flag)
+
+    ## ========== TRAJECTORY FUNCTIONS ==========
         
-        ## CONVERGENCE HISTORY
-        RL_convg_msg = RL_History()
-        RL_convg_msg.K_ep_list = self.K_ep_list
-        RL_convg_msg.K_run_list = self.K_run_list
+    def handle_P2P_traj(self):
+        x_d = self.userInput("Desired position (x,y,z):",float)
+        self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[0],x_d[0],self.TrajAcc_Max[0]],cmd_flag=0)
+        self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[1],x_d[1],self.TrajAcc_Max[1]],cmd_flag=1)
+        self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[2],x_d[2],self.TrajAcc_Max[2]],cmd_flag=2)
 
+    def handle_Global_Vel_traj(self):
 
-        RL_convg_msg.mu_1_list = self.mu_1_list
-        RL_convg_msg.mu_2_list = self.mu_2_list
+        ## GET GLOBAL VEL CONDITIONS 
+        V_mag,V_angle = self.userInput("Flight Velocity (V_mag,V_angle):",float)
 
-        RL_convg_msg.sigma_1_list = self.sigma_1_list
-        RL_convg_msg.sigma_2_list = self.sigma_2_list
+        ## CALC GLOBAL VELOCITIES
+        Vx = V_mag*np.cos(np.radians(V_angle))
+        Vy = 0
+        Vz = V_mag*np.sin(np.radians(V_angle))
+        V_B_O = [Vx,Vy,Vz]
 
-        RL_convg_msg.reward_list = self.reward_list
+        ## EXECUTE TRAJECTORY
+        self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[0],V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
+        self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[2],V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
 
-        RL_convg_msg.Kep_list_reward_avg = self.Kep_list_reward_avg
-        RL_convg_msg.reward_avg_list = self.reward_avg_list
+    def handle_Rel_Vel_traj(self):
 
-        self.RL_History_Pub.publish(RL_convg_msg) ## Publish RL_Data message
+        ## GET RELATIVE VEL CONDITIONS 
+        V_mag,V_angle = self.userInput("Flight Velocity (V_mag,V_angle):",float)
 
-        time.sleep(0.1)
+        ## CALC RELATIVE VELOCITIES
+        V_tx = V_mag*np.cos(np.radians(V_angle))
+        V_ty = 0
+        V_perp = V_mag*np.sin(np.radians(V_angle))
 
+        ## CALCULATE GLOBAL VELOCITIES
+        V_B_O = self.R_PW(np.array([V_tx,V_ty,V_perp]),self.Plane_Angle_rad)
 
+        ## EXECUTE TRAJECTORY
+        self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[0],V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
+        self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[2],V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
+
+    def handle_Impact_traj(self):
+
+        ## GET RELATIVE VEL CONDITIONS 
+        V_mag,V_angle = self.userInput("Flight Velocity (V_mag,V_angle):",float)
+
+        ## CALC RELATIVE VELOCITIES
+        V_tx = V_mag*np.cos(np.radians(V_angle))
+        V_ty = 0
+        V_perp = V_mag*np.sin(np.radians(V_angle))
+        V_B_P = np.array([V_tx,V_ty,V_perp])
+
+        ## CALCULATE GLOBAL VELOCITIES
+        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)
+
+        ## POS VELOCITY CONDITIONS MET
+        r_B_O = self.startPos_ImpactTraj(V_B_P,Acc=None,Tau_CR_start=None)
+
+        ## APPROVE START POSITION
+        print(YELLOW,f"Start Position: ({r_B_O[0]:.2f},{self.r_B_O[1]:.2f},{r_B_O[2]:.2f})",RESET)
+        str_input = self.userInput("Approve start position (y/n): ",str)
+        if str_input == 'y':
+            self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[0],r_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
+            self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[1],r_B_O[1],self.TrajAcc_Max[1]],cmd_flag=1)
+            self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[2],r_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
+        else:
+            Exception("Start position not approved")
+        
+        ## POLICY SENDING
+        cmd_vals = self.userInput("Set desired (Tau,AngAcc) Policy: ",float)
+        cmd_vals.append(0) # Append extra value to match framework
+        self.sendCmd('Policy',cmd_vals,cmd_flag=1)
+
+        ## APPROVE FLIGHT
+        str_input = self.userInput("Approve flight (y/n): ",str)
+        time.sleep(1.0)
+        if str_input == 'y':
+            self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[0],V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
+            self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[2],V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
+        else:
+            Exception("Flight not approved")
+
+    ## ========== SYSTEM FUNCTIONS ========== 
+            
+    def handle_Arm_Quad(self):
+
+        cmd_flag = self.userInput("Arm Quad On/Off (1,0): ",int)
+        self.sendCmd("Arm_Quad",cmd_flag=cmd_flag)
+    
+    def handle_Tumble_Detect(self):
+
+        cmd_flag = self.userInput("Tumble Detection On/Off (1,0): ",int)
+        self.sendCmd('Tumble',cmd_flag=cmd_flag)
+
+    def handle_Load_Params(self):
+
+        print("Reset ROS Parameters\n")
+        os.system("roslaunch sar_launch Load_Params.launch")
+        self.sendCmd("Load_Params")
+
+    def handle_Start_Logging(self):
+
+        self.startLogging(self.Log_Name)
+
+    def handle_Cap_Logging(self):
+
+        self.capLogging(self.Log_Name)
+
+    
+    ## ========== MOTOR FUNCTIONS ==========
+        
+    def handle_Stop(self):
+        self.sendCmd("Stop")
+
+    def handle_Thrust_CMD(self):
+        vals = self.userInput("Set desired thrust values (f1,f2,f3,f4): ",float)
+        self.sendCmd("Thrust_Cmd",vals[:3],vals[3])
+        
+    def handle_Motor_CMD(self):
+        vals = self.userInput("Set desired motor values (m1,m2,m3,m4): ",float)
+        self.sendCmd("Motor_Cmd",vals[:3],vals[3])
+
+    
 
     # ========================
     ##    Logging Services 
@@ -395,6 +494,37 @@ class SAR_Base_Interface():
     ##   Publishers/Subscribers 
     # ============================
     def _preInit(self):
+
+        ## COMMAND DICT
+        self.cmd_dict = {
+            'Ctrl_Reset':0,
+            'Pos':1,
+            'Vel':2,
+
+            'Stop':5,
+            'Ang_Accel':7,
+            'Policy':8,
+            'Plane_Pose':9,
+
+            'P2P_traj':10,
+            'Global_Vel_traj':11,
+            'Rel_Vel_traj':12,
+            'Impact_traj':13,
+
+            'Tumble_Detect':20,
+            'Load_Params':21,
+            'Start_Logging':22,
+            'Cap_Logging':23,
+            'Arm_Quad':24,
+
+            'Thrust_CMD':30,
+            'Motor_CMD':31,
+
+            'GZ_Pose_Reset':90,
+            'GZ_Const_Vel_Traj':91,
+            'GZ_StickyPads':92,
+        }
+        self.inv_cmd_dict = {value: key for key, value in self.cmd_dict.items()}
 
         ## RL BASED VALUES
         self.K_ep = np.nan
@@ -513,7 +643,6 @@ class SAR_Base_Interface():
         self.Plane_Angle_deg = np.nan
         self.Plane_Angle_rad = np.nan
         self.r_P_O = np.full([3],np.nan)
-
 
     def _clockCallback(self,msg):
         
@@ -707,11 +836,6 @@ class SAR_Base_Interface():
         self.Pad3_Contact = ImpactData_msg.Pad3_Contact
         self.Pad4_Contact = ImpactData_msg.Pad4_Contact
             
-
-
-
-        
-
     def _SAR_MiscDataCallback(self,MiscData_msg):        
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
@@ -724,30 +848,50 @@ class SAR_Base_Interface():
             MiscData_msg.Plane_Pos.z,
         ]
 
+    def _RL_Publish(self):
 
-
-    def userInput(self,input_string,dataType=float):
-        """Processes user input and return values as either indiviual value or list
-
-        Args:
-            input_string (string): String received from user
-            dataType (dataType, optional): Datatype to parse string to. Defaults to float.
-
-        Returns:
-            vals: Values parsed by ','. If multiple values then return list
-        """        
-
-        while True:
-            try:
-                vals = [dataType(i) for i in input(input_string).split(',')]
-            except:
-                continue
+        ## RL DATA
+        RL_msg = RL_Data() ## Initialize RL_Data message
         
-            ## RETURN MULTIPLE VALUES IF MORE THAN ONE
-            if len(vals) == 1:
-                return vals[0]
-            else:
-                return vals
+        RL_msg.K_ep = self.K_ep
+        RL_msg.K_run = self.K_run
+        RL_msg.error_string = self.Error_Str
+        RL_msg.n_rollouts = self.n_rollouts
+
+
+        RL_msg.policy = self.policy
+
+        RL_msg.reward = self.reward
+        RL_msg.reward_avg = self.reward_avg
+        RL_msg.reward_vals = self.reward_vals
+
+        RL_msg.vel_d = self.vel_d
+
+        RL_msg.trialComplete_flag = self.trialComplete_flag
+        self.RL_Data_Pub.publish(RL_msg) ## Publish RL_Data message
+        
+        ## CONVERGENCE HISTORY
+        RL_convg_msg = RL_History()
+        RL_convg_msg.K_ep_list = self.K_ep_list
+        RL_convg_msg.K_run_list = self.K_run_list
+
+
+        RL_convg_msg.mu_1_list = self.mu_1_list
+        RL_convg_msg.mu_2_list = self.mu_2_list
+
+        RL_convg_msg.sigma_1_list = self.sigma_1_list
+        RL_convg_msg.sigma_2_list = self.sigma_2_list
+
+        RL_convg_msg.reward_list = self.reward_list
+
+        RL_convg_msg.Kep_list_reward_avg = self.Kep_list_reward_avg
+        RL_convg_msg.reward_avg_list = self.reward_avg_list
+
+        self.RL_History_Pub.publish(RL_convg_msg) ## Publish RL_Data message
+
+        time.sleep(0.1)
+
+
 
     # ============================
     ##   Rotation Matrices 
@@ -771,7 +915,6 @@ class SAR_Base_Interface():
         ])
 
         return R_WB.dot(vec)
-    
     
     def R_WP(self,vec,theta):
 
@@ -852,8 +995,6 @@ class SAR_Base_Interface():
         ])
 
         return R_C2B.dot(vec)
-    
-    
 
     def arctan4(self,y, x, rotation_direction=-1):
         angle_radians = np.arctan2(y, x)

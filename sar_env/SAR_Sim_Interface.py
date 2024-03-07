@@ -218,7 +218,35 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.sendCmd('Load_Params')
 
     
-       
+    # ============================
+    ##      Command Handlers 
+    # ============================
+        
+    ## ========== GAZEBO FUNCTIONS ==========
+        
+    def handle_GZ_StickyPads(self):
+        cmd_flag = self.userInput("Turn sticky pads On/Off (1,0): ",int)
+        self.sendCmd("GZ_StickyPads",cmd_flag=cmd_flag)
+
+    def handle_GZ_Pose_Reset(self):
+        print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
+        self.resetPose()
+        self.pausePhysics(pause_flag=False)
+
+    def handle_GZ_Const_Vel_Traj(self):
+        
+        ## GET INPUT VALUES
+        V_B_O_mag,V_B_O_angle = env.userInput("Flight Velocity (V_B_O_mag,V_B_O_angle):",float)
+
+        ## DEFINE CARTESIAN VELOCITIES
+        V_B_O_angle = np.radians(V_B_O_angle)
+        V_B_O = [V_B_O_mag*np.cos(V_B_O_angle),
+                    0,
+                    V_B_O_mag*np.sin(V_B_O_angle)]
+
+        ## ESTIMATE IMPACT POINT
+        env.Sim_VelTraj(env.r_B_O,V_B_O)
+        env.pausePhysics(False)
 
     
     # ================================
