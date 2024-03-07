@@ -16,7 +16,7 @@ ENV_SETTINGS:
   - 0
   - 0
   Ang_Acc_Limits:
-  - -100
+  - -20
   - 0
 MODEL_SETTINGS:
   Ref_Mass: 0.78113

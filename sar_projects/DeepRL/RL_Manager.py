@@ -57,12 +57,17 @@ class RL_Training_Manager():
         
     def load_model(self,model_dir,t_step: int):
         
+        ## LOAD CONFIG FILE
+        config_path = os.path.join(os.path.dirname(model_dir),"Config.yaml")
+        self.load_config_file(config_path)
+        
+        ## LOAD MODEL AND REPLAY BUFFER
         model_str = f"model_{int(t_step)}_steps"
-        replay_buffer_str = f"replay_buffer_{int(t_step)}_steps"
         model_path = os.path.join(model_dir, model_str)
+
+        replay_buffer_str = f"replay_buffer_{int(t_step)}_steps"
         replay_buffer_path = os.path.join(model_dir,replay_buffer_str)
 
-        ## LOAD MODEL AND REPLAY BUFFER
         print(f"Loading Model: {model_str}...")
         self.model = SAC.load(
             model_path,
@@ -72,6 +77,7 @@ class RL_Training_Manager():
         )
         self.model.load_replay_buffer(replay_buffer_path)
         print("Model Loaded Successfully!\n")
+
 
     def train_model(self,check_freq=10,save_freq=1e3,reset_timesteps=True,total_timesteps=2e6):
 
@@ -136,7 +142,7 @@ class RL_Training_Manager():
             with open(filePath,'w') as file:
                 writer = csv.writer(file,delimiter=',')
                 writer.writerow([
-                    "V_mag_d", "V_angle_d", "Plane_Angle", "Trial_num",
+                    "V_mag", "V_angle", "Plane_Angle", "Trial_num",
 
                     "--",
 
@@ -144,7 +150,7 @@ class RL_Training_Manager():
                     "BodyContact","ForelegContact","HindlegContact",
 
                     "--",
-                    "NN_Output_trg",
+                    
                     "a_Trg_trg",
                     "a_Rot_trg",
                     "Vel_mag_B_O_trg","Vel_angle_B_O_trg",
@@ -169,6 +175,7 @@ class RL_Training_Manager():
                     "--",
 
                     "reward","reward_vals",
+                    "NN_Output_trg","a_Rot_scale"
                 ])
 
         for Plane_Angle in Plane_Angle_arr:
@@ -198,9 +205,7 @@ class RL_Training_Manager():
                                 self.env.Pad_Connections,
                                 self.env.BodyContact_Flag,self.env.ForelegContact_Flag,self.env.HindlegContact_Flag,
                                 "--",
-                                np.round(NN_Output_trg,3),
-                                np.round(a_Trg_trg,3),
-                                self.env.a_Rot_trg,
+                                np.round(a_Trg_trg,3),self.env.a_Rot_trg,
                                 self.env.Vel_mag_B_O_trg,self.env.Vel_angle_B_O_trg,
                                 self.env.Vel_mag_B_P_trg,self.env.Vel_angle_B_P_trg,
                                 self.env.Tau_CR_trg,
@@ -216,6 +221,7 @@ class RL_Training_Manager():
                                 self.env.Force_impact_x,self.env.Force_impact_y,self.env.Force_impact_z,
                                 "--",
                                 np.round(self.env.reward,3),np.round(self.env.reward_vals,3),
+                                np.round(NN_Output_trg,3),np.round(self.env.Ang_Acc_range,0)
                             ])
 
                             ## CALCULATE AVERAGE TIME PER EPISODE
@@ -373,9 +379,19 @@ class RL_Training_Manager():
 
 
 
-    def load_config_file(self):
-        pass
+    def load_config_file(self,config_path):
 
+        with open(config_path, 'r') as file:
+            config_dict = yaml.safe_load(file)
+
+        self.env.V_mag_range = config_dict['ENV_SETTINGS']['V_mag_Limts']
+        self.env.V_angle_range = config_dict['ENV_SETTINGS']['V_angle_Limits']
+        self.env.Plane_Angle_range = config_dict['ENV_SETTINGS']['Plane_Angle_Limits']
+        self.env.setAngAcc_range(config_dict['ENV_SETTINGS']['Ang_Acc_Limits'])
+
+        self.env.reward_weights = config_dict['REWARD_SETTINGS']
+
+        
     def policy_output(self,obs):
         
         ## CONVERT OBS TO TENSOR
@@ -477,12 +493,12 @@ if __name__ == '__main__':
     }
 
 
-    # log_name = "DeepRL_Policy_09:02:31"
-    # model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
+    log_name = "DeepRL_Policy_09:02:31"
+    model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
     
     RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.create_model(net_arch=[14,14,14])
-    # RL_Manager.load_model(model_dir,t_step=20e3)
+    # RL_Manager.create_model(net_arch=[14,14,14])
+    RL_Manager.load_model(model_dir,t_step=20e3)
     # RL_Manager.save_NN_to_C_header()
     # obs = [0.214436,1.837226,0.68069,0]
     
