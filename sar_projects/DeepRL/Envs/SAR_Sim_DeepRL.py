@@ -27,12 +27,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         SAR_Sim_Interface.__init__(self, GZ_Timeout=GZ_Timeout)
         gym.Env.__init__(self)
 
-        # if self.Policy_Type != "DEEP_RL_SB3":
-        #     str_input = self.userInput(YELLOW,"Incorrect Policy Activated. Continue? (y/n): ",RESET,str)
-        #     if str_input.lower() == 'n':
-        #         raise Exception('[ERROR] Incorrect Policy Type Activated')
-        #     else:
-        #         pass
+        if self.Policy_Type != "DEEP_RL_SB3":
+            str_input = self.userInput(YELLOW,"Incorrect Policy Activated. Continue? (y/n): ",RESET,str)
+            if str_input.lower() == 'n':
+                raise Exception('[ERROR] Incorrect Policy Type Activated')
+            else:
+                pass
 
         ######################
         #    GENERAL CONFIGS
@@ -52,7 +52,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
         self.t_impact_max = 1.0     # [s]
         self.t_ep_max = 5.0         # [s]
-        self.t_real_max = 120      # [s]
+        self.t_real_max = 120       # [s]
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
@@ -111,7 +111,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.V_mag = V_mag
         self.V_angle = V_angle
 
-    def reset(self, seed=None, options=None, V_mag=None,V_angle=None,Plane_Angle=None):
+    def reset(self,seed=None,options=None):
 
         ######################
         #    GENERAL CONFIGS

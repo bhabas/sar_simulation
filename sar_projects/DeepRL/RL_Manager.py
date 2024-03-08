@@ -130,6 +130,16 @@ class RL_Training_Manager():
 
         def EMA(cur_val,prev_val,alpha = 0.15):            
             return alpha*cur_val + (1-alpha)*(prev_val)
+        
+        def round_list_elements(lst, precision=3):
+            """Round all numerical elements in a list to a specified precision."""
+            rounded_list = []
+            for item in lst:
+                if isinstance(item, np.floating):  # Check if the item is a float
+                    rounded_list.append(round(item, precision))
+                else:
+                    rounded_list.append(item)  # Leave non-float items unchanged
+            return rounded_list
 
         ## TIME ESTIMATION FILTER INITIALIZATION
         num_trials = len(V_mag_arr)*len(V_angle_arr)*len(Plane_Angle_arr)*n_episodes
@@ -160,6 +170,7 @@ class RL_Training_Manager():
                     "Tau_trg",
                     "Theta_x_trg",
                     "D_perp_CR_trg",
+                    "D_perp_trg",
 
                     "--",
 
@@ -199,7 +210,9 @@ class RL_Training_Manager():
                         ## APPEND RECORDED VALUES TO CSV FILE
                         with open(filePath,'a') as file:
                             writer = csv.writer(file,delimiter=',',quoting=csv.QUOTE_NONE,escapechar='\\')
-                            writer.writerow([
+
+                            row_data = [
+                            
                                 V_mag,V_angle,Plane_Angle,trial,
                                 "--",
                                 self.env.Pad_Connections,
@@ -212,6 +225,7 @@ class RL_Training_Manager():
                                 self.env.Tau_trg,
                                 self.env.Theta_x_trg,
                                 self.env.D_perp_CR_trg,
+                                self.env.D_perp_trg,
                                 "--",
                                 self.env.Eul_B_O_impact_Ext[1],
                                 self.env.Eul_P_B_impact_Ext[1],
@@ -222,7 +236,12 @@ class RL_Training_Manager():
                                 "--",
                                 np.round(self.env.reward,3),np.round(self.env.reward_vals,3),
                                 np.round(NN_Output_trg,3),np.round(self.env.Ang_Acc_range,0)
-                            ])
+                            ]
+
+                            rounded_row_data = round_list_elements(row_data)
+                            writer.writerow(rounded_row_data)
+
+
 
                             ## CALCULATE AVERAGE TIME PER EPISODE
                             t_now = time.time() - t_init
@@ -488,7 +507,7 @@ if __name__ == '__main__':
         "V_mag_range": [2.5, 2.5],
         "V_angle_range": [60, 60],
         "Plane_Angle_range": [0, 0],
-        "Render": True,
+        "Render": False,
         "GZ_Timeout": False,
     }
 
@@ -496,7 +515,7 @@ if __name__ == '__main__':
     log_name = "DeepRL_Policy_09:02:31"
     model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
     # RL_Manager.create_model(net_arch=[14,14,14])
     RL_Manager.load_model(model_dir,t_step=20e3)
     # RL_Manager.save_NN_to_C_header()

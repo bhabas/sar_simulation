@@ -83,6 +83,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         self.V_B_P_impact_Ext = np.full(3,np.nan)
         self.Eul_B_O_impact_Ext = np.full(3,np.nan)
+        self.Eul_P_B_impact_Ext = np.full(3,np.nan)
         self.Rot_Sum_impact_Ext = 0
 
         
@@ -143,6 +144,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 self.State_Impact = self._getState()
                 self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
                 self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+                self.Eul_P_B_impact_Ext[1] = np.degrees(self.R_WP(self.State_Impact[1],self.Plane_Angle_rad)[1])
+                self.Omega_B_P_impact_Ext[1] = self.State_Impact[3]
 
                 self.render()
 
@@ -161,6 +164,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.State_Impact = self._getState()
             self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
             self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+            self.Eul_P_B_impact_Ext[1] = np.degrees(-self.R_WP([0,self.State_Impact[1],0],self.Plane_Angle_rad)[1])
+            self.Omega_B_P_impact_Ext[1] = self.State_Impact[3]
 
             self._impactConversion()
             self.render()
@@ -181,6 +186,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.State_Impact = self._getState()
             self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
             self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+            self.Eul_P_B_impact_Ext[1] = np.degrees(self.R_WP(self.State_Impact[1],self.Plane_Angle_rad)[1])
+            self.Omega_B_P_impact_Ext[1] = self.State_Impact[3]
 
             self._impactConversion()
             self.render()
@@ -240,6 +247,13 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
     def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
         self._setState(np.array(pos),0,np.array(vel),0)
+
+    def _setModelInertia(self,Mass=0,Inertia=[0,0,0]):
+
+        self.Ref_Mass = Mass
+        self.Ref_Iyy = Inertia[1]
+
+
 
     def _setPlanePose(self,Pos,Plane_Angle):
         self.Plane_Pos = Pos

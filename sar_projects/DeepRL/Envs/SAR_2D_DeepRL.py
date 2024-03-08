@@ -22,19 +22,23 @@ from sar_env import SAR_2D_Sim_Interface
 
 class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
-    def __init__(self,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True):
+    def __init__(self,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,GZ_Timeout=False):
         SAR_2D_Sim_Interface.__init__(self,Render)
         gym.Env.__init__(self)
 
         if self.Policy_Type != "DEEP_RL_SB3":
-            raise Exception('[ERROR] Incorrect Policy Type Activated')
+            str_input = self.userInput(YELLOW,"Incorrect Policy Activated. Continue? (y/n): ",RESET,str)
+            if str_input.lower() == 'n':
+                raise Exception('[ERROR] Incorrect Policy Type Activated')
+            else:
+                pass
         
         ######################
         #    GENERAL CONFIGS
         ######################
         
         ## ENV CONFIG SETTINGS
-        self.Env_Name = "SAR_Env_2D"
+        self.Env_Name = "SAR_2D_DeepRL_Env"
 
         ## TESTING CONDITIONS     
         self.V_mag_range = V_mag_range  
@@ -47,14 +51,13 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
         self.t_impact_max = 1.0     # [s]
         self.t_ep_max = 5.0         # [s]
-        self.t_real_max = 600000      # [s]
+        self.t_real_max = 120       # [s]
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
         self.K_ep = 0
         self.Pol_Trg_Threshold = 0.5
         self.Done = False
-        self.initStep = False
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
@@ -72,8 +75,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Tau_CR_trg = np.inf
 
         ## DOMAIN RANDOMIZATION
-        self.Base_Iyy_std = 0.1
-        self.Base_Mass_std = 0.1
+        self.Mass_std = 0.03*self.Ref_Mass
+        self.Iyy_std = 0.05*self.Ref_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -107,7 +110,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.V_mag = V_mag
         self.V_angle = V_angle
 
-    def reset(self,seed=None,options=None,V_mag=None,V_angle=None,Plane_Angle=None):
+    def reset(self,seed=None,options=None):
 
         ######################
         #    GENERAL CONFIGS
@@ -124,9 +127,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         self.start_time_real = time.time()
 
-        self.initStep = False
-
         
+
         ##########   2D ENV CONFIGS  ##########
         #
         self.Trg_Flag = False
@@ -138,6 +140,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         self.V_B_P_impact_Ext = np.full(3,np.nan)
         self.Eul_B_O_impact_Ext = np.full(3,np.nan)
+        self.Eul_P_B_impact_Ext = np.full(3,np.nan)
+        self.Omega_B_P_impact_Ext = np.full(3,np.nan)
         self.Rot_Sum_impact_Ext = 0
 
         self.Impact_Flag_Ext = False
@@ -146,23 +150,26 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.HindlegContact_Flag = False
         self.Pad_Connections = 0
         self.MomentCutoff = False
-
         #
         #######################################
 
-        
-
-        ######################
-        #   2D ENV CONFIGS
-        ######################
+        self.resetPose()
+        self._initialStep()
 
         # UPDATE RENDER
         if self.Render_Flag:
             self.render()
-        
+       
+
         return self._getObs(), {}
     
     def _initialStep(self):
+
+        ## DOMAIN RANDOMIZATION (UPDATE INERTIAL VALUES)
+        # NOTE: GZ sim updates base mass and inertia values
+        Iyy = self.Ref_Iyy + np.random.normal(0,self.Iyy_std)
+        Mass = self.Ref_Mass + np.random.normal(0,self.Mass_std)
+        self._setModelInertia(Mass,[self.Ref_Ixx,Iyy,self.Ref_Izz])
 
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
         V_tx = self.V_mag*np.cos(np.deg2rad(self.V_angle))
@@ -189,11 +196,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Sim_VelTraj(pos=r_B_O,vel=V_B_O)
         self._iterStep(n_steps=1000)
 
-        # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
-        # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
-        # self.setModelInertia()
-
         # ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         # if self._getTick()%10 != 0:
         #     n_steps = 10 - (self._getTick()%10)
@@ -214,11 +216,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # 3. CALC REWARD
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
-
-        ## INITIALIZE FIRST STEP
-        if self.initStep == False:
-            self._initialStep()
-            self.initStep = True
 
         # ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         # if self._getTick()%10 != 0:
@@ -301,8 +298,23 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
             ## *** 2D Env ***
             self.Trg_Flag = True
-            self.Tau_trg = self.obs_trg[0]
-            self.Tau_CR_trg = self.obs_trg[0]
+            self.Tau_trg = self.Tau
+            self.Tau_CR_trg = self.Tau_CR
+            self.Theta_x_trg = self.Theta_x
+            self.D_perp_trg = self.D_perp
+            self.D_perp_CR_trg = self.D_perp_CR
+
+            self.a_Rot_trg = a_Rot
+
+            r_B_O,Phi_B_O,V_B_O,dPhi = self._getState()
+            
+            self.Vel_mag_B_O_trg = np.linalg.norm(V_B_O)
+            self.Vel_angle_B_O_trg = np.degrees(np.arctan2(V_B_O[0],V_B_O[2]))
+
+            V_tx,_,V_perp = self.R_WP(V_B_O,self.Plane_Angle_rad)
+            self.Vel_mag_B_P_trg = np.linalg.norm([V_tx,V_perp])
+            self.Vel_angle_B_P_trg = np.degrees(np.arctan2(V_tx,V_perp))
+
             self.State_trg = self._getState()
             ## ***
 
@@ -312,7 +324,10 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             self.Done = terminated 
 
             # 3) CALC REWARD
-            reward = self._CalcReward()  
+            try:
+                reward = self._CalcReward()  
+            except (UnboundLocalError,ValueError):
+                reward = 0.0
 
 
             # 5) RETURN VALUES
@@ -337,7 +352,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         truncated = False
 
         ## SEND TRIGGER ACTION TO CONTROLLER
-        # self.sendCmd("Policy",[0,a_Rot,0],cmd_flag=1)
+        # self.sendCmd("Policy",[0,a_Rot,self.Ang_Acc_range[0]],cmd_flag=self.Ang_Acc_range[1])
 
         ## RUN REMAINING STEPS AT FULL SPEED
         # self.pausePhysics(False)
@@ -345,6 +360,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         while not (terminated or truncated):
 
             t_now = self._getTime()
+
             self._iterStep(a_Rot=a_Rot)
             self.render()
             
@@ -384,7 +400,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 truncated = True
                 # print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
 
-            elif self._getState()[2][2] <= -5:
+            elif self._getState()[2][2] <= -8: # Vz < -8 m/s
                 self.error_str = "Episode Completed: Falling [Terminated]"
                 terminated = True
                 truncated = False
@@ -525,7 +541,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Tau_CR_Trg(self.Tau_CR_trg,0.2,0.1)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -540,6 +556,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
+        self.reward = R_t/self.W_max
         # print(f"R_t_norm: {R_t/self.W_max:.3f}")
         # print(np.round(self.reward_vals,2))
 
