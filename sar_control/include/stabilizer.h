@@ -135,10 +135,11 @@ bool Controller::Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CT
 {
     res.Tick = tick;
     res.Tau = Tau;
+    res.Tau_CR = Tau_CR;
     res.Theta_x = Theta_x;
     res.D_perp = D_perp;
+    res.D_perp_CR = D_perp_CR;
     res.Plane_Angle_deg = Plane_Angle_deg;
-    res.Tau_CR = Tau_CR;
 
     return 1;
 }

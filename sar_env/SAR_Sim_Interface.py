@@ -79,17 +79,26 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         return resp.Tick
     
-    def _get_obs(self):
+    def _getObs(self):
 
         resp = self.callService('/CTRL/Get_Obs',None,CTRL_Get_Obs)
 
         Tau_CR = resp.Tau_CR
         Theta_x = resp.Theta_x
-        D_perp = resp.D_perp
+        D_perp_CR = resp.D_perp_CR
         Plane_Angle_rad = np.radians(resp.Plane_Angle_deg)
 
+        obs_list = [Tau_CR,Theta_x,D_perp_CR,self.Plane_Angle_rad]
+
+        Tau_CR_scaled = self.scaleValue(Tau_CR,original_range=[-5,5],target_range=[-1,1])
+        Theta_x_scaled = self.scaleValue(Theta_x,original_range=[-20,20],target_range=[-1,1])
+        D_perp_CR_scaled = self.scaleValue(D_perp_CR,original_range=[-0.5,2.0],target_range=[-1,1])
+        Plane_Angle_scaled = self.scaleValue(self.Plane_Angle_deg,original_range=[0,180],target_range=[-1,1])
+
+        scaled_obs_list = [Tau_CR_scaled,Theta_x_scaled,D_perp_CR_scaled,Plane_Angle_scaled]
+
         ## OBSERVATION VECTOR
-        obs = np.array([Tau_CR,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
+        obs = np.array(scaled_obs_list,dtype=np.float32)
 
         return obs
 
@@ -171,8 +180,6 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.sendCmd('GZ_StickyPads',cmd_flag=1)
 
-        
-
     def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
         ## RESET POSITION AND VELOCITY
@@ -197,8 +204,6 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
 
-    
-
     def _setModelInertia(self,Mass=0,Inertia=[0,0,0]):
 
         ## CREATE SERVICE REQUEST MSG
@@ -216,6 +221,17 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         os.system("roslaunch sar_launch Load_Params.launch")
         self.sendCmd('Load_Params')
 
+    def scaleValue(self,x, original_range=(-1, 1), target_range=(-1, 1)):
+
+        original_min, original_max = original_range
+        target_min, target_max = target_range
+
+        # Scale x to [0, 1] in original range
+        x_scaled = (x - original_min) / (original_max - original_min)
+
+        # Scale [0, 1] to target range
+        x_target = x_scaled * (target_max - target_min) + target_min
+        return x_target
     
     # ============================
     ##      Command Handlers 

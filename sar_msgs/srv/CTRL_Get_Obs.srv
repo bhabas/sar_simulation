@@ -1,9 +1,9 @@
 
 ---
 uint32 Tick
+float64 Tau
 float64 Tau_CR
 float64 Theta_x
 float64 D_perp
+float64 D_perp_CR
 float64 Plane_Angle_deg
-
-float64 Tau

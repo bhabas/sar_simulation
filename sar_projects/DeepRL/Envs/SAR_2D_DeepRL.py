@@ -8,10 +8,7 @@ import pygame as pg
 import os
 import rospy
 
-EPS = 1e-6 # Epsilon (Prevent division by zero)
-COORD_FLIP = -1  # Swap sign to match proper coordinate notation
 
-EPS = 1e-6 # Epsilon (Prevent division by zero)
 YELLOW = '\033[93m'
 RED = '\033[91m'
 GREEN = '\033[92m'
@@ -49,7 +46,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
-        self.t_impact_max = 1.0     # [s]
+        self.t_impact_max = 2.0     # [s]
         self.t_ep_max = 5.0         # [s]
         self.t_real_max = 120       # [s]
 
@@ -61,8 +58,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
-            "W_Dist":0.5,
-            "W_tau_cr":0.5,
+            "W_Dist":0.1,
+            "W_tau_cr":0.1,
             "W_LT":1.0,
             "W_GM":1.0,
             "W_Phi_rel":2.0,
@@ -70,13 +67,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         }
         self.W_max = sum(self.reward_weights.values())
 
+        self.D_perp_CR_min = np.inf
         self.D_perp_min = np.inf
-        self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
+        self.Tau_trg = np.inf
 
         ## DOMAIN RANDOMIZATION
-        self.Mass_std = 0.03*self.Ref_Mass
-        self.Iyy_std = 0.05*self.Ref_Iyy
+        self.Mass_std = 0.00*self.Ref_Mass
+        self.Iyy_std = 0.00*self.Ref_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -110,7 +108,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.V_mag = V_mag
         self.V_angle = V_angle
 
-    def reset(self,seed=None,options=None):
+    def reset(self,seed=None,options=None,V_mag=None,V_angle=None,Plane_Angle=None):
 
         ######################
         #    GENERAL CONFIGS
@@ -121,19 +119,19 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Done = False
         self.reward = 0
 
+        self.D_perp_CR_min = np.inf
         self.D_perp_min = np.inf
-        self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
+        self.Tau_trg = np.inf
+
+        self.obs_trg = np.full(self.obs_trg.shape[0],np.nan)
+        self.action_trg = np.full(self.action_trg.shape[0],np.nan)
 
         self.start_time_real = time.time()
-
-        
 
         ##########   2D ENV CONFIGS  ##########
         #
         self.Trg_Flag = False
-        self.action_trg = np.full(self.action_trg.shape[0],np.nan)
-        self.obs_trg = np.full(self.obs_trg.shape[0],np.nan)
         self.State_trg = np.full(6,np.nan)
         self.State_Impact = np.full(6,np.nan)
         self.M_thrust_prev = np.full(4,self.Ref_Mass*self.g/4)
@@ -154,13 +152,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         #######################################
 
         self.resetPose()
+        self.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         self._initialStep()
 
         # UPDATE RENDER
-        if self.Render_Flag:
-            self.render()
+        self.render()
        
-
         return self._getObs(), {}
     
     def _initialStep(self):
@@ -196,17 +193,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Sim_VelTraj(pos=r_B_O,vel=V_B_O)
         self._iterStep(n_steps=1000)
 
-        # ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
-        # if self._getTick()%10 != 0:
-        #     n_steps = 10 - (self._getTick()%10)
-        #     self._iterStep(n_steps=n_steps)
-
         ## RESET/UPDATE TIME CONDITIONS
         self.start_time_ep = self._getTime()
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
-        self.t_trg_max = self.Tau_Body_start*2.5 # [s]
+        self.t_trg_max = self.Tau_Body_start*3.0 # [s]
 
 
     def step(self, action):
@@ -217,13 +209,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
 
-        # ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
-        # if self._getTick()%10 != 0:
-        #     n_steps = 10 - (self._getTick()%10)
-        #     self._iterStep(n_steps=n_steps)
-
         a_Trg = action[0]
-        a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
+        a_Rot = self.scaleValue(action[1],original_range=[-1,1], target_range=self.Ang_Acc_range)
 
         ########## POLICY PRE-TRIGGER ##########
         if a_Trg <= self.Pol_Trg_Threshold:
@@ -233,12 +220,10 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             t_now = self._getTime()
 
             # UPDATE RENDER
-            if self.Render_Flag:
-                self.render()
+            self.render()
 
             # GRAB NEXT OBS
             next_obs = self._getObs()
-
 
             # 3) CALCULATE REWARD
             reward = 0.0
@@ -350,12 +335,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         terminated = False
         truncated = False
-
-        ## SEND TRIGGER ACTION TO CONTROLLER
-        # self.sendCmd("Policy",[0,a_Rot,self.Ang_Acc_range[0]],cmd_flag=self.Ang_Acc_range[1])
-
-        ## RUN REMAINING STEPS AT FULL SPEED
-        # self.pausePhysics(False)
 
         while not (terminated or truncated):
 
@@ -536,12 +515,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,0)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15)
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -561,9 +540,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # print(np.round(self.reward_vals,2))
 
         return R_t/self.W_max
-    
-    def Reward_Tau_CR_Trg(self,x,b,k=0.1):
-        return np.min([k/np.abs(x-b),1])
     
     def Reward_Exp_Decay(self,x,threshold,k=10):
         if x < threshold:

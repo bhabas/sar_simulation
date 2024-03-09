@@ -155,7 +155,7 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
         self.t_trg_max = self.Tau_Body_start*1.5 # [s]
         
-        return self._get_obs(), {}
+        return self._getObs(), {}
     
     def step(self,action):
 
@@ -174,14 +174,14 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
         a_Rot = action[1]
 
         ########## POLICY PRE-TRIGGER ##########
-        if self._get_obs()[0] >= a_Trg:
+        if self._getObs()[0] >= a_Trg:
 
             ## 2) UPDATE STATE
             self._iterStep(n_steps=10)
             t_now = self._getTime()
 
             # GRAB NEXT OBS
-            next_obs = self._get_obs()
+            next_obs = self._getObs()
 
             # 3) CALCULATE REWARD
             reward = 0.0
@@ -233,10 +233,10 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
             )
 
         ########## POLICY POST-TRIGGER ##########
-        elif self._get_obs()[0] <= a_Trg:
+        elif self._getObs()[0] <= a_Trg:
 
             # GRAB TERMINAL OBS/ACTION
-            self.obs_trg = self._get_obs()
+            self.obs_trg = self._getObs()
             self.action_trg = action
 
             print("Obs_Trg: ",np.round(self.obs_trg,3))

@@ -23,9 +23,7 @@ GREEN_PG = (0,153,0)
 PURPLE_PG = (76,0,153)
 ORANGE_PG = (255,128,0)
 
-EPS = 1e-6 # Epsilon (Prevent division by zero)
 GRAM_2_NEWTON = 9.81/1000.0
-COORD_FLIP = -1  # Swap sign to match proper coordinate notation
 
 EPS = 1e-6 # Epsilon (Prevent division by zero)
 YELLOW = '\033[93m'
@@ -144,7 +142,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 self.State_Impact = self._getState()
                 self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
                 self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
-                self.Eul_P_B_impact_Ext[1] = np.degrees(self.R_WP(self.State_Impact[1],self.Plane_Angle_rad)[1])
+                self.Eul_P_B_impact_Ext[1] = np.degrees(self.R_WP([0,self.State_Impact[1],0],self.Plane_Angle_rad)[1])
                 self.Omega_B_P_impact_Ext[1] = self.State_Impact[3]
 
                 self.render()
@@ -186,7 +184,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.State_Impact = self._getState()
             self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
             self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
-            self.Eul_P_B_impact_Ext[1] = np.degrees(self.R_WP(self.State_Impact[1],self.Plane_Angle_rad)[1])
+            self.Eul_P_B_impact_Ext[1] = np.degrees(-self.R_WP([0,self.State_Impact[1],0],self.Plane_Angle_rad)[1])
             self.Omega_B_P_impact_Ext[1] = self.State_Impact[3]
 
             self._impactConversion()
@@ -207,7 +205,6 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ## PLANE POSITION AND UNIT VECTORS
         r_B_O,Phi_B_O,V_B_O,dPhi = self._getState()
         r_P_O = self.r_P_O
-
 
         ## CALC DISPLACEMENT FROM PLANE CENTER
         r_P_B = r_P_O - r_B_O # {X_W,Z_W}
@@ -232,8 +229,18 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.D_perp = D_perp
         self.D_perp_CR = D_perp_CR
 
+        obs_list = [Tau_CR,Theta_x,D_perp_CR,self.Plane_Angle_rad]
+
+        Tau_CR_scaled = self.scaleValue(Tau_CR,original_range=[-5,5],target_range=[-1,1])
+        Theta_x_scaled = self.scaleValue(Theta_x,original_range=[-20,20],target_range=[-1,1])
+        D_perp_CR_scaled = self.scaleValue(D_perp_CR,original_range=[-0.5,2.0],target_range=[-1,1])
+        Plane_Angle_scaled = self.scaleValue(self.Plane_Angle_deg,original_range=[0,180],target_range=[-1,1])
+
+        scaled_obs_list = [Tau_CR_scaled,Theta_x_scaled,D_perp_CR_scaled,Plane_Angle_scaled]
+
+
         ## OBSERVATION VECTOR
-        obs = np.array([Tau_CR,Theta_x,D_perp,self.Plane_Angle_rad],dtype=np.float32)
+        obs = np.array(scaled_obs_list,dtype=np.float32)
 
         return obs
     
@@ -291,9 +298,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
 
             # UPDATE MINIMUM DISTANCE
-            D_perp = self._getObs()[2]
-            if D_perp <= self.D_perp_min:
-                self.D_perp_min = D_perp 
+            if self.D_perp_CR <= self.D_perp_CR_min:
+                self.D_perp_CR_min = self.D_perp_CR 
 
             if self.Done:
                 break
@@ -827,6 +833,18 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             alpha_down = np.exp(-self.dt/self.Tau_down)
             Thrust = alpha_down*Prev_Thrust + (1 - alpha_down)*Thrust_input
             return Thrust
+        
+    def scaleValue(self,x, original_range=(-1, 1), target_range=(-1, 1)):
+
+        original_min, original_max = original_range
+        target_min, target_max = target_range
+
+        # Scale x to [0, 1] in original range
+        x_scaled = (x - original_min) / (original_max - original_min)
+
+        # Scale [0, 1] to target range
+        x_target = x_scaled * (target_max - target_min) + target_min
+        return x_target
 
     
 if __name__ == "__main__":

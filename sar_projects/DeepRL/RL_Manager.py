@@ -78,8 +78,7 @@ class RL_Training_Manager():
         self.model.load_replay_buffer(replay_buffer_path)
         print("Model Loaded Successfully!\n")
 
-
-    def train_model(self,check_freq=10,save_freq=1e3,reset_timesteps=True,total_timesteps=2e6):
+    def train_model(self,check_freq=10,save_freq=2e3,reset_timesteps=True,total_timesteps=2e6):
 
         reward_callback = RewardCallback(check_freq=check_freq,save_freq=save_freq,model_dir=self.model_dir)
 
@@ -92,18 +91,14 @@ class RL_Training_Manager():
 
     def test_policy(self,V_mag=None,V_angle=None,Plane_Angle=None):
 
-        # self.vec_env.Render_Flag = True
-        self.env.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-        obs,_ = self.env.reset()
+        obs,_ = self.env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         terminated = False
-         
         truncated = False
  
         while not (terminated or truncated):
             action,_ = self.model.predict(obs)
             obs,reward,terminated,truncated,_ = self.env.step(action)
 
-        self.policy_output(obs)
         return obs,reward
     
     def sweep_policy(self,Plane_Angle_range=[180,180,4],V_angle_range=[-45,-135,4],V_mag_range=[1.0,2.0,4],n=1):
@@ -396,21 +391,18 @@ class RL_Training_Manager():
         with open(config_path, 'w') as outfile:
             yaml.dump(General_Dict,outfile,default_flow_style=False,sort_keys=False)
 
-
-
     def load_config_file(self,config_path):
 
         with open(config_path, 'r') as file:
             config_dict = yaml.safe_load(file)
 
-        self.env.V_mag_range = config_dict['ENV_SETTINGS']['V_mag_Limts']
-        self.env.V_angle_range = config_dict['ENV_SETTINGS']['V_angle_Limits']
-        self.env.Plane_Angle_range = config_dict['ENV_SETTINGS']['Plane_Angle_Limits']
+        # self.env.V_mag_range = config_dict['ENV_SETTINGS']['V_mag_Limts']
+        # self.env.V_angle_range = config_dict['ENV_SETTINGS']['V_angle_Limits']
+        # self.env.Plane_Angle_range = config_dict['ENV_SETTINGS']['Plane_Angle_Limits']
         self.env.setAngAcc_range(config_dict['ENV_SETTINGS']['Ang_Acc_Limits'])
 
         self.env.reward_weights = config_dict['REWARD_SETTINGS']
 
-        
     def policy_output(self,obs):
         
         ## CONVERT OBS TO TENSOR
@@ -450,11 +442,18 @@ class RewardCallback(BaseCallback):
         self.save_freq = save_freq
         self.model_dir = model_dir
 
+        self.reward_avg = [0]
+        self.reward_std = [0]
+
+        self.episode_rewards = []
+        self.highest_reward = -np.inf
+
     def _on_training_start(self) -> None:
         """
         This method is called before the first rollout starts.
         """
-        pass
+        self.env = self.training_env.envs[0].unwrapped
+
 
     def _on_step(self) -> bool:
 
@@ -467,7 +466,32 @@ class RewardCallback(BaseCallback):
 
             self.model.save(model_path)
             self.model.save_replay_buffer(replay_buffer_path)
-        
+
+        ## 
+        if self.locals["dones"].item():
+
+            episode_reward = self.locals["rewards"]
+            self.episode_rewards.append(episode_reward.item())
+
+            ## TB LOGGING VALUES
+            self.logger.record('Custom/K_ep',self.env.K_ep)
+            self.logger.record('Custom/Vel_mag',self.env.V_mag)
+            self.logger.record('Custom/Vel_angle',self.env.V_angle)
+            self.logger.record('Custom/Plane_Angle',self.env.Plane_Angle_deg)
+            self.logger.record('Custom/Reward',episode_reward.item())
+
+            self.logger.record('Actions/a_Trg',self.env.action_trg[0])
+            self.logger.record('Actions/a_Rot',self.env.a_Rot_trg)
+            
+            self.logger.record('Rewards_Components/R_Dist',self.env.reward_vals[0])
+            self.logger.record('Rewards_Components/R_tau',self.env.reward_vals[1])
+            self.logger.record('Rewards_Components/R_LT',self.env.reward_vals[2])
+            self.logger.record('Rewards_Components/R_GM',self.env.reward_vals[3])
+            self.logger.record('Rewards_Components/R_phi',self.env.reward_vals[4])
+            self.logger.record('Rewards_Components/R_Legs',self.env.reward_vals[5])
+            self.logger.record('Rewards_Components/Impact_Flag',int(self.env.Trg_Flag))
+            self.logger.record('Rewards_Components/Impact_Flag',int(self.env.Impact_Flag_Ext))
+
         return True
     
     def _on_rollout_start(self) -> None:
@@ -504,27 +528,27 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [2.5, 2.5],
-        "V_angle_range": [60, 60],
+        "V_mag_range": [2.0, 4.0],
+        "V_angle_range": [30,90],
         "Plane_Angle_range": [0, 0],
-        "Render": False,
+        "Render": True,
         "GZ_Timeout": False,
     }
 
 
-    log_name = "DeepRL_Policy_09:02:31"
-    model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_09:02:31/Models"
+    log_name = "DeepRL_Policy_03-08--17:35:23"
+    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
     # RL_Manager.create_model(net_arch=[14,14,14])
-    RL_Manager.load_model(model_dir,t_step=20e3)
-    # RL_Manager.save_NN_to_C_header()
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[60,60,1],V_mag_range=[1.0,3.0,5],n=3)
-    RL_Manager.collect_landing_performance(
-        fileName="PolicyPerformance_Data.csv",
-        V_mag_step=0.5,
-        V_angle_step=5,
-        Plane_Angle_step=45,
-        n_episodes=100
-        )
     # RL_Manager.train_model()
+    RL_Manager.load_model(model_dir,t_step=166000)
+    RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[30,90,7],V_mag_range=[1.0,4.0,7],n=1)
+    # RL_Manager.collect_landing_performance(
+    #     fileName="PolicyPerformance_Data.csv",
+    #     V_mag_step=0.5,
+    #     V_angle_step=5,
+    #     Plane_Angle_step=45,
+    #     n_episodes=100
+    #     )
+    

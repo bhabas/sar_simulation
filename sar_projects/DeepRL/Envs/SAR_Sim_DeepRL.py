@@ -50,7 +50,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
-        self.t_impact_max = 1.0     # [s]
+        self.t_impact_max = 2.0     # [s]
         self.t_ep_max = 5.0         # [s]
         self.t_real_max = 120       # [s]
 
@@ -62,8 +62,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
-            "W_Dist":0.5,
-            "W_tau_cr":0.5,
+            "W_Dist":0.1,
+            "W_tau_cr":0.1,
             "W_LT":1.0,
             "W_GM":1.0,
             "W_Phi_rel":2.0,
@@ -71,13 +71,14 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         }
         self.W_max = sum(self.reward_weights.values())
 
+        self.D_perp_CR_min = np.inf
         self.D_perp_min = np.inf
-        self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
+        self.Tau_trg = np.inf
 
         ## DOMAIN RANDOMIZATION
-        self.Mass_std = 0.03*self.Base_Mass
-        self.Iyy_std = 0.05*self.Base_Iyy
+        self.Mass_std = 0.00*self.Base_Mass
+        self.Iyy_std = 0.00*self.Base_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -111,7 +112,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.V_mag = V_mag
         self.V_angle = V_angle
 
-    def reset(self,seed=None,options=None):
+    def reset(self,seed=None,options=None,V_mag=None,V_angle=None,Plane_Angle=None):
 
         ######################
         #    GENERAL CONFIGS
@@ -121,18 +122,21 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.K_ep += 1
         self.Done = False
 
+        self.D_perp_CR_min = np.inf
         self.D_perp_min = np.inf
-        self.Tau_trg = np.nan
-        self.Tau_CR_trg = np.nan
+        self.Tau_CR_trg = np.inf
+        self.Tau_trg = np.inf
+
         self.obs_trg = np.full(self.observation_space.shape,np.nan,dtype=np.float32) # Obs values at triggering
         self.action_trg = np.full(self.action_space.shape,np.nan,dtype=np.float32) # Action values at triggering
 
         self.start_time_real = time.time()
 
         self.resetPose()
+        self.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
         self._initialStep()
         
-        return self._get_obs(), {}
+        return self._getObs(), {}
     
     def _initialStep(self):
 
@@ -175,7 +179,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
-        self.t_trg_max = self.Tau_Body_start*1.5 # [s]
+        self.t_trg_max = self.Tau_Body_start*3.0 # [s]
 
     
     def step(self, action):
@@ -192,7 +196,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             self._iterStep(n_steps=n_steps)
 
         a_Trg = action[0]
-        a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
+        a_Rot = self.scaleValue(action[1],original_range=[-1,1], target_range=self.Ang_Acc_range)
         
         ########## POLICY PRE-TRIGGER ##########
         if a_Trg <= self.Pol_Trg_Threshold:
@@ -202,8 +206,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             t_now = self._getTime()
 
             # GRAB NEXT OBS
-            next_obs = self._get_obs()
-
+            next_obs = self._getObs()
 
             # 3) CALCULATE REWARD
             reward = 0.0
@@ -258,7 +261,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         elif a_Trg >= self.Pol_Trg_Threshold:
 
             # GRAB TERMINAL OBS/ACTION
-            self.obs_trg = self._get_obs()
+            self.obs_trg = self._getObs()
             self.action_trg = action
 
             # 2) FINISH EPISODE
@@ -478,12 +481,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,0)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15)
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -566,6 +569,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## CALCULATE REWARD
         return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
+    
+    
 
 if __name__ == "__main__":
 
