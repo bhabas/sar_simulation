@@ -83,9 +83,9 @@ class RL_Training_Manager():
         self.model.load_replay_buffer(replay_buffer_path)
         print("Model Loaded Successfully!\n")
 
-    def train_model(self,check_freq=10,save_freq=2e3,reset_timesteps=True,total_timesteps=2e6):
+    def train_model(self,save_freq=25e3,reset_timesteps=True,total_timesteps=2e6):
 
-        reward_callback = RewardCallback(check_freq=check_freq,save_freq=save_freq,model_dir=self.model_dir)
+        reward_callback = RewardCallback(model_dir=self.model_dir,save_freq=save_freq,)
 
         self.model.learn(
             total_timesteps=int(total_timesteps),
@@ -329,9 +329,9 @@ class RL_Training_Manager():
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
 
-        # ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
+        ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
         # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
-        ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
         # ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
         ax.set_thetamin(0)
@@ -544,17 +544,28 @@ class RL_Training_Manager():
 
 
 class RewardCallback(BaseCallback):
-    def __init__(self, check_freq: int, save_freq: int, model_dir: str, verbose=1):
+    def __init__(self, model_dir: str, 
+                 check_freq: int = 500, save_freq: int = 25_000, keep_last_n_models: int = 5,
+                 convergence_threshold: float = 0.01, convergence_episodes: int = 100, 
+                 verbose=0):
         super(RewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
         self.save_freq = save_freq
         self.model_dir = model_dir
+        self.best_mean_reward = -np.inf
 
-        self.reward_avg = [0]
-        self.reward_std = [0]
-
+        self.n_prev_episodes = 25
         self.episode_rewards = []
-        self.highest_reward = -np.inf
+        self.saved_models = []
+        self.keep_last_n_models = keep_last_n_models
+
+
+        self.convergence_threshold = convergence_threshold
+        self.convergence_episodes = convergence_episodes
+        self.converged = False
+
+
+
 
     def _on_training_start(self) -> None:
         """
@@ -563,6 +574,28 @@ class RewardCallback(BaseCallback):
         self.env = self.training_env.envs[0].unwrapped
 
     def _on_step(self) -> bool:
+
+        ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
+        if self.n_calls % self.check_freq == 0:
+
+            ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
+            mean_reward = np.mean(self.episode_rewards)
+            if mean_reward > self.best_mean_reward:
+                self.best_mean_reward = mean_reward
+
+                ## SAVE MODEL AND REPLAY BUFFER
+                model_path = os.path.join(self.model_dir, f"model_{self.num_timesteps}_steps_BestModel")
+                replay_buffer_path = os.path.join(self.model_dir, f"replay_buffer_{self.num_timesteps}_steps_BestModel")
+
+                self.model.save(model_path)
+                self.model.save_replay_buffer(replay_buffer_path)
+
+                if self.verbose > 0:
+                    print(f"New best mean reward: {self.best_mean_reward:.2f} - Model and replay buffer saved.")
+
+                ## TRACK SAVED MODELS FOR DELETION
+                self.saved_models.append((model_path, replay_buffer_path))
+                self._keep_last_n_models()
 
         ## SAVE MODEL EVERY N TIMESTEPS
         if self.n_calls % self.save_freq == 0:
@@ -574,11 +607,13 @@ class RewardCallback(BaseCallback):
             self.model.save(model_path)
             self.model.save_replay_buffer(replay_buffer_path)
 
-        ## 
+        ## CHECK IF EPISODE IS DONE
         if self.locals["dones"].item():
 
             episode_reward = self.locals["rewards"]
             self.episode_rewards.append(episode_reward.item())
+            if len(self.episode_rewards) > self.n_prev_episodes:
+                self.episode_rewards.pop(0)  # Remove the oldest reward
 
             ## TB LOGGING VALUES
             self.logger.record('Custom/K_ep',self.env.K_ep)
@@ -599,7 +634,22 @@ class RewardCallback(BaseCallback):
             self.logger.record('z_Rewards_Components/R_phi',self.env.reward_vals[4])
             self.logger.record('z_Rewards_Components/R_Legs',self.env.reward_vals[5])
 
+        
+
         return True
+    
+    def _keep_last_n_models(self):
+
+        ## REMOVE OLDER TOP MODELS AND REPLAY BUFFERS
+        if len(self.saved_models) > self.keep_last_n_models:
+
+            for model_path, replay_buffer_path in self.saved_models[:-self.keep_last_n_models]:
+                if os.path.exists(model_path + ".zip"):
+                    os.remove(model_path + ".zip")
+                if os.path.exists(replay_buffer_path + ".pkl"):
+                    os.remove(replay_buffer_path + ".pkl")
+
+            self.saved_models = self.saved_models[-self.keep_last_n_models:]
     
     def _on_rollout_start(self) -> None:
         """
@@ -636,27 +686,27 @@ if __name__ == '__main__':
     env_kwargs = {
         "Ang_Acc_range": [-100, 100],
         "V_mag_range": [1.0, 4.0],
-        "V_angle_range": [30,150],
+        "V_angle_range": [5,175],
         "Plane_Angle_range": [0, 0],
-        "Render": True,
+        "Render": False,
         "GZ_Timeout": False,
     }
 
 
-    log_name = "DeepRL_Policy_03-09--11:39:41"
-    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    # log_name = "DeepRL_Policy_03-09--13:08:24"
+    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.create_model(net_arch=[14,14,14])
-    # RL_Manager.train_model()
-    RL_Manager.load_model(model_dir,t_step=130e3)
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[30,150,13],V_mag_range=[1.0,4.0,7],n=1)
+    RL_Manager.create_model(net_arch=[14,14,14])
+    RL_Manager.train_model()
+    # RL_Manager.load_model(model_dir,t_step=210e3)
+    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[10,170,17],V_mag_range=[2.5,2.5,1],n=4)
     # RL_Manager.collect_landing_performance(
     #     fileName="PolicyPerformance_Data.csv",
     #     V_mag_range=[1.0,4.0,0.5],
-    #     V_angle_range=[30,150,5],
+    #     V_angle_range=[5,175,5],
     #     Plane_Angle_range=[0,0,1],
     #     n_trials=5
     #     )
-    RL_Manager.plot_landing_performance()
+    # RL_Manager.plot_landing_performance()
     
