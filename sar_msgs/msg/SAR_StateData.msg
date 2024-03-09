@@ -15,7 +15,7 @@ geometry_msgs/Vector3 Eul_P_B
 float64 Vel_mag_B_P
 float64 Vel_angle_B_P
 float64 D_perp
-float64 D_perp_min
+float64 D_perp_CR_min
 float64 D_perp_CR
 
 

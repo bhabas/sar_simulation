@@ -48,7 +48,7 @@ void SAR_DataConverter::Publish_StateData()
     StateData_msg.Vel_angle_B_P = Vel_angle_B_P;
     StateData_msg.D_perp = D_perp;
     StateData_msg.D_perp_CR = D_perp_CR;
-    StateData_msg.D_perp_min = D_perp_min;
+    StateData_msg.D_perp_CR_min = D_perp_CR_min;
 
 
     // OPTICAL FLOW STATES

@@ -392,7 +392,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         pg.draw.line(self.surf,PURPLE_PG,c2p(Pose[0]),c2p(Pose[0] + g_hat*0.1),width=3)
 
         ## VELOCITY UNIT VECTOR
-        v_hat = V_B_O/np.linalg.norm(V_B_O)
+        v_hat = V_B_O/(np.linalg.norm(V_B_O) + EPS)
         pg.draw.line(self.surf,ORANGE_PG,c2p(Pose[0]),c2p(Pose[0] + v_hat*0.1),width=3)
 
 

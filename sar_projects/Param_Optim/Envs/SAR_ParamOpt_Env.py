@@ -54,7 +54,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         }
         self.W_max = sum(self.reward_weights.values())
 
-        self.D_perp_min = np.inf
+        self.D_perp_CR_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
@@ -95,7 +95,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.Pol_Trg_Flag = False
         self.reward = 0
 
-        self.D_perp_min = np.inf
+        self.D_perp_CR_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
@@ -168,8 +168,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             t_now = self._getTime()
 
             ## RECORD LOWEST D_perp VALUE
-            if self.D_perp < self.D_perp_min:
-                self.D_perp_min = self.D_perp 
+            if self.D_perp_CR < self.D_perp_CR_min:
+                self.D_perp_CR_min = self.D_perp_CR
 
             ## START TRIGGER AND IMPACT TERMINATION TIMERS
             if (self.Trg_Flag == True and OnceFlag_Trg == False):
@@ -336,7 +336,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius*0.5)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,self.Collision_Radius*0.5)
         else:
             R_dist = 0
 

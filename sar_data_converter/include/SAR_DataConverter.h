@@ -320,7 +320,7 @@ class SAR_DataConverter {
         double Vel_angle_B_P = NAN;
         double D_perp = NAN;
         double D_perp_CR = NAN;
-        double D_perp_min = INFINITY;   
+        double D_perp_CR_min = INFINITY;   
 
         geometry_msgs::Vector3 Optical_Flow;
         geometry_msgs::Vector3 Optical_Flow_Cam;
@@ -582,7 +582,7 @@ inline void SAR_DataConverter::updateParams()
 
 inline void SAR_DataConverter::resetStateData()
 {
-    D_perp_min = INFINITY;
+    D_perp_CR_min = INFINITY;
 }
 
 inline void SAR_DataConverter::resetTriggerData()

@@ -5,7 +5,7 @@ PLANE_SETTINGS:
   Plane_Type: Landing_Surface
   Plane_Config: Checkerboard_L02
 ENV_SETTINGS:
-  Env_Name: SAR_Sim_DeepRL_Env
+  Env_Name: SAR_2D_DeepRL_Env
   V_mag_Limts:
   - 2.5
   - 2.5
@@ -19,8 +19,8 @@ ENV_SETTINGS:
   - -100
   - 0
 MODEL_SETTINGS:
-  Mass_Std: 0.0156226
-  Iyy_Std: 0.0005290000000000001
+  Mass_Std: 0.0
+  Iyy_Std: 0.0
   Ref_Mass: 0.78113
   Ref_Ixx: 0.00575
   Ref_Iyy: 0.00529
@@ -50,8 +50,8 @@ LEARNING_MODEL:
   Gamma: 0.999
   Learning_Rate: 0.002
 REWARD_SETTINGS:
-  W_Dist: 0.5
-  W_tau_cr: 0.5
+  W_Dist: 0.1
+  W_tau_cr: 0.1
   W_LT: 1.0
   W_GM: 1.0
   W_Phi_rel: 2.0

@@ -91,7 +91,16 @@ class RL_Training_Manager():
 
     def test_policy(self,V_mag=None,V_angle=None,Plane_Angle=None):
 
-        obs,_ = self.env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+        if V_mag != None:
+            self.env.V_mag_range = [V_mag,V_mag]
+
+        if V_angle != None:
+            self.env.V_angle_range = [V_angle,V_angle]
+
+        if Plane_Angle != None:
+            self.env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
+
+        obs,_ = self.env.reset()
         terminated = False
         truncated = False
  
@@ -454,7 +463,6 @@ class RewardCallback(BaseCallback):
         """
         self.env = self.training_env.envs[0].unwrapped
 
-
     def _on_step(self) -> bool:
 
         ## SAVE MODEL EVERY N TIMESTEPS
@@ -475,22 +483,22 @@ class RewardCallback(BaseCallback):
 
             ## TB LOGGING VALUES
             self.logger.record('Custom/K_ep',self.env.K_ep)
-            self.logger.record('Custom/Vel_mag',self.env.V_mag)
-            self.logger.record('Custom/Vel_angle',self.env.V_angle)
-            self.logger.record('Custom/Plane_Angle',self.env.Plane_Angle_deg)
             self.logger.record('Custom/Reward',episode_reward.item())
 
-            self.logger.record('Actions/a_Trg',self.env.action_trg[0])
-            self.logger.record('Actions/a_Rot',self.env.a_Rot_trg)
+            self.logger.record('z_Custom/Vel_mag',self.env.V_mag)
+            self.logger.record('z_Custom/Vel_angle',self.env.V_angle)
+            self.logger.record('z_Custom/Plane_Angle',self.env.Plane_Angle_deg)
+            self.logger.record('z_Custom/a_Trg',self.env.a_Trg_trg)
+            self.logger.record('z_Custom/a_Rot',self.env.a_Rot_trg)
+            self.logger.record('z_Custom/Flip_Flag',int(self.env.Trg_Flag))
+            self.logger.record('z_Custom/Impact_Flag_Ext',int(self.env.Impact_Flag_Ext))
             
-            self.logger.record('Rewards_Components/R_Dist',self.env.reward_vals[0])
-            self.logger.record('Rewards_Components/R_tau',self.env.reward_vals[1])
-            self.logger.record('Rewards_Components/R_LT',self.env.reward_vals[2])
-            self.logger.record('Rewards_Components/R_GM',self.env.reward_vals[3])
-            self.logger.record('Rewards_Components/R_phi',self.env.reward_vals[4])
-            self.logger.record('Rewards_Components/R_Legs',self.env.reward_vals[5])
-            self.logger.record('Rewards_Components/Impact_Flag',int(self.env.Trg_Flag))
-            self.logger.record('Rewards_Components/Impact_Flag',int(self.env.Impact_Flag_Ext))
+            self.logger.record('z_Rewards_Components/R_Dist',self.env.reward_vals[0])
+            self.logger.record('z_Rewards_Components/R_tau',self.env.reward_vals[1])
+            self.logger.record('z_Rewards_Components/R_LT',self.env.reward_vals[2])
+            self.logger.record('z_Rewards_Components/R_GM',self.env.reward_vals[3])
+            self.logger.record('z_Rewards_Components/R_phi',self.env.reward_vals[4])
+            self.logger.record('z_Rewards_Components/R_Legs',self.env.reward_vals[5])
 
         return True
     
@@ -528,22 +536,22 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [2.0, 4.0],
-        "V_angle_range": [30,90],
+        "V_mag_range": [1.0, 4.0],
+        "V_angle_range": [5,90],
         "Plane_Angle_range": [0, 0],
-        "Render": True,
+        "Render": False,
         "GZ_Timeout": False,
     }
 
 
-    log_name = "DeepRL_Policy_03-08--17:35:23"
-    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    # log_name = "DeepRL_Policy_03-08--17:35:23"
+    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.create_model(net_arch=[14,14,14])
-    # RL_Manager.train_model()
-    RL_Manager.load_model(model_dir,t_step=166000)
-    RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[30,90,7],V_mag_range=[1.0,4.0,7],n=1)
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager.create_model(net_arch=[14,14,14])
+    RL_Manager.train_model()
+    # RL_Manager.load_model(model_dir,t_step=166000)
+    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[30,90,7],V_mag_range=[1.0,4.0,7],n=1)
     # RL_Manager.collect_landing_performance(
     #     fileName="PolicyPerformance_Data.csv",
     #     V_mag_step=0.5,

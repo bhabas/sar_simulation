@@ -61,7 +61,7 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
         }
         self.W_max = sum(self.reward_weights.values())
 
-        self.D_perp_min = np.inf
+        self.D_perp_CR_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
@@ -104,7 +104,7 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
         self.Done = False
         self.reward = 0
 
-        self.D_perp_min = np.inf
+        self.D_perp_CR_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
@@ -435,7 +435,7 @@ class SAR_ParamOpt_Sim_SS(SAR_Sim_Interface):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius*0.8)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,self.Collision_Radius*0.8)
         else:
             R_dist = 0
 

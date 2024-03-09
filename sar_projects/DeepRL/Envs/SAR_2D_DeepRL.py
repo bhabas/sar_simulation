@@ -52,6 +52,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
+        self.Initial_Step = False
         self.K_ep = 0
         self.Pol_Trg_Threshold = 0.5
         self.Done = False
@@ -68,7 +69,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.W_max = sum(self.reward_weights.values())
 
         self.D_perp_CR_min = np.inf
-        self.D_perp_min = np.inf
+        self.D_perp_CR_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
 
@@ -84,31 +85,17 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-    def setTestingConditions(self,V_mag=None,V_angle=None,Plane_Angle=None):
+    
 
-        ## SET PLANE POSE
-        if Plane_Angle == None:
+    def reset(self,seed=None,options=None):
 
-            Plane_Angle_Low = self.Plane_Angle_range[0]
-            Plane_Angle_High = self.Plane_Angle_range[1]
-            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-            self._setPlanePose(self.r_P_O,Plane_Angle)
-
-        else:
-            self._setPlanePose(self.r_P_O,Plane_Angle)
-
-        ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if V_mag == None or V_angle == None:
-            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
-
-        else:
-            V_mag = V_mag       # Flight velocity
-            V_angle = V_angle   # Flight angle  
-
-        self.V_mag = V_mag
-        self.V_angle = V_angle
-
-    def reset(self,seed=None,options=None,V_mag=None,V_angle=None,Plane_Angle=None):
+        self.start_time_real = time.time()
+        self.resetPose()
+        self.Initial_Step = False
+       
+        return self._getObs(), {}
+    
+    def _resetParams(self):
 
         ######################
         #    GENERAL CONFIGS
@@ -118,16 +105,19 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.K_ep += 1
         self.Done = False
         self.reward = 0
+        self.reward_vals = np.array([0,0,0,0,0,0])
 
         self.D_perp_CR_min = np.inf
-        self.D_perp_min = np.inf
+        self.D_perp_CR_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
 
         self.obs_trg = np.full(self.obs_trg.shape[0],np.nan)
         self.action_trg = np.full(self.action_trg.shape[0],np.nan)
 
-        self.start_time_real = time.time()
+        self.a_Trg_trg = np.nan
+        self.a_Rot_trg = np.nan
+
 
         ##########   2D ENV CONFIGS  ##########
         #
@@ -151,14 +141,18 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         #
         #######################################
 
-        self.resetPose()
-        self.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-        self._initialStep()
+    def _setTestingConditions(self):
 
-        # UPDATE RENDER
-        self.render()
-       
-        return self._getObs(), {}
+        ## SAMPLE SET PLANE POSE
+        Plane_Angle_Low = self.Plane_Angle_range[0]
+        Plane_Angle_High = self.Plane_Angle_range[1]
+        Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+        self._setPlanePose(self.r_P_O,Plane_Angle)
+
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
+        V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
+        self.V_mag = V_mag
+        self.V_angle = V_angle
     
     def _initialStep(self):
 
@@ -200,7 +194,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
         self.t_trg_max = self.Tau_Body_start*3.0 # [s]
 
-
     def step(self, action):
 
         # 1. TAKE ACTION
@@ -208,6 +201,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # 3. CALC REWARD
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
+
+        if self.Initial_Step == False:
+            self._resetParams()
+            self._setTestingConditions()
+            self._initialStep()
+            self.Initial_Step = True
 
         a_Trg = action[0]
         a_Rot = self.scaleValue(action[1],original_range=[-1,1], target_range=self.Ang_Acc_range)
@@ -289,6 +288,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             self.D_perp_trg = self.D_perp
             self.D_perp_CR_trg = self.D_perp_CR
 
+            self.a_Trg_trg = a_Trg
             self.a_Rot_trg = a_Rot
 
             r_B_O,Phi_B_O,V_B_O,dPhi = self._getState()
@@ -620,9 +620,16 @@ if __name__ == '__main__':
         V_angle = 60
         Plane_Angle = 0
 
-        env.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-        obs,_ = env.reset()
+        if V_mag != None:
+            env.V_mag_range = [V_mag,V_mag]
 
+        if V_angle != None:
+            env.V_angle_range = [V_angle,V_angle]
+
+        if Plane_Angle != None:
+            env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
+
+        obs,_ = env.reset()
 
         Done = False
         while not Done:
