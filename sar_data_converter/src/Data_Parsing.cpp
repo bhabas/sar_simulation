@@ -59,7 +59,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     D_perp = ctrl_msg.D_perp;
     D_perp_CR = ctrl_msg.D_perp_CR;
 
-    if (D_perp < D_perp_CR_min)
+    if (D_perp_CR < D_perp_CR_min)
     {
         D_perp_CR_min = D_perp_CR;
     }

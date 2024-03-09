@@ -72,7 +72,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.W_max = sum(self.reward_weights.values())
 
         self.D_perp_CR_min = np.inf
-        self.D_perp_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
 
@@ -123,7 +122,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Done = False
 
         self.D_perp_CR_min = np.inf
-        self.D_perp_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
 

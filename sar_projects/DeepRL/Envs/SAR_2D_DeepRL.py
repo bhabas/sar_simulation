@@ -69,7 +69,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.W_max = sum(self.reward_weights.values())
 
         self.D_perp_CR_min = np.inf
-        self.D_perp_CR_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
 
@@ -107,7 +106,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
 
-        self.D_perp_CR_min = np.inf
         self.D_perp_CR_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
