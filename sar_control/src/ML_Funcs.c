@@ -136,8 +136,11 @@ float Leaky_Relu(float x) {
     }
 }
 
-// CLAMP WITH TANH AND SCALE TO APPROPRIATE RANGE
-float scale_Action(float action, float low, float high)
-{
-    return low + (0.5f * (action + 1.0f) * (high - low));
+float scaleValue(float x, float original_min, float original_max, float target_min, float target_max) {
+    // Scale x to [0, 1] in original range
+    float x_scaled = (x - original_min) / (original_max - original_min);
+    
+    // Scale [0, 1] to target range
+    float x_target = x_scaled * (target_max - target_min) + target_min;
+    return x_target;
 }

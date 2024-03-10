@@ -20,7 +20,8 @@ typedef struct{
 // NEURAL NETWORK FUNCTIONS
 void NN_init(NN* NN_Policy, char str[]);
 void NN_forward(nml_mat* X_input, nml_mat* y_output, NN* NN);
-float scale_Action(float action, float low, float high);
+float scaleValue(float x, float original_min, float original_max, float target_min, float target_max);
+
 
 // SAMPLING FUNCTIONS
 float uniform_sample();

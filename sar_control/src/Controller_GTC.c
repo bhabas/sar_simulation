@@ -247,8 +247,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     a_Rot = GaussianSample(Y_output->data[1][0],Y_output->data[3][0]);
 
                     // SCALE ACTIONS
-                    a_Trg = scale_Action(tanhf(a_Trg),-1.0f,1.0f);
-                    a_Rot = scale_Action(tanhf(a_Rot),a_Rot_bounds[0],a_Rot_bounds[1]);
+                    a_Trg = scaleValue(tanhf(a_Trg),-1.0f,1.0f,-1.0f,1.0f);
+                    a_Rot = scaleValue(tanhf(a_Rot),-1.0f,1.0f,a_Rot_bounds[0],a_Rot_bounds[1]);
 
                     // EXECUTE POLICY IF TRIGGERED
                     if(a_Trg >= 0.5f && onceFlag == false && abs(Tau_CR) <= 1.0f)
@@ -376,13 +376,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         if (CamActive_Flag == true)
         {
             // ONLY UPDATE WITH NEW OPTICAL FLOW DATA
-            isOFUpdated = updateOpticalFlowEst();
+            // isOFUpdated = updateOpticalFlowEst();
 
             // UPDATE POLICY VECTOR
-            X_input->data[0][0] = Tau_Cam;
-            X_input->data[1][0] = Theta_x_Cam;
-            X_input->data[2][0] = D_perp; 
-            X_input->data[3][0] = Plane_Angle_deg; 
+            // X_input->data[0][0] = Tau_Cam;
+            // X_input->data[1][0] = Theta_x_Cam;
+            // X_input->data[2][0] = D_perp; 
+            // X_input->data[3][0] = Plane_Angle_deg; 
         }
         else
         {
@@ -390,10 +390,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             isOFUpdated = true;
 
             // UPDATE POLICY VECTOR
-            X_input->data[0][0] = Tau_CR;
-            X_input->data[1][0] = Theta_x;
-            X_input->data[2][0] = D_perp; 
-            X_input->data[3][0] = Plane_Angle_deg;
+            X_input->data[0][0] = scaleValue(Tau_CR,-5.0f,5.0f,-1.0f,1.0f);
+            X_input->data[1][0] = scaleValue(Theta_x,-20.0f,20.0f,-1.0f,1.0f);
+            X_input->data[2][0] = scaleValue(D_perp_CR,-0.5f,2.0f,-1.0f,1.0f); 
+            X_input->data[3][0] = scaleValue(Plane_Angle_deg,0.0f,180.0f,-1.0f,1.0f);
         }
     }
     

@@ -693,13 +693,15 @@ if __name__ == '__main__':
     }
 
 
-    # log_name = "DeepRL_Policy_03-09--13:08:24"
-    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    log_name = "DeepRL_Policy_03-09--11:39:41"
+    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.create_model(net_arch=[14,14,14])
-    RL_Manager.train_model()
-    # RL_Manager.load_model(model_dir,t_step=210e3)
+    # RL_Manager.create_model(net_arch=[14,14,14])
+    # RL_Manager.train_model()
+    RL_Manager.load_model(model_dir,t_step=150e3)
+    RL_Manager.save_NN_to_C_header()
+
     # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[10,170,17],V_mag_range=[2.5,2.5,1],n=4)
     # RL_Manager.collect_landing_performance(
     #     fileName="PolicyPerformance_Data.csv",

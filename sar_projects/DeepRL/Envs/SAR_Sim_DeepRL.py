@@ -56,6 +56,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
+        self.Initial_Step = False
         self.K_ep = 0
         self.Pol_Trg_Threshold = 0.5
         self.Done = False
@@ -87,31 +88,15 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-    def setTestingConditions(self,V_mag=None,V_angle=None,Plane_Angle=None):
+    def reset(self,seed=None,options=None):
 
-        ## SET PLANE POSE
-        if Plane_Angle == None:
-
-            Plane_Angle_Low = self.Plane_Angle_range[0]
-            Plane_Angle_High = self.Plane_Angle_range[1]
-            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-            self._setPlanePose(self.r_P_O,Plane_Angle)
-
-        else:
-            self._setPlanePose(self.r_P_O,Plane_Angle)
-
-        ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if V_mag == None or V_angle == None:
-            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
-
-        else:
-            V_mag = V_mag       # Flight velocity
-            V_angle = V_angle   # Flight angle  
-
-        self.V_mag = V_mag
-        self.V_angle = V_angle
-
-    def reset(self,seed=None,options=None,V_mag=None,V_angle=None,Plane_Angle=None):
+        self.start_time_real = time.time()
+        self.resetPose()
+        self.Initial_Step = False
+       
+        return self._getObs(), {}
+    
+    def _resetParams(self):
 
         ######################
         #    GENERAL CONFIGS
@@ -120,21 +105,31 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## RESET LEARNING/REWARD CONDITIONS
         self.K_ep += 1
         self.Done = False
+        self.reward = 0
+        self.reward_vals = np.array([0,0,0,0,0,0])
 
         self.D_perp_CR_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
 
-        self.obs_trg = np.full(self.observation_space.shape,np.nan,dtype=np.float32) # Obs values at triggering
-        self.action_trg = np.full(self.action_space.shape,np.nan,dtype=np.float32) # Action values at triggering
+        self.obs_trg = np.full(self.obs_trg.shape[0],np.nan)
+        self.action_trg = np.full(self.action_trg.shape[0],np.nan)
 
-        self.start_time_real = time.time()
+        self.a_Trg_trg = np.nan
+        self.a_Rot_trg = np.nan
 
-        self.resetPose()
-        self.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-        self._initialStep()
-        
-        return self._getObs(), {}
+    def _setTestingConditions(self):
+
+        ## SAMPLE SET PLANE POSE
+        Plane_Angle_Low = self.Plane_Angle_range[0]
+        Plane_Angle_High = self.Plane_Angle_range[1]
+        Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+        self._setPlanePose(self.r_P_O,Plane_Angle)
+
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
+        V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
+        self.V_mag = V_mag
+        self.V_angle = V_angle
     
     def _initialStep(self):
 
@@ -187,6 +182,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # 3. CALC REWARD
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
+
+        if self.Initial_Step == False:
+            self._resetParams()
+            self._setTestingConditions()
+            self._initialStep()
+            self.Initial_Step = True
 
         ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         if self._getTick()%10 != 0:
