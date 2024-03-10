@@ -248,8 +248,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self._setModelState(pos=[0,0,-0.5])
 
     def Sim_VelTraj(self,pos,vel): 
-        self._setState(pos,0*DEG2RAD,vel,0)
-        
+        self._setState(pos,0*DEG2RAD,vel,0)  
 
     def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
@@ -260,29 +259,30 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.Ref_Mass = Mass
         self.Ref_Iyy = Inertia[1]
 
-
-
     def _setPlanePose(self,Pos,Plane_Angle):
         self.Plane_Pos = Pos
         self.Plane_Angle_deg = Plane_Angle
         self.Plane_Angle_rad = np.radians(Plane_Angle)
 
-
     def _iterStep(self,n_steps=10,a_Rot=0):
 
         for _ in range(n_steps):
 
+            ## FLIGHT STAGE
             if self.Trg_Flag == False and self.Impact_Flag_Ext == False:
                 self._iterStep_Flight()
                 self._checkImpact()
             
+            ## IMPACT BEFORE ROTATION
             elif self.Trg_Flag == False and self.Impact_Flag_Ext == True:
                 self.Done = True
                 
+            ## ROTATION STAGE
             elif self.Trg_Flag == True and self.Impact_Flag_Ext == False:
                 self._iterStep_Rot(a_Rot)
                 self._checkImpact()
 
+            ## IMPACT AFTER ROTATION
             elif self.Trg_Flag == True and self.Impact_Flag_Ext == True:
 
                 if self.BodyContact_Flag == True:
@@ -729,32 +729,46 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             return
 
         elif self.ForelegContact_Flag == True:
-        
-            if self.Beta <= -(90 + self.Gamma_eff)*DEG2RAD:
+
+            r_B_O,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._getPose()
+
+            ## CHECK FOR PROP CONTACT
+            for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
+                Prop_wrt_Plane = self.R_WP((Prop_Pos - self.r_P_O),self.Plane_Angle_rad)
+                if Prop_wrt_Plane[2] >= 0:
+                    self.BodyContact_Flag = True
+                    self.Pad_Connections = 2
+                    self.render()
+                    self.Done = True
+                    return
+
+            ## CHECK FOR HINDLEG CONTACT
+            Hindleg_wrt_Plane = self.R_WP((Leg2_Pos - self.r_P_O),self.Plane_Angle_rad)
+            if Hindleg_wrt_Plane[2] >= 0:
                 self.Pad_Connections = 4
                 self.render()
                 self.Done = True
                 return
-
-            elif self.Beta >= self.Beta_Min_deg*DEG2RAD:
-                self.BodyContact_Flag = True
-                self.Pad_Connections = 2
-                self.render()
-                self.Done = True
-                return
-
-            
+                        
         elif self.HindlegContact_Flag == True:
             
-            if self.Beta >= -(90 - self.Gamma_eff)*DEG2RAD:
-                self.Pad_Connections = 4
-                self.render()
-                self.Done = True
-                return
+            r_B_O,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._getPose()
 
-            elif self.Beta <= -(180 + self.Beta_Min_deg)*DEG2RAD:
-                self.BodyContact_Flag = True
-                self.Pad_Connections = 2
+            ## CHECK FOR PROP CONTACT
+            for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
+                Prop_wrt_Plane = self.R_WP((Prop_Pos - self.r_P_O),self.Plane_Angle_rad)
+                if Prop_wrt_Plane[2] >= 0:
+                    self.BodyContact_Flag = True
+                    self.Pad_Connections = 2
+                    self.render()
+                    self.Done = True
+                    return
+
+            ## CHECK FOR FORELEG CONTACT
+            Foreleg_wrt_Plane = self.R_WP((Leg1_Pos - self.r_P_O),self.Plane_Angle_rad)
+
+            if Foreleg_wrt_Plane[2] >= 0:
+                self.Pad_Connections = 4
                 self.render()
                 self.Done = True
                 return
@@ -768,12 +782,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         if self.ForelegContact_Flag:
 
             ## CALC BETA ANGLE
-            Beta_1_deg = Phi_B_O*RAD2DEG - self.Gamma_eff - self.Plane_Angle_deg + 90
+            Phi_B_P = Phi_B_O - self.Plane_Angle_rad
+            Beta_1_deg = Phi_B_P*RAD2DEG - self.Gamma_eff + 90
             Beta_1_rad = np.radians(Beta_1_deg)
-
-            # Beta_1 = np.arctan2(np.cos(self.Gamma_eff - phi + self.Plane_Angle_rad), \
-            #                     np.sin(self.Gamma_eff - phi + self.Plane_Angle_rad))
-            # Beta_1_deg = np.degrees(Beta_1)
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
             H_V_perp = self.Ref_Mass*self.L_eff*V_perp*np.cos(Beta_1_rad)

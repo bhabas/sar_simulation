@@ -615,7 +615,7 @@ if __name__ == '__main__':
     for ep in range(50):
 
         V_mag = 2.5
-        V_angle = 60
+        V_angle = 120
         Plane_Angle = 0
 
         if V_mag != None:
@@ -634,7 +634,9 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -0.50
+            action[1] = 1.0
+            if env.Tau_CR <= 0.255:
+                action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 
