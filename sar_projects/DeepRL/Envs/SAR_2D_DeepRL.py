@@ -46,7 +46,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
-        self.t_impact_max = 2.0     # [s]
+        self.t_impact_max = 1.0     # [s]
         self.t_ep_max = 5.0         # [s]
         self.t_real_max = 120       # [s]
 
@@ -190,7 +190,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
-        self.t_trg_max = self.Tau_Body_start*3.0 # [s]
+        self.t_trg_max = self.Tau_Body_start*2.5 # [s]
 
     def step(self, action):
 
@@ -347,6 +347,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 OnceFlag_Trg = True             # Turns on to make sure this only runs once per rollout
 
             if (self.Impact_Flag_Ext and OnceFlag_Impact == False):
+                self.start_time_trg = np.nan    # Nullify trigger timer
                 self.start_time_impact = t_now
                 OnceFlag_Impact = True
 
