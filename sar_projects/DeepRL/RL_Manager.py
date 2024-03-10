@@ -10,6 +10,7 @@ import csv
 import time 
 import rospy
 import rospkg
+import glob
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -37,12 +38,13 @@ class RL_Training_Manager():
         self.vec_env = make_vec_env(env, env_kwargs=env_kwargs)
         self.env = self.vec_env.envs[0].unwrapped
 
+        self.log_dir = log_dir
         self.log_name = log_name
-        self.log_dir = os.path.join(log_dir, log_name)
-        self.model_dir = os.path.join(log_dir, log_name, "Models")
+        self.log_subdir = os.path.join(self.log_dir, log_name)
+        self.model_subdir = os.path.join(self.log_dir, log_name, "Models")
 
-        os.makedirs(self.log_dir, exist_ok=True)
-        os.makedirs(self.model_dir, exist_ok=True)
+        os.makedirs(self.log_subdir, exist_ok=True)
+        os.makedirs(self.model_subdir, exist_ok=True)
 
     def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[12,12,12]):
 
@@ -55,7 +57,7 @@ class RL_Training_Manager():
             policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[256,256,256])),
             verbose=1,
             device='cpu',
-            tensorboard_log=self.log_dir
+            tensorboard_log=self.log_subdir
         )
 
         self.write_config_file()
@@ -65,27 +67,61 @@ class RL_Training_Manager():
         ## LOAD CONFIG FILE
         config_path = os.path.join(os.path.dirname(model_dir),"Config.yaml")
         self.load_config_file(config_path)
-        
+
+        # Prepare to search for both model and replay buffer with wildcard for optional suffix
+        model_pattern = f"model_{int(t_step)}_steps*.zip"  # Assuming the model files are saved with '.zip' extension
+        replay_buffer_pattern = f"replay_buffer_{int(t_step)}_steps*.pkl"  # Assuming replay buffers are saved with '.pkl'
+
+        # Use glob to find matching files
+        model_files = glob.glob(os.path.join(model_dir, model_pattern))
+        replay_buffer_files = glob.glob(os.path.join(model_dir, replay_buffer_pattern))
+
         ## LOAD MODEL AND REPLAY BUFFER
-        model_str = f"model_{int(t_step)}_steps"
-        model_path = os.path.join(model_dir, model_str)
+        if model_files:
+            model_path = model_files[0]  # Assuming there's only one match or taking the first match
+            print(f"Loading Model...")
+            self.model = SAC.load(
+                model_path,
+                env=self.vec_env,
+                device='cpu',
+                tensorboard_log=self.log_subdir,
+            )
+        else:
+            print("Model file not found!")
 
-        replay_buffer_str = f"replay_buffer_{int(t_step)}_steps"
-        replay_buffer_path = os.path.join(model_dir,replay_buffer_str)
+        
+        if replay_buffer_files:
+            replay_buffer_path = replay_buffer_files[0]  # Similarly, taking the first match
+            print(f"Loading Replay Buffer...")
+            self.model.load_replay_buffer(replay_buffer_path)
+        else:
+            print("Replay buffer file not found!")
 
-        print(f"Loading Model: {model_str}...")
-        self.model = SAC.load(
-            model_path,
-            env=self.vec_env,
-            device='cpu',
-            tensorboard_log=self.log_dir,
-        )
-        self.model.load_replay_buffer(replay_buffer_path)
-        print("Model Loaded Successfully!\n")
+
+        if model_files and replay_buffer_files:
+            print("Model and Replay Buffer Loaded Successfully!\n")
+        else:
+            print("Error loading files.")
+
 
     def train_model(self,save_freq=25e3,reset_timesteps=True,total_timesteps=2e6):
 
-        reward_callback = RewardCallback(model_dir=self.model_dir,save_freq=save_freq,)
+        if reset_timesteps == True:
+
+            current_datetime = datetime.now()
+            current_time = current_datetime.strftime("%m-%d--%H:%M:%S")
+            log_name = f"DeepRL_Policy_{current_time}"
+
+            self.log_name = log_name
+            self.log_subdir = os.path.join(self.log_dir, log_name)
+            self.model_subdir = os.path.join(self.log_dir, log_name, "Models")
+
+            os.makedirs(self.log_subdir, exist_ok=True)
+            os.makedirs(self.model_subdir, exist_ok=True)
+
+            self.model.tensorboard_log = self.log_subdir
+
+        reward_callback = RewardCallback(model_dir=self.model_subdir,save_freq=save_freq,)
 
         self.model.learn(
             total_timesteps=int(total_timesteps),
@@ -130,7 +166,7 @@ class RL_Training_Manager():
 
         if fileName is None:
             fileName = "PolicyPerformance_Data.csv"
-        filePath = os.path.join(self.log_dir,fileName)
+        filePath = os.path.join(self.log_subdir,fileName)
          
         ## GENERATE SWEEP ARRAYS
         V_mag_arr = np.arange(V_mag_range[0],V_mag_range[1] + V_mag_range[2],V_mag_range[2])
@@ -295,7 +331,7 @@ class RL_Training_Manager():
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
-        filePath = os.path.join(self.log_dir,fileName)
+        filePath = os.path.join(self.log_subdir,fileName)
 
         ## READ CSV FILE
         df = pd.read_csv(filePath,sep=',',comment="#")
@@ -360,7 +396,7 @@ class RL_Training_Manager():
     def save_NN_to_C_header(self):
 
         FileName = f"NN_Params_DeepRL.h"
-        f = open(os.path.join(self.log_dir,FileName),'a')
+        f = open(os.path.join(self.log_subdir,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
         f.write(f"// Model: {self.log_name}\n")
@@ -448,7 +484,7 @@ class RL_Training_Manager():
         f.close()
 
     def write_config_file(self):
-        config_path = os.path.join(self.log_dir,"Config.yaml")
+        config_path = os.path.join(self.log_subdir,"Config.yaml")
 
         General_Dict = dict(
 
@@ -504,12 +540,7 @@ class RL_Training_Manager():
         with open(config_path, 'r') as file:
             config_dict = yaml.safe_load(file)
 
-        # self.env.V_mag_range = config_dict['ENV_SETTINGS']['V_mag_Limts']
-        # self.env.V_angle_range = config_dict['ENV_SETTINGS']['V_angle_Limits']
-        # self.env.Plane_Angle_range = config_dict['ENV_SETTINGS']['Plane_Angle_Limits']
         self.env.setAngAcc_range(config_dict['ENV_SETTINGS']['Ang_Acc_Limits'])
-
-        self.env.reward_weights = config_dict['REWARD_SETTINGS']
 
     def policy_output(self,obs):
         
@@ -576,7 +607,7 @@ class RewardCallback(BaseCallback):
     def _on_step(self) -> bool:
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
-        if self.n_calls % self.check_freq == 0:
+        if self.num_timesteps % self.check_freq == 0:
 
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
             mean_reward = np.mean(self.episode_rewards)
@@ -598,7 +629,7 @@ class RewardCallback(BaseCallback):
                 self._keep_last_n_models()
 
         ## SAVE MODEL EVERY N TIMESTEPS
-        if self.n_calls % self.save_freq == 0:
+        if self.num_timesteps % self.save_freq == 0:
 
             ## SAVE NEWEST MODEL AND REPLAY BUFFER
             model_path = os.path.join(self.model_dir, f"model_{self.num_timesteps}_steps")
@@ -698,9 +729,9 @@ if __name__ == '__main__':
     
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
     # RL_Manager.create_model(net_arch=[14,14,14])
-    # RL_Manager.train_model()
-    RL_Manager.load_model(model_dir,t_step=150e3)
-    RL_Manager.save_NN_to_C_header()
+    RL_Manager.load_model(model_dir,t_step=150000)
+    RL_Manager.train_model(reset_timesteps=True)
+    # RL_Manager.save_NN_to_C_header()
 
     # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[10,170,17],V_mag_range=[2.5,2.5,1],n=4)
     # RL_Manager.collect_landing_performance(

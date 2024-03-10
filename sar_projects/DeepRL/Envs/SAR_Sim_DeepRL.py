@@ -28,7 +28,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         gym.Env.__init__(self)
 
         if self.Policy_Type != "DEEP_RL_SB3":
-            str_input = self.userInput(YELLOW,"Incorrect Policy Activated. Continue? (y/n): ",RESET,str)
+            str_input = self.userInput(YELLOW + "Incorrect Policy Activated. Continue? (y/n): " + RESET,str)
             if str_input.lower() == 'n':
                 raise Exception('[ERROR] Incorrect Policy Type Activated')
             else:
