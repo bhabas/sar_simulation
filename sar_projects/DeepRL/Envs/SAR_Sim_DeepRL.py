@@ -171,8 +171,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.start_time_ep = self._getTime()
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
-        self.t_flight_max = self.Tau_Body_start*2.0   # [s]
-        self.t_trg_max = self.Tau_Body_start*2.5 # [s]
+        self.t_flight_max = self.Tau_CR_start*2.0   # [s]
+        self.t_trg_max = self.Tau_CR_start*2.0 # [s]
 
     
     def step(self, action):
@@ -196,6 +196,9 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         a_Trg = action[0]
         a_Rot = self.scaleValue(action[1],original_range=[-1,1], target_range=self.Ang_Acc_range)
+
+        if self.Policy_Type != "DEEP_RL_SB3":
+            a_Trg = 1.0
         
         ########## POLICY PRE-TRIGGER ##########
         if a_Trg <= self.Pol_Trg_Threshold:

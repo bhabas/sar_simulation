@@ -160,7 +160,7 @@ class SAR_Base_Interface():
 
         ## CHECK THAT SERVICE IS AVAILABLE
         try:
-            rospy.wait_for_service(srv_addr, 1)
+            rospy.wait_for_service(srv_addr, timeout=1)
 
         except rospy.ROSException as e:
             rospy.logerr(f"[WARNING] Service '{srv_addr}' not available: {e}")

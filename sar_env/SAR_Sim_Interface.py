@@ -46,12 +46,12 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
 
         ## START MONITORING NODES
-        # self._start_monitoring_subprocesses()
+        self._start_monitoring_subprocesses()
         if GZ_Timeout == True:
             self._startMonitoringClockTopic()
 
         ## WAIT TILL TOPIC DATA STARTS COMING IN
-        rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData)
+        rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData,timeout=30)
         self.sendCmd("Arm_Quad",cmd_flag=1)
 
 
@@ -396,7 +396,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         else:
             service = '/gazebo/unpause_physics'
 
-        rospy.wait_for_service(service)
+        rospy.wait_for_service(service,timeout=1)
         try:
             service_call = rospy.ServiceProxy(service, Empty)
             service_call()
