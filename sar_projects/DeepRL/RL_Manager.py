@@ -399,7 +399,7 @@ class RL_Training_Manager():
         f = open(os.path.join(self.log_subdir,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
-        f.write(f"// Model: {self.log_name}\n")
+        f.write(f"// Model: {self.log_name} \t SAR_Type: {self.env.SAR_Type} \t SAR_Config: {self.env.SAR_Config}\n")
         f.write("static char NN_Params_DeepRL[] = {\n")
 
         num_hidden_layers = np.array([3]).reshape(-1,1)
@@ -715,25 +715,26 @@ if __name__ == '__main__':
 
     # Define the environment parameters
     env_kwargs = {
-        "Ang_Acc_range": [-100, 100],
+        "Ang_Acc_range": [-100, 0],
         "V_mag_range": [1.0, 4.0],
-        "V_angle_range": [5,175],
+        "V_angle_range": [30,90],
         "Plane_Angle_range": [0, 0],
         "Render": False,
         "GZ_Timeout": False,
     }
 
 
-    # log_name = "DeepRL_Policy_03-09--13:08:24"
+    # log_name = "DeepRL_Policy_03-11--13:42:28"
     # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.create_model(net_arch=[14,14,14])
-    # RL_Manager.load_model(model_dir,t_step=210e3)
+    RL_Manager.create_model(net_arch=[10,10,10])
+    # RL_Manager.load_model(model_dir,t_step=72500)
     RL_Manager.train_model()
     # RL_Manager.save_NN_to_C_header()
+    # RL_Manager.policy_output()
 
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[5,175,17],V_mag_range=[1.0,4.0,7],n=2)
+    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[30,30,1],V_mag_range=[1.0,2.0,3],n=2)
     # RL_Manager.collect_landing_performance(
     #     fileName="PolicyPerformance_Data.csv",
     #     V_mag_range=[1.0,4.0,0.5],

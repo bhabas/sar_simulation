@@ -211,7 +211,7 @@ SAR_Type:
         ## POSITION Z
         P_kp_z: 10.0
         P_kd_z: 5.0
-        P_ki_z: 0.0
+        P_ki_z: 4.0
         i_range_z: 0.1
 
         ## ORIENTATION XY
@@ -245,7 +245,7 @@ SAR_Type:
         Base_Iyy: 2.71e-3               # [kg*m^2]
         Base_Izz: 5.27e-3               # [kg*m^2] 
 
-        TrajAcc_Max: [0.5,0.5,1.5]    # Max Accel for trajectory generation [m/s^2]
+        TrajAcc_Max: [0.5,0.5,2.0]    # Max Accel for trajectory generation [m/s^2]
 
       Leg_Params:
 
