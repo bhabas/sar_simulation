@@ -527,10 +527,6 @@ inline void SAR_DataConverter::loadInitParams()
 
     // PLANE SETTINGS
     ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
-    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_deg);
-    ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos.x);
-    ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
-    ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
 
     
     // DATA SETTINGS
@@ -681,13 +677,7 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
             break;
 
         case 9: // UPDATE PLANE POSITION
-            SAR_DataConverter::setLandingSurfacePose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
-
-            Plane_Pos.x = req.cmd_vals.x;
-            Plane_Pos.y = req.cmd_vals.y;
-            Plane_Pos.z = req.cmd_vals.z;
-            Plane_Angle_deg = req.cmd_flag;
-            
+            SAR_DataConverter::setLandingSurfacePose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);            
             break;
 
         case 21:  // UPDATE PARAMS IN SAR_DC 
@@ -729,16 +719,16 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
     else
     {
         // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER (BROADCAST CMD VALUES AS ROS MESSAGE)
-        sar_msgs::CTRL_Cmd cmd_msg;
-        cmd_msg.cmd_type = req.cmd_type;
-        cmd_msg.cmd_vals = req.cmd_vals;
-        cmd_msg.cmd_flag = req.cmd_flag;
-        cmd_msg.cmd_rx = req.cmd_rx;
+        // sar_msgs::CTRL_Cmd cmd_msg;
+        // cmd_msg.cmd_type = req.cmd_type;
+        // cmd_msg.cmd_vals = req.cmd_vals;
+        // cmd_msg.cmd_flag = req.cmd_flag;
+        // cmd_msg.cmd_rx = req.cmd_rx;
 
-        for (int i = 0; i < 3; i++)
-        {
-            CMD_Output_Topic.publish(cmd_msg);
-        }
+        // for (int i = 0; i < 3; i++)
+        // {
+        //     CMD_Output_Topic.publish(cmd_msg);
+        // }
 
         return true;
     }

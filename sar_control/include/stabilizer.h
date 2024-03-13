@@ -373,6 +373,12 @@ void Controller::publishCtrlData()
     CtrlData_msg.Vel_mag_B_P = Vel_mag_B_P;
     CtrlData_msg.Vel_angle_B_P = Vel_angle_B_P;
 
+    // PLANE STATES
+    CtrlData_msg.Plane_Pos.x = r_P_O.x;
+    CtrlData_msg.Plane_Pos.y = r_P_O.y;
+    CtrlData_msg.Plane_Pos.z = r_P_O.z;
+    CtrlData_msg.Plane_Angle_deg = Plane_Angle_deg;
+
     // OPTICAL FLOW DATA
     CtrlData_msg.Optical_Flow.x = Theta_x;
     CtrlData_msg.Optical_Flow.y = Theta_y;
