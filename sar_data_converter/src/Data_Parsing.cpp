@@ -64,6 +64,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
         D_perp_CR_min = D_perp_CR;
     }
 
+    // LANDING SURFACE STATES
+    Plane_Pos = ctrl_msg.Plane_Pos;
+    Plane_Angle_deg = ctrl_msg.Plane_Angle_deg;
+
     // OPTICAL FLOW STATES
     Optical_Flow = ctrl_msg.Optical_Flow;
     Optical_Flow_Cam = ctrl_msg.Optical_Flow_Cam;
@@ -417,7 +421,7 @@ void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::C
 
 void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-        // LANDING SURFACE DISTANCE
+    // LANDING SURFACE DISTANCE
     float D_perp_arr[2];
     decompressXY(log_msg->values[0],D_perp_arr);
     D_perp_trg = D_perp_arr[0];
@@ -496,6 +500,10 @@ void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::Const
 
 void SAR_DataConverter::cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
+    Plane_Pos.x = log_msg->values[0];
+    Plane_Pos.y = log_msg->values[1];
+    Plane_Pos.z = log_msg->values[2];
+    Plane_Angle_deg = log_msg->values[3];
     CustomThrust_Flag = (bool)log_msg->values[1];
     CustomMotorCMD_Flag = (bool)log_msg->values[2];
 
