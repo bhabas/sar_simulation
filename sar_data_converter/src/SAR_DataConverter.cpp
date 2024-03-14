@@ -11,32 +11,6 @@ void SAR_DataConverter::MainInit()
 
 }
 
-void SAR_DataConverter::CrazyswarmPingLoop()
-{
-    int loopRate = 5;     // [Hz]
-    ros::Rate rate(loopRate);
-
-    while(ros::ok())
-    {
-        // CONTINUOUSLY PING CRAZYSWARM FOR EXPERIMENT SETUP
-        if(DATA_TYPE.compare("EXP") == 0)
-        {
-            sar_msgs::CTRL_Cmd cmd_msg;
-            cmd_msg.cmd_type = 99;
-            cmd_msg.cmd_vals.x = 0;
-            cmd_msg.cmd_vals.y = 0;
-            cmd_msg.cmd_vals.z = 0;
-            cmd_msg.cmd_flag = 0;
-            cmd_msg.cmd_rx = 1;
-
-            for (int i = 0; i < 3; i++)
-            {
-                CMD_Output_Topic.publish(cmd_msg);
-            }
-        }
-        rate.sleep();
-    }
-}
 
 void SAR_DataConverter::MainLoop()
 {

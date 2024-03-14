@@ -79,9 +79,8 @@ class SAR_DataConverter {
 
             // INITIALIZE CTRL COMMAND PIPELINE
             CMD_Input_Service = nh->advertiseService("/SAR_DC/CMD_Input",&SAR_DataConverter::CMD_SAR_DC_Callback,this); // CTRL COMMAND
-            CMD_Output_Service = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
-            CMD_Output_Topic = nh->advertise<sar_msgs::CTRL_Cmd>("/SAR_DC/CMD_Output_Topic",1);        // Msg publisher for Crazyswarm->CF->Controller
-
+            CMD_Output_Service_Sim = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
+            CMD_Output_Service_Exp = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/cf1/Cmd_ctrl");          // Service client for exp controller
 
             // INITIALIZE STATE DATA PUBLISHERS
             StateData_Pub = nh->advertise<sar_msgs::SAR_StateData>("/SAR_DC/StateData",1);
@@ -98,7 +97,6 @@ class SAR_DataConverter {
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
             ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
             Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
-            CrazyswarmPing_Thread = std::thread(&SAR_DataConverter::CrazyswarmPingLoop, this);
 
 
         }
@@ -107,7 +105,6 @@ class SAR_DataConverter {
         void MainLoop();
         void ConsoleLoop();
         void LoggingLoop();
-        void CrazyswarmPingLoop();
 
 
         // =======================
@@ -264,8 +261,8 @@ class SAR_DataConverter {
         // ===========================
         ros::ServiceServer CMD_Input_Service;
         ros::ServiceServer CMD_Service_Dashboard;
-        ros::ServiceClient CMD_Output_Service;
-        ros::Publisher CMD_Output_Topic;
+        ros::ServiceClient CMD_Output_Service_Sim;
+        ros::ServiceClient CMD_Output_Service_Exp;
 
         // ============================
         //     DATA PUBLISH OBJECTS
@@ -713,22 +710,15 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
     {
         sar_msgs::CTRL_Cmd_srv srv;
         srv.request = req;
-        CMD_Output_Service.call(srv);
-        return srv.response.srv_Success; // Return if service request successful (true/false)
+        CMD_Output_Service_Sim.call(srv);
+        return true;
     }
     else
     {
-        // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER (BROADCAST CMD VALUES AS ROS MESSAGE)
-        sar_msgs::CTRL_Cmd cmd_msg;
-        cmd_msg.cmd_type = req.cmd_type;
-        cmd_msg.cmd_vals = req.cmd_vals;
-        cmd_msg.cmd_flag = req.cmd_flag;
-        cmd_msg.cmd_rx = req.cmd_rx;
-
-        for (int i = 0; i < 3; i++)
-        {
-            CMD_Output_Topic.publish(cmd_msg);
-        }
+        // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER
+        sar_msgs::CTRL_Cmd_srv srv;
+        srv.request = req;
+        CMD_Output_Service_Exp.call(srv);
 
         return true;
     }
