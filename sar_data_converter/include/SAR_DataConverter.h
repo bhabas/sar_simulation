@@ -719,16 +719,16 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
     else
     {
         // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER (BROADCAST CMD VALUES AS ROS MESSAGE)
-        // sar_msgs::CTRL_Cmd cmd_msg;
-        // cmd_msg.cmd_type = req.cmd_type;
-        // cmd_msg.cmd_vals = req.cmd_vals;
-        // cmd_msg.cmd_flag = req.cmd_flag;
-        // cmd_msg.cmd_rx = req.cmd_rx;
+        sar_msgs::CTRL_Cmd cmd_msg;
+        cmd_msg.cmd_type = req.cmd_type;
+        cmd_msg.cmd_vals = req.cmd_vals;
+        cmd_msg.cmd_flag = req.cmd_flag;
+        cmd_msg.cmd_rx = req.cmd_rx;
 
-        // for (int i = 0; i < 3; i++)
-        // {
-        //     CMD_Output_Topic.publish(cmd_msg);
-        // }
+        for (int i = 0; i < 3; i++)
+        {
+            CMD_Output_Topic.publish(cmd_msg);
+        }
 
         return true;
     }
