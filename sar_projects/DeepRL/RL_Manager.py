@@ -104,7 +104,7 @@ class RL_Training_Manager():
             print("Error loading files.")
 
 
-    def train_model(self,save_freq=25e3,reset_timesteps=True,total_timesteps=2e6):
+    def train_model(self,save_freq=25e3,reset_timesteps=False,total_timesteps=200e3):
 
         if reset_timesteps == True:
 
@@ -151,11 +151,15 @@ class RL_Training_Manager():
 
         return obs,reward
     
-    def sweep_policy(self,Plane_Angle_range=[180,180,4],V_angle_range=[-45,-135,4],V_mag_range=[1.0,2.0,4],n=1):
+    def sweep_policy(self,Plane_Angle_range=[0,180,45],V_mag_range=[1.0,2.0,0.5],V_angle_range=[10,90,10],n=1):
+
+        Plane_Angle_arr = np.arange(Plane_Angle_range[0],Plane_Angle_range[1] + Plane_Angle_range[2],Plane_Angle_range[2])
+        V_mag_arr = np.arange(V_mag_range[0],V_mag_range[1] + V_mag_range[2],V_mag_range[2])
+        V_angle_arr = np.arange(V_angle_range[0],V_angle_range[1] + V_angle_range[2],V_angle_range[2])
         
-        for Plane_Angle in np.linspace(Plane_Angle_range[0],Plane_Angle_range[1],Plane_Angle_range[2]):
-            for V_mag in np.linspace(V_mag_range[0],V_mag_range[1],V_mag_range[2]):
-                for V_angle in np.linspace(V_angle_range[0],V_angle_range[1],V_angle_range[2]):
+        for Plane_Angle in Plane_Angle_arr:
+            for V_mag in V_mag_arr:
+                for V_angle in V_angle_arr:
                     for _ in range(n):
 
                         obs,reward = self.test_policy(V_mag,V_angle,Plane_Angle)
@@ -169,9 +173,9 @@ class RL_Training_Manager():
         filePath = os.path.join(self.log_subdir,fileName)
          
         ## GENERATE SWEEP ARRAYS
+        Plane_Angle_arr = np.arange(Plane_Angle_range[0],Plane_Angle_range[1] + Plane_Angle_range[2],Plane_Angle_range[2])
         V_mag_arr = np.arange(V_mag_range[0],V_mag_range[1] + V_mag_range[2],V_mag_range[2])
         V_angle_arr = np.arange(V_angle_range[0],V_angle_range[1] + V_angle_range[2],V_angle_range[2])
-        Plane_Angle_arr = np.arange(Plane_Angle_range[0],Plane_Angle_range[1] + Plane_Angle_range[2],Plane_Angle_range[2])
 
 
         def EMA(cur_val,prev_val,alpha = 0.15):            
@@ -325,9 +329,9 @@ class RL_Training_Manager():
 
                             TTC = np.round(t_delta_avg*(num_trials-idx)) # Time to completion
                             t_now = np.round(t_now)
-                            print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg, {Plane_Angle:.02f} deg)\t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t TTC: {str(timedelta(seconds=TTC))} \t Time Elapsed: {str(timedelta(seconds=t_now))}")
+                            print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg, {Plane_Angle:.02f} deg) Index: {idx}/{num_trials} \tPercent: {100*idx/num_trials:.2f}% \tTTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
 
-    def plot_landing_performance(self,fileName=None,saveFig=False):
+    def plot_landing_performance(self,PlaneAngle=0,fileName=None,saveFig=False):
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
@@ -340,13 +344,14 @@ class RL_Training_Manager():
         df = df[cols_to_keep]
         df.drop(["reward_vals","NN_Output_trg","a_Rot_scale"],axis=1,inplace=True)
 
-        af2 = df.groupby(["V_mag","V_angle","Plane_Angle"]).mean().round(3).reset_index()
+        df2 = df.groupby(["V_mag","V_angle","Plane_Angle"]).mean().round(3).reset_index()
+        df2.query(f"Plane_Angle == {PlaneAngle}",inplace=True)
         
         
         ## COLLECT DATA
-        R = af2.iloc[:]['V_mag']
-        Theta = af2.iloc[:]['V_angle']
-        C = af2.iloc[:]['4_Leg_NBC']
+        R = df2.iloc[:]['V_mag']
+        Theta = df2.iloc[:]['V_angle']-PlaneAngle
+        C = df2.iloc[:]['4_Leg_NBC']
 
 
 
@@ -370,8 +375,8 @@ class RL_Training_Manager():
         # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
         # ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
-        ax.set_thetamin(0)
-        ax.set_thetamax(180)
+        ax.set_thetamin(0-PlaneAngle)
+        ax.set_thetamax(180-PlaneAngle)
 
         ax.set_rticks([0.0,1.0,2.0,3.0,4.0,4.5])
         ax.set_rmin(0)
@@ -399,7 +404,7 @@ class RL_Training_Manager():
         f = open(os.path.join(self.log_subdir,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
-        f.write(f"// Model: {self.log_name}\n")
+        f.write(f"// Model: {self.log_name} \t SAR_Type: {self.env.SAR_Type} \t SAR_Config: {self.env.SAR_Config}\n")
         f.write("static char NN_Params_DeepRL[] = {\n")
 
         num_hidden_layers = np.array([3]).reshape(-1,1)
@@ -715,31 +720,32 @@ if __name__ == '__main__':
 
     # Define the environment parameters
     env_kwargs = {
-        "Ang_Acc_range": [-100, 100],
+        "Ang_Acc_range": [-100, 0],
         "V_mag_range": [1.0, 4.0],
         "V_angle_range": [5,175],
-        "Plane_Angle_range": [0, 0],
-        "Render": False,
+        "Plane_Angle_range": [0, 180],
+        "Render": True,
         "GZ_Timeout": False,
     }
 
 
-    # log_name = "DeepRL_Policy_03-09--13:08:24"
-    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    log_name = "DeepRL_Policy_03-11--20:47:39"
+    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.create_model(net_arch=[14,14,14])
-    # RL_Manager.load_model(model_dir,t_step=210e3)
-    RL_Manager.train_model()
+    # RL_Manager.create_model(net_arch=[10,10,10])
+    # RL_Manager.load_model(model_dir,t_step=169_000)
+    # RL_Manager.train_model()
     # RL_Manager.save_NN_to_C_header()
+    # RL_Manager.policy_output()
 
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,1],V_angle_range=[5,175,17],V_mag_range=[1.0,4.0,7],n=2)
+    # RL_Manager.sweep_policy(Plane_Angle_range=[0,180,45],V_mag_range=[1.0,4.0,0.5],V_angle_range=[10,170,10],n=1)
     # RL_Manager.collect_landing_performance(
     #     fileName="PolicyPerformance_Data.csv",
+    #     Plane_Angle_range=[0,180,45],
     #     V_mag_range=[1.0,4.0,0.5],
-    #     V_angle_range=[5,175,5],
-    #     Plane_Angle_range=[0,0,1],
+    #     V_angle_range=[10,170,5],
     #     n_trials=5
     #     )
-    # RL_Manager.plot_landing_performance()
+    RL_Manager.plot_landing_performance(PlaneAngle=180)
     

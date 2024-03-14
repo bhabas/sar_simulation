@@ -160,7 +160,7 @@ class SAR_Base_Interface():
 
         ## CHECK THAT SERVICE IS AVAILABLE
         try:
-            rospy.wait_for_service(srv_addr, 1)
+            rospy.wait_for_service(srv_addr, timeout=1)
 
         except rospy.ROSException as e:
             rospy.logerr(f"[WARNING] Service '{srv_addr}' not available: {e}")
@@ -392,12 +392,12 @@ class SAR_Base_Interface():
             self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[1],r_B_O[1],self.TrajAcc_Max[1]],cmd_flag=1)
             self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[2],r_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
         else:
-            Exception("Start position not approved")
+            raise Exception("Start position not approved")
         
         ## POLICY SENDING
         cmd_vals = self.userInput("Set desired (Tau,AngAcc) Policy: ",float)
-        cmd_vals.append(0) # Append extra value to match framework
-        self.sendCmd('Policy',cmd_vals,cmd_flag=1)
+        cmd_vals.append(-100) # Append extra value to match framework
+        self.sendCmd('Policy',cmd_vals,cmd_flag=0)
 
         ## APPROVE FLIGHT
         str_input = self.userInput("Approve flight (y/n): ",str)
@@ -406,7 +406,7 @@ class SAR_Base_Interface():
             self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[0],V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
             self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[2],V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
         else:
-            Exception("Flight not approved")
+            raise Exception("Flight not approved")
 
     ## ========== SYSTEM FUNCTIONS ========== 
             

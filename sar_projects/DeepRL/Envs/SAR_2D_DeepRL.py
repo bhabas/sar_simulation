@@ -292,11 +292,11 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             r_B_O,Phi_B_O,V_B_O,dPhi = self._getState()
             
             self.Vel_mag_B_O_trg = np.linalg.norm(V_B_O)
-            self.Vel_angle_B_O_trg = np.degrees(np.arctan2(V_B_O[0],V_B_O[2]))
+            self.Vel_angle_B_O_trg = np.degrees(np.arctan2(V_B_O[2],V_B_O[0]))
 
             V_tx,_,V_perp = self.R_WP(V_B_O,self.Plane_Angle_rad)
             self.Vel_mag_B_P_trg = np.linalg.norm([V_tx,V_perp])
-            self.Vel_angle_B_P_trg = np.degrees(np.arctan2(V_tx,V_perp))
+            self.Vel_angle_B_P_trg = np.degrees(np.arctan2(V_perp,V_tx))
 
             self.State_trg = self._getState()
             ## ***
