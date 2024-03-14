@@ -75,7 +75,7 @@ void controllerOutOfTreeReset() {
     kd_xf = 1.0f;
 
     // RESET SETPOINTS TO HOME POSITION
-    x_d = mkvec(0.0f,0.0f,0.4f);
+    x_d = mkvec(0.0f,0.0f,0.5f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
     b1_d = mkvec(1.0f,0.0f,0.0f);
@@ -88,6 +88,9 @@ void controllerOutOfTreeReset() {
 
     // RESET TRAJECTORY FLAGS
     Traj_Type = NONE;
+    resetTraj_Vals(0);
+    resetTraj_Vals(1);
+    resetTraj_Vals(2);
 
     // RESET POLICY FLAGS
     Policy_Armed_Flag = false;
@@ -305,12 +308,14 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         updateRotationMatrices();
     }
 
-    // if (RATE_DO_EXECUTE(100, tick))
+    // if (RATE_DO_EXECUTE(1, tick))
     // {
+    //     // PASS OBSERVATION THROUGH POLICY NN
     //     NN_forward(X_input,Y_output,&NN_DeepRL);
 
-    //     // a_Trg = Y_output->data[0][0]+0.00001f*tick;
-    //     // nml_mat_print_CF(Y_output);
+    //     consolePrintf("X_input: %.5f %.5f %.5f %.5f\n",X_input->data[0][0],X_input->data[1][0],X_input->data[2][0],X_input->data[3][0]);
+    //     consolePrintf("Y_output: %.5f %.5f %.5f %.5f\n\n",Y_output->data[0][0],Y_output->data[1][0],Y_output->data[2][0],Y_output->data[3][0]);
+
     // }
 
     
@@ -414,7 +419,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 const_velocity_Traj();
                 break;
 
-            case CONST_VEL_GZ:
+            case GZ_CONST_VEL:
                 const_velocity_GZ_Traj();
                 break;
         }
@@ -674,6 +679,10 @@ LOG_ADD(LOG_UINT8, Armed_Flag,      &Armed_Flag)
 LOG_ADD(LOG_UINT8, Policy_Armed,    &Policy_Armed_Flag)
 LOG_ADD(LOG_UINT8, CustomThrust,    &CustomThrust_Flag)
 LOG_ADD(LOG_UINT8, CustomM_CMD,     &CustomMotorCMD_Flag)
+LOG_ADD(LOG_FLOAT, r_PO_x,          &r_P_O.x)
+LOG_ADD(LOG_FLOAT, r_PO_y,          &r_P_O.y)
+LOG_ADD(LOG_FLOAT, r_PO_z,          &r_P_O.z)
 LOG_ADD(LOG_FLOAT, Plane_Angle,     &Plane_Angle_deg)
+LOG_ADD(LOG_UINT16,CMD_ID,          &CMD_ID)
 LOG_GROUP_STOP(Misc)
 #endif

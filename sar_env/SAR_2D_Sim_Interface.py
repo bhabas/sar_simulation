@@ -244,13 +244,13 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         return obs
     
-    def resetPose(self,z_0=0.4):
+    def resetPose(self,z_0=0.5):
         self._setModelState(pos=[0,0,-0.5])
 
     def Sim_VelTraj(self,pos,vel): 
         self._setState(pos,0*DEG2RAD,vel,0)  
 
-    def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
+    def _setModelState(self,pos=[0,0,0.5],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
         self._setState(np.array(pos),0,np.array(vel),0)
 

@@ -228,6 +228,7 @@ bool AngAccel_Flag = false;
 bool Armed_Flag = false;
 bool CustomThrust_Flag = false;
 bool CustomMotorCMD_Flag = false;
+uint16_t CMD_ID = 0;
 
 
 // SENSOR FLAGS
@@ -259,8 +260,6 @@ float a_Rot_bounds[2] = {-1.0f,1.0f};
 // ===============================
 
 NN NN_DeepRL;
-float Policy_Rot_threshold = 1.50f;
-
 
 
 // ==========================================
@@ -330,7 +329,8 @@ struct mat33 R_PW;                      // Rotation matrix from plane to world
 
 void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 {
-    // consolePrintf("Cmd Type: %d | Cmd Val1: %.3f | Cmd Val2: %.3f | Cmd Val3: %.3f | Cmd Flag: %.3f\n",CTRL_Cmd->cmd_type,CTRL_Cmd->cmd_val1,CTRL_Cmd->cmd_val2,CTRL_Cmd->cmd_val3,CTRL_Cmd->cmd_flag);
+    // consolePrintf("Cmd ID: %d | Cmd Type: %d | Cmd Val1: %.3f | Cmd Val2: %.3f | Cmd Val3: %.3f | Cmd Flag: %.3f\n",CTRL_Cmd->cmd_ID,CTRL_Cmd->cmd_type,CTRL_Cmd->cmd_val1,CTRL_Cmd->cmd_val2,CTRL_Cmd->cmd_val3,CTRL_Cmd->cmd_flag);
+    CMD_ID = CTRL_Cmd->cmd_ID;
     switch(CTRL_Cmd->cmd_type){
         case 0: // Reset
             controllerOutOfTreeReset();
@@ -395,7 +395,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             
             break;
 
-        case 10: // Point-to-Point Trajectory
+        case 10: // Upload Point-to-Point Trajectory Values
 
             Traj_Type = P2P;
             axis = (axis_direction)CTRL_Cmd->cmd_flag;
@@ -404,77 +404,35 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
                 case x_axis:
 
-                    Traj_Active[0] = true;
-                    s_0_t[0] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_0_t[0] = Pos_B_O.x;           // Starting position [m]
                     s_f_t[0] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[0] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
-                    t_traj[0] = 0.0f; // Reset timer
+                    t_traj[0] = 0.0f;               // Reset timer
 
                     break;
 
                 case y_axis:
 
-                    Traj_Active[1] = true;
-                    s_0_t[1] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_0_t[1] = Pos_B_O.y;           // Starting position [m]
                     s_f_t[1] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[1] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
-                    t_traj[1] = 0.0f; // Reset timer
+                    t_traj[1] = 0.0f;               // Reset timer
 
                     break;
 
                 case z_axis:
 
-                    Traj_Active[2] = true;
-                    s_0_t[2] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_0_t[2] = Pos_B_O.z;           // Starting position [m]
                     s_f_t[2] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[2] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
-                    t_traj[2] = 0.0f; // Reset timer
+                    t_traj[2] = 0.0f;               // Reset timer
 
                     break;
             }
 
             break;
 
-
-        case 91: // Gazebo Velocity Trajectory (Instantaneous Acceleration)
-
-            Traj_Type = CONST_VEL_GZ;
-            axis = (axis_direction)CTRL_Cmd->cmd_flag;
-
-            switch(axis){
-
-                case x_axis:
-
-                    s_0_t[0] = CTRL_Cmd->cmd_val1;   // Starting position [m]
-                    v_t[0] = CTRL_Cmd->cmd_val2;     // Desired velocity [m/s]
-                    a_t[0] = 0.0f;                  // Acceleration [m/s^2]
-
-                    t_traj[0] = 0.0f; // Reset timer
-                    break;
-
-                case y_axis:
-
-                    s_0_t[1] = CTRL_Cmd->cmd_val1;
-                    v_t[1] = CTRL_Cmd->cmd_val2;
-                    a_t[1] = 0.0f;
-
-                    t_traj[1] = 0.0f;
-                    break;
-
-                case z_axis:
-
-                    s_0_t[2] = CTRL_Cmd->cmd_val1;
-                    v_t[2] = CTRL_Cmd->cmd_val2;
-                    a_t[2] = 0.0f;
-
-                    t_traj[2] = 0.0f;
-                    break;
-                    
-            }
-
-            break;
-
-        case 11: // Constant Velocity Trajectory
+        case 11: // Upload Constant Velocity Trajectory Values
 
             Traj_Type = CONST_VEL;
             axis = (axis_direction)CTRL_Cmd->cmd_flag;
@@ -483,34 +441,87 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
                 case x_axis:
 
-                    s_0_t[0] = CTRL_Cmd->cmd_val1;               // Starting position [m]
-                    v_t[0] = CTRL_Cmd->cmd_val2;                 // Desired velocity [m/s]
-                    a_t[0] = CTRL_Cmd->cmd_val3;                 // Acceleration [m/s^2]
+                    s_0_t[0] = Pos_B_O.x;           // Starting position [m]
+                    v_t[0] = CTRL_Cmd->cmd_val1;    // Desired velocity [m/s]
+                    a_t[0] = CTRL_Cmd->cmd_val2;    // Acceleration [m/s^2]
+                    j_t[0] = CTRL_Cmd->cmd_val3;    // Jerk [m/s^3]
+                    t_traj[0] = 0.0f;               // Reset timer
+                    T[0] = 0.0f;                    // Reset completion time
 
-                    t_traj[0] = 0.0f; // Reset timer
                     break;
 
                 case y_axis:
 
-                    s_0_t[1] = CTRL_Cmd->cmd_val1;
-                    v_t[1] = CTRL_Cmd->cmd_val2;
-                    a_t[1] = CTRL_Cmd->cmd_val3;
+                    s_0_t[1] = Pos_B_O.y;
+                    v_t[1] = CTRL_Cmd->cmd_val1;    
+                    a_t[1] = CTRL_Cmd->cmd_val2;    
+                    j_t[1] = CTRL_Cmd->cmd_val3;    
+                    t_traj[1] = 0.0f;
+                    T[1] = 0.0f;
 
+                    break;
+
+                case z_axis:
+
+                    s_0_t[2] = Pos_B_O.z;
+                    v_t[2] = CTRL_Cmd->cmd_val1;    
+                    a_t[2] = CTRL_Cmd->cmd_val2;    
+                    j_t[2] = CTRL_Cmd->cmd_val3;    
+                    t_traj[2] = 0.0f;
+                    T[2] = 0.0f;
+                    
+                    break;
+                    
+            }
+
+            break;
+
+        case 19: // ACTIVATE TRAJECTORY
+
+            Traj_Active[0] = (bool)CTRL_Cmd->cmd_val1;
+            Traj_Active[1] = (bool)CTRL_Cmd->cmd_val2;
+            Traj_Active[2] = (bool)CTRL_Cmd->cmd_val3;
+
+            break;
+    
+
+        case 92: // Upload Gazebo Velocity Trajectory Values (Instantaneous Acceleration)
+
+            Traj_Type = GZ_CONST_VEL;
+            axis = (axis_direction)CTRL_Cmd->cmd_flag;
+            printf("Traj_Type: %d | axis: %d\n",Traj_Type,axis);
+
+            switch(axis){
+
+                case x_axis:
+
+                    s_0_t[0] = Pos_B_O.x;           // Starting position [m]
+                    v_t[0] = CTRL_Cmd->cmd_val2;    // Desired velocity [m/s]
+                    a_t[0] = 0.0f;                  // Acceleration [m/s^2]
+                    t_traj[0] = 0.0f;               // Reset timer
+                    break;
+
+                case y_axis:
+
+                    s_0_t[1] = Pos_B_O.y;
+                    v_t[1] = CTRL_Cmd->cmd_val2;
+                    a_t[1] = 0.0f;
                     t_traj[1] = 0.0f;
                     break;
 
                 case z_axis:
 
-                    s_0_t[2] = CTRL_Cmd->cmd_val1;
+                    s_0_t[2] = Pos_B_O.z;
                     v_t[2] = CTRL_Cmd->cmd_val2;
-                    a_t[2] = CTRL_Cmd->cmd_val3;
-
+                    a_t[2] = 0.0f;
                     t_traj[2] = 0.0f;
                     break;
                     
             }
 
             break;
+
+        
 
 
         case 20: // Tumble-Detection
@@ -541,11 +552,8 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
             break;
 
-        case 99: // Crazyswarm Check
-            
-            #ifdef CONFIG_SAR_EXP
-            PrevCrazyswarmTick = xTaskGetTickCount(); 
-            #endif
+        case 99:           
+
             break;
 
     }

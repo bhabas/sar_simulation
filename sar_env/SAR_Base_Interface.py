@@ -434,15 +434,16 @@ class SAR_Base_Interface():
 
         print("Reset ROS Parameters\n")
         os.system("roslaunch sar_launch Load_Params.launch")
+        self.loadParams()
         self.sendCmd("Load_Params")
 
     def handle_Start_Logging(self):
 
-        self.startLogging(self.Log_Name)
+        self.startLogging()
 
     def handle_Cap_Logging(self):
 
-        self.capLogging(self.Log_Name)
+        self.capLogging()
 
     
     ## ========== MOTOR FUNCTIONS ==========
@@ -464,7 +465,7 @@ class SAR_Base_Interface():
     ##    Logging Services 
     # ========================
 
-    def createCSV(self,logName):
+    def createCSV(self):
         """Sends service to CF_DataConverter to create CSV log file 
 
         Args:
@@ -473,31 +474,31 @@ class SAR_Base_Interface():
 
         ## CREATE SERVICE REQUEST MSG
         srv = Logging_CMDRequest() 
-        srv.filePath = os.path.join(self.Log_Dir,logName)
+        srv.filePath = os.path.join(self.Log_Dir,self.Log_Name)
         srv.Logging_CMD = 0
 
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
-    def startLogging(self,logName):
+    def startLogging(self):
         """Start logging values to the current CSV file
         """        
 
         ## CREATE SERVICE REQUEST MSG
         srv = Logging_CMDRequest()
-        srv.filePath = os.path.join(self.Log_Dir,logName)
+        srv.filePath = os.path.join(self.Log_Dir,self.Log_Name)
         srv.Logging_CMD = 1
 
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
-    def capLogging(self,logName):
+    def capLogging(self):
         """Cap logging values with Flight, Rot, and Impact conditions and stop continuous logging
         """        
 
         ## CREATE SERVICE REQUEST MSG
         srv = Logging_CMDRequest()
-        srv.filePath = os.path.join(self.Log_Dir,logName)
+        srv.filePath = os.path.join(self.Log_Dir,self.Log_Name)
         srv.Logging_CMD = 2
         srv.error_string = self.Error_Str # String for why logging was capped
         

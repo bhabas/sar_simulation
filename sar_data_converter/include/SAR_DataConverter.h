@@ -681,7 +681,7 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
             SAR_DataConverter::loadInitParams();
             break;
         
-        case 92: // ACTIVATE STICKY FEET
+        case 91: // ACTIVATE STICKY FEET
 
             if (DATA_TYPE.compare("SIM") == 0)
             {

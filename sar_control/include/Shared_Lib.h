@@ -240,6 +240,7 @@ extern bool AngAccel_Flag;
 extern bool Armed_Flag;
 extern bool CustomThrust_Flag;
 extern bool CustomMotorCMD_Flag;
+extern uint16_t CMD_ID;
 
 // SENSOR FLAGS
 extern bool CamActive_Flag;
@@ -277,10 +278,6 @@ extern float a_Rot_bounds[2];
 // ===============================
 
 extern NN NN_DeepRL;
-extern NN NN_DeepRL2;
-extern float Policy_Rot_threshold;
-
-
 
 
 // ==========================================
@@ -351,6 +348,7 @@ extern struct mat33 R_PW;       // Rotation matrix from plane to world
 
 // CTRL COMMAND PACKETS
 struct CTRL_CmdPacket{
+    uint16_t cmd_ID; 
     uint8_t cmd_type; 
     float cmd_val1;
     float cmd_val2;

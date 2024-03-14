@@ -167,7 +167,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         ## ROUND OUT TO 10 ITER STEPS (0.01s) TO MATCH 100Hz CONTROLLER 
         self._iterStep(2)
 
-    def resetPose(self,z_0=0.4):           
+    def resetPose(self,z_0=0.5):           
 
         self.sendCmd('GZ_StickyPads',cmd_flag=0)
 
@@ -183,7 +183,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.sendCmd('GZ_StickyPads',cmd_flag=1)
 
-    def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
+    def _setModelState(self,pos=[0,0,0.5],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
         ## RESET POSITION AND VELOCITY
         state_srv = ModelState()
@@ -266,14 +266,21 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.pausePhysics(False)
 
 
-        # ## EXECUTE TRAJECTORY
-        # self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[np.nan,V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
-        # self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[np.nan,V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
-        # self.sendCmd('Activate_traj',cmd_vals=[1,0,1])
-
     def handle_GZ_Rel_Vel_traj(self):
 
-        pass
+        ## GET RELATIVE VEL CONDITIONS 
+        V_mag,V_angle = self.userInput("Flight Velocity (V_mag,V_angle):",float)
+
+        ## CALC RELATIVE VELOCITIES
+        V_tx = V_mag*np.cos(np.radians(V_angle))
+        V_ty = 0
+        V_perp = V_mag*np.sin(np.radians(V_angle))
+
+        ## CALCULATE GLOBAL VELOCITIES
+        V_B_O = self.R_PW(np.array([V_tx,V_ty,V_perp]),self.Plane_Angle_rad)
+
+        self.Sim_VelTraj(self.r_B_O,V_B_O)
+        self.pausePhysics(False)
 
     
     # ================================

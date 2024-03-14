@@ -11,8 +11,8 @@ typedef struct{
     uint8_t num_layers;
     nml_mat* scaler_mean;
     nml_mat* scaler_std;
-    nml_mat* W[6];  // Weights
-    nml_mat* b[6];  // biases
+    nml_mat* W[4];  // Weights
+    nml_mat* b[4];  // biases
 }NN;
 
 
