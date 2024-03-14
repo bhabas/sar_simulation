@@ -156,12 +156,13 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
 
         ## SET DESIRED VEL IN CONTROLLER
-        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[0],vel[0],0],cmd_flag=0)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[np.nan,vel[0],0],cmd_flag=0)
         self._iterStep(2)
-        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[1],vel[1],0],cmd_flag=1)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[np.nan,vel[1],0],cmd_flag=1)
         self._iterStep(2)
-        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos[2],vel[2],0],cmd_flag=2)
+        self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[np.nan,vel[2],0],cmd_flag=2)
         self._iterStep(2)
+        self.sendCmd('Activate_traj',cmd_vals=[1,1,1])
 
         ## ROUND OUT TO 10 ITER STEPS (0.01s) TO MATCH 100Hz CONTROLLER 
         self._iterStep(2)
@@ -250,20 +251,29 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.resetPose()
         self.pausePhysics(pause_flag=False)
 
-    def handle_GZ_Const_Vel_Traj(self):
-        
-        ## GET INPUT VALUES
-        V_B_O_mag,V_B_O_angle = env.userInput("Flight Velocity (V_B_O_mag,V_B_O_angle):",float)
+    def handle_GZ_Global_Vel_traj(self):
 
-        ## DEFINE CARTESIAN VELOCITIES
-        V_B_O_angle = np.radians(V_B_O_angle)
-        V_B_O = [V_B_O_mag*np.cos(V_B_O_angle),
-                    0,
-                    V_B_O_mag*np.sin(V_B_O_angle)]
+        ## GET GLOBAL VEL CONDITIONS 
+        V_mag,V_angle = self.userInput("Flight Velocity (V_mag,V_angle):",float)
 
-        ## ESTIMATE IMPACT POINT
-        env.Sim_VelTraj(env.r_B_O,V_B_O)
-        env.pausePhysics(False)
+        ## CALC GLOBAL VELOCITIES
+        Vx = V_mag*np.cos(np.radians(V_angle))
+        Vy = 0
+        Vz = V_mag*np.sin(np.radians(V_angle))
+        V_B_O = [Vx,Vy,Vz]
+
+        self.Sim_VelTraj(self.r_B_O,V_B_O)
+        self.pausePhysics(False)
+
+
+        # ## EXECUTE TRAJECTORY
+        # self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[np.nan,V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
+        # self.sendCmd('GZ_Const_Vel_Traj',cmd_vals=[np.nan,V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
+        # self.sendCmd('Activate_traj',cmd_vals=[1,0,1])
+
+    def handle_GZ_Rel_Vel_traj(self):
+
+        pass
 
     
     # ================================

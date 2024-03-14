@@ -44,6 +44,7 @@ SAR_Type:
       Base_Izz: 34.2e-6               # [kg*m^2] 
 
       TrajAcc_Max: [1.0, 1.0, 3.1]    # Max Accel for trajectory generation [m/s^2]
+      TrajJerk_Max: [20,20,20]     # Max Jerk for trajectory generation [m/s^3]
 
 
     Leg_Params:
@@ -246,6 +247,7 @@ SAR_Type:
         Base_Izz: 5.27e-3               # [kg*m^2] 
 
         TrajAcc_Max: [0.5,0.5,2.0]    # Max Accel for trajectory generation [m/s^2]
+        TrajJerk_Max: [20,20,20]     # Max Jerk for trajectory generation [m/s^3]
 
       Leg_Params:
 
@@ -517,6 +519,7 @@ SAR_Type:
         Base_Izz: 1.02e-3          # [kg*m^2] 
 
         TrajAcc_Max: [0.5,0.5,1.5]    # Max Accel for trajectory generation [m/s^2]
+        TrajJerk_Max: [20,20,20]     # Max Jerk for trajectory generation [m/s^3]
 
 
       Leg_Params:

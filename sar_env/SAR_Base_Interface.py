@@ -9,7 +9,7 @@ import warnings
 ## ROS MESSAGES AND SERVICES
 from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
 from sar_msgs.srv import Logging_CMD,Logging_CMDRequest
-from sar_msgs.srv import CTRL_Cmd_srv,CTRL_Cmd_srvRequest
+from sar_msgs.srv import CTRL_Cmd,CTRL_CmdRequest
 from sar_msgs.msg import RL_Data,RL_History
 
 from rosgraph_msgs.msg import Clock
@@ -107,6 +107,7 @@ class SAR_Base_Interface():
 
         ## SYSTEM AND FLIGHT PARAMETERS
         self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")
+        self.TrajJerk_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajJerk_Max")
         self.Tau_up = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Tau_up")
         self.Tau_down = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Tau_down")
         self.Thrust_max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Thrust_max")
@@ -149,7 +150,7 @@ class SAR_Base_Interface():
         """        
 
         ## CREATE SERVICE REQUEST MSG
-        srv = CTRL_Cmd_srvRequest() 
+        srv = CTRL_CmdRequest() 
         
         srv.cmd_type = self.cmd_dict[action]
         srv.cmd_vals.x = cmd_vals[0]
@@ -158,7 +159,7 @@ class SAR_Base_Interface():
         srv.cmd_flag = cmd_flag
         srv.cmd_rx = True
 
-        self.callService('/SAR_DC/CMD_Input',srv,CTRL_Cmd_srv)    
+        self.callService('/SAR_DC/CMD_Input',srv,CTRL_Cmd)    
 
     def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):
 
@@ -335,9 +336,10 @@ class SAR_Base_Interface():
         
     def handle_P2P_traj(self):
         x_d = self.userInput("Desired position (x,y,z):",float)
-        self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[0],x_d[0],self.TrajAcc_Max[0]],cmd_flag=0)
-        self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[1],x_d[1],self.TrajAcc_Max[1]],cmd_flag=1)
-        self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[2],x_d[2],self.TrajAcc_Max[2]],cmd_flag=2)
+        self.sendCmd('P2P_traj',cmd_vals=[np.nan,x_d[0],0.5],cmd_flag=0)
+        self.sendCmd('P2P_traj',cmd_vals=[np.nan,x_d[1],0.5],cmd_flag=1)
+        self.sendCmd('P2P_traj',cmd_vals=[np.nan,x_d[2],0.5],cmd_flag=2)
+        self.sendCmd('Activate_traj',cmd_vals=[1,1,1])
 
     def handle_Global_Vel_traj(self):
 
@@ -351,8 +353,9 @@ class SAR_Base_Interface():
         V_B_O = [Vx,Vy,Vz]
 
         ## EXECUTE TRAJECTORY
-        self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[0],V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
-        self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[2],V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
+        self.sendCmd('Const_Vel_traj',cmd_vals=[V_B_O[0],self.TrajAcc_Max[0],self.TrajJerk_Max[0]],cmd_flag=0)
+        self.sendCmd('Const_Vel_traj',cmd_vals=[V_B_O[2],self.TrajAcc_Max[2],self.TrajJerk_Max[2]],cmd_flag=2)
+        self.sendCmd('Activate_traj',cmd_vals=[1,0,1])
 
     def handle_Rel_Vel_traj(self):
 
@@ -368,8 +371,9 @@ class SAR_Base_Interface():
         V_B_O = self.R_PW(np.array([V_tx,V_ty,V_perp]),self.Plane_Angle_rad)
 
         ## EXECUTE TRAJECTORY
-        self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[0],V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
-        self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[2],V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
+        self.sendCmd('Const_Vel_traj',cmd_vals=[V_B_O[0],self.TrajAcc_Max[0],self.TrajJerk_Max[0]],cmd_flag=0)
+        self.sendCmd('Const_Vel_traj',cmd_vals=[V_B_O[2],self.TrajAcc_Max[2],self.TrajJerk_Max[2]],cmd_flag=2)
+        self.sendCmd('Activate_traj',cmd_vals=[1,0,1])
 
     def handle_Impact_traj(self):
 
@@ -392,9 +396,10 @@ class SAR_Base_Interface():
         print(YELLOW,f"Start Position: ({r_B_O[0]:.2f},{self.r_B_O[1]:.2f},{r_B_O[2]:.2f})",RESET)
         str_input = self.userInput("Approve start position (y/n): ",str)
         if str_input == 'y':
-            self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[0],r_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
-            self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[1],r_B_O[1],self.TrajAcc_Max[1]],cmd_flag=1)
-            self.sendCmd('P2P_traj',cmd_vals=[self.r_B_O[2],r_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
+            self.sendCmd('P2P_traj',cmd_vals=[np.nan,r_B_O[0],0.5],cmd_flag=0)
+            self.sendCmd('P2P_traj',cmd_vals=[np.nan,r_B_O[1],0.5],cmd_flag=1)
+            self.sendCmd('P2P_traj',cmd_vals=[np.nan,r_B_O[2],0.5],cmd_flag=2)
+            self.sendCmd('Activate_traj',cmd_vals=[1,1,1])
         else:
             raise Exception("Start position not approved")
         
@@ -405,12 +410,13 @@ class SAR_Base_Interface():
 
         ## APPROVE FLIGHT
         str_input = self.userInput("Approve flight (y/n): ",str)
-        time.sleep(1.0)
         if str_input == 'y':
-            self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[0],V_B_O[0],self.TrajAcc_Max[0]],cmd_flag=0)
-            self.sendCmd('Global_Vel_traj',cmd_vals=[self.r_B_O[2],V_B_O[2],self.TrajAcc_Max[2]],cmd_flag=2)
+            self.sendCmd('Const_Vel_traj',cmd_vals=[V_B_O[0],self.TrajAcc_Max[0],self.TrajJerk_Max[0]],cmd_flag=0)
+            self.sendCmd('Const_Vel_traj',cmd_vals=[V_B_O[2],self.TrajAcc_Max[2],self.TrajJerk_Max[2]],cmd_flag=2)
+            self.sendCmd('Activate_traj',cmd_vals=[1,0,1])
         else:
             raise Exception("Flight not approved")
+            
 
     ## ========== SYSTEM FUNCTIONS ========== 
             
@@ -422,7 +428,7 @@ class SAR_Base_Interface():
     def handle_Tumble_Detect(self):
 
         cmd_flag = self.userInput("Tumble Detection On/Off (1,0): ",int)
-        self.sendCmd('Tumble',cmd_flag=cmd_flag)
+        self.sendCmd('Tumble_Detect',cmd_flag=cmd_flag)
 
     def handle_Load_Params(self):
 
@@ -516,9 +522,8 @@ class SAR_Base_Interface():
             'Plane_Pose':9,
 
             'P2P_traj':10,
-            'Global_Vel_traj':11,
-            'Rel_Vel_traj':12,
-            'Impact_traj':13,
+            'Const_Vel_traj':11,
+            'Activate_traj':19,
 
             'Tumble_Detect':20,
             'Load_Params':21,
@@ -530,8 +535,8 @@ class SAR_Base_Interface():
             'Motor_CMD':31,
 
             'GZ_Pose_Reset':90,
-            'GZ_Const_Vel_Traj':91,
-            'GZ_StickyPads':92,
+            'GZ_StickyPads':91,
+            'GZ_Const_Vel_Traj':92,
         }
         self.inv_cmd_dict = {value: key for key, value in self.cmd_dict.items()}
 
