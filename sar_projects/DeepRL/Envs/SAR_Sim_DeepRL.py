@@ -484,12 +484,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,0)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,0,k=5)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=5)
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -577,25 +577,33 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-200,200],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
 
-    for ep in range(20):
+    for ep in range(50):
 
         V_mag = 2.5
         V_angle = 60
         Plane_Angle = 0
 
-        env.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
-        obs,_ = env.reset()
+        if V_mag != None:
+            env.V_mag_range = [V_mag,V_mag]
 
-        
+        if V_angle != None:
+            env.V_angle_range = [V_angle,V_angle]
+
+        if Plane_Angle != None:
+            env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
+
+        obs,_ = env.reset()
 
         Done = False
         while not Done:
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -0.25
+            action[1] = -1.0
+            if env.Tau_CR <= 0.25:
+                action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 

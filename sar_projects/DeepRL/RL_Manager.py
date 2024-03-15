@@ -720,26 +720,26 @@ if __name__ == '__main__':
 
     # Define the environment parameters
     env_kwargs = {
-        "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [1.0, 4.0],
-        "V_angle_range": [5,175],
-        "Plane_Angle_range": [0, 180],
+        "Ang_Acc_range": [-100, 100],
+        "V_mag_range": [2.5,2.5],
+        "V_angle_range": [60,60],
+        "Plane_Angle_range": [0, 0],
         "Render": True,
-        "GZ_Timeout": False,
+        "GZ_Timeout": True,
     }
 
 
-    log_name = "DeepRL_Policy_03-11--20:47:39"
+    log_name = "DeepRL_Policy_03-10--20:23:35"
     model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
     # RL_Manager.create_model(net_arch=[10,10,10])
-    # RL_Manager.load_model(model_dir,t_step=169_000)
-    # RL_Manager.train_model()
+    RL_Manager.load_model(model_dir,t_step=508_000)
+    # RL_Manager.train_model(reset_timesteps=False)
     # RL_Manager.save_NN_to_C_header()
     # RL_Manager.policy_output()
 
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,180,45],V_mag_range=[1.0,4.0,0.5],V_angle_range=[10,170,10],n=1)
+    RL_Manager.sweep_policy(Plane_Angle_range=[0,0,45],V_mag_range=[2.5,2.5,0.5],V_angle_range=[60,60,10],n=5)
     # RL_Manager.collect_landing_performance(
     #     fileName="PolicyPerformance_Data.csv",
     #     Plane_Angle_range=[0,180,45],
@@ -747,5 +747,5 @@ if __name__ == '__main__':
     #     V_angle_range=[10,170,5],
     #     n_trials=5
     #     )
-    RL_Manager.plot_landing_performance(PlaneAngle=180)
+    # RL_Manager.plot_landing_performance(PlaneAngle=180)
     

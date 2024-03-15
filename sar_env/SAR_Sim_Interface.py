@@ -135,19 +135,26 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         state_srv.pose.position.y = pos[1]
         state_srv.pose.position.z = pos[2]
 
-        state_srv.pose.orientation.x = 0
-        state_srv.pose.orientation.y = 0
-        state_srv.pose.orientation.z = 0
-        state_srv.pose.orientation.w = 1
+        ## PUBLISH MODEL STATE SERVICE REQUEST
+        self.pausePhysics(pause_flag=True)
+        self.callService('/gazebo/set_model_state',state_srv,SetModelState)
+        self.sendCmd('Pos',cmd_vals=pos,cmd_flag=1)
+        self._iterStep(100)
+        
+
+        ## CREATE SERVICE MESSAGE
+        state_srv = ModelState()
+        state_srv.model_name = self.SAR_Config
+
+        ## INPUT POSITION AND ORIENTATION
+        state_srv.pose.position.x = pos[0]
+        state_srv.pose.position.y = pos[1]
+        state_srv.pose.position.z = pos[2]
 
         ## INPUT LINEAR AND ANGULAR VELOCITY
         state_srv.twist.linear.x = vel[0]
         state_srv.twist.linear.y = vel[1]
         state_srv.twist.linear.z = vel[2]
-
-        state_srv.twist.angular.x = 0
-        state_srv.twist.angular.y = 0
-        state_srv.twist.angular.z = 0
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.pausePhysics(pause_flag=True)
@@ -309,7 +316,11 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         while True:
 
-            GZ_ping_ok = self._ping_subprocesses("/gazebo/get_loggers")
+            if rospy.get_param('/SIM_SETTINGS/GUI_Flag') == True:
+                GZ_ping_ok = self._ping_subprocesses("/gazebo_gui/get_loggers")
+            else:
+                GZ_ping_ok = self._ping_subprocesses("/gazebo/get_loggers")
+
             SAR_DC_ping_ok = self._ping_subprocesses("/SAR_DataConverter_Node/get_loggers")
             SAR_Ctrl_ping_ok = self._ping_subprocesses("/SAR_Controller_Node/get_loggers")
             NaN_check_ok = not np.isnan(self.r_B_O[0])
@@ -415,8 +426,8 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         else:
             service = '/gazebo/unpause_physics'
 
-        rospy.wait_for_service(service,timeout=1)
         try:
+            rospy.wait_for_service(service,timeout=1)
             service_call = rospy.ServiceProxy(service, Empty)
             service_call()
         except rospy.ServiceException as e:

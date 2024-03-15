@@ -514,12 +514,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,0)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,0,k=5)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=5)
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
