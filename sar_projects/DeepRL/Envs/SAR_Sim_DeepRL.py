@@ -92,8 +92,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         self.start_time_real = time.time()
         self.resetPose()
-        self.Initial_Step = False
-       
+
+        self._resetParams()
+        self._setTestingConditions()
+        self._initialStep()
+
         return self._getObs(), {}
     
     def _resetParams(self):
@@ -183,11 +186,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
 
-        if self.Initial_Step == False:
-            self._resetParams()
-            self._setTestingConditions()
-            self._initialStep()
-            self.Initial_Step = True
+        
 
         ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         if self._getTick()%10 != 0:
@@ -196,6 +195,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         a_Trg = action[0]
         a_Rot = self.scaleValue(action[1],original_range=[-1,1], target_range=self.Ang_Acc_range)
+
+        if self.Tau_CR < 0.25:
+            a_Trg = 1.0
+        else:
+            a_Trg = 0.0
 
         if self.Policy_Type != "DEEP_RL_SB3":
             a_Trg = 1.0

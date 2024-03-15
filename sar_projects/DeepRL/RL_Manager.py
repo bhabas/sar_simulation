@@ -120,6 +120,7 @@ class RL_Training_Manager():
             os.makedirs(self.model_subdir, exist_ok=True)
 
             self.model.tensorboard_log = self.log_subdir
+            self.model.learning_starts = 0
 
         reward_callback = RewardCallback(model_dir=self.model_subdir,save_freq=save_freq,)
 
@@ -127,7 +128,7 @@ class RL_Training_Manager():
             total_timesteps=int(total_timesteps),
             callback=reward_callback,
             tb_log_name="TB_Log",
-            reset_num_timesteps=reset_timesteps,
+            reset_num_timesteps=True,
         )
 
     def test_policy(self,V_mag=None,V_angle=None,Plane_Angle=None):
@@ -725,21 +726,21 @@ if __name__ == '__main__':
         "V_angle_range": [60,60],
         "Plane_Angle_range": [0, 0],
         "Render": True,
-        "GZ_Timeout": True,
+        "GZ_Timeout": False,
     }
 
 
-    log_name = "DeepRL_Policy_03-10--20:23:35"
-    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    # log_name = "DeepRL_Policy_03-10--20:23:35"
+    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.create_model(net_arch=[10,10,10])
-    RL_Manager.load_model(model_dir,t_step=508_000)
-    # RL_Manager.train_model(reset_timesteps=False)
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager.create_model(net_arch=[10,10,10])
+    # RL_Manager.load_model(model_dir,t_step=508_000)
+    RL_Manager.train_model(reset_timesteps=True)
     # RL_Manager.save_NN_to_C_header()
     # RL_Manager.policy_output()
 
-    RL_Manager.sweep_policy(Plane_Angle_range=[0,0,45],V_mag_range=[2.5,2.5,0.5],V_angle_range=[60,60,10],n=5)
+    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,45],V_mag_range=[2.5,2.5,0.5],V_angle_range=[60,60,10],n=10)
     # RL_Manager.collect_landing_performance(
     #     fileName="PolicyPerformance_Data.csv",
     #     Plane_Angle_range=[0,180,45],

@@ -489,7 +489,6 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
             Traj_Type = GZ_CONST_VEL;
             axis = (axis_direction)CTRL_Cmd->cmd_flag;
-            printf("Traj_Type: %d | axis: %d\n",Traj_Type,axis);
 
             switch(axis){
 

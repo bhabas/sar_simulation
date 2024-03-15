@@ -46,8 +46,8 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
 
         ## START MONITORING NODES
-        self._start_monitoring_subprocesses()
         if GZ_Timeout == True:
+            self._start_monitoring_subprocesses()
             self._startMonitoringClockTopic()
 
         ## WAIT TILL TOPIC DATA STARTS COMING IN
@@ -101,7 +101,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         scaled_obs_list = [Tau_CR_scaled,Theta_x_scaled,D_perp_CR_scaled,Plane_Angle_scaled]
 
         ## OBSERVATION VECTOR
-        obs = np.array(scaled_obs_list,dtype=np.float32)
+        obs = np.array(obs_list,dtype=np.float32)
 
         return obs
 

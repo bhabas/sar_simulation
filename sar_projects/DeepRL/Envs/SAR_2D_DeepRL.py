@@ -84,13 +84,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-    
-
     def reset(self,seed=None,options=None):
 
         self.start_time_real = time.time()
         self.resetPose()
-        self.Initial_Step = False
+
+        self._resetParams()
+        self._setTestingConditions()
+        self._initialStep()
        
         return self._getObs(), {}
     
@@ -200,11 +201,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
 
-        if self.Initial_Step == False:
-            self._resetParams()
-            self._setTestingConditions()
-            self._initialStep()
-            self.Initial_Step = True
+        
 
         a_Trg = action[0]
         a_Rot = self.scaleValue(action[1],original_range=[-1,1], target_range=self.Ang_Acc_range)
