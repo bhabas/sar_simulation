@@ -6,6 +6,7 @@ import time
 import subprocess
 from threading import Thread,Event
 import rospy
+import yaml
 from sar_env import SAR_Base_Interface
 
 
@@ -33,6 +34,9 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
     def __init__(self,GZ_Timeout=False):
         SAR_Base_Interface.__init__(self)
+        self.loadSimParams()
+
+        
 
         self.GZ_Sim_process = None
         self.SAR_DC_process = None
@@ -59,6 +63,18 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
 
         print("[INITIATING] Gazebo simulation started")
+
+    def loadSimParams(self):
+
+        ## LOAD BASE PARAMETERS
+        param_path = f"{self.BASE_PATH}/sar_config/Sim_Settings.yaml"
+                    
+        with open(param_path, 'r') as file:
+            loaded_parameters = yaml.safe_load(file)
+
+        # Load parameters into the ROS Parameter Server
+        for param_name, param_value in loaded_parameters.items():
+            rospy.set_param(param_name, param_value)
 
 
     # =========================
@@ -227,11 +243,6 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService("/SAR_Internal/Inertia_Update",srv,Inertia_Params)
 
-    def setParams(self):
-
-        os.system("roslaunch sar_launch Load_Params.launch")
-        self.sendCmd('Load_Params')
-
     def scaleValue(self,x, original_range=(-1, 1), target_range=(-1, 1)):
 
         original_min, original_max = original_range
@@ -249,6 +260,12 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     # ============================
         
     ## ========== GAZEBO FUNCTIONS ==========
+    def handle_Load_Params(self):
+
+        print("Reset ROS Parameters\n")
+        self.loadBaseParams()
+        self.loadSimParams()
+        self.sendCmd("Load_Params")
         
     def handle_GZ_StickyPads(self):
         cmd_flag = self.userInput("Turn sticky pads On/Off (1,0): ",int)
@@ -272,7 +289,6 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.Sim_VelTraj(self.r_B_O,V_B_O)
         self.pausePhysics(False)
-
 
     def handle_GZ_Rel_Vel_traj(self):
 

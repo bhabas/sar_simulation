@@ -5,6 +5,8 @@ import rospy
 import getpass
 import time
 import warnings 
+import yaml
+import rospkg
 
 ## ROS MESSAGES AND SERVICES
 from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
@@ -23,24 +25,22 @@ RESET = "\033[0m"  # Reset to default color
 class SAR_Base_Interface():
 
     def __init__(self,Experiment_Setup=False):
+
+        ## LOGGING PARAMETERS
+        self.BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
+        self.Log_Dir =  f"{self.BASE_PATH}/sar_logging/local_logs"
+        self.Log_Name = "TestLog.csv"
+        self.Error_Str = "No_Debug_Data"
         
         if not Experiment_Setup:   
             rospy.init_node("SAR_Env_Node")
-            os.system("roslaunch sar_launch Load_Params.launch")
-            self.loadParams()
+            self.loadBaseParams()
             self._preInit()
             
         else:
-            os.system("roslaunch sar_launch_exp Load_Params.launch")
-            self.loadParams()
+            self.loadBaseParams()
             self._preInit()
 
-
-        ## LOGGING PARAMETERS
-        self.Username = getpass.getuser()
-        self.Log_Dir =  f"/home/{self.Username}/catkin_ws/src/sar_simulation/sar_logging/local_logs"
-        self.Log_Name = "TestLog.csv"
-        self.Error_Str = "No_Debug_Data"
 
         print(f"{GREEN}")
         print("=============================================")
@@ -73,7 +73,24 @@ class SAR_Base_Interface():
         self.RL_Data_Pub = rospy.Publisher("/RL/Data",RL_Data,queue_size=10)
         self.RL_History_Pub = rospy.Publisher("/RL/History",RL_History,queue_size=10)
 
-    def loadParams(self):
+    def loadBaseParams(self):
+
+        ## LOAD BASE PARAMETERS
+        param_path_list = [f"{self.BASE_PATH}/sar_config/Base_Settings.yaml",
+                     f"{self.BASE_PATH}/sar_config/Model_Types.yaml",
+                     f"{self.BASE_PATH}/sar_config/Cam_Types.yaml",
+        ]
+
+        for path in param_path_list:
+
+            with open(path, 'r') as file:
+                loaded_parameters = yaml.safe_load(file)
+
+            # Load parameters into the ROS Parameter Server
+            for param_name, param_value in loaded_parameters.items():
+                rospy.set_param(param_name, param_value)
+
+        
 
         ## SAR PARAMETERS
         self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
@@ -129,7 +146,7 @@ class SAR_Base_Interface():
         self.Plane_Pos_x_init = rospy.get_param('/PLANE_SETTINGS/Pos_X_init')
         self.Plane_Pos_y_init = rospy.get_param('/PLANE_SETTINGS/Pos_Y_init')
         self.Plane_Pos_z_init = rospy.get_param('/PLANE_SETTINGS/Pos_Z_init')
-        self.Plane_Angle_deg_init = rospy.get_param('/PLANE_SETTINGS/Plane_Angle')
+        self.Plane_Angle_deg_init = rospy.get_param('/PLANE_SETTINGS/Plane_Angle_init')
 
     def _getTime(self):
         """Returns current known time.
@@ -433,8 +450,7 @@ class SAR_Base_Interface():
     def handle_Load_Params(self):
 
         print("Reset ROS Parameters\n")
-        os.system("roslaunch sar_launch Load_Params.launch")
-        self.loadParams()
+        self.loadBaseParams()
         self.sendCmd("Load_Params")
 
     def handle_Start_Logging(self):

@@ -6,7 +6,6 @@ source ~/catkin_ws/devel/setup.bash
 SIMULATION_PATH=$(find ~/catkin_ws/src -name 'sar_simulation' -type d | head -n 1)
 
 ## LOAD GAZEBO PARAMS
-roslaunch sar_launch Load_Params.launch
 GUI_FLAG=$(rosparam get /SIM_SETTINGS/GUI_Flag)
 PAUSE_FLAG=$(rosparam get /SIM_SETTINGS/Pause_Flag)
 
