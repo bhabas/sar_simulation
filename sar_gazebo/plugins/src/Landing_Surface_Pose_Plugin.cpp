@@ -35,9 +35,9 @@ namespace gazebo
         Joint_Ptr->SetProvideFeedback(true);
 
         // LOAD INITIAL POSE FROM SDF
-        ros::param::get("/PLANE_SETTINGS/Pos_X",Pos_X);
-        ros::param::get("/PLANE_SETTINGS/Pos_Y",Pos_Y);
-        ros::param::get("/PLANE_SETTINGS/Pos_Z",Pos_Z);
+        ros::param::get("/PLANE_SETTINGS/Pos_X_init",Pos_X);
+        ros::param::get("/PLANE_SETTINGS/Pos_Y_init",Pos_Y);
+        ros::param::get("/PLANE_SETTINGS/Pos_Z_init",Pos_Z);
         ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_deg);
 
 

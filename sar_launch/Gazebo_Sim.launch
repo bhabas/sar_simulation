@@ -38,7 +38,7 @@
 
     <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Config) -z 0.5" />
 
-    <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Config) -z 2" />
+    <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Config) -y 4 -z 0" />
 
     <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Config) -z 0" />
 

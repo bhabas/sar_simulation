@@ -126,9 +126,9 @@ class SAR_Base_Interface():
         ## PLANE PARAMETERS
         self.Plane_Type = rospy.get_param('/PLANE_SETTINGS/Plane_Type')
         self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
-        self.Plane_Pos_x_init = rospy.get_param('/PLANE_SETTINGS/Pos_X')
-        self.Plane_Pos_y_init = rospy.get_param('/PLANE_SETTINGS/Pos_Y')
-        self.Plane_Pos_z_init = rospy.get_param('/PLANE_SETTINGS/Pos_Z')
+        self.Plane_Pos_x_init = rospy.get_param('/PLANE_SETTINGS/Pos_X_init')
+        self.Plane_Pos_y_init = rospy.get_param('/PLANE_SETTINGS/Pos_Y_init')
+        self.Plane_Pos_z_init = rospy.get_param('/PLANE_SETTINGS/Pos_Z_init')
         self.Plane_Angle_deg_init = rospy.get_param('/PLANE_SETTINGS/Plane_Angle')
 
     def _getTime(self):
