@@ -7,6 +7,7 @@ import subprocess
 from threading import Thread,Event
 import rospy
 import yaml
+import asyncio
 from sar_env import SAR_Base_Interface
 
 
@@ -42,24 +43,29 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.SAR_DC_process = None
         self.SAR_Ctrl_process = None
 
+        self.GZ_ping_ok = False
+        self.SAR_DC_ping_ok = False
+        self.SAR_Ctrl_ping_ok = False
+        self.NaN_check_ok = False
+
         
 
         ## START SIMULATION
-        self.Clock_Check_Flag = Event() # Stops clock monitoring during launch process
+        # self.Clock_Check_Flag = Event() # Stops clock monitoring during launch process
         self._restart_Sim()
 
+        self._start_monitoring_subprocesses()
 
-        ## START MONITORING NODES
-        if GZ_Timeout == True:
-            self._start_monitoring_subprocesses()
-            self._startMonitoringClockTopic()
+        # ## START MONITORING NODES
+        # if GZ_Timeout == True:
+        #     self._startMonitoringClockTopic()
 
-        ## WAIT TILL TOPIC DATA STARTS COMING IN
-        rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData,timeout=30)
+        # ## WAIT TILL TOPIC DATA STARTS COMING IN
+        # rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData,timeout=30)
         
-        self.sendCmd("Arm_Quad",cmd_flag=1)
-        time.sleep(5.0)
-        self.sendCmd("Plane_Pose",cmd_vals=[self.Plane_Pos_x_init,self.Plane_Pos_y_init,self.Plane_Pos_z_init],cmd_flag=self.Plane_Angle_deg_init)
+        # self.sendCmd("Arm_Quad",cmd_flag=1)
+        # time.sleep(5.0)
+        # self.sendCmd("Plane_Pose",cmd_vals=[self.Plane_Pos_x_init,self.Plane_Pos_y_init,self.Plane_Pos_z_init],cmd_flag=self.Plane_Angle_deg_init)
 
 
         print("[INITIATING] Gazebo simulation started")
@@ -334,27 +340,27 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         while True:
 
             if rospy.get_param('/SIM_SETTINGS/GUI_Flag') == True:
-                GZ_ping_ok = self._ping_subprocesses("/gazebo_gui/get_loggers")
+                self.GZ_ping_ok = self._ping_service("/gazebo_gui/get_loggers")
             else:
-                GZ_ping_ok = self._ping_subprocesses("/gazebo/get_loggers")
+                self.GZ_ping_ok = self._ping_service("/gazebo/get_loggers")
 
-            SAR_DC_ping_ok = self._ping_subprocesses("/SAR_DataConverter_Node/get_loggers")
-            SAR_Ctrl_ping_ok = self._ping_subprocesses("/SAR_Controller_Node/get_loggers")
-            NaN_check_ok = not np.isnan(self.r_B_O[0])
+            self.SAR_DC_ping_ok = self._ping_service("/SAR_DataConverter_Node/get_loggers")
+            self.SAR_Ctrl_ping_ok = self._ping_service("/SAR_Controller_Node/get_loggers")
+            self.NaN_check_ok = not np.isnan(self.r_B_O[0])
 
-            if not (GZ_ping_ok and SAR_DC_ping_ok and SAR_Ctrl_ping_ok):
+            if not (self.GZ_ping_ok and self.SAR_DC_ping_ok and self.SAR_Ctrl_ping_ok):
                 print("One or more subprocesses not responding. Restarting all subprocesses...")
                 self._restart_Sim()
                 self.Done = True
 
-            if not (NaN_check_ok):
+            elif not (self.NaN_check_ok):
                 print("NaN value detected. Restarting all subprocesses...")
                 self._restart_Sim()
                 self.Done = True
 
             time.sleep(0.5)
 
-    def _ping_subprocesses(self, service_name,silence_errors=False):
+    def _ping_service(self, service_name,silence_errors=False):
         cmd = f"rosservice call {service_name}"
         stderr_option = subprocess.DEVNULL if silence_errors else None
 
@@ -367,7 +373,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     
     def _restart_Sim(self):
 
-        self.Clock_Check_Flag.clear()
+        # self.Clock_Check_Flag.clear()
 
         ## KILL ALL POTENTIAL NODE/SUBPROCESSES
         os.system("killall -9 gzserver gzclient")
@@ -380,26 +386,28 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         ## LAUNCH GAZEBO
         self._launch_GZ_Sim()
-        self._wait_for_node(node_name="gazebo",timeout=10,interval=1)
 
         if rospy.get_param(f"/SIM_SETTINGS/GUI_Flag") == True:
-            self._wait_for_node(node_name="gazebo_gui",timeout=5,interval=0.25)
+            self._wait_for_node(node_name="gazebo_gui",timeout=30,interval=2)
+        else:
+            self._wait_for_node(node_name="gazebo",timeout=30,interval=2)
+
 
         ## LAUNCH CONTROLLER
         self._launch_Controller()
-        self._wait_for_node(node_name="SAR_Controller_Node",timeout=5,interval=0.25)
+        self._wait_for_node(node_name="SAR_Controller_Node",timeout=10,interval=0.5)
 
         ## LAUNCH SAR_DC
         self._launch_SAR_DC()
-        self._wait_for_node(node_name="SAR_DataConverter_Node",timeout=5,interval=0.25)
+        self._wait_for_node(node_name="SAR_DataConverter_Node",timeout=10,interval=0.5)
 
-        self.Clock_Check_Flag.set()
+        # self.Clock_Check_Flag.set()
     
     def _wait_for_node(self,node_name,timeout=None,interval=1.0):
 
         start_time = time.time()
 
-        while not self._ping_subprocesses(f"/{node_name}/get_loggers",silence_errors=True):
+        while not self._ping_service(f"/{node_name}/get_loggers",silence_errors=True):
 
             if timeout is not None and time.time() - start_time > timeout:
                 print(f"Timeout reached while waiting for {node_name} to launch.")

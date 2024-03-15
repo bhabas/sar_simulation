@@ -117,6 +117,7 @@ class Controller
         void stabilizerLoop();
 
         void loadInitParams();
+        void loadParams();
         void publishCtrlData();
         void publishCtrlDebug();
 
@@ -159,8 +160,7 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
 
     if(req.cmd_type == 21) // RESET ROS PARAM VALUES
     {
-        Controller::loadInitParams();
-
+        Controller::loadParams();
     }
 
     return 1;
@@ -216,7 +216,7 @@ void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
 void Controller::loadInitParams()
 {
-    printf("Updating Parameters\n");
+    printf("Loading Initial Parameters\n");
 
     ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
@@ -243,12 +243,29 @@ void Controller::loadInitParams()
     Prop_14_x = Prop_Front_Vec[0];
     Prop_14_y = Prop_Front_Vec[1];
 
-
     ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
     Prop_23_x = Prop_Rear_Vec[0];
     Prop_23_y = Prop_Rear_Vec[1];
 
+    // LOAD INITIAL PLANE POSE
+    ros::param::get("/PLANE_SETTINGS/Pos_X_init",r_P_O.x);
+    ros::param::get("/PLANE_SETTINGS/Pos_Y_init",r_P_O.y);
+    ros::param::get("/PLANE_SETTINGS/Pos_Z_init",r_P_O.z);
+    ros::param::get("/PLANE_SETTINGS/Plane_Angle_init",Plane_Angle_deg);
 
+
+    int Vicon_Delay_ms;
+    ros::param::get("/SIM_SETTINGS/Vicon_Delay",Vicon_Delay_ms);
+    Ext_Position_msgBuffer.set_capacity(Vicon_Delay_ms);
+
+    // LOAD CONTROLLER GAINS
+    Controller::loadParams();
+
+}
+
+void Controller::loadParams()
+{
+    printf("Updating Parameters\n");
 
     // UPDATE CTRL GAINS
     ros::param::get("/SAR_Type/" + SAR_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
@@ -273,7 +290,6 @@ void Controller::loadInitParams()
 
     ros::param::get("/SAR_SETTINGS/Cam_Active",CamActive_Flag);
 
-
     // SIMULATION SETTINGS FROM CONFIG FILE
     ros::param::get("SAR_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
     if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
@@ -288,11 +304,6 @@ void Controller::loadInitParams()
     {
         Policy = DEEP_RL_SB3;
     }    
-
-    int Vicon_Delay_ms;
-    ros::param::get("/SIM_SETTINGS/Vicon_Delay",Vicon_Delay_ms);
-    Ext_Position_msgBuffer.set_capacity(Vicon_Delay_ms);
-
 }
 
 
