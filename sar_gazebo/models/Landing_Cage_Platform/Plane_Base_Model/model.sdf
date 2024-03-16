@@ -1,0 +1,72 @@
+<sdf version='1.7'>
+  <model name='Plane_Base_Model'>
+    <static>0</static>
+    <link name='Surface_Link'>
+      <pose>0 0 0 0 0 0</pose>
+      <inertial>
+        <inertia>
+          <ixx>1000</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1000</iyy>
+          <iyz>0</iyz>
+          <izz>1000</izz>
+        </inertia>
+        <mass>1</mass>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <self_collide>0</self_collide>
+      <gravity>0</gravity>
+
+      <visual name='Surface_Center'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>20.0e-3</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+      </visual>
+      <collision name='Surface_Collision'>
+        <max_contacts>10</max_contacts>
+        <pose>0 0 0.025 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.22 0.61 0.05</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <sensor name='Surface_Contact_Sensor' type='contact'>
+        <always_on>1</always_on>
+        <visualize>1</visualize>
+        <contact>
+          <collision>Surface_Collision</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <plugin name='Surface_Contact_Plugin' filename='libgazebo_ros_bumper.so'>
+          <bumperTopicName>/ENV/SurfaceContact</bumperTopicName>
+          <frameName>Surface_Link</frameName>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>500</updateRate>
+        </plugin>
+      </sensor>
+    </link>
+
+    <plugin name='Landing_Surface_Pose_Plugin' filename='libLanding_Surface_Pose_Plugin.so'>
+      <jointName>Landing_Surface_Joint</jointName>
+      <topicName>/ENV/Surface_ForceTorque_Sensor</topicName>
+    </plugin>
+
+    <allow_auto_disable>false</allow_auto_disable>
+  </model>
+</sdf>

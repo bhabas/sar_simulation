@@ -28,34 +28,34 @@
         </material>
       </visual>
       <collision name='Ground_Collision'>
-        <pose>0 0 0.025 0 0 0</pose>
+        <pose>0 0 -0.02 0 0 0</pose>
         <geometry>
           <box>
-            <size>8 4.25 0.05</size>
+            <size>8 4.25 0.04</size>
           </box>
         </geometry>
       </collision>
       <collision name='Ceiling_Collision'>
-        <pose>0 0 2.8 0 0 0</pose>
+        <pose>0 0 2.82 0 0 0</pose>
         <geometry>
           <box>
-            <size>8 4.25 0.05</size>
+            <size>8 4.25 0.04</size>
           </box>
         </geometry>
       </collision>
       <collision name='Left_Wall_Collision'>
-        <pose>-4 0 1.4 0 0 0</pose>
+        <pose>-4.02 0 1.4 0 0 0</pose>
         <geometry>
           <box>
-            <size>0.05 4.25 2.8</size>
+            <size>0.04 4.25 2.8</size>
           </box>
         </geometry>
       </collision>
       <collision name='Right_Wall_Collision'>
-        <pose>4.1 0 1.4 0 0 0</pose>
+        <pose>4.02 0 1.4 0 0 0</pose>
         <geometry>
           <box>
-            <size>0.05 4.25 2.8</size>
+            <size>0.04 4.25 2.8</size>
           </box>
         </geometry>
       </collision>

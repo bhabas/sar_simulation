@@ -1,5 +1,5 @@
 <sdf version='1.7'>
-  <model name='Landing_Cage_Platform'>
+  <model name='Landing_Platform'>
 
     <include>
       <uri>model://Plane_Base_Model</uri>
@@ -12,7 +12,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Landing_Cage_Platform/meshes/Landing_Platform_Support.STL</uri>
+            <uri>model://Landing_Platform/meshes/Landing_Platform_Support.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -31,7 +31,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Landing_Cage_Platform/meshes/Landing_Platform_Panels.STL</uri>
+            <uri>model://Landing_Platform/meshes/Landing_Platform_Panels.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
