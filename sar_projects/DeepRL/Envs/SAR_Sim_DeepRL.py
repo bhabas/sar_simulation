@@ -3,6 +3,7 @@
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
+from threading import Thread,Event
 
 import rospy
 import time
@@ -51,8 +52,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
         self.t_impact_max = 1.0     # [s]
-        self.t_ep_max = 5.0         # [s]
-        self.t_real_max = 120       # [s]
+        self.t_real_max = 60       # [s]
+        self.start_time_real = np.inf
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
@@ -87,6 +88,28 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## DEFINE ACTION SPACE
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
+
+        self._start_RealTimeTimer()
+
+    def _start_RealTimeTimer(self):
+
+        RealTimeTimer_thread = Thread(target=self._RealTimeTimer)
+        RealTimeTimer_thread.daemon = True
+        RealTimeTimer_thread.start()
+
+    def _RealTimeTimer(self):
+
+        ## IF REAL TIME EXCEEDS TIMEOUT VALUE THEN RESTART SIM
+        while True:
+            if (time.time() - self.start_time_real > self.t_real_max) and not self.Done:
+                self.Done = True
+                print(YELLOW + f"Real Time Exceeded: {time.time() - self.start_time_real:.3f} s" + RESET)
+                print(YELLOW + f"Sim Likely Frozen: Restarting Simulation Env" + RESET)
+
+                self._kill_Sim()
+                
+            time.sleep(1)
+
 
     def reset(self,seed=None,options=None):
 
@@ -241,7 +264,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 # print(YELLOW,self.error_str,RESET)
 
             ## REAL-TIME TIMEOUT
-            elif (time.time() - self.start_time_real) > self.t_real_max:
+            elif (time.time() - self.start_time_real) > self.t_real_max*2:
                 self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
                 terminated = False
                 truncated = True
@@ -603,7 +626,7 @@ if __name__ == "__main__":
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
             action[1] = -1.0
-            if env.Tau_CR <= 0.25:
+            if 0.0 < env.Tau_CR <= 0.25:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated

@@ -7,7 +7,6 @@ import subprocess
 from threading import Thread,Event
 import rospy
 import yaml
-import asyncio
 from sar_env import SAR_Base_Interface
 
 
@@ -47,6 +46,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.SAR_Ctrl_ping_ok = False
         self.NaN_check_ok = False
         self.Sim_Status = "Initializing"
+        self.Sim_Restarting = False
 
         
 
@@ -55,14 +55,9 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self._kill_Sim()
         self._restart_Sim()
         self._start_monitoring_subprocesses()
-
-        # ## START MONITORING NODES
-        # if GZ_Timeout == True:
-        #     self._startMonitoringClockTopic()
+        self._wait_for_sim()
 
         # ## WAIT TILL TOPIC DATA STARTS COMING IN
-        rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData,timeout=30)
-        self._wait_for_sim()
 
         print("[INITIATING] Gazebo simulation started")
 
@@ -325,6 +320,9 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         cmd = "gnome-terminal --disable-factory  --geometry 85x46+1050+0 -- rosrun sar_control SAR_Controller"
         self.SAR_Ctrl_process = subprocess.Popen(cmd, shell=True)
 
+    
+
+
     def _start_monitoring_subprocesses(self):
         monitor_thread = Thread(target=self._monitor_subprocesses)
         monitor_thread.daemon = True
@@ -360,21 +358,25 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
             time.sleep(0.5)
 
-    def _wait_for_sim(self,timeout=180):
+    def _wait_for_sim(self,timeout=600):
 
         ## BLOCKING WAIT FOR SIM TO BE RUNNING
         start_time = time.time()
         while not (self.Sim_Status == "Running"):
 
             elapsed_time = time.time() - start_time
+            self.Sim_Restarting = True
 
             if elapsed_time > timeout:
                 raise TimeoutError("Timeout reached while waiting for simulation to fully launch.")
             else:
                 print(YELLOW + "Waiting for simulation to fully launch..." + RESET)
-                time.sleep(5.0)
+                time.sleep(1.0)
         
-        # print(GREEN + "Simulation has fully launched." + RESET)
+        if self.Sim_Restarting == True:
+            print(GREEN + "Simulation has fully launched." + RESET)
+            self.Sim_Restarting = False
+
 
     def _ping_service(self, service_name,timeout=5,silence_errors=False):
         cmd = f"rosservice call {service_name}"
@@ -400,14 +402,13 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
     def _restart_Sim(self):
 
-        # self.Clock_Check_Flag.clear()
         ## LAUNCH GAZEBO
         self._launch_GZ_Sim()
 
         if rospy.get_param(f"/SIM_SETTINGS/GUI_Flag") == True:
-            self._wait_for_node(node_name="gazebo_gui",timeout=30,interval=2)
+            self._wait_for_node(node_name="gazebo_gui",timeout=60,interval=2)
         else:
-            self._wait_for_node(node_name="gazebo",timeout=30,interval=2)
+            self._wait_for_node(node_name="gazebo",timeout=60,interval=2)
 
 
         ## LAUNCH CONTROLLER
@@ -418,7 +419,6 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self._launch_SAR_DC()
         self._wait_for_node(node_name="SAR_DataConverter_Node",timeout=10,interval=0.5)
 
-        # self.Clock_Check_Flag.set()
     
     def _wait_for_node(self,node_name,timeout=None,interval=1.0):
 
@@ -447,8 +447,6 @@ class SAR_Sim_Interface(SAR_Base_Interface):
             except (rospy.ServiceException,rospy.exceptions.ROSException) as e:
                 rospy.logerr(f"Service call failed with exception: {e}")
 
-
-        
         for retry in range(num_retries):
 
             self.response = None
@@ -475,48 +473,6 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self._kill_Sim()
         self._wait_for_sim()
         return None
-
-
-
-        #     try:
-        #         response = service_proxy(srv_msg)
-        #         return response
-            
-        #     except (rospy.ServiceException,rospy.exceptions.ROSException) as e:
-        #         rospy.logwarn(f"[WARNING] Attempt {retry + 1} to call service '{srv_addr}' failed: {e}")
-        #         self._wait_for_sim()
-
-        # ## IF SERVICE CALL FAILS THEN MARK SIM EPISODE AS DONE AND RETURN ERROR
-        # self.Done = True
-        # rospy.logerr(f"Service '{srv_addr}' call failed after {num_retries} attempts")
-        # self._kill_Sim()
-        # self._wait_for_sim()
-        # return None
-    
-
-
-
-
-
-    # ===========================
-    ##      MONITOR CLOCK
-    # ===========================
-
-    def _startMonitoringClockTopic(self):
-        monitor_clock_thread = Thread(target=self._monitorClockTopic)
-        monitor_clock_thread.daemon = True
-        monitor_clock_thread.start()
-
-    def _monitorClockTopic(self):
-
-        while True:
-            self.Clock_Check_Flag.wait()
-            try:
-                rospy.wait_for_message('/clock', Clock, timeout=10)
-            except (rospy.ROSException, rospy.exceptions.ROSInterruptException):
-                
-                print("No message received on /clock topic within the timeout. Unpausing physics.")
-                self.pausePhysics(False)
 
     def pausePhysics(self,pause_flag=True):
 

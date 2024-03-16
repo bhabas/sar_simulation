@@ -3,14 +3,14 @@ SAR_SETTINGS:
   SAR_Type: "Source_One_V5"
   SAR_Config: "A15_L200"
 
-  Policy_Type: "PARAM_OPTIM"
-  # Policy_Type: "DEEP_RL_SB3" 
+  # Policy_Type: "PARAM_OPTIM"
+  Policy_Type: "DEEP_RL_SB3" 
   # Policy_Type: "DEEP_RL_ONBOARD" 
 
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
-  Plane_Type: "Landing_Cage_Platform"
-  Plane_Config: "Landing_Platform"
+  Plane_Type: "Landing_Surface"
+  Plane_Config: "Checkerboard_L02"
   
   Pos_X_init: 3.2       # [m]
   Pos_Y_init: 0.0       # [m]
@@ -19,7 +19,7 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "Landing_Cage"
+  Ground_Config: "None"
 
 
 CAM_SETTINGS:
