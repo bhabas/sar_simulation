@@ -730,12 +730,12 @@ if __name__ == '__main__':
     }
 
 
-    # log_name = "DeepRL_Policy_03-10--20:23:35"
-    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    log_name = "DeepRL_Policy_03-10--20:23:35"
+    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.create_model(net_arch=[10,10,10])
-    # RL_Manager.load_model(model_dir,t_step=508_000)
+    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
+    # RL_Manager.create_model(net_arch=[10,10,10])
+    RL_Manager.load_model(model_dir,t_step=50_000)
     RL_Manager.train_model(reset_timesteps=True)
     # RL_Manager.save_NN_to_C_header()
     # RL_Manager.policy_output()
