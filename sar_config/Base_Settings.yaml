@@ -17,10 +17,6 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Pos_Z_init: 2.595       # [m]
   Plane_Angle_init: 0   # [deg]
 
-GROUND_SETTINGS:
-  Ground_Type: "Ground_Surface"
-  Ground_Config: "None"
-
 
 CAM_SETTINGS:
   Cam_Config: "None"

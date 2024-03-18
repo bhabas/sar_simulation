@@ -204,7 +204,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Pose_B_O_impact_OB.orientation.z = NAN;
     Pose_B_O_impact_OB.orientation.w = NAN;
     Twist_B_P_impact_OB = ctrl_msg.Twist_B_P_impact_OB;
-    Accel_B_O_Mag_impact_OB = ctrl_msg.Accel_B_O_Mag_impact_OB;
+    dOmega_B_O_y_impact_OB = ctrl_msg.Accel_B_O_Mag_impact_OB;
 
 }
 
@@ -292,11 +292,10 @@ void SAR_DataConverter::cf1_States_B_O_Callback(const sar_msgs::GenericLogData::
     
     Twist_B_O.angular.x = omega_xy_arr[0]*10;
     Twist_B_O.angular.y = omega_xy_arr[1]*10;
-    Twist_B_O.angular.z = log_msg->values[6]*1e-3;
 
     // ACCELERATION
-    Accel_B_O.angular.y = log_msg->values[7]*1e-3;
-
+    Accel_B_O_Mag = log_msg->values[6]/100.0;
+    Accel_B_O.angular.y = log_msg->values[7]/10.0;
 
 }
 
@@ -342,7 +341,7 @@ void SAR_DataConverter::cf1_States_B_P_Callback(const sar_msgs::GenericLogData::
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[6],Policy_Action_arr);
     a_Trg = Policy_Action_arr[0];
-    a_Rot = Policy_Action_arr[1];
+    a_Rot = Policy_Action_arr[1]*10.0;
 
     // TRIGGER FLAG
     Trg_Flag = log_msg->values[7];
@@ -479,8 +478,59 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[6],Policy_Action_arr);
     a_Trg_trg = Policy_Action_arr[0];
-    a_Rot_trg = Policy_Action_arr[1];
+    a_Rot_trg = Policy_Action_arr[1]*10.0;
     
+}
+
+void SAR_DataConverter::cf1_Impact_OB_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
+{
+    // IMPACT FLAG
+    Impact_Flag_OB = (bool)log_msg->values[0];
+
+    // RELATIVE VELOCITY
+    float VelRel_BP_arr[2];
+    decompressXY(log_msg->values[1],VelRel_BP_arr);
+
+    Vel_mag_B_P_impact_OB = VelRel_BP_arr[0];
+    Vel_angle_B_P_impact_OB = VelRel_BP_arr[1]*10.0;
+
+    Twist_B_P_impact_OB.linear.x = Vel_mag_B_P_impact_OB*cos(Vel_angle_B_P_impact_OB*M_PI/180);
+    Twist_B_P_impact_OB.linear.y = NAN;
+    Twist_B_P_impact_OB.linear.z = Vel_mag_B_P_impact_OB*sin(Vel_angle_B_P_impact_OB*M_PI/180);
+
+    // ORIENTATION
+    float quat[4];
+    uint32_t quatZ = (uint32_t)log_msg->values[2];
+    quatdecompress(quatZ,quat);
+
+    Pose_B_O_impact_OB.orientation.x = quat[0];
+    Pose_B_O_impact_OB.orientation.y = quat[1];
+    Pose_B_O_impact_OB.orientation.z = quat[2];
+    Pose_B_O_impact_OB.orientation.w = quat[3]; 
+
+    // PROCESS EULER ANGLES
+    float eul[3];
+    quat2euler(quat,eul);
+    Eul_B_O_impact_OB.x = eul[0]*180/M_PI;
+    Eul_B_O_impact_OB.y = eul[1]*180/M_PI;
+    Eul_B_O_impact_OB.z = eul[2]*180/M_PI;
+
+    Eul_P_B_impact_OB.x = NAN;
+    Eul_P_B_impact_OB.y = Plane_Angle_deg - Eul_B_O_impact_OB.y;
+    Eul_P_B_impact_OB.z = NAN;
+
+    // ANGULAR VELOCITY
+    Twist_B_P_impact_OB.angular.y = log_msg->values[3]*1e-2;
+
+    // ANGULAR ACCELERATION IMPACT DETECTION
+    dOmega_B_O_y_impact_OB = log_msg->values[4]*1e-1;
+
+    
+    if(Impact_Flag_OB == true && OnceFlag_Impact_OB == false)
+    {
+        Time_impact_OB = ros::Time::now();
+        OnceFlag_Impact_OB = true;
+    }
 }
 
 void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
@@ -504,7 +554,7 @@ void SAR_DataConverter::cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstP
     Plane_Pos.y = log_msg->values[1];
     Plane_Pos.z = log_msg->values[2];
     Plane_Angle_deg = log_msg->values[3];
-    CustomThrust_Flag = (bool)log_msg->values[1];
-    CustomMotorCMD_Flag = (bool)log_msg->values[2];
+    CustomThrust_Flag = (bool)log_msg->values[4];
+    CustomMotorCMD_Flag = (bool)log_msg->values[5];
 
 }

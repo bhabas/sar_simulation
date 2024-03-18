@@ -70,6 +70,7 @@ class SAR_DataConverter {
             cf1_States_B_O_Sub = nh->subscribe("/cf1/States_B_O", 1, &SAR_DataConverter::cf1_States_B_O_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_States_B_P_Sub = nh->subscribe("/cf1/States_B_P", 1, &SAR_DataConverter::cf1_States_B_P_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_TrgState_Sub = nh->subscribe("/cf1/TrgState", 1, &SAR_DataConverter::cf1_TrgState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_ImpactOBState_Sub = nh->subscribe("/cf1/ImpactOBState", 1, &SAR_DataConverter::cf1_Impact_OB_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_CTRL_Output_Sub = nh->subscribe("/cf1/CTRL_Output", 1, &SAR_DataConverter::cf1_CTRL_Output_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_SetPoints_Sub = nh->subscribe("/cf1/SetPoints", 1, &SAR_DataConverter::cf1_SetPoints_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_Flags_Sub = nh->subscribe("/cf1/Flags", 1, &SAR_DataConverter::cf1_Flags_Callback, this, ros::TransportHints().tcpNoDelay());
@@ -135,6 +136,7 @@ class SAR_DataConverter {
         void cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_Impact_OB_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
 
@@ -285,6 +287,7 @@ class SAR_DataConverter {
         ros::Subscriber cf1_CTRL_Output_Sub;
         ros::Subscriber cf1_SetPoints_Sub;
         ros::Subscriber cf1_TrgState_Sub;
+        ros::Subscriber cf1_ImpactOBState_Sub;
         ros::Subscriber cf1_Flags_Sub;
         ros::Subscriber cf1_Misc_Sub;
 
@@ -388,10 +391,12 @@ class SAR_DataConverter {
 
         geometry_msgs::Pose Pose_B_O_impact_OB;
         geometry_msgs::Vector3 Eul_B_O_impact_OB;
+        double Vel_mag_B_P_impact_OB = NAN;
+        double Vel_angle_B_P_impact_OB = NAN;
 
         geometry_msgs::Twist Twist_B_P_impact_OB;
         geometry_msgs::Vector3 Eul_P_B_impact_OB;
-        float Accel_B_O_Mag_impact_OB = NAN;
+        float dOmega_B_O_y_impact_OB = NAN;
 
 
         // ==========================
@@ -623,7 +628,7 @@ inline void SAR_DataConverter::resetImpactData()
 
     Twist_B_P_impact_OB = geometry_msgs::Twist();
     Eul_P_B_impact_OB = geometry_msgs::Vector3();
-    Accel_B_O_Mag_impact_OB = NAN;
+    dOmega_B_O_y_impact_OB = NAN;
 
     // EXTERNAL IMPACT DATA
     Impact_Flag_Ext = false;
