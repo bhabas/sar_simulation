@@ -11,7 +11,7 @@ import rospkg
 ## ROS MESSAGES AND SERVICES
 from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
 from sar_msgs.srv import Logging_CMD,Logging_CMDRequest
-from sar_msgs.srv import CTRL_Cmd,CTRL_CmdRequest
+from sar_msgs.srv import CTRL_Cmd_srv,CTRL_Cmd_srvRequest
 from sar_msgs.msg import RL_Data,RL_History
 
 from rosgraph_msgs.msg import Clock
@@ -167,7 +167,7 @@ class SAR_Base_Interface():
         """        
 
         ## CREATE SERVICE REQUEST MSG
-        srv = CTRL_CmdRequest() 
+        srv = CTRL_Cmd_srvRequest() 
         
         srv.cmd_type = self.cmd_dict[action]
         srv.cmd_vals.x = cmd_vals[0]
@@ -176,7 +176,7 @@ class SAR_Base_Interface():
         srv.cmd_flag = cmd_flag
         srv.cmd_rx = True
 
-        self.callService('/SAR_DC/CMD_Input',srv,CTRL_Cmd)    
+        self.callService('/SAR_DC/CMD_Input',srv,CTRL_Cmd_srv)    
 
     def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):
 
