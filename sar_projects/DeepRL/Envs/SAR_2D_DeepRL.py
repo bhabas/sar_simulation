@@ -74,7 +74,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## DOMAIN RANDOMIZATION
         self.Mass_std = 0.00*self.Ref_Mass
-        self.Iyy_std = 0.00*self.Ref_Iyy
+        self.Iyy_std = 0.03*self.Ref_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -612,9 +612,9 @@ if __name__ == '__main__':
 
     for ep in range(50):
 
-        V_mag = 2.5
-        V_angle = 120
-        Plane_Angle = 0
+        V_mag = 1.0
+        V_angle = 160
+        Plane_Angle = 180
 
         if V_mag != None:
             env.V_mag_range = [V_mag,V_mag]
@@ -632,8 +632,8 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = 1.0
-            if env.Tau_CR <= 0.255:
+            action[1] = -0.2
+            if env.Tau_CR <= 0.08:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated

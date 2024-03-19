@@ -573,16 +573,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 + self.Ref_Mass * self.g * self.L_eff * np.sin(self.Beta) * np.sin(self.Plane_Angle_rad)
             
 
-            ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+            ## TURN OFF BODY MOMENT AT CONTACT
             _,Phi_B_O,_,_ = self._getState()
-            if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
-                M_yd = self.Ref_Iyy*a_Rot
-                M_yd *= 2
-
-            else: 
-
-                M_yd = 0
-                self.MomentCutoff= True
+            M_yd = 0
+            self.MomentCutoff= True
 
             ## THRUST MIXING
             M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
@@ -652,16 +646,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             M_g = -self.Ref_Mass * self.g * self.L_eff * np.cos(self.Beta) * np.cos(self.Plane_Angle_rad) \
                 + self.Ref_Mass * self.g * self.L_eff * np.sin(self.Beta) * np.sin(self.Plane_Angle_rad)
             
-            ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+            ## TURN OFF BODY MOMENT AT CONTACT
             _,Phi_B_O,_,_ = self._getState()
-            if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
-                M_yd = self.Ref_Iyy*a_Rot
-                M_yd *= 2
-
-            else: 
-
-                M_yd = 0
-                self.MomentCutoff= True
+            M_yd = 0
+            self.MomentCutoff= True
 
             ## THRUST MIXING
             M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
@@ -811,9 +799,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             dBeta_2 = 1/(self.I_c)*(H_V_perp + H_V_tx + H_dphi)
 
             self.Beta = Beta_2_rad
-            self.dBeta = dBeta_2
-
-  
+            self.dBeta = dBeta_2 
 
     def draw_line_dashed(self,surface, color, start_pos, end_pos, width = 1, dash_length = 10, exclude_corners = True):
 
