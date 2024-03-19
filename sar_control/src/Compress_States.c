@@ -3,6 +3,7 @@
 // Definition of the global instances
 States_Z_Struct States_Z;
 TrgStates_Z_Struct TrgStates_Z;
+ImpactOB_States_Z_Struct ImpactOB_States_Z;
 SetPoints_Z_Struct SetPoints_Z;
 
 void compressStates(){
@@ -16,6 +17,7 @@ void compressStates(){
 
     States_Z.Acc_BOxy = compressXY(Accel_B_O.x, Accel_B_O.y);
     States_Z.Acc_BOz = (int16_t)(Accel_B_O.z * 1000.0f);
+    States_Z.Accel_BO_Mag = (int16_t)(Accel_B_O_Mag * 100.0f);
 
     float const q[4] = {
         Quat_B_O.x,
@@ -27,7 +29,7 @@ void compressStates(){
     States_Z.Omega_BOxy = compressXY(Omega_B_O.x/10,Omega_B_O.y/10);
     States_Z.Omega_BOz = (int16_t)(Omega_B_O.z * 1000.0f);
 
-    States_Z.dOmega_BOy = (int16_t)(dOmega_B_O.y * 1000.0f);
+    States_Z.dOmega_BOy = (int16_t)(dOmega_B_O.y * 10.0f);
 
     States_Z.VelRel_BP = compressXY(Vel_mag_B_P, Vel_angle_B_P);
 
@@ -53,7 +55,7 @@ void compressStates(){
 
 
     // COMPRESS POLICY ACTIONS
-    States_Z.Policy_Actions = compressXY(a_Trg,a_Rot);
+    States_Z.Policy_Actions = compressXY(a_Trg,a_Rot/10.0f);
 }
 
 void compressTrgStates(){
@@ -85,8 +87,25 @@ void compressTrgStates(){
 
 
     // COMPRESS POLICY ACTIONS
-    TrgStates_Z.Policy_Actions = compressXY(a_Trg_trg,a_Rot_trg);
+    TrgStates_Z.Policy_Actions = compressXY(a_Trg_trg,a_Rot_trg/10.0f);
 
+}
+
+void compressImpactOBStates()
+{
+
+    ImpactOB_States_Z.VelRel_BP = compressXY(Vel_mag_B_P_impact_OB, Vel_angle_B_P_impact_OB/10.0f);
+
+    float const q[4] = {
+        Quat_B_O_impact_OB.x,
+        Quat_B_O_impact_OB.y,
+        Quat_B_O_impact_OB.z,
+        Quat_B_O_impact_OB.w};
+    ImpactOB_States_Z.Quat_BO = quatcompress(q);
+
+    ImpactOB_States_Z.Omega_BOy = (int16_t)Omega_B_O_impact_OB.y * 100.0f;
+
+    ImpactOB_States_Z.dOmega_BOy = (int16_t)dOmega_B_O_impact_OB.y * 10.0f;
 }
 
 void compressSetpoints(){

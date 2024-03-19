@@ -323,12 +323,19 @@ extern float a_Rot_trg;
 //  RECORD SYSTEM STATES AT IMPACT
 // =================================
 extern bool Impact_Flag_OB;
-extern float Accel_B_O_Mag_impact_OB;      // Linear Accel. Magnitude [m/s^2]
-extern struct vec Pos_B_O_impact_OB;       // Pos [m]
+extern bool Impact_Flag_Ext;
 extern struct quat Quat_B_O_impact_OB;     // Orientation
+extern float Vel_mag_B_P_impact_OB;        // Velocity magnitude relative [m/s]
+extern float Vel_angle_B_P_impact_OB;      // Velocity angle relative [deg]
+extern struct vec Omega_B_O_impact_OB;     // Angular Rate [rad/s]
+extern struct vec dOmega_B_O_impact_OB;    // Angular Accel [rad/s^2]
 
-extern struct vec Vel_B_P_impact_OB;       // Vel [m/s]
-extern struct vec Omega_B_P_impact_OB;     // Angular Rate [rad/s]
+extern uint16_t cycleCounter;               // Cycle counter to delay recorded impact states   
+extern float Vel_mag_B_P_prev_N;            // Velocity magnitude relative [m/s]
+extern float Vel_angle_B_P_prev_N;          // Velocity angle relative [deg]
+extern struct quat Quat_B_O_prev_N;         // Orientation
+extern struct vec Omega_B_O_prev_N;         // Angular Rate [rad/s]
+extern struct vec dOmega_B_O_prev_N;        // Angular Accel [rad/s^2]
 
 // =================================
 //    LANDING SURFACE PARAMETERS

@@ -10,7 +10,7 @@ GREEN = '\033[92m'
 BLUE = "\033[34m"  
 RESET = "\033[0m"  # Reset to default color
        
-def cmd_send(env,logName):
+def cmd_send(env):
 
     while True:
         # Converts input number into action name
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     logName = f"Control_Playground--trial_{int(trial_num):02d}--{env.SAR_Config}.csv"
 
     env.createCSV()
-    cmd_thread = threading.Thread(target=cmd_send,args=(env,logName))
+    cmd_thread = threading.Thread(target=cmd_send,args=(env,))
     cmd_thread.start()   
 
     rospy.spin()

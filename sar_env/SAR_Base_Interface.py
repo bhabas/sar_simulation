@@ -643,7 +643,6 @@ class SAR_Base_Interface():
         self.V_B_P_impact_OB = np.full([3],np.nan)
         self.Omega_B_P_impact_OB = np.full([3],np.nan)
         self.Eul_P_B_impact_OB = np.full([3],np.nan)
-        self.Accel_B_O_Mag_impact_OB = np.nan
 
         self.Impact_Flag_Ext = False
         self.BodyContact_Flag = False
@@ -820,7 +819,6 @@ class SAR_Base_Interface():
                                         ImpactData_msg.Eul_P_B_impact_OB.y,
                                         ImpactData_msg.Eul_P_B_impact_OB.z],3)
         
-        self.Accel_B_O_Mag_impact_OB = np.round(ImpactData_msg.Accel_B_O_Mag_impact_OB,3)
         
 
         ## EXTERNAL IMPACT DETECTION

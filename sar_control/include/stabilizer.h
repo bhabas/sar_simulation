@@ -22,7 +22,7 @@
 #include "sar_msgs/CTRL_Get_Obs.h"
 #include "sar_msgs/CTRL_Data.h"
 #include "sar_msgs/CTRL_Debug.h"
-#include "sar_msgs/SAR_MiscData.h"
+#include "sar_msgs/SAR_ImpactData.h"
 
 
 
@@ -48,7 +48,7 @@ class Controller
             CTRL_Debug_Publisher = nh->advertise<sar_msgs::CTRL_Debug>("CTRL/debug",1);
             CTRL_CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
             Get_Obs_Service = nh->advertiseService("/CTRL/Get_Obs",&Controller::Get_Obs_Resp,this);
-            SAR_DC_Subscriber = nh->subscribe("/SAR_DC/MiscData",1,&Controller::Plane_Pose_Callback,this,ros::TransportHints().tcpNoDelay());
+            SAR_DC_Subscriber = nh->subscribe("/SAR_DC/ImpactData",1,&Controller::SAR_DC_ExtImpact_Callback,this,ros::TransportHints().tcpNoDelay());
 
 
 
@@ -110,7 +110,7 @@ class Controller
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         bool CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
         bool Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res);
-        void Plane_Pose_Callback(const sar_msgs::SAR_MiscData::ConstPtr &msg);
+        void SAR_DC_ExtImpact_Callback(const sar_msgs::SAR_ImpactData::ConstPtr &msg);
 
 
         void appLoop();
@@ -124,12 +124,9 @@ class Controller
 
 };
 
-void Controller::Plane_Pose_Callback(sar_msgs::SAR_MiscData::ConstPtr const &msg)
+void Controller::SAR_DC_ExtImpact_Callback(sar_msgs::SAR_ImpactData::ConstPtr const &msg)
 {
-    Plane_Angle_deg = msg->Plane_Angle;
-    r_P_O.x = msg->Plane_Pos.x;
-    r_P_O.y = msg->Plane_Pos.y;
-    r_P_O.z = msg->Plane_Pos.z;
+    Impact_Flag_Ext = msg->Impact_Flag_Ext;
 }
 
 bool Controller::Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res)
@@ -489,24 +486,21 @@ void Controller::publishCtrlData()
     //      STATES AT IMPACT
     // ==========================
     CtrlData_msg.Impact_Flag_OB = Impact_Flag_OB;
-    CtrlData_msg.Accel_B_O_Mag_impact_OB = Accel_B_O_Mag_impact_OB;
 
-    CtrlData_msg.Pose_B_O_impact_OB.position.x = Pos_B_O_impact_OB.x;
-    CtrlData_msg.Pose_B_O_impact_OB.position.y = Pos_B_O_impact_OB.y;
-    CtrlData_msg.Pose_B_O_impact_OB.position.z = Pos_B_O_impact_OB.z;
+    CtrlData_msg.Vel_mag_B_P_impact_OB = Vel_mag_B_P_impact_OB;
+    CtrlData_msg.Vel_angle_B_P_impact_OB = Vel_angle_B_P_impact_OB;
 
     CtrlData_msg.Pose_B_O_impact_OB.orientation.x = Quat_B_O_impact_OB.x;
     CtrlData_msg.Pose_B_O_impact_OB.orientation.y = Quat_B_O_impact_OB.y;
     CtrlData_msg.Pose_B_O_impact_OB.orientation.z = Quat_B_O_impact_OB.z;
     CtrlData_msg.Pose_B_O_impact_OB.orientation.w = Quat_B_O_impact_OB.w;
 
-    CtrlData_msg.Twist_B_P_impact_OB.linear.x = Vel_B_P_impact_OB.x;
-    CtrlData_msg.Twist_B_P_impact_OB.linear.y = Vel_B_P_impact_OB.y;
-    CtrlData_msg.Twist_B_P_impact_OB.linear.z = Vel_B_P_impact_OB.z;
 
-    CtrlData_msg.Twist_B_P_impact_OB.angular.x = Omega_B_P_impact_OB.x;
-    CtrlData_msg.Twist_B_P_impact_OB.angular.y = Omega_B_P_impact_OB.y;
-    CtrlData_msg.Twist_B_P_impact_OB.angular.z = Omega_B_P_impact_OB.z;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.x = Omega_B_O_impact_OB.x;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.y = Omega_B_O_impact_OB.y;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.z = Omega_B_O_impact_OB.z;
+
+    CtrlData_msg.dOmega_B_O_y_impact_OB = dOmega_B_O_impact_OB.y;
     
     CTRL_Data_Publisher.publish(CtrlData_msg);
 }

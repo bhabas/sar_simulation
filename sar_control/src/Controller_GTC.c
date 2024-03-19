@@ -129,6 +129,22 @@ void controllerOutOfTreeReset() {
     a_Trg_trg = 0.0f;
     a_Rot_trg = 0.0f;
 
+    // RESET LOGGED IMPACT VALUES
+    Impact_Flag_OB = false;
+    Impact_Flag_Ext = false;
+    Vel_mag_B_P_impact_OB = 0.0f;
+    Vel_angle_B_P_impact_OB = 0.0f;
+    Quat_B_O_impact_OB = mkquat(0.0f,0.0f,0.0f,1.0f);
+    Omega_B_O_impact_OB = vzero();
+    dOmega_B_O_impact_OB = vzero();
+
+
+    // TURN OFF IMPACT LEDS
+    #ifdef CONFIG_SAR_EXP
+    ledSet(LED_GREEN_L, 0);
+    ledSet(LED_BLUE_NRF, 0);
+    #endif
+
 }
 
 
@@ -308,19 +324,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         updateRotationMatrices();
     }
 
-    // if (RATE_DO_EXECUTE(1, tick))
-    // {
-    //     // PASS OBSERVATION THROUGH POLICY NN
-    //     NN_forward(X_input,Y_output,&NN_DeepRL);
-
-    //     consolePrintf("X_input: %.5f %.5f %.5f %.5f\n",X_input->data[0][0],X_input->data[1][0],X_input->data[2][0],X_input->data[3][0]);
-    //     consolePrintf("Y_output: %.5f %.5f %.5f %.5f\n\n",Y_output->data[0][0],Y_output->data[1][0],Y_output->data[2][0],Y_output->data[3][0]);
-
-    // }
-
-    
-
-
     
     // STATE UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
@@ -328,18 +331,17 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         float time_delta = (tick-prev_tick)/1000.0f;
 
         // CALC STATES WRT ORIGIN
-        Pos_B_O = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
-        Vel_B_O = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
-        Accel_B_O = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
-        Accel_B_O_Mag = firstOrderFilter(vmag(Accel_B_O),Accel_B_O_Mag,0.5f);
+        Pos_B_O = mkvec(state->position.x, state->position.y, state->position.z);               // [m]
+        Vel_B_O = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);               // [m/s]
+        Accel_B_O = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f);    // [m/s^2]
+        Accel_B_O_Mag = firstOrderFilter(vmag(Accel_B_O),Accel_B_O_Mag,1.0f) - 9.81f;           // [m/s^2]
 
         Omega_B_O = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
 
         // CALC AND FILTER ANGULAR ACCELERATION
-        dOmega_B_O.x = firstOrderFilter((Omega_B_O.x - Omega_B_O_prev.x)/time_delta,dOmega_B_O.x,0.90f); // [rad/s^2]
-        dOmega_B_O.y = firstOrderFilter((Omega_B_O.y - Omega_B_O_prev.y)/time_delta,dOmega_B_O.y,0.90f); // [rad/s^2]
-        dOmega_B_O.z = firstOrderFilter((Omega_B_O.z - Omega_B_O_prev.z)/time_delta,dOmega_B_O.z,0.90f); // [rad/s^2]
-
+        dOmega_B_O.x = firstOrderFilter((Omega_B_O.x - Omega_B_O_prev.x)/time_delta,dOmega_B_O.x,1.0f); // [rad/s^2]
+        dOmega_B_O.y = firstOrderFilter((Omega_B_O.y - Omega_B_O_prev.y)/time_delta,dOmega_B_O.y,1.0f); // [rad/s^2]
+        dOmega_B_O.z = firstOrderFilter((Omega_B_O.z - Omega_B_O_prev.z)/time_delta,dOmega_B_O.z,1.0f); // [rad/s^2]
 
         Quat_B_O = mkquat(state->attitudeQuaternion.x,
                         state->attitudeQuaternion.y,
@@ -353,18 +355,35 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         Vel_angle_B_P = atan2f(Vel_B_P.z,Vel_B_P.x)*Rad2Deg;
         Omega_B_P = Omega_B_O;
 
+        // LAGGING STATES TO RECORD IMPACT VALUES
+        // NOTE: A circular buffer would be a true better option if time allows
+        if (cycleCounter % 5 == 0)
+        {
+            Vel_mag_B_P_prev_N = Vel_mag_B_P;
+            Vel_angle_B_P_prev_N = Vel_angle_B_P;
+            Quat_B_O_prev_N = Quat_B_O;
+            Omega_B_O_prev_N = Omega_B_O;
+            dOmega_B_O_prev_N = dOmega_B_O;
+        }
+        cycleCounter++;
+        
 
+        // ONBOARD IMPACT DETECTION
+        if (dOmega_B_O.y > 300.0f && Impact_Flag_OB == false)
+        {
+            Impact_Flag_OB = true;
+            Vel_mag_B_P_impact_OB = Vel_mag_B_P_prev_N;
+            Vel_angle_B_P_impact_OB = Vel_angle_B_P_prev_N;
+            Quat_B_O_impact_OB = Quat_B_O_prev_N;
+            Omega_B_O_impact_OB = Omega_B_O_prev_N;
+            dOmega_B_O_impact_OB.y = dOmega_B_O_prev_N.y;
 
-        // if (Accel_B_O_Mag > 10.0f && Impact_Flag_OB == false)
-        // {
-        //     Impact_Flag_OB = true;
-        //     Pos_B_O_impact_OB = Pos_B_O;
-        //     Vel_B_P_impact_OB = Vel_B_P;
-        //     Quat_B_O_impact_OB = Quat_B_O;
-        //     Omega_B_P_impact_OB = Omega_B_P;
-        //     Accel_B_O_Mag_impact_OB = Accel_B_O_Mag;
-        // }
-
+            // TURN ON IMPACT LEDS
+            #ifdef CONFIG_SAR_EXP
+            ledSet(LED_GREEN_R, 1);
+            ledSet(LED_BLUE_NRF, 1);
+            #endif
+        }
 
         // SAVE PREVIOUS VALUES
         Omega_B_O_prev = Omega_B_O;
@@ -487,7 +506,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             M4_CMD = (int32_t)thrust2Motor_CMD(M4_thrust);
         }
 
-        if (!Armed_Flag || MotorStop_Flag || Tumbled_Flag)
+        if (!Armed_Flag || MotorStop_Flag || Tumbled_Flag || Impact_Flag_OB || Impact_Flag_Ext)
         {
             #ifndef CONFIG_SAR_EXP
             M1_thrust = 0.0f;
@@ -516,7 +535,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             
             // TURN ON ARMING LEDS
             ledSet(LED_BLUE_L, 1);
-            ledSet(LED_BLUE_NRF, 1);
         }
         else{
             motorsSetRatio(MOTOR_M1, 0);
@@ -526,24 +544,18 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             
             // TURN OFF ARMING LEDS
             ledSet(LED_BLUE_L, 0);
-            ledSet(LED_BLUE_NRF, 0);
         }
         #endif
 
         // COMPRESS STATES
         compressStates();
-        compressSetpoints();
         compressTrgStates();
+        compressImpactOBStates();
+        compressSetpoints();
 
 
     }
 
-    // if (RATE_DO_EXECUTE(2, tick))
-    // {
-    //     consolePrintf("F_thrust: %f\n",F_thrust);
-    // }   
-    
- 
 
 }
 
@@ -554,48 +566,48 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 // NOTE: PARAM GROUP + NAME + 1 CANNOT EXCEED 26 CHARACTERS (WHY? IDK.)
 // NOTE: CANNOT HAVE A LOG AND A PARAM ACCESS THE SAME VALUE
 PARAM_GROUP_START(P1)
-PARAM_ADD(PARAM_FLOAT, Mass, &m)
-PARAM_ADD(PARAM_FLOAT, I_xx, &Ixx)
-PARAM_ADD(PARAM_FLOAT, I_yy, &Iyy)
-PARAM_ADD(PARAM_FLOAT, Izz, &Izz)
+PARAM_ADD(PARAM_FLOAT, Mass,        &m)
+PARAM_ADD(PARAM_FLOAT, I_xx,        &Ixx)
+PARAM_ADD(PARAM_FLOAT, I_yy,        &Iyy)
+PARAM_ADD(PARAM_FLOAT, Izz,         &Izz)
 
-PARAM_ADD(PARAM_FLOAT, Prop_14_x, &Prop_14_x)
-PARAM_ADD(PARAM_FLOAT, Prop_14_y, &Prop_14_y)
-PARAM_ADD(PARAM_FLOAT, Prop_23_x, &Prop_23_x)
-PARAM_ADD(PARAM_FLOAT, Prop_23_y, &Prop_23_y)
+PARAM_ADD(PARAM_FLOAT, Prop_14_x,   &Prop_14_x)
+PARAM_ADD(PARAM_FLOAT, Prop_14_y,   &Prop_14_y)
+PARAM_ADD(PARAM_FLOAT, Prop_23_x,   &Prop_23_x)
+PARAM_ADD(PARAM_FLOAT, Prop_23_y,   &Prop_23_y)
 
-PARAM_ADD(PARAM_FLOAT, C_tf, &C_tf)
-PARAM_ADD(PARAM_FLOAT, Tust_max, &Thrust_max)
-PARAM_ADD(PARAM_FLOAT, L_eff, &L_eff)
-PARAM_ADD(PARAM_FLOAT, Fwd_Reach, &Forward_Reach)
+PARAM_ADD(PARAM_FLOAT, C_tf,        &C_tf)
+PARAM_ADD(PARAM_FLOAT, Tust_max,    &Thrust_max)
+PARAM_ADD(PARAM_FLOAT, L_eff,       &L_eff)
+PARAM_ADD(PARAM_FLOAT, Fwd_Reach,   &Forward_Reach)
 
 
-PARAM_ADD(PARAM_UINT8, Armed, &Armed_Flag)
-PARAM_ADD(PARAM_UINT8, PolicyType, &Policy)
-PARAM_ADD(PARAM_UINT8, SAR_Type, &SAR_Type)
+PARAM_ADD(PARAM_UINT8, Armed,       &Armed_Flag)
+PARAM_ADD(PARAM_UINT8, PolicyType,  &Policy)
+PARAM_ADD(PARAM_UINT8, SAR_Type,    &SAR_Type)
 PARAM_GROUP_STOP(P1)
 
 
 PARAM_GROUP_START(P2)
-PARAM_ADD(PARAM_FLOAT, P_kp_xy, &P_kp_xy)
-PARAM_ADD(PARAM_FLOAT, P_kd_xy, &P_kd_xy) 
-PARAM_ADD(PARAM_FLOAT, P_ki_xy, &P_ki_xy)
-PARAM_ADD(PARAM_FLOAT, i_range_xy, &i_range_xy)
+PARAM_ADD(PARAM_FLOAT, P_kp_xy,         &P_kp_xy)
+PARAM_ADD(PARAM_FLOAT, P_kd_xy,         &P_kd_xy) 
+PARAM_ADD(PARAM_FLOAT, P_ki_xy,         &P_ki_xy)
+PARAM_ADD(PARAM_FLOAT, i_range_xy,      &i_range_xy)
 
-PARAM_ADD(PARAM_FLOAT, P_kp_z,  &P_kp_z)
-PARAM_ADD(PARAM_FLOAT, P_Kd_z,  &P_kd_z)
-PARAM_ADD(PARAM_FLOAT, P_ki_z,  &P_ki_z)
-PARAM_ADD(PARAM_FLOAT, i_range_z, &i_range_z)
+PARAM_ADD(PARAM_FLOAT, P_kp_z,          &P_kp_z)
+PARAM_ADD(PARAM_FLOAT, P_Kd_z,          &P_kd_z)
+PARAM_ADD(PARAM_FLOAT, P_ki_z,          &P_ki_z)
+PARAM_ADD(PARAM_FLOAT, i_range_z,       &i_range_z)
 
-PARAM_ADD(PARAM_FLOAT, R_kp_xy, &R_kp_xy)
-PARAM_ADD(PARAM_FLOAT, R_kd_xy, &R_kd_xy) 
-PARAM_ADD(PARAM_FLOAT, R_ki_xy, &R_ki_xy)
-PARAM_ADD(PARAM_FLOAT, i_range_R_xy, &i_range_R_xy)
+PARAM_ADD(PARAM_FLOAT, R_kp_xy,         &R_kp_xy)
+PARAM_ADD(PARAM_FLOAT, R_kd_xy,         &R_kd_xy) 
+PARAM_ADD(PARAM_FLOAT, R_ki_xy,         &R_ki_xy)
+PARAM_ADD(PARAM_FLOAT, i_range_R_xy,    &i_range_R_xy)
 
-PARAM_ADD(PARAM_FLOAT, R_kpz,  &R_kp_z)
-PARAM_ADD(PARAM_FLOAT, R_kdz,  &R_kd_z)
-PARAM_ADD(PARAM_FLOAT, R_ki_z,  &R_ki_z)
-PARAM_ADD(PARAM_FLOAT, i_range_R_z, &i_range_R_z)
+PARAM_ADD(PARAM_FLOAT, R_kpz,           &R_kp_z)
+PARAM_ADD(PARAM_FLOAT, R_kdz,           &R_kd_z)
+PARAM_ADD(PARAM_FLOAT, R_ki_z,          &R_ki_z)
+PARAM_ADD(PARAM_FLOAT, i_range_R_z,     &i_range_R_z)
 PARAM_GROUP_STOP(P2)
 
 
@@ -611,7 +623,8 @@ LOG_ADD(LOG_INT16,  Acc_BOz,        &States_Z.Acc_BOz)
 LOG_ADD(LOG_UINT32, Quat_BO,        &States_Z.Quat_BO)
 LOG_ADD(LOG_UINT32, Omega_BOxy,     &States_Z.Omega_BOxy)
 LOG_ADD(LOG_INT16,  Omega_BOz,      &States_Z.Omega_BOz)
-LOG_ADD(LOG_INT16,  dOmega_BOy,     &States_Z.dOmega_BOy)
+LOG_ADD(LOG_INT16,  dOmegaBOy,      &States_Z.dOmega_BOy)
+LOG_ADD(LOG_INT16,  Acc_BO_Mag,     &States_Z.Accel_BO_Mag)
 
 LOG_ADD(LOG_UINT32, VelRel_BP,      &States_Z.VelRel_BP)
 LOG_ADD(LOG_UINT32, r_PBxy,         &States_Z.r_PBxy)
@@ -632,26 +645,26 @@ LOG_GROUP_STOP(Z_States)
 
 
 LOG_GROUP_START(Z_SetPoints)
-LOG_ADD(LOG_UINT32, x_xy,         &SetPoints_Z.xy)
-LOG_ADD(LOG_INT16,  x_z,          &SetPoints_Z.z)
+LOG_ADD(LOG_UINT32, x_xy,           &SetPoints_Z.xy)
+LOG_ADD(LOG_INT16,  x_z,            &SetPoints_Z.z)
 
-LOG_ADD(LOG_UINT32, v_xy,         &SetPoints_Z.vxy)
-LOG_ADD(LOG_INT16,  v_z,         &SetPoints_Z.vz)
+LOG_ADD(LOG_UINT32, v_xy,           &SetPoints_Z.vxy)
+LOG_ADD(LOG_INT16,  v_z,            &SetPoints_Z.vz)
 
-LOG_ADD(LOG_UINT32, a_xy,        &SetPoints_Z.axy)
-LOG_ADD(LOG_INT16,  a_z,         &SetPoints_Z.az)
+LOG_ADD(LOG_UINT32, a_xy,           &SetPoints_Z.axy)
+LOG_ADD(LOG_INT16,  a_z,            &SetPoints_Z.az)
 LOG_GROUP_STOP(Z_SetPoints)
 
 
 
 LOG_GROUP_START(Z_Trg)
-LOG_ADD(LOG_UINT8, Trg_Flag, &Trg_Flag)
+LOG_ADD(LOG_UINT8,  Trg_Flag,       &Trg_Flag)
 LOG_ADD(LOG_UINT32, r_BOxy,         &TrgStates_Z.r_BOxy)
 LOG_ADD(LOG_INT16,  r_BOz,          &TrgStates_Z.r_BOz)
 LOG_ADD(LOG_UINT32, V_BOxy,         &TrgStates_Z.V_BOxy)
 LOG_ADD(LOG_INT16,  V_BOz,          &TrgStates_Z.V_BOz)
 LOG_ADD(LOG_UINT32, Quat_BO,        &TrgStates_Z.Quat_BO)
-LOG_ADD(LOG_INT16, Omega_BOy,       &TrgStates_Z.Omega_BOy)
+LOG_ADD(LOG_INT16,  Omega_BOy,      &TrgStates_Z.Omega_BOy)
 LOG_ADD(LOG_UINT32, VelRel_BP,      &TrgStates_Z.VelRel_BP)
 LOG_ADD(LOG_UINT32, r_PBxy,         &TrgStates_Z.r_PBxy)
 LOG_ADD(LOG_INT16,  r_PBz,          &TrgStates_Z.r_PBz)
@@ -663,7 +676,11 @@ LOG_GROUP_STOP(Z_Trg)
 
 
 LOG_GROUP_START(Z_Impact)
-// TBD IF NEEDED/CAPBABLE
+LOG_ADD(LOG_UINT8,  ImpaOB,         &Impact_Flag_OB)
+LOG_ADD(LOG_UINT32, VelRel_BP,      &ImpactOB_States_Z.VelRel_BP)
+LOG_ADD(LOG_UINT32, Quat_BO,        &ImpactOB_States_Z.Quat_BO)
+LOG_ADD(LOG_INT16,  OmegaBOy,       &ImpactOB_States_Z.Omega_BOy)
+LOG_ADD(LOG_INT16,  dOmega_BOy,     &ImpactOB_States_Z.dOmega_BOy)
 LOG_GROUP_STOP(Z_Impact)
 
 

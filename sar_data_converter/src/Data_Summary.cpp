@@ -132,7 +132,6 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Eul_B_O_impact_OB = Eul_B_O_impact_OB;
     ImpactData_msg.Twist_B_P_impact_OB = Twist_B_P_impact_OB;
     ImpactData_msg.Eul_P_B_impact_OB = Eul_P_B_impact_OB;
-    ImpactData_msg.Accel_B_O_Mag_impact_OB = dOmega_B_O_y_impact_OB;
 
     // EXTERNAL IMPACT DATA
     ros::Duration Time_delta_Ext(Time_impact_Ext-Time_start);

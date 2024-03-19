@@ -13,8 +13,9 @@
 // ==================================
 
 void compressStates();
-void compressSetpoints();
 void compressTrgStates();
+void compressImpactOBStates();
+void compressSetpoints();
 uint32_t compressXY(float x, float y); // Compresses values in range (-32.767 - 32.767)
 
 typedef struct {
@@ -29,6 +30,7 @@ typedef struct {
     // Compressed accelerations [mm/s^2]
     uint32_t Acc_BOxy; 
     int16_t Acc_BOz;
+    int16_t Accel_BO_Mag;
 
     // compressed quaternion, see quatcompress.h
     int32_t Quat_BO; 
@@ -116,6 +118,23 @@ typedef struct {
 } TrgStates_Z_Struct;
 
 typedef struct {
+
+    // Compressed Velocity [mm/s]
+    uint32_t VelRel_BP;
+
+    // compressed quaternion, see quatcompress.h
+    int32_t Quat_BO; 
+
+    // Compressed angular velocity [milli-rad/sec]
+    int16_t Omega_BOy;
+
+    // Compressed Impact angular acceleration [milli-rad/sec^2]
+    int16_t dOmega_BOy;
+   
+
+} ImpactOB_States_Z_Struct;
+
+typedef struct {
     
     uint32_t xy;  // Compressed position [mm]
     int16_t z;
@@ -131,4 +150,5 @@ typedef struct {
 // Declaration of the global instances
 extern States_Z_Struct States_Z;
 extern TrgStates_Z_Struct TrgStates_Z;
+extern ImpactOB_States_Z_Struct ImpactOB_States_Z;
 extern SetPoints_Z_Struct SetPoints_Z;

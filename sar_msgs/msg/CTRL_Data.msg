@@ -67,7 +67,9 @@ bool Impact_Flag_OB
 
 geometry_msgs/Pose Pose_B_O_impact_OB
 geometry_msgs/Twist Twist_B_P_impact_OB
-float64 Accel_B_O_Mag_impact_OB
+float64 Vel_mag_B_P_impact_OB
+float64 Vel_angle_B_P_impact_OB
+float64 dOmega_B_O_y_impact_OB
 
 
 

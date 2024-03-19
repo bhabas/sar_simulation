@@ -89,10 +89,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // CONTROL ACTIONS
     FM = ctrl_msg.FM;
-    FM[0] = FM[0]*g2Newton;
-    FM[1] = FM[1]*g2Newton*1.0e-3;
-    FM[2] = FM[2]*g2Newton*1.0e-3;
-    FM[3] = FM[3]*g2Newton*1.0e-3;
+    FM[0] = FM[0]*Newton2g;
+    FM[1] = FM[1]*Newton2g*1.0e-3;
+    FM[2] = FM[2]*Newton2g*1.0e-3;
+    FM[3] = FM[3]*Newton2g*1.0e-3;
     MotorThrusts = ctrl_msg.MotorThrusts;
     Motor_CMD = ctrl_msg.Motor_CMD;
 
@@ -191,6 +191,37 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     Impact_Flag_OB = ctrl_msg.Impact_Flag_OB;
 
+    Vel_mag_B_P_impact_OB = ctrl_msg.Vel_mag_B_P_impact_OB;
+    Vel_angle_B_P_impact_OB = ctrl_msg.Vel_angle_B_P_impact_OB;
+    Pose_B_O_impact_OB = ctrl_msg.Pose_B_O_impact_OB;
+
+    Twist_B_P_impact_OB = ctrl_msg.Twist_B_P_impact_OB;
+    Twist_B_P_impact_OB.linear.x = Vel_mag_B_P_impact_OB*cos(Vel_angle_B_P_impact_OB*M_PI/180);
+    Twist_B_P_impact_OB.linear.y = NAN;
+    Twist_B_P_impact_OB.linear.z = Vel_mag_B_P_impact_OB*sin(Vel_angle_B_P_impact_OB*M_PI/180);
+
+    float quat_impact[4] = {
+        (float)ctrl_msg.Pose_B_O_impact_OB.orientation.x,
+        (float)ctrl_msg.Pose_B_O_impact_OB.orientation.y,
+        (float)ctrl_msg.Pose_B_O_impact_OB.orientation.z,
+        (float)ctrl_msg.Pose_B_O_impact_OB.orientation.w
+    };
+
+    // PROCESS EULER ANGLES
+    float eul_impact[3];
+    quat2euler(quat_impact,eul);
+    Eul_B_O_impact_OB.x = eul_impact[0]*180/M_PI;
+    Eul_B_O_impact_OB.y = eul_impact[1]*180/M_PI;
+    Eul_B_O_impact_OB.z = eul_impact[2]*180/M_PI;
+    
+
+    Eul_P_B_impact_OB.x = NAN;
+    Eul_P_B_impact_OB.y = Plane_Angle_deg - Eul_B_O_impact_OB.y;
+    Eul_P_B_impact_OB.z = NAN;
+
+
+    dOmega_B_O_y_impact_OB = ctrl_msg.dOmega_B_O_y_impact_OB;
+
     if(ctrl_msg.Impact_Flag_OB == true && OnceFlag_Impact_OB == false)
     {   
         Time_impact_OB = ros::Time::now();
@@ -198,13 +229,6 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     }
 
-    Pose_B_O_impact_OB = ctrl_msg.Pose_B_O_impact_OB;
-    Pose_B_O_impact_OB.orientation.x = NAN; // Quaternion is not used
-    Pose_B_O_impact_OB.orientation.y = NAN;
-    Pose_B_O_impact_OB.orientation.z = NAN;
-    Pose_B_O_impact_OB.orientation.w = NAN;
-    Twist_B_P_impact_OB = ctrl_msg.Twist_B_P_impact_OB;
-    dOmega_B_O_y_impact_OB = ctrl_msg.Accel_B_O_Mag_impact_OB;
 
 }
 
