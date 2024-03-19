@@ -226,18 +226,18 @@ void SAR_DataConverter::append_CSV_impact()
     fprintf(fPtr,"%s,%s,%s,",formatBool(BodyContact_Flag),formatBool(ForelegContact_Flag),formatBool(HindlegContact_Flag));                                                                                  // Mu,Sigma,Policy
 
     fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad3_Contact);   // Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact
-    fprintf(fPtr,"--,--,--,");                                                          // V_BO_Mag,V_BO_Angle,a_BO_Mag
-    fprintf(fPtr,"--,% 7.2f,% 7.2f,",Rot_Sum_impact_Ext,Eul_P_B_impact_Ext.y);                                 // V_BP_Mag,V_BP_Angle,Phi_PB
-    fprintf(fPtr,"--,%s,%s,",formatBool(Impact_Flag_Ext),formatBool(Impact_Flag_OB));   // Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB
+    fprintf(fPtr,"% 7.2f,% 7.2f,% 7.2f,",Rot_Sum_impact_Ext,Eul_P_B_impact_Ext.y,Eul_P_B_impact_OB.y);                                                          // V_BO_Mag,V_BO_Angle,a_BO_Mag
+    fprintf(fPtr,"--,% 5.2f,% 5.2f,",Eul_B_O_impact_Ext.y,Eul_B_O_impact_OB.y);                                   // Eul_BO.x,Eul_BO.y,Eul_BO.z
+    fprintf(fPtr,"% 7.2f,%s,%s,",dOmega_B_O_y_impact_OB,formatBool(Impact_Flag_Ext),formatBool(Impact_Flag_OB));   // Trg_Flag,Impact_Flag_Ext,Impact_Flag_OB
 
     // STATE DATA
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Pose_B_O_impact_Ext.position.x,Pose_B_O_impact_Ext.position.y,Pose_B_O_impact_Ext.position.z);     // r_BO.x,r_BO.y,r_BO.z
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.linear.x,Twist_B_P_impact_Ext.linear.y,Twist_B_P_impact_Ext.linear.z);        // V_BO.x,V_BO.y,V_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.linear.x,Twist_B_P_impact_Ext.linear.y,Twist_B_P_impact_Ext.linear.z);     // r_BO.x,r_BO.y,r_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_OB.linear.x,Twist_B_P_impact_OB.linear.y,Twist_B_P_impact_OB.linear.z);        // V_BO.x,V_BO.y,V_BO.z
     fprintf(fPtr,"--,--,--,");                                                                                                              // a_BO.x,a_BO.y,a_BO.z
     
     // MISC STATE DATA
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Eul_B_O_impact_Ext.x,Eul_B_O_impact_Ext.y,Eul_B_O_impact_Ext.z);                                   // Eul_BO.x,Eul_BO.y,Eul_BO.z
-    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Twist_B_P_impact_Ext.angular.x,Twist_B_P_impact_Ext.angular.y,Twist_B_P_impact_Ext.angular.z);     // W_BO.x,W_BO.y,W_BO.z
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Pose_B_O_impact_Ext.position.x,Pose_B_O_impact_Ext.position.z,Pose_B_O_impact_OB.position.x);  // Eul_BO.x,Eul_BO.y,Eul_BO.z                              
+    fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,",Pose_B_O_impact_OB.position.z,Twist_B_P_impact_Ext.angular.y,Twist_B_P_impact_OB.angular.y);     // W_BO.x,W_BO.y,W_BO.z
     fprintf(fPtr,"--,");                                                                                                                    // AngAcc_BO.x,AngAcc_BO.y,AngAcc_BO.z
     fprintf(fPtr,"% 5.2f,% 5.2f,% 5.2f,% 5.2f,",Impact_Magnitude,Force_Impact_x,Force_Impact_y,Force_Impact_z);                             // F_thrust,Mx,My,Mz
 
