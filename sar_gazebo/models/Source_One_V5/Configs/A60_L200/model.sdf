@@ -9,15 +9,15 @@
     <link name='Leg_1'>
       <pose>18.5e-3 -18.5e-3 -4.0e-3 0 0.524 -0.785</pose>
       <inertial>
-        <mass>2.18E-2</mass>
-        <pose>1.25E-1 0 3.00E-4 0 0 0 </pose>
+        <mass>2.45E-2</mass>
+        <pose>1.35E-1 0 -2.20E-3 0 0 0 </pose>
         <inertia>
-          <ixx>6.86E-7</ixx>
+          <ixx>1.53E-6</ixx>
           <ixy>0</ixy>
-          <ixz>2.37E-6</ixz>
-          <iyy>1.92E-4</iyy>
+          <ixz>0</ixz>
+          <iyy>2.08E-4</iyy>
           <iyz>0</iyz>
-          <izz>1.92E-4</izz>
+          <izz>2.07E-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -39,10 +39,10 @@
         </material>
       </visual>
       <collision name="Leg_Collision_1">
-        <pose>218.4e-3 0 4.5e-3 0 0 0</pose>
+        <pose>209.6e-3 0 -2.3e-3 0 0 0</pose>
         <geometry>
           <sphere>
-            <radius>6.5e-3</radius>
+            <radius>13.9e-3</radius>
           </sphere>
         </geometry>
       </collision>
@@ -58,15 +58,15 @@
     <link name='Leg_2'>
       <pose>-18.5e-3 -18.5e-3 -4.0e-3 0 0.524 -2.35</pose>
       <inertial>
-        <mass>2.18E-2</mass>
-        <pose>1.25E-1 0 3.00E-4 0 0 0 </pose>
+        <mass>2.45E-2</mass>
+        <pose>1.35E-1 0 -2.20E-3 0 0 0 </pose>
         <inertia>
-          <ixx>6.86E-7</ixx>
+          <ixx>1.53E-6</ixx>
           <ixy>0</ixy>
-          <ixz>2.37E-6</ixz>
-          <iyy>1.92E-4</iyy>
+          <ixz>0</ixz>
+          <iyy>2.08E-4</iyy>
           <iyz>0</iyz>
-          <izz>1.92E-4</izz>
+          <izz>2.07E-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -88,10 +88,10 @@
         </material>
       </visual>
       <collision name="Leg_Collision_2">
-        <pose>218.4e-3 0 4.5e-3 0 0 0</pose>
+        <pose>209.6e-3 0 -2.3e-3 0 0 0</pose>
         <geometry>
           <sphere>
-            <radius>6.5e-3</radius>
+            <radius>13.9e-3</radius>
           </sphere>
         </geometry>
       </collision>
@@ -107,15 +107,15 @@
     <link name='Leg_3'>
       <pose>-18.5e-3 18.5e-3 -4.0e-3 0 0.524 2.35</pose>
       <inertial>
-        <mass>2.18E-2</mass>
-        <pose>1.25E-1 0 3.00E-4 0 0 0 </pose>
+        <mass>2.45E-2</mass>
+        <pose>1.35E-1 0 -2.20E-3 0 0 0 </pose>
         <inertia>
-          <ixx>6.86E-7</ixx>
+          <ixx>1.53E-6</ixx>
           <ixy>0</ixy>
-          <ixz>2.37E-6</ixz>
-          <iyy>1.92E-4</iyy>
+          <ixz>0</ixz>
+          <iyy>2.08E-4</iyy>
           <iyz>0</iyz>
-          <izz>1.92E-4</izz>
+          <izz>2.07E-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -137,10 +137,10 @@
         </material>
       </visual>
       <collision name="Leg_Collision_3">
-        <pose>218.4e-3 0 4.5e-3 0 0 0</pose>
+        <pose>209.6e-3 0 -2.3e-3 0 0 0</pose>
         <geometry>
           <sphere>
-            <radius>6.5e-3</radius>
+            <radius>13.9e-3</radius>
           </sphere>
         </geometry>
       </collision>
@@ -156,15 +156,15 @@
     <link name='Leg_4'>
       <pose>18.5e-3 18.5e-3 -4.0e-3 0 0.524 0.785</pose>
       <inertial>
-        <mass>2.18E-2</mass>
-        <pose>1.25E-1 0 3.00E-4 0 0 0 </pose>
+        <mass>2.45E-2</mass>
+        <pose>1.35E-1 0 -2.20E-3 0 0 0 </pose>
         <inertia>
-          <ixx>6.86E-7</ixx>
+          <ixx>1.53E-6</ixx>
           <ixy>0</ixy>
-          <ixz>2.37E-6</ixz>
-          <iyy>1.92E-4</iyy>
+          <ixz>0</ixz>
+          <iyy>2.08E-4</iyy>
           <iyz>0</iyz>
-          <izz>1.92E-4</izz>
+          <izz>2.07E-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -186,10 +186,10 @@
         </material>
       </visual>
       <collision name="Leg_Collision_4">
-        <pose>218.4e-3 0 4.5e-3 0 0 0</pose>
+        <pose>209.6e-3 0 -2.3e-3 0 0 0</pose>
         <geometry>
           <sphere>
-            <radius>6.5e-3</radius>
+            <radius>13.9e-3</radius>
           </sphere>
         </geometry>
       </collision>
