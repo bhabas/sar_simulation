@@ -2,7 +2,7 @@ DATA_TYPE: "SIM"
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "None"
+  Ground_Config: "Debug"
 
 SIM_SETTINGS:
   GUI_Flag: True
