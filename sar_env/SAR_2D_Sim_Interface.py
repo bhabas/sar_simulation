@@ -362,8 +362,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         ## LANDING SURFACE
         pg.draw.line(self.surf,GREY_PG,
-                         c2p(self.r_P_O + self.R_PW(np.array([-2,0,0]),self.Plane_Angle_rad)),
-                         c2p(self.r_P_O + self.R_PW(np.array([+2,0,0]),self.Plane_Angle_rad)),width=2)
+                         c2p(self.r_P_O + self.R_PW(np.array([-0.6,0,0]),self.Plane_Angle_rad)),
+                         c2p(self.r_P_O + self.R_PW(np.array([+0.6,0,0]),self.Plane_Angle_rad)),width=2)
         
         pg.draw.line(self.surf,BLACK_PG,
                          c2p(self.r_P_O + self.R_PW(np.array([-0.5,0,0]),self.Plane_Angle_rad)),

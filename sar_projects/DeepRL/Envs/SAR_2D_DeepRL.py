@@ -57,10 +57,11 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Pol_Trg_Threshold = 0.5
         self.Done = False
         self.reward = 0
-        self.reward_vals = np.array([0,0,0,0,0,0])
+        self.reward_vals = np.array([0,0,0,0,0,0,0])
         self.reward_weights = {
             "W_Dist":0.1,
             "W_tau_cr":0.1,
+            "W_tx":2.0,
             "W_LT":1.0,
             "W_GM":1.0,
             "W_Phi_rel":2.0,
@@ -105,7 +106,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.K_ep += 1
         self.Done = False
         self.reward = 0
-        self.reward_vals = np.array([0,0,0,0,0,0])
+        self.reward_vals = np.array([0,0,0,0,0,0,0])
 
         self.D_perp_CR_min = np.inf
         self.Tau_CR_trg = np.inf
@@ -518,6 +519,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         ## REWARD: TAU_CR TRIGGER
         R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=5)
 
+        ## REWARD: DISTANCE FROM PLANE CENTER
+        R_tx  = 0
+        r_B_O = self._getState()[0]
+        r_P_O = self.r_P_O
+        r_B_P = r_B_O - r_P_O
+        r_B_P = self.R_WP(r_B_P,self.Plane_Angle_rad)
+        R_tx = self.Reward_Exp_Decay(np.abs(r_B_P[0]),0.1,k=2.5)
+
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
             R_Legs = 1.0
@@ -529,7 +538,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         if self.BodyContact_Flag:
             R_Legs = R_Legs*0.5
 
-        self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
+        self.reward_vals = [R_dist,R_tau_cr,R_tx,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
         self.reward = R_t/self.W_max
         # print(f"R_t_norm: {R_t/self.W_max:.3f}")
