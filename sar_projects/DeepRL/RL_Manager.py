@@ -11,6 +11,7 @@ import time
 import rospy
 import rospkg
 import glob
+import boto3
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -122,7 +123,7 @@ class RL_Training_Manager():
             self.model.tensorboard_log = self.log_subdir
             self.model.learning_starts = 0
 
-        reward_callback = RewardCallback(model_dir=self.model_subdir,save_freq=save_freq,)
+        reward_callback = RewardCallback(self,save_freq=save_freq,)
 
         self.model.learn(
             total_timesteps=int(total_timesteps),
@@ -397,8 +398,6 @@ class RL_Training_Manager():
 
         plt.show(block=True)
         
-
-
     def save_NN_to_C_header(self):
 
         FileName = f"NN_Params_DeepRL.h"
@@ -577,19 +576,43 @@ class RL_Training_Manager():
 
         return np.hstack((squished_action_mean,action_std))
 
+    def upload_file_to_S3(self,file_path,bucket_name,object_name=None):
+        """
+        Upload a file to an S3 bucket
+
+        :param file_path: Full path to file to upload
+        :param bucket_name: Bucket to upload to
+        :param object_name: S3 object name. If not specified, just the file name is used
+        """
+        # Extract the file name from the file path if object_name is not specified
+        if object_name is None:
+            object_name = os.path.basename(file_path)
+
+        # Upload the file
+        s3_client = boto3.client('s3')
+        try:
+            response = s3_client.upload_file(file_path, bucket_name, object_name)
+
+        except Exception as e:
+            print(f"Upload failed: {e}")
+        else:
+            print(f"File {file_path} uploaded to {bucket_name}/{object_name}")
 
 
 
 class RewardCallback(BaseCallback):
-    def __init__(self, model_dir: str, 
-                 check_freq: int = 500, save_freq: int = 25_000, keep_last_n_models: int = 5,
-                 convergence_threshold: float = 0.01, convergence_episodes: int = 100, 
+    def __init__(self, RLM, 
+                 check_freq: int = 500, 
+                 save_freq: int = 25_000, 
+                 keep_last_n_models: int = 5,
                  verbose=0):
         super(RewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
         self.save_freq = save_freq
-        self.model_dir = model_dir
         self.best_mean_reward = -np.inf
+        self.RLM = RLM
+        self.s3_client = boto3.client('s3')
+
 
         self.n_prev_episodes = 25
         self.episode_rewards = []
@@ -597,23 +620,25 @@ class RewardCallback(BaseCallback):
         self.keep_last_n_models = keep_last_n_models
 
 
-        self.convergence_threshold = convergence_threshold
-        self.convergence_episodes = convergence_episodes
-        self.converged = False
-
-
-
-
     def _on_training_start(self) -> None:
         """
         This method is called before the first rollout starts.
         """
         self.env = self.training_env.envs[0].unwrapped
+        path = os.path.join(self.RLM.log_subdir,"TB_Log_1")
+        self.TB_Log = os.listdir(path)[0]
+        self.TB_Log_path = os.path.join(path,self.TB_Log)
+        
+        
 
     def _on_step(self) -> bool:
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
         if self.num_timesteps % self.check_freq == 0:
+
+            ## UPLOAD TB LOG TO SB3
+            self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join(self.RLM.log_name,self.TB_Log))
+
 
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
             mean_reward = np.mean(self.episode_rewards)
@@ -621,8 +646,8 @@ class RewardCallback(BaseCallback):
                 self.best_mean_reward = mean_reward
 
                 ## SAVE MODEL AND REPLAY BUFFER
-                model_path = os.path.join(self.model_dir, f"model_{self.num_timesteps}_steps_BestModel")
-                replay_buffer_path = os.path.join(self.model_dir, f"replay_buffer_{self.num_timesteps}_steps_BestModel")
+                model_path = os.path.join(self.RLM.model_subdir, f"model_{self.num_timesteps}_steps_BestModel")
+                replay_buffer_path = os.path.join(self.RLM.model_subdir, f"replay_buffer_{self.num_timesteps}_steps_BestModel")
 
                 self.model.save(model_path)
                 self.model.save_replay_buffer(replay_buffer_path)
@@ -638,8 +663,8 @@ class RewardCallback(BaseCallback):
         if self.num_timesteps % self.save_freq == 0:
 
             ## SAVE NEWEST MODEL AND REPLAY BUFFER
-            model_path = os.path.join(self.model_dir, f"model_{self.num_timesteps}_steps")
-            replay_buffer_path = os.path.join(self.model_dir, f"replay_buffer_{self.num_timesteps}_steps")
+            model_path = os.path.join(self.RLM.model_subdir, f"model_{self.num_timesteps}_steps")
+            replay_buffer_path = os.path.join(self.RLM.model_subdir, f"replay_buffer_{self.num_timesteps}_steps")
 
             self.model.save(model_path)
             self.model.save_replay_buffer(replay_buffer_path)
@@ -725,22 +750,22 @@ if __name__ == '__main__':
         "V_mag_range": [1.0,4.0],
         "V_angle_range": [10,170],
         "Plane_Angle_range": [0,180],
-        "Render": True,
+        "Render": False,
         "GZ_Timeout": False,
     }
 
 
     
-    # RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.create_model(net_arch=[10,10,10])
-    # RL_Manager.train_model(reset_timesteps=False)
-
-
-    log_name = "DeepRL_Policy_03-19--22:47:12"
-    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.load_model(model_dir,t_step=109e3)
-    RL_Manager.sweep_policy(Plane_Angle_range=[0,180,45],V_mag_range=[1.0,4.0,1.0],V_angle_range=[10,170,40],n=1)
+    RL_Manager.create_model(net_arch=[10,10,10])
+    RL_Manager.train_model(reset_timesteps=False)
+
+
+    # log_name = "DeepRL_Policy_03-19--22:47:12"
+    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    # RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    # RL_Manager.load_model(model_dir,t_step=109e3)
+    # RL_Manager.sweep_policy(Plane_Angle_range=[0,180,45],V_mag_range=[1.0,4.0,1.0],V_angle_range=[10,170,40],n=1)
 
 
     # RL_Manager.collect_landing_performance(
