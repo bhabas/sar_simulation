@@ -38,25 +38,33 @@ if __name__ == '__main__':
     }
 
 
-    log_name = "DeepRL_Policy_03-24--08:16:59"
+    # log_name = "DeepRL_Policy_03-24--08:16:59"
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL" 
+    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+
+    # ## LOAD EXPERT MODEL
+    # RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    # RL_Manager.load_model(model_dir,t_step=22000)
+
+    # ## COLLECT EXPERT TRANSITIONS
+    # rollouts = rollout.rollout(
+    #     RL_Manager.model,
+    #     RL_Manager.vec_env,
+    #     sample_until=rollout.make_sample_until(min_episodes=10),
+    #     rng=np.random.default_rng(),
+    #     exclude_infos=True,
+    #     unwrap=False,
+    # )
+    # transitions = rollout.flatten_trajectories(rollouts)
+
+    log_name = "DeepRL_Policy_03-24--13:26:10"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL" 
     model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
-
-    ## LOAD EXPERT MODEL
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.load_model(model_dir,t_step=22000)
+    transitions = RL_Manager.load_transitions_from_csv()
+    
 
-    ## COLLECT EXPERT TRANSITIONS
-    rollouts = rollout.rollout(
-        RL_Manager.model,
-        RL_Manager.vec_env,
-        sample_until=rollout.make_sample_until(min_episodes=10),
-        rng=np.random.default_rng(),
-        exclude_infos=True,
-        unwrap=False,
-    )
-    transitions = rollout.flatten_trajectories(rollouts)
-
+    ## PERFORM BEHAVIORAL CLONING TRAINING
     from imitation.algorithms import bc
     bc_trainer = bc.BC(
         observation_space=RL_Manager.env.observation_space,
@@ -65,9 +73,13 @@ if __name__ == '__main__':
         rng=np.random.default_rng(),
     )
 
-    bc_trainer.train(n_epochs=250)
+    bc_trainer.train(n_epochs=1500)
 
+    ## TEST OUT CLONES POLICY
     from stable_baselines3.common.evaluation import evaluate_policy
+    # RL_Manager.env.V_mag_range = [2.0,3.0]
+    # RL_Manager.env.V_angle_range = [50,70]
+
     reward_after_training, _ = evaluate_policy(bc_trainer.policy, RL_Manager.env, 10)
     print(f"Reward after training: {reward_after_training}")
 

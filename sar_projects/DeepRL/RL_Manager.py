@@ -13,6 +13,7 @@ import rospkg
 import glob
 import boto3
 
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from scipy.interpolate import griddata
@@ -25,6 +26,9 @@ from stable_baselines3.common.env_util import make_vec_env
 
 import imitation
 import imitation.data.rollout as rollout
+from imitation.data.types import Transitions
+
+
 
 
 
@@ -42,15 +46,16 @@ class RL_Training_Manager():
         self.vec_env = make_vec_env(env, env_kwargs=env_kwargs)
         self.env = self.vec_env.envs[0].unwrapped
 
-        self.log_dir = log_dir
-        self.log_name = log_name
-        self.log_subdir = os.path.join(self.log_dir, log_name)
-        self.model_subdir = os.path.join(self.log_dir, log_name, "Models")
 
-        os.makedirs(self.log_subdir, exist_ok=True)
+        self.log_name = log_name
+        self.log_dir = os.path.join(log_dir, log_name)
+        self.model_subdir = os.path.join(self.log_dir, "Models")
+        self.TB_log_subdir = os.path.join(self.log_dir, "TB_Logs")
+
+        os.makedirs(self.log_dir, exist_ok=True)
         os.makedirs(self.model_subdir, exist_ok=True)
 
-    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[12,12,12]):
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[10,10,10]):
 
         self.model = SAC(
             "MlpPolicy",
@@ -61,7 +66,7 @@ class RL_Training_Manager():
             policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[256,256,256])),
             verbose=1,
             device='cpu',
-            tensorboard_log=self.log_subdir
+            tensorboard_log=self.log_dir
         )
 
         self.write_config_file()
@@ -88,7 +93,7 @@ class RL_Training_Manager():
                 model_path,
                 env=self.vec_env,
                 device='cpu',
-                tensorboard_log=self.log_subdir,
+                tensorboard_log=self.log_dir,
             )
         else:
             print("Model file not found!")
@@ -107,7 +112,6 @@ class RL_Training_Manager():
         else:
             print("Error loading files.")
 
-
     def train_model(self,save_freq=25e3,reset_timesteps=False,total_timesteps=200e3):
 
         if reset_timesteps == True:
@@ -117,13 +121,13 @@ class RL_Training_Manager():
             log_name = f"DeepRL_Policy_{current_time}"
 
             self.log_name = log_name
-            self.log_subdir = os.path.join(self.log_dir, log_name)
+            self.log_dir = os.path.join(self.log_dir, log_name)
             self.model_subdir = os.path.join(self.log_dir, log_name, "Models")
 
-            os.makedirs(self.log_subdir, exist_ok=True)
+            os.makedirs(self.log_dir, exist_ok=True)
             os.makedirs(self.model_subdir, exist_ok=True)
 
-            self.model.tensorboard_log = self.log_subdir
+            self.model.tensorboard_log = self.log_dir
             self.model.learning_starts = 0
 
         reward_callback = RewardCallback(self,save_freq=save_freq,)
@@ -175,7 +179,7 @@ class RL_Training_Manager():
 
         if fileName is None:
             fileName = "PolicyPerformance_Data.csv"
-        filePath = os.path.join(self.log_subdir,fileName)
+        filePath = os.path.join(self.log_dir,fileName)
          
         ## GENERATE SWEEP ARRAYS
         Plane_Angle_arr = np.arange(Plane_Angle_range[0],Plane_Angle_range[1] + Plane_Angle_range[2],Plane_Angle_range[2])
@@ -340,7 +344,7 @@ class RL_Training_Manager():
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
-        filePath = os.path.join(self.log_subdir,fileName)
+        filePath = os.path.join(self.log_dir,fileName)
 
         ## READ CSV FILE
         df = pd.read_csv(filePath,sep=',',comment="#")
@@ -404,7 +408,7 @@ class RL_Training_Manager():
     def save_NN_to_C_header(self):
 
         FileName = f"NN_Params_DeepRL.h"
-        f = open(os.path.join(self.log_subdir,FileName),'a')
+        f = open(os.path.join(self.log_dir,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
         f.write(f"// Model: {self.log_name} \t SAR_Type: {self.env.SAR_Type} \t SAR_Config: {self.env.SAR_Config}\n")
@@ -492,7 +496,7 @@ class RL_Training_Manager():
         f.close()
 
     def write_config_file(self):
-        config_path = os.path.join(self.log_subdir,"Config.yaml")
+        config_path = os.path.join(self.log_dir,"Config.yaml")
 
         General_Dict = dict(
 
@@ -601,6 +605,100 @@ class RL_Training_Manager():
         else:
             print(f"File {file_path} uploaded to {bucket_name}/{object_name}")
 
+    def test_manual_policy(self,V_mag=None,V_angle=None,Plane_Angle=None):
+
+        if V_mag != None:
+            self.env.V_mag_range = [V_mag,V_mag]
+
+        if V_angle != None:
+            self.env.V_angle_range = [V_angle,V_angle]
+
+        if Plane_Angle != None:
+            self.env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
+
+        def serialize_array(array):
+            return ';'.join(map(str, array.flatten()))
+
+
+        transitions_path = os.path.join(self.log_dir, "BC_Transitions.csv")
+
+        # CSV headers
+        headers = ["obs", "actions", "next_obs", "dones"]
+
+        file_exists = os.path.isfile(transitions_path)
+
+        with open(transitions_path, mode='a', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=headers)
+
+            if not file_exists:
+                writer.writeheader()  # Write headers if file doesn't exist
+
+
+
+            obs,_ = self.env.reset()
+            terminated = False
+            truncated = False
+
+            # Tau_CR_trg, a_Rot = self.env.userInput("Please enter triggering policy (Tau_CR, a_Rot): ",float)
+            Tau_CR_trg, a_Rot = 0.25, -100    
+    
+            while not (terminated or truncated):
+
+                action = self.env.action_space.sample() # obs gets passed in here
+                action[0] = 0
+                if self.env.Tau_CR <= Tau_CR_trg:
+                    action[0] = 1
+                    action[1] = self.env.scaleValue(a_Rot,original_range=self.env.Ang_Acc_range,target_range=[-1,1])
+                next_obs,reward,terminated,truncated,_ = self.env.step(action)
+
+                writer.writerow({
+                    "obs": serialize_array(obs),
+                    "actions": serialize_array(action),
+                    "next_obs": serialize_array(next_obs),
+                    "dones": str(terminated)
+                })
+
+                obs = next_obs
+
+    def load_transitions_from_csv(self):
+
+        obs_list = []
+        actions_list = []
+        next_obs_list = []
+        dones_list = []
+        infos_list = []
+
+        transitions_path = os.path.join(self.log_dir, "BC_Transitions.csv")
+
+        def deserialize_array(serialized_str):
+            return np.array([float(i) for i in serialized_str.split(';')])
+
+
+        with open(transitions_path, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                obs_list.append(deserialize_array(row["obs"]))
+                actions_list.append(deserialize_array(row["actions"]))
+                next_obs_list.append(deserialize_array(row["next_obs"]))
+                dones_list.append(bool(row["dones"]))
+                infos_list.append({})
+
+        # Convert lists to numpy arrays
+        obs_array = np.array(obs_list)
+        actions_array = np.array(actions_list)
+        next_obs_array = np.array(next_obs_list)
+        dones_array = np.array(dones_list)
+        infos_array = np.array(infos_list)
+
+        transitions = Transitions(
+        obs=obs_array,
+        acts=actions_array,
+        next_obs=next_obs_array,
+        dones=dones_array,
+        infos=infos_array
+        )
+
+        return transitions
 
 
 class RewardCallback(BaseCallback):
@@ -757,8 +855,12 @@ if __name__ == '__main__':
         "GZ_Timeout": False,
     }
 
+    log_name = "DeepRL_Policy_03-24--13:26:10"
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
 
-    # RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    for _ in range(10):
+        RL_Manager.test_manual_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
+    # RL_Manager.load_transitions_from_csv()
     # RL_Manager.create_model(net_arch=[10,10,10])
     # RL_Manager.train_model(reset_timesteps=False)
 
@@ -766,21 +868,21 @@ if __name__ == '__main__':
     
 
 
-    log_name = "DeepRL_Policy_03-23--13:35:57"
-    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.load_model(model_dir,t_step=25000)
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,45],V_mag_range=[2.5,2.5,1.0],V_angle_range=[60,60,40],n=5)
-    your_trajectories = rollout.rollout(
-        RL_Manager.model,
-        RL_Manager.vec_env,
-        sample_until=rollout.make_sample_until(min_episodes=5),
-        rng=np.random.default_rng(),
-        exclude_infos=True,
-        unwrap=False,
-    )
+    # log_name = "DeepRL_Policy_03-23--13:35:57"
+    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    # RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    # RL_Manager.load_model(model_dir,t_step=25000)
+    # # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,45],V_mag_range=[2.5,2.5,1.0],V_angle_range=[60,60,40],n=5)
+    # your_trajectories = rollout.rollout(
+    #     RL_Manager.model,
+    #     RL_Manager.vec_env,
+    #     sample_until=rollout.make_sample_until(min_episodes=5),
+    #     rng=np.random.default_rng(),
+    #     exclude_infos=True,
+    #     unwrap=False,
+    # )
 
-    print()
+    # print()
 
 
     # RL_Manager.collect_landing_performance(
