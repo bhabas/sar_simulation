@@ -23,6 +23,9 @@ from stable_baselines3.common.callbacks import *
 from stable_baselines3.common import utils
 from stable_baselines3.common.env_util import make_vec_env
 
+import imitation
+import imitation.data.rollout as rollout
+
 
 
 
@@ -637,7 +640,7 @@ class RewardCallback(BaseCallback):
         if self.num_timesteps % self.check_freq == 0:
 
             ## UPLOAD TB LOG TO SB3
-            self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join(self.RLM.log_name,self.TB_Log))
+            # self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join(self.RLM.log_name,self.TB_Log))
 
 
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
@@ -747,25 +750,37 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 100],
-        "V_mag_range": [1.0,4.0],
-        "V_angle_range": [10,170],
-        "Plane_Angle_range": [0,180],
-        "Render": False,
+        "V_mag_range": [2.5,2.5],
+        "V_angle_range": [60,60],
+        "Plane_Angle_range": [0,0],
+        "Render": True,
         "GZ_Timeout": False,
     }
 
 
-    
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.create_model(net_arch=[10,10,10])
-    RL_Manager.train_model(reset_timesteps=False)
-
-
-    # log_name = "DeepRL_Policy_03-19--22:47:12"
-    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     # RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.load_model(model_dir,t_step=109e3)
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,180,45],V_mag_range=[1.0,4.0,1.0],V_angle_range=[10,170,40],n=1)
+    # RL_Manager.create_model(net_arch=[10,10,10])
+    # RL_Manager.train_model(reset_timesteps=False)
+
+
+    
+
+
+    log_name = "DeepRL_Policy_03-23--13:35:57"
+    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager.load_model(model_dir,t_step=25000)
+    # RL_Manager.sweep_policy(Plane_Angle_range=[0,0,45],V_mag_range=[2.5,2.5,1.0],V_angle_range=[60,60,40],n=5)
+    your_trajectories = rollout.rollout(
+        RL_Manager.model,
+        RL_Manager.vec_env,
+        sample_until=rollout.make_sample_until(min_episodes=5),
+        rng=np.random.default_rng(),
+        exclude_infos=True,
+        unwrap=False,
+    )
+
+    print()
 
 
     # RL_Manager.collect_landing_performance(
