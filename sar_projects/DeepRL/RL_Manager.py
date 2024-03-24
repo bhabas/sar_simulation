@@ -605,60 +605,60 @@ class RL_Training_Manager():
         else:
             print(f"File {file_path} uploaded to {bucket_name}/{object_name}")
 
-    def test_manual_policy(self,V_mag=None,V_angle=None,Plane_Angle=None):
+    def collect_manual_policy_transition(self,V_mag=None,V_angle=None,Plane_Angle=None):
 
-        if V_mag != None:
-            self.env.V_mag_range = [V_mag,V_mag]
-
-        if V_angle != None:
-            self.env.V_angle_range = [V_angle,V_angle]
-
-        if Plane_Angle != None:
-            self.env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
+        ## SET TESTING CONDITION
+        self.env.V_mag_range = [V_mag,V_mag]
+        self.env.V_angle_range = [V_angle,V_angle]
+        self.env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
 
         def serialize_array(array):
             return ';'.join(map(str, array.flatten()))
+        
+        episode_transitions = []
+
+        obs,_ = self.env.reset()
+        terminated = False
+        truncated = False
+
+        Tau_CR_trg, a_Rot = self.env.userInput("Please enter triggering policy (Tau_CR, a_Rot): ",float)
+        # Tau_CR_trg, a_Rot = 0.25,-100
+
+        while not (terminated or truncated):
+            action = self.env.action_space.sample() # obs gets passed in here
+            action[0] = np.clip(np.random.uniform(-0.25,0.2),-1,1)
+            if self.env.Tau_CR <= Tau_CR_trg:
+                action[0] = np.clip(np.random.normal(0.75,0.1),-1,1)
+                action[1] = self.env.scaleValue(a_Rot,original_range=self.env.Ang_Acc_range,target_range=[-1,1])
+            next_obs,reward,terminated,truncated,_ = self.env.step(action)
+
+            episode_transitions.append({
+                "obs": serialize_array(obs),
+                "actions": serialize_array(action),
+                "next_obs": serialize_array(next_obs),
+                "dones": str(terminated)
+            })
+
+            obs = next_obs
 
 
-        transitions_path = os.path.join(self.log_dir, "BC_Transitions.csv")
+        # After the episode, ask for approval before saving
+        approval = input("Save this episode's transitions? (y/n): ")
+        if approval.lower() == 'y':
+            transitions_path = os.path.join(self.log_dir, "BC_Transitions.csv")
+            file_exists = os.path.isfile(transitions_path)
 
-        # CSV headers
-        headers = ["obs", "actions", "next_obs", "dones"]
+            with open(transitions_path, mode='a', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=["obs", "actions", "next_obs", "dones"])
+                if not file_exists:
+                    writer.writeheader()  # Write headers if file doesn't exist
+                
+                for transition in episode_transitions:
+                    writer.writerow(transition)
+            print("Transitions saved.")
+        else:
+            print("Transitions not saved.")
 
-        file_exists = os.path.isfile(transitions_path)
-
-        with open(transitions_path, mode='a', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=headers)
-
-            if not file_exists:
-                writer.writeheader()  # Write headers if file doesn't exist
-
-
-
-            obs,_ = self.env.reset()
-            terminated = False
-            truncated = False
-
-            # Tau_CR_trg, a_Rot = self.env.userInput("Please enter triggering policy (Tau_CR, a_Rot): ",float)
-            Tau_CR_trg, a_Rot = 0.25, -100    
-    
-            while not (terminated or truncated):
-
-                action = self.env.action_space.sample() # obs gets passed in here
-                action[0] = 0
-                if self.env.Tau_CR <= Tau_CR_trg:
-                    action[0] = 1
-                    action[1] = self.env.scaleValue(a_Rot,original_range=self.env.Ang_Acc_range,target_range=[-1,1])
-                next_obs,reward,terminated,truncated,_ = self.env.step(action)
-
-                writer.writerow({
-                    "obs": serialize_array(obs),
-                    "actions": serialize_array(action),
-                    "next_obs": serialize_array(next_obs),
-                    "dones": str(terminated)
-                })
-
-                obs = next_obs
 
     def load_transitions_from_csv(self):
 
@@ -859,7 +859,7 @@ if __name__ == '__main__':
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
 
     for _ in range(10):
-        RL_Manager.test_manual_policy(V_mag=2.5,V_angle=60,Plane_Angle=0)
+        RL_Manager.collect_manual_policy_transition(V_mag=2.5,V_angle=60,Plane_Angle=0)
     # RL_Manager.load_transitions_from_csv()
     # RL_Manager.create_model(net_arch=[10,10,10])
     # RL_Manager.train_model(reset_timesteps=False)

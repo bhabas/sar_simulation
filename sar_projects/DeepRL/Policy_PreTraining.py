@@ -73,7 +73,7 @@ if __name__ == '__main__':
         rng=np.random.default_rng(),
     )
 
-    bc_trainer.train(n_epochs=1500)
+    bc_trainer.train(n_epochs=1000)
 
     ## TEST OUT CLONES POLICY
     from stable_baselines3.common.evaluation import evaluate_policy
