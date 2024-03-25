@@ -33,7 +33,7 @@ if __name__ == '__main__':
         "Render": True,
     }
 
-    log_name = "DeepRL_Policy_03-24--13:26:10"
+    log_name = "DeepRL_Policy_03-25--13:28:56"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL" 
     model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
 

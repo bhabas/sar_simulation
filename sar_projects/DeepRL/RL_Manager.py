@@ -27,6 +27,7 @@ from stable_baselines3.common.env_util import make_vec_env
 import imitation
 import imitation.data.rollout as rollout
 from imitation.data.types import Transitions
+from stable_baselines3.common.buffers import ReplayBuffer
 
 
 
@@ -62,10 +63,13 @@ class RL_Training_Manager():
             env=self.vec_env,
             gamma=gamma,
             learning_rate=learning_rate,
+            buffer_size=int(1e3),
             ent_coef='auto',
             policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[256,256,256])),
             verbose=1,
+            replay_buffer_kwargs=dict(handle_timeout_termination=False),
             device='cpu',
+            learning_starts=0,
             tensorboard_log=self.log_dir
         )
 
@@ -635,8 +639,8 @@ class RL_Training_Manager():
         terminated = False
         truncated = False
 
-        Tau_CR_trg, a_Rot = self.env.userInput("Please enter triggering policy (Tau_CR, a_Rot): ",float)
-        # Tau_CR_trg, a_Rot = 0.25,-100
+        # Tau_CR_trg, a_Rot = self.env.userInput("Please enter triggering policy (Tau_CR, a_Rot): ",float)
+        Tau_CR_trg, a_Rot = 0.25,-100
 
         while not (terminated or truncated):
             action = self.env.action_space.sample() # obs gets passed in here
@@ -650,7 +654,8 @@ class RL_Training_Manager():
                 "obs": serialize_array(obs),
                 "actions": serialize_array(action),
                 "next_obs": serialize_array(next_obs),
-                "dones": str(terminated)
+                "rewards":reward,
+                "dones": int(terminated)
             })
 
             obs = next_obs
@@ -659,11 +664,11 @@ class RL_Training_Manager():
         # After the episode, ask for approval before saving
         approval = input("Save this episode's transitions? (y/n): ")
         if approval.lower() == 'y':
-            transitions_path = os.path.join(self.log_dir, "BC_Transitions.csv")
+            transitions_path = os.path.join(self.log_dir, "ReplayBuffer_Transistions.csv")
             file_exists = os.path.isfile(transitions_path)
 
             with open(transitions_path, mode='a', newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=["obs", "actions", "next_obs", "dones"])
+                writer = csv.DictWriter(file, fieldnames=["obs","actions","next_obs","rewards","dones"])
                 if not file_exists:
                     writer.writeheader()  # Write headers if file doesn't exist
                 
@@ -678,10 +683,11 @@ class RL_Training_Manager():
         obs_list = []
         actions_list = []
         next_obs_list = []
+        rewards_list = []
         dones_list = []
         infos_list = []
 
-        transitions_path = os.path.join(self.log_dir, "BC_Transitions.csv")
+        transitions_path = os.path.join(self.log_dir, "ReplayBuffer_Transistions.csv")
 
         def deserialize_array(serialized_str):
             return np.array([float(i) for i in serialized_str.split(';')])
@@ -693,6 +699,7 @@ class RL_Training_Manager():
                 obs_list.append(deserialize_array(row["obs"]))
                 actions_list.append(deserialize_array(row["actions"]))
                 next_obs_list.append(deserialize_array(row["next_obs"]))
+                rewards_list.append(row["rewards"])
                 dones_list.append(bool(row["dones"]))
                 infos_list.append({})
 
@@ -700,18 +707,19 @@ class RL_Training_Manager():
         obs_array = np.array(obs_list)
         actions_array = np.array(actions_list)
         next_obs_array = np.array(next_obs_list)
+        rewards_array = np.array(rewards_list)
         dones_array = np.array(dones_list)
         infos_array = np.array(infos_list)
 
-        transitions = Transitions(
-        obs=obs_array,
-        acts=actions_array,
-        next_obs=next_obs_array,
-        dones=dones_array,
-        infos=infos_array
-        )
+        buffer = self.model.replay_buffer
+        # buffer.handle_timeout_termination = False
 
-        return transitions
+        data_length = len(obs_array)
+        buffer_size = 1000
+        repeats_needed = buffer_size // data_length + (1 if buffer_size % data_length else 0)
+
+        for idx in range(repeats_needed):
+            buffer.add(obs_array[idx], next_obs_array[idx], actions_array[idx], rewards_array[idx], dones_array[idx], infos=[])
 
 
 class RewardCallback(BaseCallback):
@@ -738,7 +746,7 @@ class RewardCallback(BaseCallback):
         This method is called before the first rollout starts.
         """
         self.env = self.training_env.envs[0].unwrapped
-        path = os.path.join(self.RLM.log_subdir,"TB_Log_1")
+        path = os.path.join(self.RLM.log_dir,"TB_Log_1")
         self.TB_Log = os.listdir(path)[0]
         self.TB_Log_path = os.path.join(path,self.TB_Log)
         
