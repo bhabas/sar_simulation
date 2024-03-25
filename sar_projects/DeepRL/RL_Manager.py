@@ -63,7 +63,7 @@ class RL_Training_Manager():
             env=self.vec_env,
             gamma=gamma,
             learning_rate=learning_rate,
-            buffer_size=int(1e3),
+            buffer_size=int(1e5),
             ent_coef='auto',
             policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[256,256,256])),
             verbose=1,
