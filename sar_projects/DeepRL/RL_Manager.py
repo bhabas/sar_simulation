@@ -112,6 +112,20 @@ class RL_Training_Manager():
         else:
             print("Error loading files.")
 
+    def save_model(self,model_name=None):
+            
+        if model_name is None:
+            model_name = f"Pre-Trained_BC_Model.zip"
+
+        ## SAVE MODEL
+        self.model.save(os.path.join(self.model_subdir,model_name))
+
+        # ## SAVE REPLAY BUFFER
+        # replay_buffer_path = os.path.join(model_dir, f"replay_buffer_{self.model.num_timesteps}_steps.pkl")
+        # self.model.save_replay_buffer(replay_buffer_path)
+
+        # print(f"Model and Replay Buffer saved at {model_path} and {replay_buffer_path} respectively.")
+
     def train_model(self,save_freq=25e3,reset_timesteps=False,total_timesteps=200e3):
 
         if reset_timesteps == True:
@@ -659,7 +673,6 @@ class RL_Training_Manager():
         else:
             print("Transitions not saved.")
 
-
     def load_transitions_from_csv(self):
 
         obs_list = []
@@ -720,7 +733,6 @@ class RewardCallback(BaseCallback):
         self.saved_models = []
         self.keep_last_n_models = keep_last_n_models
 
-
     def _on_training_start(self) -> None:
         """
         This method is called before the first rollout starts.
@@ -730,8 +742,6 @@ class RewardCallback(BaseCallback):
         self.TB_Log = os.listdir(path)[0]
         self.TB_Log_path = os.path.join(path,self.TB_Log)
         
-        
-
     def _on_step(self) -> bool:
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED

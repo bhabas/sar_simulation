@@ -30,36 +30,15 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 100],
-        "V_mag_range": [2.5,2.5],
-        "V_angle_range": [60,60],
-        "Plane_Angle_range": [0,0],
         "Render": True,
-        "GZ_Timeout": False,
     }
 
-
-    log_name = "DeepRL_Policy_03-24--08:16:59"
+    log_name = "DeepRL_Policy_03-24--13:26:10"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL" 
     model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
 
     ## LOAD EXPERT MODEL
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.load_model(model_dir,t_step=22000)
 
-    ## COLLECT EXPERT TRANSITIONS
-    rollouts = rollout.rollout(
-        RL_Manager.model,
-        RL_Manager.vec_env,
-        sample_until=rollout.make_sample_until(min_episodes=1),
-        rng=np.random.default_rng(),
-        exclude_infos=True,
-        unwrap=False,
-    )
-    transitions = rollout.flatten_trajectories(rollouts)
-
-    
-
-
-
-
-
+    for _ in range(10):
+        RL_Manager.collect_manual_policy_transition(V_mag=2.5,V_angle=60,Plane_Angle=0)
