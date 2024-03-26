@@ -47,7 +47,7 @@ class RL_Training_Manager():
         os.makedirs(self.log_subdir, exist_ok=True)
         os.makedirs(self.model_subdir, exist_ok=True)
 
-    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[12,12,12]):
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[10,10,10]):
 
         self.model = SAC(
             "MlpPolicy",
@@ -55,7 +55,10 @@ class RL_Training_Manager():
             gamma=gamma,
             learning_rate=learning_rate,
             ent_coef='auto',
+            buffer_size=int(20e3),
             policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[256,256,256])),
+            replay_buffer_kwargs=dict(handle_timeout_termination=False),
+            learning_starts=0,
             verbose=1,
             device='cpu',
             tensorboard_log=self.log_subdir
@@ -66,8 +69,8 @@ class RL_Training_Manager():
     def load_model(self,model_dir,t_step: int):
         
         ## LOAD CONFIG FILE
-        config_path = os.path.join(os.path.dirname(model_dir),"Config.yaml")
-        self.load_config_file(config_path)
+        # config_path = os.path.join(os.path.dirname(model_dir),"Config.yaml")
+        # self.load_config_file(config_path)
 
         # Prepare to search for both model and replay buffer with wildcard for optional suffix
         model_pattern = f"model_{int(t_step)}_steps*.zip"  # Assuming the model files are saved with '.zip' extension
@@ -77,32 +80,33 @@ class RL_Training_Manager():
         model_files = glob.glob(os.path.join(model_dir, model_pattern))
         replay_buffer_files = glob.glob(os.path.join(model_dir, replay_buffer_pattern))
 
-        ## LOAD MODEL AND REPLAY BUFFER
-        if model_files:
-            model_path = model_files[0]  # Assuming there's only one match or taking the first match
-            print(f"Loading Model...")
-            self.model = SAC.load(
-                model_path,
-                env=self.vec_env,
-                device='cpu',
-                tensorboard_log=self.log_subdir,
-            )
-        else:
-            print("Model file not found!")
+        # ## LOAD MODEL AND REPLAY BUFFER
+        # if model_files:
+        #     model_path = model_files[0]  # Assuming there's only one match or taking the first match
+        #     print(f"Loading Model...")
+        #     self.model = SAC.load(
+        #         model_path,
+        #         env=self.vec_env,
+        #         device='cpu',
+        #         tensorboard_log=self.log_subdir,
+        #     )
+        # else:
+        #     print("Model file not found!")
 
         
-        if replay_buffer_files:
-            replay_buffer_path = replay_buffer_files[0]  # Similarly, taking the first match
-            print(f"Loading Replay Buffer...")
-            self.model.load_replay_buffer(replay_buffer_path)
-        else:
-            print("Replay buffer file not found!")
+        # if replay_buffer_files:
+        #     replay_buffer_path = replay_buffer_files[0]  # Similarly, taking the first match
+        #     print(f"Loading Replay Buffer...")
+        # else:
+        #     print("Replay buffer file not found!")
+        replay_buffer_path = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_03-26--08:20:24/Models/replay_buffer_31500_steps_BestModel.pkl"
+        self.model.load_replay_buffer(replay_buffer_path)
 
 
-        if model_files and replay_buffer_files:
-            print("Model and Replay Buffer Loaded Successfully!\n")
-        else:
-            print("Error loading files.")
+        # if model_files and replay_buffer_files:
+        #     print("Model and Replay Buffer Loaded Successfully!\n")
+        # else:
+        #     print("Error loading files.")
 
 
     def train_model(self,save_freq=25e3,reset_timesteps=False,total_timesteps=200e3):
@@ -752,7 +756,7 @@ if __name__ == '__main__':
         "V_mag_range": [2.5,2.5],
         "V_angle_range": [60,60],
         "Plane_Angle_range": [0,0],
-        "Render": False,
+        "Render": True,
         "GZ_Timeout": False,
     }
 
@@ -760,14 +764,25 @@ if __name__ == '__main__':
     
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
     RL_Manager.create_model(net_arch=[10,10,10])
-    RL_Manager.train_model(reset_timesteps=False)
+    model_dir = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/DeepRL_Policy_03-26--08:20:24"
+    RL_Manager.model._logger = utils.configure_logger(verbose=1,tensorboard_log=model_dir,tb_log_name="TestLog")
+    RL_Manager.load_model(model_dir=model_dir,t_step=31500)
+    # RL_Manager.train_model(reset_timesteps=False)
+
+    for idx in range(20_000):
+        RL_Manager.model.train(1,batch_size=256)
+        if idx % 100 == 0:
+            print(f"Training Step: {idx}")
+
+    RL_Manager.sweep_policy(Plane_Angle_range=[0,0,45],V_mag_range=[2.5,2.5,1.0],V_angle_range=[60,60,10],n=10)
+    
 
 
-    # log_name = "DeepRL_Policy_03-19--22:47:12"
+    # log_name = "DeepRL_Policy_03-26--08:20:24"
     # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
     # RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.load_model(model_dir,t_step=109e3)
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,180,45],V_mag_range=[1.0,4.0,1.0],V_angle_range=[10,170,40],n=1)
+    # RL_Manager.create_model(net_arch=[10,10,10])
+    # RL_Manager.load_model(model_dir,t_step=31500)
 
 
     # RL_Manager.collect_landing_performance(
