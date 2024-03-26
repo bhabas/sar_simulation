@@ -75,7 +75,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## DOMAIN RANDOMIZATION
         self.Mass_std = 0.00*self.Ref_Mass
-        self.Iyy_std = 0.03*self.Ref_Iyy
+        self.Iyy_std = 0.00*self.Ref_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -259,6 +259,18 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             else:
                 terminated = False
                 truncated = False
+
+            info_dict = {
+                "reward_vals": self.reward_vals,
+                "reward": reward,
+                "a_Rot": a_Rot,
+                "Trg_Flag:": self.Trg_Flag,
+                "Impact_Flag_Ext": self.Impact_Flag_Ext,
+                "Tau_CR_trg": self.Tau_CR_trg,
+                "Plane_Angle": self.Plane_Angle_deg,
+                "V_mag": self.V_mag,
+                "V_angle": self.V_angle,
+            }
             
             # 5) RETURN VALUES
             return(
@@ -266,7 +278,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 reward,
                 terminated,
                 truncated,
-                {},
+                info_dict,
             )
 
         ########## POLICY POST-TRIGGER ##########
@@ -310,6 +322,18 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             except (UnboundLocalError,ValueError):
                 reward = 0.0
 
+            info_dict = {
+                "reward_vals": self.reward_vals,
+                "reward": reward,
+                "a_Rot": a_Rot,
+                "Trg_Flag:": self.Trg_Flag,
+                "Impact_Flag_Ext": self.Impact_Flag_Ext,
+                "Tau_CR_trg": self.Tau_CR_trg,
+                "Plane_Angle": self.Plane_Angle_deg,
+                "V_mag": self.V_mag,
+                "V_angle": self.V_angle,
+            }
+
 
             # 5) RETURN VALUES
             return(
@@ -317,12 +341,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 reward,
                 terminated,
                 truncated,
-                {},
+                info_dict,
             )
         
-
-        return obs, reward, terminated, truncated, {}
-
     
     def _finishSim(self,a_Rot):
 

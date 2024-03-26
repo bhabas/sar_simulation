@@ -1,32 +1,32 @@
 SAR_SETTINGS:
   SAR_Type: Source_One_V5
-  SAR_Config: A30_L200
+  SAR_Config: A15_L200
 PLANE_SETTINGS:
   Plane_Type: Landing_Surface
   Plane_Config: Checkerboard_L02
 ENV_SETTINGS:
   Env_Name: SAR_2D_DeepRL_Env
   V_mag_Limts:
-  - 1.0
-  - 4.0
+  - 2.5
+  - 2.5
   V_angle_Limits:
-  - 10
-  - 170
+  - 60
+  - 60
   Plane_Angle_Limits:
   - 0
-  - 180
+  - 0
   Ang_Acc_Limits:
   - -100
   - 100
 MODEL_SETTINGS:
   Mass_Std: 0.0
-  Iyy_Std: 0.0001728
-  Ref_Mass: 0.7917
-  Ref_Ixx: 0.00622
-  Ref_Iyy: 0.00576
-  Ref_Izz: 0.00633
-  L_eff: 0.20809
-  Gamma_eff: 26.12
+  Iyy_Std: 0.0
+  Ref_Mass: 0.792
+  Ref_Ixx: 0.0064
+  Ref_Iyy: 0.00594
+  Ref_Izz: 0.00569
+  L_eff: 0.21481
+  Gamma_eff: 15.07
   Forward_Reach: 0.15
 LEARNING_MODEL:
   Policy: SACPolicy

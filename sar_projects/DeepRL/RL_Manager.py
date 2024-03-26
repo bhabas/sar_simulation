@@ -637,7 +637,7 @@ class RewardCallback(BaseCallback):
         if self.num_timesteps % self.check_freq == 0:
 
             ## UPLOAD TB LOG TO SB3
-            self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join(self.RLM.log_name,self.TB_Log))
+            # self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join(self.RLM.log_name,self.TB_Log))
 
 
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
@@ -678,23 +678,25 @@ class RewardCallback(BaseCallback):
                 self.episode_rewards.pop(0)  # Remove the oldest reward
 
             ## TB LOGGING VALUES
+            info_dict = self.locals["infos"][0]
             self.logger.record('Custom/K_ep',self.env.K_ep)
             self.logger.record('Custom/Reward',episode_reward.item())
 
-            self.logger.record('z_Custom/Vel_mag',self.env.V_mag)
-            self.logger.record('z_Custom/Vel_angle',self.env.V_angle)
-            self.logger.record('z_Custom/Plane_Angle',self.env.Plane_Angle_deg)
-            self.logger.record('z_Custom/a_Trg',self.env.a_Trg_trg)
-            self.logger.record('z_Custom/a_Rot',self.env.a_Rot_trg)
-            self.logger.record('z_Custom/Flip_Flag',int(self.env.Trg_Flag))
-            self.logger.record('z_Custom/Impact_Flag_Ext',int(self.env.Impact_Flag_Ext))
+            self.logger.record('z_Custom/Vel_mag',info_dict["V_mag"])
+            self.logger.record('z_Custom/Vel_angle',info_dict["V_angle"])
+            self.logger.record('z_Custom/Plane_Angle',info_dict["Plane_Angle"])
+            self.logger.record('z_Custom/a_Rot_trg',info_dict["a_Rot"])
+            self.logger.record('z_Custom/Tau_CR_trg',info_dict["Tau_CR_trg"])
+            # self.logger.record('z_Custom/Trg_Flag',int(info_dict["Trg_Flag"]))
+            self.logger.record('z_Custom/Impact_Flag_Ext',int(info_dict["Impact_Flag_Ext"]))
             
-            self.logger.record('z_Rewards_Components/R_Dist',self.env.reward_vals[0])
-            self.logger.record('z_Rewards_Components/R_tau',self.env.reward_vals[1])
-            self.logger.record('z_Rewards_Components/R_LT',self.env.reward_vals[2])
-            self.logger.record('z_Rewards_Components/R_GM',self.env.reward_vals[3])
-            self.logger.record('z_Rewards_Components/R_phi',self.env.reward_vals[4])
-            self.logger.record('z_Rewards_Components/R_Legs',self.env.reward_vals[5])
+            self.logger.record('z_Rewards_Components/R_Dist',info_dict["reward_vals"][0])
+            self.logger.record('z_Rewards_Components/R_tau',info_dict["reward_vals"][1])
+            self.logger.record('z_Rewards_Components/R_tx',info_dict["reward_vals"][2])
+            self.logger.record('z_Rewards_Components/R_LT',info_dict["reward_vals"][3])
+            self.logger.record('z_Rewards_Components/R_GM',info_dict["reward_vals"][4])
+            self.logger.record('z_Rewards_Components/R_phi',info_dict["reward_vals"][5])
+            self.logger.record('z_Rewards_Components/R_Legs',info_dict["reward_vals"][6])
 
         
 
@@ -747,9 +749,9 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 100],
-        "V_mag_range": [1.0,4.0],
-        "V_angle_range": [10,170],
-        "Plane_Angle_range": [0,180],
+        "V_mag_range": [2.5,2.5],
+        "V_angle_range": [60,60],
+        "Plane_Angle_range": [0,0],
         "Render": False,
         "GZ_Timeout": False,
     }
