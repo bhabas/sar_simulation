@@ -268,26 +268,39 @@ class SAR_Base_Interface():
         
         self.sendCmd("Plane_Pose",Position,Plane_Angle)
 
-    def _sampleFlightConditions(self,V_mag_range=[0.5,1.5],V_angle_range=[0,90]):
+    def _sampleFlightConditions(self,V_mag_range=[0.5,1.5],V_angle_range=[0,180]):
 
-        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
-        Vel_Low = V_mag_range[0]
-        Vel_High = V_mag_range[1]
-        V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
+        ## SAMPLE V_MAG FROM UNIFORM DISTRIBUTION IN MAGNITUDE RANGE
+        V_mag_Low = V_mag_range[0]
+        V_mag_High = V_mag_range[1]
+        V_mag = np.random.uniform(low=V_mag_Low,high=V_mag_High)
 
-        ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
-        Rel_Angle_Low = V_angle_range[0]
-        Rel_Angle_High = V_angle_range[1]
-        Flight_Angle_range = Rel_Angle_High-Rel_Angle_Low
+        ## CONVERT RELATIVE ANGLES TO GLOBAL ANGLE
+        A1 = V_angle_range[0] - self.Plane_Angle_deg
+        A2 = V_angle_range[1] - self.Plane_Angle_deg
 
+        ## ANGLE CAPS TO ENSURE +X DIRECTION
+        B1 = -90
+        B2 = 90
+
+        ## CAP ANGLES TO BE WITHIN -90 to 90 DEGREES
+        A1 = np.clip(A1,B1,B2)
+        A2 = np.clip(A2,B1,B2)
+
+        ## CONVERT ANGLES BACK TO RELATIVE VALUES
+        V_angle_Low = A1 + self.Plane_Angle_deg
+        V_angle_High = A2 + self.Plane_Angle_deg
+
+        ## SAMPLE RELATIVE V_ANGLE FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        V_Angle_range = V_angle_High - V_angle_Low
         Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
 
         if Dist_Num == 0: # Low Range
-            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low, high=Rel_Angle_Low + 0.1*Flight_Angle_range)
+            Flight_Angle = np.random.default_rng().uniform(low=V_angle_Low, high=V_angle_Low + 0.1*V_Angle_range)
         elif Dist_Num == 1: # Medium Range
-            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low + 0.1*Flight_Angle_range, high=Rel_Angle_High - 0.1*Flight_Angle_range)
+            Flight_Angle = np.random.default_rng().uniform(low=V_angle_Low + 0.1*V_Angle_range, high=V_angle_High - 0.1*V_Angle_range)
         elif Dist_Num == 2: # High Range
-            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_High - 0.1*Flight_Angle_range, high=Rel_Angle_High)
+            Flight_Angle = np.random.default_rng().uniform(low=V_angle_High - 0.1*V_Angle_range, high=V_angle_High)
        
         return V_mag,Flight_Angle
 

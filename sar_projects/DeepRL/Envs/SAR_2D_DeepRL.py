@@ -59,8 +59,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0,0])
         self.reward_weights = {
-            "W_Dist":0.1,
-            "W_tau_cr":0.1,
+            "W_Dist":0.2,
+            "W_tau_cr":0.2,
             "W_tx":2.0,
             "W_LT":1.0,
             "W_GM":1.0,
@@ -85,7 +85,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-    def reset(self,seed=None,options=None):
+    def reset(self,V_angle_range=None,seed=None,options=None):
 
         self.start_time_real = time.time()
         self.resetPose()
@@ -643,7 +643,7 @@ if __name__ == '__main__':
     for ep in range(50):
 
         V_mag = 1.0
-        V_angle = 160
+        V_angle = 50
         Plane_Angle = 180
 
         if V_mag != None:
@@ -652,8 +652,8 @@ if __name__ == '__main__':
         if V_angle != None:
             env.V_angle_range = [V_angle,V_angle]
 
-        if Plane_Angle != None:
-            env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
+        # if Plane_Angle != None:
+        #     env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
 
         obs,_ = env.reset()
 
