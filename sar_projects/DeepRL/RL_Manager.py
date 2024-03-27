@@ -34,20 +34,23 @@ current_datetime = datetime.now()
 current_time = current_datetime.strftime("%m_%d-%H:%M")
 
 class RL_Training_Manager():
-    def __init__(self,env,log_dir,log_name,env_kwargs=None):
+    def __init__(self,env,Log_dir,Log_name,env_kwargs=None):
 
         self.vec_env = make_vec_env(env, env_kwargs=env_kwargs)
         self.env = self.vec_env.envs[0].unwrapped
 
-        self.log_dir = log_dir
-        self.log_name = log_name
-        self.log_subdir = os.path.join(self.log_dir, log_name)
-        self.model_subdir = os.path.join(self.log_dir, log_name, "Models")
+        self.Log_name = Log_name
+        self.Log_dir = Log_dir
 
-        os.makedirs(self.log_subdir, exist_ok=True)
-        os.makedirs(self.model_subdir, exist_ok=True)
+        self.Log_subdir = os.path.join(Log_dir, Log_name)
+        self.Model_subdir = os.path.join(self.Log_subdir, "Models")
+        self.TB_log_subdir = os.path.join(self.Log_subdir, "TB_Logs")
 
-    def create_model(self,gamma=0.999,learning_rate=0.01,net_arch=[10,10,10]):
+        os.makedirs(self.Log_subdir, exist_ok=True)
+        os.makedirs(self.Model_subdir, exist_ok=True)
+        os.makedirs(self.TB_log_subdir, exist_ok=True)
+
+    def create_model(self,gamma=0.999,learning_rate=0.01,net_arch=[10,10,10],write_config=True):
 
         self.model = SAC(
             "MlpPolicy",
@@ -59,65 +62,57 @@ class RL_Training_Manager():
             policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[64,64,64])),
             replay_buffer_kwargs=dict(handle_timeout_termination=False),
             learning_starts=0,
+            train_freq=(1, "episode"),
+            gradient_steps=-1,
             verbose=1,
             device='cpu',
-            tensorboard_log=self.log_subdir
+            tensorboard_log=self.TB_log_subdir
         )
 
-        self.write_config_file()
+        if write_config:
+            self.write_config_file()
         
-    def load_model(self,model_dir,t_step: int):
+    def load_model(self,t_step: int, Log_name: str, Params_only=False, load_replay_buffer=True):
         
-        ## LOAD CONFIG FILE
-        # config_path = os.path.join(os.path.dirname(model_dir),"Config.yaml")
-        # self.load_config_file(config_path)
+        ## SEARCH FOR BOTH MODEL AND REPLAY BUFFER WITH WILDCARD FOR OPTIONAL SUFFIX
+        model_pattern = f"model_{int(t_step)}_steps*.zip" 
+        replay_buffer_pattern = f"replay_buffer_{int(t_step)}_steps*.pkl" 
 
-        # Prepare to search for both model and replay buffer with wildcard for optional suffix
-        model_pattern = f"model_{int(t_step)}_steps*.zip"  # Assuming the model files are saved with '.zip' extension
-        replay_buffer_pattern = f"replay_buffer_{int(t_step)}_steps*.pkl"  # Assuming replay buffers are saved with '.pkl'
-
-        # Use glob to find matching files
-        model_files = glob.glob(os.path.join(model_dir, model_pattern))
-        replay_buffer_files = glob.glob(os.path.join(model_dir, replay_buffer_pattern))
+        ## FIND MODEL AND REPLAY BUFFER FILES
+        model_files = glob.glob(os.path.join(self.Log_dir, Log_name, "Models", model_pattern))
+        replay_buffer_files = glob.glob(os.path.join(self.Log_dir, Log_name, "Models", replay_buffer_pattern))
 
         ## LOAD MODEL AND REPLAY BUFFER
-        if model_files:
-            model_path = model_files[0]  # Assuming there's only one match or taking the first match
+        if Params_only:
+            print(f"Loading Model params...")
+            model_path = model_files[0]  # Taking the first match
+            loaded_model = SAC.load(
+                model_path,
+                device='cpu',
+            )
+            self.model.policy.load_state_dict(loaded_model.policy.state_dict())
+        
+        else:
             print(f"Loading Model...")
+            model_path = model_files[0]  # Taking the first match
             self.model = SAC.load(
                 model_path,
                 env=self.vec_env,
                 device='cpu',
-                tensorboard_log=self.log_subdir,
             )
-        else:
-            print("Model file not found!")
 
-        
-        if replay_buffer_files:
+        if load_replay_buffer:
+
+            print(f"Loading Replay Buffer...")
             replay_buffer_path = replay_buffer_files[0]  # Similarly, taking the first match
             self.model.load_replay_buffer(replay_buffer_path)
-            print(f"Loading Replay Buffer...")
-        else:
-            print("Replay buffer file not found!")
 
 
-    def train_model(self,save_freq=25e3,reset_timesteps=False,total_timesteps=200e3):
+    def train_model(self,save_freq=25e3,reset_timesteps=False,total_timesteps=500e3):
 
         if reset_timesteps == True:
 
-            current_datetime = datetime.now()
-            current_time = current_datetime.strftime("%m-%d--%H:%M:%S")
-            log_name = f"DeepRL_Policy_{current_time}"
-
-            self.log_name = log_name
-            self.log_subdir = os.path.join(self.log_dir, log_name)
-            self.model_subdir = os.path.join(self.log_dir, log_name, "Models")
-
-            os.makedirs(self.log_subdir, exist_ok=True)
-            os.makedirs(self.model_subdir, exist_ok=True)
-
-            self.model.tensorboard_log = self.log_subdir
+            self.model.tensorboard_log = self.TB_log_subdir
             self.model.learning_starts = 0
 
         reward_callback = RewardCallback(self,save_freq=save_freq,)
@@ -126,7 +121,7 @@ class RL_Training_Manager():
             total_timesteps=int(total_timesteps),
             callback=reward_callback,
             tb_log_name="TB_Log",
-            reset_num_timesteps=True,
+            reset_num_timesteps=reset_timesteps,
         )
 
     def test_policy(self,V_mag=None,V_angle=None,Plane_Angle=None):
@@ -153,7 +148,7 @@ class RL_Training_Manager():
     def sweep_policy(self,Plane_Angle_Step=45,V_mag_Step=0.5,V_angle_Step=10,n=1):
 
         Plane_Angle_arr = np.arange(self.env.Plane_Angle_range[0], self.env.Plane_Angle_range[1] + Plane_Angle_Step, Plane_Angle_Step)
-        V_mag_arr = np.arange(self.env.V_mag_range[0], self.env.V_mag_range[1] + V_mag_Step, V_mag_Step)
+        V_mag_arr = np.arange(self.env.V_mag_range[0], self.env.V_mag_range[1], V_mag_Step)
         V_angle_arr = np.arange(self.env.V_angle_range[0], self.env.V_angle_range[1] + V_angle_Step, V_angle_Step)
         
         for Plane_Angle in Plane_Angle_arr:
@@ -169,7 +164,7 @@ class RL_Training_Manager():
 
         if fileName is None:
             fileName = "PolicyPerformance_Data.csv"
-        filePath = os.path.join(self.log_subdir,fileName)
+        filePath = os.path.join(self.Log_subdir,fileName)
          
         ## GENERATE SWEEP ARRAYS
         Plane_Angle_arr = np.arange(Plane_Angle_range[0],Plane_Angle_range[1] + Plane_Angle_range[2],Plane_Angle_range[2])
@@ -334,7 +329,7 @@ class RL_Training_Manager():
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
-        filePath = os.path.join(self.log_subdir,fileName)
+        filePath = os.path.join(self.Log_subdir,fileName)
 
         ## READ CSV FILE
         df = pd.read_csv(filePath,sep=',',comment="#")
@@ -398,10 +393,10 @@ class RL_Training_Manager():
     def save_NN_to_C_header(self):
 
         FileName = f"NN_Params_DeepRL.h"
-        f = open(os.path.join(self.log_subdir,FileName),'a')
+        f = open(os.path.join(self.Log_subdir,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
-        f.write(f"// Model: {self.log_name} \t SAR_Type: {self.env.SAR_Type} \t SAR_Config: {self.env.SAR_Config}\n")
+        f.write(f"// Model: {self.Log_name} \t SAR_Type: {self.env.SAR_Type} \t SAR_Config: {self.env.SAR_Config}\n")
         f.write("static char NN_Params_DeepRL[] = {\n")
 
         num_hidden_layers = np.array([3]).reshape(-1,1)
@@ -486,7 +481,7 @@ class RL_Training_Manager():
         f.close()
 
     def write_config_file(self):
-        config_path = os.path.join(self.log_subdir,"Config.yaml")
+        config_path = os.path.join(self.Log_subdir,"Config.yaml")
 
         General_Dict = dict(
 
@@ -622,7 +617,7 @@ class RewardCallback(BaseCallback):
         This method is called before the first rollout starts.
         """
         self.env = self.training_env.envs[0].unwrapped
-        path = os.path.join(self.RLM.log_subdir,"TB_Log_1")
+        path = os.path.join(self.RLM.TB_log_subdir,"TB_Log_1")
         self.TB_Log = os.listdir(path)[0]
         self.TB_Log_path = os.path.join(path,self.TB_Log)
         
@@ -643,8 +638,8 @@ class RewardCallback(BaseCallback):
                 self.best_mean_reward = mean_reward
 
                 ## SAVE MODEL AND REPLAY BUFFER
-                model_path = os.path.join(self.RLM.model_subdir, f"model_{self.num_timesteps}_steps_BestModel")
-                replay_buffer_path = os.path.join(self.RLM.model_subdir, f"replay_buffer_{self.num_timesteps}_steps_BestModel")
+                model_path = os.path.join(self.RLM.Model_subdir, f"model_{self.num_timesteps}_steps_BestModel")
+                replay_buffer_path = os.path.join(self.RLM.Model_subdir, f"replay_buffer_{self.num_timesteps}_steps_BestModel")
 
                 self.model.save(model_path)
                 self.model.save_replay_buffer(replay_buffer_path)
@@ -660,8 +655,8 @@ class RewardCallback(BaseCallback):
         if self.num_timesteps % self.save_freq == 0:
 
             ## SAVE NEWEST MODEL AND REPLAY BUFFER
-            model_path = os.path.join(self.RLM.model_subdir, f"model_{self.num_timesteps}_steps")
-            replay_buffer_path = os.path.join(self.RLM.model_subdir, f"replay_buffer_{self.num_timesteps}_steps")
+            model_path = os.path.join(self.RLM.Model_subdir, f"model_{self.num_timesteps}_steps")
+            replay_buffer_path = os.path.join(self.RLM.Model_subdir, f"replay_buffer_{self.num_timesteps}_steps")
 
             self.model.save(model_path)
             self.model.save_replay_buffer(replay_buffer_path)
@@ -755,9 +750,6 @@ if __name__ == '__main__':
 
 
     
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.create_model(net_arch=[10,10,10])
-    RL_Manager.train_model(reset_timesteps=False)
 
 
     

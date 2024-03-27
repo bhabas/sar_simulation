@@ -7,8 +7,8 @@ PLANE_SETTINGS:
 ENV_SETTINGS:
   Env_Name: SAR_2D_DeepRL_Env
   V_mag_Limts:
-  - 2.5
-  - 2.5
+  - 1.5
+  - 4.0
   V_angle_Limits:
   - 10
   - 170
@@ -33,9 +33,9 @@ LEARNING_MODEL:
   Observation_Layer: 4
   Network_Layers:
     pi:
-    - 10
-    - 10
-    - 10
+    - 64
+    - 64
+    - 64
     qf:
     - 64
     - 64
@@ -48,12 +48,12 @@ LEARNING_MODEL:
   - -1.0
   - -1.0
   Gamma: 0.999
-  Learning_Rate: 0.002
+  Learning_Rate: 0.01
 REWARD_SETTINGS:
-  W_Dist: 0.1
-  W_tau_cr: 0.1
-  W_tx: 1.0
-  W_LT: 0.5
-  W_GM: 0.5
+  W_Dist: 0.2
+  W_tau_cr: 0.2
+  W_tx: 2.0
+  W_LT: 1.0
+  W_GM: 1.0
   W_Phi_rel: 2.0
-  W_Legs: 2.5
+  W_Legs: 2.0

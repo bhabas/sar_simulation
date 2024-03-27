@@ -436,6 +436,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         else:
             ## CALC REWARD VALUES
+            R_tx = 0
             R_LT = 0
             R_GM = 0
             R_Phi = 0
@@ -461,13 +462,17 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             r_C1_B = -r_B_C1                        # {X_W,Y_W,Z_W}
             e_r_hat = r_C1_B/np.linalg.norm(r_C1_B) # {X_W,Y_W,Z_W}
 
+            ## IMPACT LOCATION REWARD
+            r_C1_O = self._getPose()[1]                                     # {X_W,Z_W}
+            r_C1_P = self.R_WP(r_C1_O - self.r_P_O,self.Plane_Angle_rad)    # {tx,n_p}
+            R_tx = self.Reward_Exp_Decay(np.abs(r_C1_P[0]),0.1,k=5.0)
+
             ## MOMENTUM TRANSFER REWARD
             CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
             DP_LT = np.dot(V_hat_impact,e_r_hat)
             CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
             R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
 
-            
             ## GRAVITY MOMENT REWARD
             g_hat = np.array([0,0,-1])              # {X_W,Y_W,Z_W}
             CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
@@ -498,6 +503,11 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             r_C2_B = -r_B_C2                        # {X_W,Y_W,Z_W}
             e_r_hat = r_C2_B/np.linalg.norm(r_C2_B) # {X_W,Y_W,Z_W}
 
+            ## IMPACT LOCATION REWARD
+            r_C2_O = self._getPose()[2]             # {X_W,Z_W}
+            r_C2_P = self.R_WP(r_C2_O - self.r_P_O,self.Plane_Angle_rad)
+            R_tx = self.Reward_Exp_Decay(np.abs(r_C2_P[0]),0.1,k=5.0)
+
             ## MOMENTUM TRANSFER REWARD
             CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
             DP_LT = np.dot(V_hat_impact,e_r_hat)
@@ -526,6 +536,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             Phi_P_B_impact_deg = -Phi_B_P_impact_deg
 
             ## CALC REWARD VALUES
+            R_tx = 0
             R_LT = 0
             R_GM = 0
             R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
@@ -540,13 +551,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         ## REWARD: TAU_CR TRIGGER
         R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=5)
 
-        ## REWARD: DISTANCE FROM PLANE CENTER
-        R_tx  = 0
-        r_B_O = self._getState()[0]
-        r_P_O = self.r_P_O
-        r_B_P = r_B_O - r_P_O
-        r_B_P = self.R_WP(r_B_P,self.Plane_Angle_rad)
-        R_tx = self.Reward_Exp_Decay(np.abs(r_B_P[0]),0.1,k=2.5)
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 

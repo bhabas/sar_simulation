@@ -34,16 +34,18 @@ if __name__ == '__main__':
     env_kwargs = {
         "Ang_Acc_range": [-100, 0],
         "V_mag_range": [1.5,4.0],
-        "V_angle_range": [10,90],
-        "Plane_Angle_range": [0,0],
+        "V_angle_range": [10,170],
+        "Plane_Angle_range": [45,180],
         "Render": True,
     }
 
 
     
-    log_name = "DeepRL_Policy_03-26--22:19:13"
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL" 
-    model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
+    log_name = "DeepRL_Policy_03-27--07:57:57"
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.load_model(model_dir,t_step=195000)
-    RL_Manager.sweep_policy(Plane_Angle_Step=45,V_mag_Step=1.0,V_angle_Step=10,n=2)
+    # RL_Manager.create_model(net_arch=[64,64,64])
+
+    Model_to_Load = "DeepRL_Policy_03-27--09:47:51"
+    RL_Manager.load_model(t_step=175000,Log_name=log_name,Params_only=False)
+    RL_Manager.sweep_policy(Plane_Angle_Step=45,V_mag_Step=1.0,V_angle_Step=20,n=2)
