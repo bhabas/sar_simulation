@@ -50,7 +50,7 @@ class RL_Training_Manager():
         os.makedirs(self.Model_subdir, exist_ok=True)
         os.makedirs(self.TB_log_subdir, exist_ok=True)
 
-    def create_model(self,gamma=0.999,learning_rate=0.01,net_arch=[10,10,10],write_config=True):
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[10,10,10],write_config=True):
 
         self.model = SAC(
             "MlpPolicy",
@@ -58,12 +58,10 @@ class RL_Training_Manager():
             gamma=gamma,
             learning_rate=learning_rate,
             ent_coef='auto',
-            buffer_size=int(100e3),
+            buffer_size=int(5e3),
             policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[64,64,64])),
             replay_buffer_kwargs=dict(handle_timeout_termination=False),
             learning_starts=0,
-            train_freq=(1, "episode"),
-            gradient_steps=-1,
             verbose=1,
             device='cpu',
             tensorboard_log=self.TB_log_subdir
@@ -148,7 +146,7 @@ class RL_Training_Manager():
     def sweep_policy(self,Plane_Angle_Step=45,V_mag_Step=0.5,V_angle_Step=10,n=1):
 
         Plane_Angle_arr = np.arange(self.env.Plane_Angle_range[0], self.env.Plane_Angle_range[1] + Plane_Angle_Step, Plane_Angle_Step)
-        V_mag_arr = np.arange(self.env.V_mag_range[0], self.env.V_mag_range[1], V_mag_Step)
+        V_mag_arr = np.arange(self.env.V_mag_range[0], self.env.V_mag_range[1] + V_mag_Step, V_mag_Step)
         V_angle_arr = np.arange(self.env.V_angle_range[0], self.env.V_angle_range[1] + V_angle_Step, V_angle_Step)
         
         for Plane_Angle in Plane_Angle_arr:
@@ -243,6 +241,16 @@ class RL_Training_Manager():
             for V_mag in V_mag_arr:
                 for V_angle in V_angle_arr:
                     for trial in range(n_trials):
+
+                        ## CONVERT RELATIVE ANGLES TO GLOBAL ANGLE
+                        A1 = V_angle - Plane_Angle
+
+                        ## ANGLE CAPS TO ENSURE +X DIRECTION
+                        B1 = -90
+                        B2 = 90
+
+                        if A1 < B1 or A1 > B2:
+                            continue
 
                         t_trial_start = time.time()
 
@@ -385,8 +393,8 @@ class RL_Training_Manager():
         # ax.text(np.radians(60),4.5,'Flight Angle (deg)',
         #     rotation=0,ha='left',va='center')
 
-        # if saveFig==True:
-        #     plt.savefig(f'{self.TB_log_path}/Landing_Rate_Fig.pdf',dpi=300)
+        if saveFig==True:
+            plt.savefig(f'{self.Log_subdir}/Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}.pdf',dpi=300)
 
         plt.show(block=True)
         
@@ -617,10 +625,9 @@ class RewardCallback(BaseCallback):
         This method is called before the first rollout starts.
         """
         self.env = self.training_env.envs[0].unwrapped
-        path = os.path.join(self.RLM.TB_log_subdir,"TB_Log_1")
-        self.TB_Log = os.listdir(path)[0]
-        self.TB_Log_path = os.path.join(path,self.TB_Log)
-        
+        TB_Log_pattern = f"TB_Log_*" 
+        TB_log_files = glob.glob(os.path.join(self.RLM.TB_log_subdir, TB_Log_pattern))
+        self.TB_Log_path = TB_log_files[0]        
         
 
     def _on_step(self) -> bool:
@@ -679,9 +686,9 @@ class RewardCallback(BaseCallback):
             self.logger.record('z_Custom/Plane_Angle',info_dict["Plane_Angle"])
             self.logger.record('z_Custom/a_Rot_trg',info_dict["a_Rot"])
             self.logger.record('z_Custom/Tau_CR_trg',info_dict["Tau_CR_trg"])
-            # self.logger.record('z_Custom/Trg_Flag',int(info_dict["Trg_Flag"]))
+            self.logger.record('z_Custom/Trg_Flag',int(info_dict["Trg_Flag"]))
             self.logger.record('z_Custom/Impact_Flag_Ext',int(info_dict["Impact_Flag_Ext"]))
-            
+            self.logger.record('z_Custom/D_perp_pad_min',info_dict["D_perp_pad_min"])
             self.logger.record('z_Rewards_Components/R_Dist',info_dict["reward_vals"][0])
             self.logger.record('z_Rewards_Components/R_tau',info_dict["reward_vals"][1])
             self.logger.record('z_Rewards_Components/R_tx',info_dict["reward_vals"][2])

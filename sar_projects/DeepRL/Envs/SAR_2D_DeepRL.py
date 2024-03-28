@@ -59,8 +59,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0,0])
         self.reward_weights = {
-            "W_Dist":0.2,
-            "W_tau_cr":0.2,
+            "W_Dist":1.0,
+            "W_tau_cr":0.5,
             "W_tx":2.0,
             "W_LT":1.0,
             "W_GM":1.0,
@@ -70,12 +70,13 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.W_max = sum(self.reward_weights.values())
 
         self.D_perp_CR_min = np.inf
+        self.D_perp_pad_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
 
         ## DOMAIN RANDOMIZATION
-        self.Mass_std = 0.00*self.Ref_Mass
-        self.Iyy_std = 0.00*self.Ref_Iyy
+        self.Mass_std = 0.001*self.Ref_Mass
+        self.Iyy_std = 0.001*self.Ref_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -109,6 +110,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.reward_vals = np.array([0,0,0,0,0,0,0])
 
         self.D_perp_CR_min = np.inf
+        self.D_perp_pad_min = np.inf
         self.Tau_CR_trg = np.inf
         self.Tau_trg = np.inf
 
@@ -264,8 +266,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 "reward_vals": self.reward_vals,
                 "reward": reward,
                 "a_Rot": a_Rot,
-                "Trg_Flag:": self.Trg_Flag,
+                "Trg_Flag": self.Trg_Flag,
                 "Impact_Flag_Ext": self.Impact_Flag_Ext,
+                "D_perp_pad_min": self.D_perp_pad_min,
                 "Tau_CR_trg": self.Tau_CR_trg,
                 "Plane_Angle": self.Plane_Angle_deg,
                 "V_mag": self.V_mag,
@@ -326,8 +329,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 "reward_vals": self.reward_vals,
                 "reward": reward,
                 "a_Rot": a_Rot,
-                "Trg_Flag:": self.Trg_Flag,
+                "Trg_Flag": self.Trg_Flag,
                 "Impact_Flag_Ext": self.Impact_Flag_Ext,
+                "D_perp_pad_min": self.D_perp_pad_min,
                 "Tau_CR_trg": self.Tau_CR_trg,
                 "Plane_Angle": self.Plane_Angle_deg,
                 "V_mag": self.V_mag,
@@ -544,7 +548,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,0,k=5)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_pad_min,0,k=5)
         else:
             R_dist = 0
 

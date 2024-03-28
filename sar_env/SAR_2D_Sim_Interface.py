@@ -55,10 +55,11 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
         self.V_mag = np.nan
         self.V_angle = np.nan
-        self.Tau = np.nan
-        self.Theta_x = np.nan
-        self.D_perp = np.nan
-        self.Tau_CR = np.nan
+        self.Tau = np.inf
+        self.Theta_x = np.inf
+        self.D_perp = np.inf
+        self.Tau_CR = np.inf
+        self.D_perp_pad = np.inf
 
         ## INITIAL LEARNING/REWARD CONFIGS
         self.Trg_Flag = False
@@ -296,13 +297,26 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     self._iterStep_Swing(a_Rot)
                     self._checkTouchdown()
 
-
-            # UPDATE MINIMUM DISTANCE
-            if self.D_perp_CR <= self.D_perp_CR_min:
-                self.D_perp_CR_min = self.D_perp_CR 
-
             if self.Done:
                 break
+
+        ## UPDATE MINIMUM DISTANCE OF PAD
+        r_C1_O = self._getPose()[1]                                     # {X_W,Z_W}
+        r_C1_P = self.R_WP(r_C1_O - self.r_P_O, self.Plane_Angle_rad)    # {tx,n_p}
+
+        r_C2_O = self._getPose()[2]                 
+        r_C2_P = self.R_WP(r_C2_O - self.r_P_O, self.Plane_Angle_rad)
+
+        self.D_perp_pad = min(abs(r_C1_P[2]),abs(r_C2_P[2]))
+
+        # UPDATE MINIMUM DISTANCE
+        if self.D_perp_CR <= self.D_perp_CR_min:
+            self.D_perp_CR_min = self.D_perp_CR 
+
+        r_B_O,Phi_B_O,V_B_O,dPhi_B_O = self._getState()
+        if self.D_perp_pad <= self.D_perp_pad_min and np.abs(Phi_B_O) < np.deg2rad(360):
+            self.D_perp_pad_min = self.D_perp_pad
+
 
     def render(self):
 
