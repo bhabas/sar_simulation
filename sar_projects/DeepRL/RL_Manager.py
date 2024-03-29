@@ -50,16 +50,17 @@ class RL_Training_Manager():
         os.makedirs(self.Model_subdir, exist_ok=True)
         os.makedirs(self.TB_log_subdir, exist_ok=True)
 
-    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[10,10,10],write_config=True):
+    def create_model(self,model_kwargs,write_config=True):
 
         self.model = SAC(
             "MlpPolicy",
             env=self.vec_env,
-            gamma=gamma,
-            learning_rate=learning_rate,
-            ent_coef='auto',
-            buffer_size=int(5e3),
-            policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[64,64,64])),
+            gamma=model_kwargs["gamma"],
+            learning_rate=model_kwargs["learning_rate"],
+            ent_coef=model_kwargs["ent_coef"],
+            target_entropy=model_kwargs["target_entropy"],
+            buffer_size=model_kwargs["buffer_size"],
+            policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=model_kwargs["net_arch"]),
             replay_buffer_kwargs=dict(handle_timeout_termination=False),
             learning_starts=0,
             verbose=1,
@@ -88,6 +89,7 @@ class RL_Training_Manager():
                 model_path,
                 device='cpu',
             )
+            self.model.buffer_size = int(20e3)
             self.model.policy.load_state_dict(loaded_model.policy.state_dict())
         
         else:
@@ -112,6 +114,8 @@ class RL_Training_Manager():
 
             self.model.tensorboard_log = self.TB_log_subdir
             self.model.learning_starts = 0
+
+
 
         reward_callback = RewardCallback(self,save_freq=save_freq,)
 
@@ -333,7 +337,7 @@ class RL_Training_Manager():
                             t_now = np.round(t_now)
                             print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg, {Plane_Angle:.02f} deg) Index: {idx}/{num_trials} \tPercent: {100*idx/num_trials:.2f}% \tTTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
 
-    def plot_landing_performance(self,PlaneAngle=0,fileName=None,saveFig=False):
+    def plot_landing_performance(self,PlaneAngle=0,fileName=None,saveFig=False,showFig=True):
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
@@ -396,7 +400,8 @@ class RL_Training_Manager():
         if saveFig==True:
             plt.savefig(f'{self.Log_subdir}/Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}.pdf',dpi=300)
 
-        plt.show(block=True)
+        if showFig==True:
+            plt.show(block=True)
         
     def save_NN_to_C_header(self):
 
@@ -680,6 +685,7 @@ class RewardCallback(BaseCallback):
             info_dict = self.locals["infos"][0]
             self.logger.record('Custom/K_ep',self.env.K_ep)
             self.logger.record('Custom/Reward',episode_reward.item())
+            self.logger.record('Custom/TestCondition_idx',info_dict["TestCondition_idx"])
 
             self.logger.record('z_Custom/Vel_mag',info_dict["V_mag"])
             self.logger.record('z_Custom/Vel_angle',info_dict["V_angle"])

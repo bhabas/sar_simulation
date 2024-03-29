@@ -7,7 +7,8 @@ import math
 import pygame as pg
 import os
 import rospy
-
+import csv
+import random
 
 YELLOW = '\033[93m'
 RED = '\033[91m'
@@ -19,7 +20,7 @@ from sar_env import SAR_2D_Sim_Interface
 
 class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
-    def __init__(self,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,GZ_Timeout=False):
+    def __init__(self,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=False,GZ_Timeout=False):
         SAR_2D_Sim_Interface.__init__(self,Render)
         gym.Env.__init__(self)
 
@@ -38,10 +39,26 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Env_Name = "SAR_2D_DeepRL_Env"
 
         ## TESTING CONDITIONS     
+        self.Fine_Tuning_Flag = Fine_Tune
         self.V_mag_range = V_mag_range  
         self.V_angle_range = V_angle_range
         self.Plane_Angle_range = Plane_Angle_range
         self.setAngAcc_range(Ang_Acc_range)
+        self.TestCondition_idx = 0
+
+        if self.Fine_Tuning_Flag:
+            
+            ## LOAD TESTING CONDITIONS
+            self.TestingConditions = []
+            csv_file_path = f"{self.BASE_PATH}/sar_projects/DeepRL/Finetuning_Training_Conditions.csv"
+
+            with open(csv_file_path, mode='r') as csv_file:
+                csv_reader = csv.DictReader(csv_file)
+                for row in csv_reader:
+                    self.TestingConditions.append((float(row['Plane_Angle']),float(row['V_angle']),float(row['V_mag']),))
+
+            ## SHUFFLE TESTING CONDITIONS
+            random.shuffle(self.TestingConditions)
 
 
         ## TIME CONSTRAINTS
@@ -85,6 +102,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         ## DEFINE ACTION SPACE
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
+
 
     def reset(self,V_angle_range=None,seed=None,options=None):
 
@@ -145,17 +163,37 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
     def _setTestingConditions(self):
 
-        ## SAMPLE SET PLANE POSE
-        Plane_Angle_Low = self.Plane_Angle_range[0]
-        Plane_Angle_High = self.Plane_Angle_range[1]
-        Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-        self._setPlanePose(self.r_P_O,Plane_Angle)
+        if self.Fine_Tuning_Flag:
 
-        ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
-        self.V_mag = V_mag
-        self.V_angle = V_angle
-    
+            ## SET TESTING CONDITIONS
+            Plane_Angle = self.TestingConditions[self.TestCondition_idx][0]
+            V_angle_B_O = self.TestingConditions[self.TestCondition_idx][1]
+            V_mag_B_O = self.TestingConditions[self.TestCondition_idx][2]
+
+            ## CONVERT GLOBAL ANGLE TO RELATIVE ANGLE
+            self._setPlanePose(self.r_P_O,Plane_Angle)
+            self.V_angle = self.Plane_Angle_deg + V_angle_B_O
+            self.V_mag = V_mag_B_O
+
+
+            ## UPDATE TESTING CONDITION INDEX
+            self.TestCondition_idx += 1
+            if self.TestCondition_idx >= len(self.TestingConditions):
+                self.TestCondition_idx = 0
+
+        else:
+
+            ## SAMPLE SET PLANE POSE
+            Plane_Angle_Low = self.Plane_Angle_range[0]
+            Plane_Angle_High = self.Plane_Angle_range[1]
+            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+            self._setPlanePose(self.r_P_O,Plane_Angle)
+
+            ## SAMPLE VELOCITY AND FLIGHT ANGLE
+            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
+            self.V_mag = V_mag
+            self.V_angle = V_angle
+        
     def _initialStep(self):
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIAL VALUES)
@@ -273,6 +311,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 "Plane_Angle": self.Plane_Angle_deg,
                 "V_mag": self.V_mag,
                 "V_angle": self.V_angle,
+                "TestCondition_idx": self.TestCondition_idx,
             }
             
             # 5) RETURN VALUES
@@ -336,6 +375,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 "Plane_Angle": self.Plane_Angle_deg,
                 "V_mag": self.V_mag,
                 "V_angle": self.V_angle,
+                "TestCondition_idx": self.TestCondition_idx,
             }
 
 
