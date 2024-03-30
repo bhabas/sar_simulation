@@ -76,9 +76,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0,0])
         self.reward_weights = {
-            "W_Dist":1.0,
-            "W_tau_cr":0.5,
-            "W_tx":2.0,
+            "W_Dist":0.1,
+            "W_tau_cr":0.1,
+            "W_tx":1.0,
             "W_LT":1.0,
             "W_GM":1.0,
             "W_Phi_rel":2.0,

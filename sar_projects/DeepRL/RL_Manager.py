@@ -12,6 +12,7 @@ import rospy
 import rospkg
 import glob
 import boto3
+from collections import deque
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -90,7 +91,6 @@ class RL_Training_Manager():
                 model_path,
                 device='cpu',
             )
-            self.model.buffer_size = int(20e3)
             self.model.policy.load_state_dict(loaded_model.policy.state_dict())
         
         else:
@@ -158,6 +158,16 @@ class RL_Training_Manager():
             for V_mag in V_mag_arr:
                 for V_angle in V_angle_arr:
                     for _ in range(n):
+
+                        ## CONVERT RELATIVE ANGLES TO GLOBAL ANGLE
+                        A1 = V_angle - Plane_Angle
+
+                        ## ANGLE CAPS TO ENSURE +X DIRECTION
+                        B1 = -90
+                        B2 = 90
+
+                        if A1 < B1 or A1 > B2:
+                            continue
 
                         obs,reward = self.test_policy(V_mag,V_angle,Plane_Angle)
                         print(f"Plane_Angle: {Plane_Angle:.2f}  V_mag: {V_mag:.2f}  V_angle: {V_angle:.2f}")
@@ -636,24 +646,35 @@ class RewardCallback(BaseCallback):
         TB_Log_pattern = f"TB_Log_*" 
         TB_log_files = glob.glob(os.path.join(self.RLM.TB_log_subdir, TB_Log_pattern))
         self.TB_Log_path = TB_log_files[0]        
+
+        self.variance_threshold = 0.09
+        self.cooldown = int(20e3)
+        self.increase_factor = 0.04
+        self.consistent_time_steps = int(10e3)
+        self.var_history = deque(maxlen=self.consistent_time_steps)  # To
+        self.reward_threshold = 0.5
+        self.last_increase_step = 0
         
 
     def _on_step(self) -> bool:
         
-        ## DECAY ENTROPY
-        # self.current_entropy *= self.entropy_decay
+        ## COMPUTE EPISODE REWARD MEAN AND VARIANCE
+        ep_info_buffer = self.locals['self'].ep_info_buffer
+        ep_rew_mean = safe_mean([ep_info["r"] for ep_info in ep_info_buffer])
+        ep_rew_var = np.var([ep_info["r"] for ep_info in ep_info_buffer])
 
-        # ## BOOST ENTROPY FOR SPECIFIC K_EPISODES
-        # if self.num_timesteps in [7_000, 15_000, 25_000, 32_000, 75_000]:
-        #     self.current_entropy = 0.03
-        # elif self.num_timesteps in [50_000, 75_00]:
-        #     self.current_entropy = 0.02
+        # Update the variance history
+        self.var_history.append(ep_rew_var)
 
+        if (all(var < self.variance_threshold for var in self.var_history) 
+            and ep_rew_mean > self.reward_threshold 
+            and self.num_timesteps > self.last_increase_step + self.cooldown
+            and int(20e3) < self.num_timesteps < int(80e3)):
 
-        # self.model.ent_coef = self.current_entropy
-        # self.model.ent_coef_tensor = th.tensor(float(self.model.ent_coef), device=self.model.device)
-        
-        ep_rew_mean = safe_mean([ep_info["r"] for ep_info in self.locals['self'].ep_info_buffer])
+            self.last_increase_step = self.num_timesteps
+            with th.no_grad():
+                ent_coef = 0.05
+                self.model.log_ent_coef.fill_(np.log(ent_coef))
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
         if self.num_timesteps % self.check_freq == 0:
@@ -690,8 +711,9 @@ class RewardCallback(BaseCallback):
             self.model.save(model_path)
             self.model.save_replay_buffer(replay_buffer_path)
 
-        self.logger.record("rollout/ep_rew_mean2", safe_mean([ep_info["r"] for ep_info in self.locals['self'].ep_info_buffer]))
-        
+        self.logger.record("rollout/ep_rew_var", ep_rew_var)
+
+
         ## CHECK IF EPISODE IS DONE
         if self.locals["dones"].item():
 
@@ -699,7 +721,6 @@ class RewardCallback(BaseCallback):
             info_dict = self.locals["infos"][0]
             self.logger.record('Custom/K_ep',self.env.K_ep)
             self.logger.record('Custom/Reward',self.locals["rewards"].item())
-            self.logger.record('Custom/TestCondition_idx',info_dict["TestCondition_idx"])
 
             self.logger.record('z_Custom/Vel_mag',info_dict["V_mag"])
             self.logger.record('z_Custom/Vel_angle',info_dict["V_angle"])

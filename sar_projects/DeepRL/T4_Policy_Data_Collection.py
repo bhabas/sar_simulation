@@ -41,17 +41,17 @@ if __name__ == '__main__':
 
 
     
-    log_name = "DeepRL_Policy_LR_Schedule_0_deg_plane_03-30--08:21:46"
+    log_name = "est2_03-30--17:36:29"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.load_model(t_step=100e3,Log_name=log_name,Params_only=False)
+    RL_Manager.load_model(t_step=35000,Log_name=log_name,Params_only=False)
 
     RL_Manager.collect_landing_performance(
         fileName="PolicyPerformance_Data.csv",
         Plane_Angle_range=[0,0,45],
         V_mag_range=[1.6,4.4,0.4],
         V_angle_range=[15,165,10],
-        n_trials=4
+        n_trials=5
         )
     
     RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=0,saveFig=True,showFig=False)

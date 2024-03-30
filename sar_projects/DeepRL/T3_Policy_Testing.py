@@ -35,25 +35,15 @@ if __name__ == '__main__':
         "Ang_Acc_range": [-100, 0],
         "V_mag_range": [1.5,4.5],
         "V_angle_range": [15,165],
-        "Plane_Angle_range": [0,180],
-        "Render": False,
+        "Plane_Angle_range": [0,0],
+        "Render": True,
     }
 
 
     
-    log_name = "DeepRL_Policy_03-27--13:24:17"
+    log_name = "A30_L200_0deg_BaseTest_03-30--15:04:50"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.create_model(net_arch=[64,64,64])
 
-    # Model_to_Load = "DeepRL_Policy_03-27--09:47:51"
-    RL_Manager.load_model(t_step=47000,Log_name=log_name,Params_only=False)
-    # RL_Manager.sweep_policy(Plane_Angle_Step=45,V_mag_Step=1.0,V_angle_Step=15,n=2)
-
-    RL_Manager.collect_landing_performance(
-        fileName="PolicyPerformance_Data.csv",
-        Plane_Angle_range=[0,180,45],
-        V_mag_range=[1.5,4.5,0.5],
-        V_angle_range=[10,170,5],
-        n_trials=5
-        )
+    RL_Manager.load_model(t_step=113500,Log_name=log_name,Params_only=False)
+    RL_Manager.sweep_policy(Plane_Angle_Step=45,V_mag_Step=1.0,V_angle_Step=15,n=2)
