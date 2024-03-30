@@ -82,13 +82,26 @@ if __name__ == '__main__':
 
     model_kwargs = {
         "gamma": 0.999,
-        "learning_rate": step_schedule(0.0002, 0.002, 0.7),
+        "learning_rate": step_schedule(2e-4,2e-3,0.75),
         "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
         "ent_coef": "auto",
-        "target_entropy": -2,
+        "target_entropy": -1,
         "batch_size": 256,
-        "buffer_size": int(30e3),
+        "buffer_size": int(20e3),
     }
 
     RL_Manager.create_model(model_kwargs)
-    RL_Manager.train_model(reset_timesteps=False,total_timesteps=int(100e3))
+    RL_Manager.train_model(reset_timesteps=False,total_timesteps=int(120e3))
+
+    RL_Manager.collect_landing_performance(
+        fileName="PolicyPerformance_Data.csv",
+        Plane_Angle_range=[0,135,45],
+        V_mag_range=[1.6,4.4,0.4],
+        V_angle_range=[15,165,10],
+        n_trials=4
+        )
+    
+    RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=0,saveFig=True,showFig=False)
+    RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=45,saveFig=True,showFig=False)
+    RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=90,saveFig=True,showFig=False)
+    RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=135,saveFig=True,showFig=False)

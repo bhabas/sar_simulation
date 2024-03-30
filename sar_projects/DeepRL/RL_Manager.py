@@ -22,6 +22,7 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
 from stable_baselines3.common import utils
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.utils import safe_mean
 
 
 
@@ -618,8 +619,10 @@ class RewardCallback(BaseCallback):
         self.RLM = RLM
         self.s3_client = boto3.client('s3')
 
+        # self.current_entropy = 0.1
+        # self.entropy_decay = 0.999
 
-        self.n_prev_episodes = 25
+        self.n_prev_episodes = 100
         self.episode_rewards = []
         self.saved_models = []
         self.keep_last_n_models = keep_last_n_models
@@ -636,6 +639,21 @@ class RewardCallback(BaseCallback):
         
 
     def _on_step(self) -> bool:
+        
+        ## DECAY ENTROPY
+        # self.current_entropy *= self.entropy_decay
+
+        # ## BOOST ENTROPY FOR SPECIFIC K_EPISODES
+        # if self.num_timesteps in [7_000, 15_000, 25_000, 32_000, 75_000]:
+        #     self.current_entropy = 0.03
+        # elif self.num_timesteps in [50_000, 75_00]:
+        #     self.current_entropy = 0.02
+
+
+        # self.model.ent_coef = self.current_entropy
+        # self.model.ent_coef_tensor = th.tensor(float(self.model.ent_coef), device=self.model.device)
+        
+        ep_rew_mean = safe_mean([ep_info["r"] for ep_info in self.locals['self'].ep_info_buffer])
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
         if self.num_timesteps % self.check_freq == 0:
@@ -643,11 +661,10 @@ class RewardCallback(BaseCallback):
             ## UPLOAD TB LOG TO SB3
             # self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join(self.RLM.log_name,self.TB_Log))
 
-
+            
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
-            mean_reward = np.mean(self.episode_rewards)
-            if mean_reward > self.best_mean_reward:
-                self.best_mean_reward = mean_reward
+            if ep_rew_mean > self.best_mean_reward:
+                self.best_mean_reward = ep_rew_mean
 
                 ## SAVE MODEL AND REPLAY BUFFER
                 model_path = os.path.join(self.RLM.Model_subdir, f"model_{self.num_timesteps}_steps_BestModel")
@@ -673,18 +690,15 @@ class RewardCallback(BaseCallback):
             self.model.save(model_path)
             self.model.save_replay_buffer(replay_buffer_path)
 
+        self.logger.record("rollout/ep_rew_mean2", safe_mean([ep_info["r"] for ep_info in self.locals['self'].ep_info_buffer]))
+        
         ## CHECK IF EPISODE IS DONE
         if self.locals["dones"].item():
-
-            episode_reward = self.locals["rewards"]
-            self.episode_rewards.append(episode_reward.item())
-            if len(self.episode_rewards) > self.n_prev_episodes:
-                self.episode_rewards.pop(0)  # Remove the oldest reward
 
             ## TB LOGGING VALUES
             info_dict = self.locals["infos"][0]
             self.logger.record('Custom/K_ep',self.env.K_ep)
-            self.logger.record('Custom/Reward',episode_reward.item())
+            self.logger.record('Custom/Reward',self.locals["rewards"].item())
             self.logger.record('Custom/TestCondition_idx',info_dict["TestCondition_idx"])
 
             self.logger.record('z_Custom/Vel_mag',info_dict["V_mag"])
