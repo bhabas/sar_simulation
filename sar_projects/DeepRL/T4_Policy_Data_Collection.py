@@ -33,24 +33,21 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [1.5,4.5],
-        "V_angle_range": [10,170],
-        "Plane_Angle_range": [45,45],
         "Render": False,
     }
 
 
     
-    log_name = "est2_03-30--17:36:29"
+    log_name = "A15_L100_03-30--21:13:09"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.load_model(t_step=35000,Log_name=log_name,Params_only=False)
+    RL_Manager.load_model(t_step=100000,Log_name=log_name,Params_only=False)
 
     RL_Manager.collect_landing_performance(
         fileName="PolicyPerformance_Data.csv",
         Plane_Angle_range=[0,0,45],
         V_mag_range=[1.6,4.4,0.4],
-        V_angle_range=[15,165,10],
+        V_angle_range=[15,90,2.5],
         n_trials=5
         )
     

@@ -1,6 +1,6 @@
 SAR_SETTINGS:
   SAR_Type: Source_One_V5
-  SAR_Config: A30_L200
+  SAR_Config: A60_L200
 PLANE_SETTINGS:
   Plane_Type: Landing_Surface
   Plane_Config: Checkerboard_L02
@@ -19,14 +19,14 @@ ENV_SETTINGS:
   - -100
   - 0
 MODEL_SETTINGS:
-  Mass_Std: 0.0007917
-  Iyy_Std: 5.760000000000001e-06
-  Ref_Mass: 0.7917
-  Ref_Ixx: 0.00622
-  Ref_Iyy: 0.00576
-  Ref_Izz: 0.00633
-  L_eff: 0.20809
-  Gamma_eff: 26.12
+  Mass_Std: 0.0007912
+  Iyy_Std: 5.09e-06
+  Ref_Mass: 0.7912
+  Ref_Ixx: 0.00555
+  Ref_Iyy: 0.00509
+  Ref_Izz: 0.00787
+  L_eff: 0.18331
+  Gamma_eff: 52.8
   Forward_Reach: 0.15
 LEARNING_MODEL:
   Policy: SACPolicy
@@ -48,7 +48,7 @@ LEARNING_MODEL:
   - -1.0
   - -1.0
   Gamma: 0.999
-  Learning_Rate: !!python/name:__main__.func ''
+  Learning_Rate: 0.002
 REWARD_SETTINGS:
   W_Dist: 0.1
   W_tau_cr: 0.1

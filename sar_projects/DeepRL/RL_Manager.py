@@ -619,7 +619,7 @@ class RL_Training_Manager():
 class RewardCallback(BaseCallback):
     def __init__(self, RLM, 
                  check_freq: int = 500, 
-                 save_freq: int = 25_000, 
+                 save_freq: int = 5_000, 
                  keep_last_n_models: int = 5,
                  verbose=0):
         super(RewardCallback, self).__init__(verbose)
@@ -629,13 +629,17 @@ class RewardCallback(BaseCallback):
         self.RLM = RLM
         self.s3_client = boto3.client('s3')
 
-        # self.current_entropy = 0.1
-        # self.entropy_decay = 0.999
 
         self.n_prev_episodes = 100
         self.episode_rewards = []
         self.saved_models = []
         self.keep_last_n_models = keep_last_n_models
+
+        self.rew_var_threshold = 0.09                       # Threshold for variance of episode rewards
+        self.var_history_window = deque(maxlen=int(10e3))   # Keep a window of the last 10k variance values
+        self.ent_burst_cooldown = int(20e3)                 # Cooldown period for entropy burst
+        self.ent_burst_limit = int(100e3)                   # Limit the entropy burst to the first 100k steps
+        self.last_ent_burst_step = 0                        # Last step when entropy burst was applied
 
 
     def _on_training_start(self) -> None:
@@ -647,13 +651,6 @@ class RewardCallback(BaseCallback):
         TB_log_files = glob.glob(os.path.join(self.RLM.TB_log_subdir, TB_Log_pattern))
         self.TB_Log_path = TB_log_files[0]        
 
-        self.variance_threshold = 0.09
-        self.cooldown = int(20e3)
-        self.increase_factor = 0.04
-        self.consistent_time_steps = int(10e3)
-        self.var_history = deque(maxlen=self.consistent_time_steps)  # To
-        self.reward_threshold = 0.5
-        self.last_increase_step = 0
         
 
     def _on_step(self) -> bool:
@@ -663,15 +660,14 @@ class RewardCallback(BaseCallback):
         ep_rew_mean = safe_mean([ep_info["r"] for ep_info in ep_info_buffer])
         ep_rew_var = np.var([ep_info["r"] for ep_info in ep_info_buffer])
 
-        # Update the variance history
-        self.var_history.append(ep_rew_var)
+        ## UPDATE VARIANCE HISTORY WINDOW
+        self.var_history_window.append(ep_rew_var)
 
-        if (all(var < self.variance_threshold for var in self.var_history) 
-            and ep_rew_mean > self.reward_threshold 
-            and self.num_timesteps > self.last_increase_step + self.cooldown
-            and int(20e3) < self.num_timesteps < int(80e3)):
+        if (all(var < self.rew_var_threshold for var in self.var_history_window) 
+            and self.num_timesteps - self.last_ent_burst_step > self.ent_burst_cooldown
+            and self.num_timesteps < self.ent_burst_limit):
 
-            self.last_increase_step = self.num_timesteps
+            self.last_ent_burst_step = self.num_timesteps
             with th.no_grad():
                 ent_coef = 0.05
                 self.model.log_ent_coef.fill_(np.log(ent_coef))
@@ -711,6 +707,7 @@ class RewardCallback(BaseCallback):
             self.model.save(model_path)
             self.model.save_replay_buffer(replay_buffer_path)
 
+        ## LOG VARIANCE HISTORY
         self.logger.record("rollout/ep_rew_var", ep_rew_var)
 
 
@@ -730,6 +727,7 @@ class RewardCallback(BaseCallback):
             self.logger.record('z_Custom/Trg_Flag',int(info_dict["Trg_Flag"]))
             self.logger.record('z_Custom/Impact_Flag_Ext',int(info_dict["Impact_Flag_Ext"]))
             self.logger.record('z_Custom/D_perp_pad_min',info_dict["D_perp_pad_min"])
+
             self.logger.record('z_Rewards_Components/R_Dist',info_dict["reward_vals"][0])
             self.logger.record('z_Rewards_Components/R_tau',info_dict["reward_vals"][1])
             self.logger.record('z_Rewards_Components/R_tx',info_dict["reward_vals"][2])
@@ -737,8 +735,6 @@ class RewardCallback(BaseCallback):
             self.logger.record('z_Rewards_Components/R_GM',info_dict["reward_vals"][4])
             self.logger.record('z_Rewards_Components/R_phi',info_dict["reward_vals"][5])
             self.logger.record('z_Rewards_Components/R_Legs',info_dict["reward_vals"][6])
-
-        
 
         return True
     
@@ -754,21 +750,6 @@ class RewardCallback(BaseCallback):
                     os.remove(replay_buffer_path + ".pkl")
 
             self.saved_models = self.saved_models[-self.keep_last_n_models:]
-    
-    def _on_rollout_start(self) -> None:
-        """
-        A rollout is the collection of environment interaction
-        using the current policy.
-        This event is triggered before collecting new samples.
-        """
-        pass
-    
-    def _on_rollout_end(self) -> None:
-        """
-        This event is triggered before updating the policy.
-        """
-        pass
-
 
 
 if __name__ == '__main__':

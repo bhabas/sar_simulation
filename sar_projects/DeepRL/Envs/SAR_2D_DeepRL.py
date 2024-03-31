@@ -81,7 +81,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             "W_tx":1.0,
             "W_LT":1.0,
             "W_GM":1.0,
-            "W_Phi_rel":2.0,
+            "W_Phi_rel":1.0,
             "W_Legs":2.0
         }
         self.W_max = sum(self.reward_weights.values())

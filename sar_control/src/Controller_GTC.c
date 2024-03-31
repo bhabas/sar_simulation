@@ -98,7 +98,7 @@ void controllerOutOfTreeReset() {
     onceFlag = false;
 
     // UPDATE COLLISION RADIUS
-    Collision_Radius = max(L_eff,Forward_Reach);
+    Collision_Radius = L_eff;
 
 
     // RESET LOGGED TRIGGER VALUES

@@ -120,7 +120,7 @@ class SAR_Base_Interface():
         self.Gamma_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Gamma_eff")
         self.Lx_eff = self.L_eff*np.sin(np.radians(self.Gamma_eff))
         self.Lz_eff = self.L_eff*np.cos(np.radians(self.Gamma_eff))
-        self.Collision_Radius = max(self.L_eff,self.Forward_Reach)
+        self.Collision_Radius = self.L_eff
 
         ## SYSTEM AND FLIGHT PARAMETERS
         self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")

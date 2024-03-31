@@ -73,7 +73,7 @@ if __name__ == '__main__':
         "gamma": 0.999,
         "learning_rate": 2e-3,
         "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
-        "ent_coef": "auto_0.0",
+        "ent_coef": "auto_0.005",
         "target_entropy": -2,
         "batch_size": 256,
         "buffer_size": int(100e3),
@@ -81,9 +81,8 @@ if __name__ == '__main__':
 
     RL_Manager.create_model(model_kwargs)
 
-    # Model_to_Load = "A30_L200_0deg_BaseTest_03-30--15:04:50"
-    # RL_Manager.load_model(t_step=50e3,Log_name=Model_to_Load,Params_only=True,load_replay_buffer=False)
-
+    Model_to_Load = "A30_L200_0deg_PreTraining_Agent"
+    RL_Manager.load_model(t_step=55500,Log_name=Model_to_Load,Params_only=True,load_replay_buffer=False)
     RL_Manager.train_model(reset_timesteps=False,total_timesteps=int(120e3))
 
     # RL_Manager.collect_landing_performance(
