@@ -609,7 +609,8 @@ class SAR_Base_Interface():
         self.Vel_angle_B_P = np.nan
         self.D_perp = np.nan
         self.D_perp_CR = np.nan
-        self.D_perp_CR_min = np.nan
+        self.D_perp_pad = np.nan
+        self.D_perp_pad_min = np.nan
         
         self.Theta_x = np.nan
         self.Theta_y = np.nan
@@ -733,7 +734,8 @@ class SAR_Base_Interface():
         self.Vel_angle_B_P = np.round(StateData_msg.Vel_angle_B_P,3)
         self.D_perp = np.round(StateData_msg.D_perp,3)
         self.D_perp_CR = np.round(StateData_msg.D_perp_CR,3)
-        self.D_perp_CR_min = np.round(StateData_msg.D_perp_CR_min,3)
+        self.D_perp_pad = np.round(StateData_msg.D_perp_pad,3)
+        self.D_perp_pad_min = np.round(StateData_msg.D_perp_pad_min,3)
 
         ## OPTICAL FLOW STATES
         self.Theta_x = np.round(StateData_msg.Optical_Flow.x,3)

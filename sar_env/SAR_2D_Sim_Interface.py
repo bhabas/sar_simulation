@@ -302,7 +302,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         ## UPDATE MINIMUM DISTANCE OF PAD
         r_C1_O = self._getPose()[1]                                     # {X_W,Z_W}
-        r_C1_P = self.R_WP(r_C1_O - self.r_P_O, self.Plane_Angle_rad)    # {tx,n_p}
+        r_C1_P = self.R_WP(r_C1_O - self.r_P_O, self.Plane_Angle_rad)   # {tx,n_p}
 
         r_C2_O = self._getPose()[2]                 
         r_C2_P = self.R_WP(r_C2_O - self.r_P_O, self.Plane_Angle_rad)

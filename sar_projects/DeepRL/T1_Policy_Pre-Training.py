@@ -60,8 +60,8 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [1.3,5.2],
-        "V_angle_range": [10,90],
+        "V_mag_range": [2.5,2.5],
+        "V_angle_range": [60,60],
         "Plane_Angle_range": [0,0],
         "Render": False,
         "Fine_Tune": False,
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         "gamma": 0.999,
         "learning_rate": 2e-3,
         "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
-        "ent_coef": "auto_0.005",
+        "ent_coef": "auto_0.0000001",
         "target_entropy": -2,
         "batch_size": 256,
         "buffer_size": int(100e3),

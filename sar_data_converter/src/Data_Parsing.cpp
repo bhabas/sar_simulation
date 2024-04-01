@@ -59,9 +59,46 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     D_perp = ctrl_msg.D_perp;
     D_perp_CR = ctrl_msg.D_perp_CR;
 
-    if (D_perp_CR < D_perp_CR_min)
+
+    float Beta1_deg = -Eul_P_B.y - Gamma_eff + 90;
+    float Beta1_rad = Beta1_deg*M_PI/180;
+
+    float Beta2_deg = Gamma_eff - Eul_P_B.y + 90;
+    float Beta2_rad = Beta2_deg*M_PI/180;
+
+    geometry_msgs::Vector3 r_B_O;
+    r_B_O.x = Pose_B_O.position.x;
+    r_B_O.y = Pose_B_O.position.y;
+    r_B_O.z = Pose_B_O.position.z;
+
+    
+    Eigen::Vector3d r_C1_B(L_eff,0,0);
+    Eigen::Vector3d r_C2_B(L_eff,0,0);
+    Eigen::Vector3d r_P_B(Pose_P_B.position.x,Pose_P_B.position.y,Pose_P_B.position.z); // {t_x,t_y,n_p}
+    Eigen::Vector3d r_B_P = -r_P_B; // {t_x,t_y,n_p}
+
+    Eigen::Matrix3d R_C1P;
+
+    R_C1P << cos(Beta1_rad), 0, sin(Beta1_rad),
+             0, 1, 0,
+             -sin(Beta1_rad), 0, cos(Beta1_rad);
+
+    Eigen::Matrix3d R_C2P;
+
+    R_C2P << cos(Beta2_rad), 0, sin(Beta2_rad),
+             0, 1, 0,
+             -sin(Beta2_rad), 0, cos(Beta2_rad);
+
+    r_C1_B = R_C1P*r_C1_B; // {t_x,t_y,n_p}
+    r_C2_B = R_C2P*r_C2_B; // {t_x,t_y,n_p}
+
+    Eigen::Vector3d r_C1_P = r_B_P + r_C1_B; // {t_x,t_y,n_p}
+    Eigen::Vector3d r_C2_P = r_B_P + r_C2_B; // {t_x,t_y,n_p}
+
+    D_perp_pad = std::min(abs(r_C1_P(2)),abs(r_C2_P(2)));
+    if (D_perp_pad < D_perp_pad_min)
     {
-        D_perp_CR_min = D_perp_CR;
+        D_perp_pad_min = D_perp_pad;
     }
 
     // LANDING SURFACE STATES
