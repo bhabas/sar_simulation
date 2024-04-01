@@ -40,9 +40,10 @@ if __name__ == '__main__':
     }
 
 
+
     
-    log_name = "A15_L100_03-30--21:13:09"
+    log_name = "A30_L200_0deg_PreTraining_Agent"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.load_model(t_step=100000,Log_name=log_name,Params_only=False)
-    RL_Manager.sweep_policy(Plane_Angle_Step=45,V_mag_Step=1.0,V_angle_Step=5,n=2)
+    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager.load_model(t_step=55e3,Log_name=log_name,Params_only=False,load_replay_buffer=False)
+    RL_Manager.sweep_policy(Plane_Angle_Step=45,V_mag_Step=1.0,V_angle_Step=10,n=1)

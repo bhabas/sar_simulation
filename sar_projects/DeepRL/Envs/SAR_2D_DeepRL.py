@@ -104,7 +104,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
 
-    def reset(self,V_angle_range=None,seed=None,options=None):
+    def reset(self,seed=None,options=None):
 
         self.start_time_real = time.time()
         self.resetPose()
@@ -198,9 +198,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIAL VALUES)
         # NOTE: GZ sim updates base mass and inertia values
-        Iyy = self.Ref_Iyy + np.random.normal(0,self.Iyy_std)
-        Mass = self.Ref_Mass + np.random.normal(0,self.Mass_std)
-        self._setModelInertia(Mass,[self.Ref_Ixx,Iyy,self.Ref_Izz])
+        Iyy_DR = self.Ref_Iyy + np.random.normal(0,self.Iyy_std)
+        Mass_DR = self.Ref_Mass + np.random.normal(0,self.Mass_std)
+        self._setModelInertia(Mass_DR,[self.Ref_Ixx,Iyy_DR,self.Ref_Izz])
 
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
         V_tx = self.V_mag*np.cos(np.deg2rad(self.V_angle))
@@ -241,8 +241,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         # 3. CALC REWARD
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
-
-        
 
         a_Trg = action[0]
         a_Rot = self.scaleValue(action[1],original_range=[-1,1], target_range=self.Ang_Acc_range)
@@ -690,9 +688,9 @@ if __name__ == '__main__':
 
     for ep in range(50):
 
-        V_mag = 1.0
-        V_angle = 50
-        Plane_Angle = 180
+        V_mag = 2.5
+        V_angle = 60
+        Plane_Angle = 0
 
         if V_mag != None:
             env.V_mag_range = [V_mag,V_mag]
@@ -700,8 +698,8 @@ if __name__ == '__main__':
         if V_angle != None:
             env.V_angle_range = [V_angle,V_angle]
 
-        # if Plane_Angle != None:
-        #     env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
+        if Plane_Angle != None:
+            env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
 
         obs,_ = env.reset()
 
@@ -710,8 +708,8 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -0.2
-            if env.Tau_CR <= 0.08:
+            action[1] = -1.0
+            if env.Tau_CR <= 0.25:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated

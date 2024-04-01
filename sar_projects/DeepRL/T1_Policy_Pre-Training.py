@@ -67,7 +67,7 @@ if __name__ == '__main__':
         "Fine_Tune": False,
     }
     
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
 
     model_kwargs = {
         "gamma": 0.999,

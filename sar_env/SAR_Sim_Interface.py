@@ -51,11 +51,11 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         
 
         ## START SIMULATION
-        # self.Clock_Check_Flag = Event() # Stops clock monitoring during launch process
         self._kill_Sim()
         self._restart_Sim()
         self._start_monitoring_subprocesses()
-        self._wait_for_sim()
+        # self.Sim_Status = "Running"
+        self._wait_for_sim_running()
 
         # ## WAIT TILL TOPIC DATA STARTS COMING IN
 
@@ -114,7 +114,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         scaled_obs_list = [Tau_CR_scaled,Theta_x_scaled,D_perp_CR_scaled,Plane_Angle_scaled]
 
         ## OBSERVATION VECTOR
-        obs = np.array(obs_list,dtype=np.float32)
+        obs = np.array(scaled_obs_list,dtype=np.float32)
 
         return obs
 
@@ -358,7 +358,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
             time.sleep(0.5)
 
-    def _wait_for_sim(self,timeout=600):
+    def _wait_for_sim_running(self,timeout=600):
 
         ## BLOCKING WAIT FOR SIM TO BE RUNNING
         start_time = time.time()
@@ -471,7 +471,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         rospy.logerr(f"Service '{srv_addr}' call failed after {num_retries} attempts.")
         self.Done = True
         self._kill_Sim()
-        self._wait_for_sim()
+        self._wait_for_sim_running()
         return None
 
     def pausePhysics(self,pause_flag=True):
