@@ -36,10 +36,11 @@ current_datetime = datetime.now()
 current_time = current_datetime.strftime("%m_%d-%H:%M")
 
 class RL_Training_Manager():
-    def __init__(self,env,Log_dir,Log_name,env_kwargs=None):
+    def __init__(self,env,Log_dir,Log_name,env_kwargs=None,S3_Upload=False):
 
         self.vec_env = make_vec_env(env, env_kwargs=env_kwargs)
         self.env = self.vec_env.envs[0].unwrapped
+        self.S3_Upload = S3_Upload
 
         self.Log_name = Log_name
         self.Log_dir = Log_dir
@@ -588,27 +589,25 @@ class RL_Training_Manager():
 
         return np.hstack((squished_action_mean,action_std))
 
-    def upload_file_to_S3(self,file_path,bucket_name,object_name=None):
+    def upload_file_to_S3(self,file_path,bucket_name,object_name):
         """
         Upload a file to an S3 bucket
 
         :param file_path: Full path to file to upload
         :param bucket_name: Bucket to upload to
-        :param object_name: S3 object name. If not specified, just the file name is used
+        :param object_name: S3 object name.
         """
-        # Extract the file name from the file path if object_name is not specified
-        if object_name is None:
-            object_name = os.path.basename(file_path)
 
-        # Upload the file
+        if self.S3_Upload == False:
+            return 
+        
+        ## UPLOAD FILE
         s3_client = boto3.client('s3')
         try:
-            response = s3_client.upload_file(file_path, bucket_name, object_name)
+            s3_client.upload_file(file_path, bucket_name, object_name)
 
         except Exception as e:
-            print(f"Upload failed: {e}")
-        else:
-            print(f"File {file_path} uploaded to {bucket_name}/{object_name}")
+            print(f"File {file_path} failed to upload to {bucket_name}/{object_name}")
 
 
 
@@ -632,7 +631,7 @@ class RewardCallback(BaseCallback):
         self.keep_last_n_models = keep_last_n_models
 
         self.rew_var_threshold = 0.09                       # Threshold for variance of episode rewards
-        self.var_history_window = deque(maxlen=int(5e3))    # Keep a window of the last 10k variance values
+        self.var_history_window = deque(maxlen=int(7.5e3))  # Keep a window of the last 10k variance values
         self.ent_burst_cooldown = int(20e3)                 # Cooldown period for entropy burst
         self.ent_burst_limit = int(100e3)                   # Limit the entropy burst to the first 100k steps
         self.ent_coef = 0.05                                # Initial entropy coefficient
@@ -644,28 +643,34 @@ class RewardCallback(BaseCallback):
         This method is called before the first rollout starts.
         """
         self.env = self.training_env.envs[0].unwrapped
-        TB_Log_pattern = f"TB_Log_*" 
-        TB_log_files = glob.glob(os.path.join(self.RLM.TB_log_subdir, TB_Log_pattern))
-        self.TB_Log_path = TB_log_files[0]        
+        TB_Log_pattern = f"TB_Log_*"
+        TB_Log_folders = glob.glob(os.path.join(self.RLM.TB_log_subdir, TB_Log_pattern))
+        self.TB_Log = os.listdir(TB_Log_folders[0])[0]
+        self.TB_Log_path = os.path.join(TB_Log_folders[0],self.TB_Log)
 
         
 
     def _on_step(self) -> bool:
-        
+
         ## COMPUTE EPISODE REWARD MEAN AND VARIANCE
         ep_info_buffer = self.locals['self'].ep_info_buffer
         ep_rew_mean = safe_mean([ep_info["r"] for ep_info in ep_info_buffer])
         ep_rew_var = np.var([ep_info["r"] for ep_info in ep_info_buffer])
 
-        ## UPDATE VARIANCE HISTORY WINDOW
+        # Update the variance history
         self.var_history_window.append(ep_rew_var)
 
-        if self.num_timesteps in [30_000, 60_000, 90_000, 120_000]:
-            with th.no_grad():
-                self.model.log_ent_coef.fill_(np.log(self.ent_coef))
-                self.ent_coef -= 0.01
+        if (all(var < self.rew_var_threshold for var in self.var_history_window) 
+            and ep_rew_mean > 0.3 
+            and self.num_timesteps > self.last_increase_step + self.ent_burst_cooldown
+            and int(20e3) < self.num_timesteps < int(80e3)):
 
-        elif self.num_timesteps > 130_000:
+            self.last_increase_step = self.num_timesteps
+            with th.no_grad():
+                ent_coef = 0.05
+                self.model.log_ent_coef.fill_(np.log(ent_coef))
+
+        elif self.num_timesteps > self.ent_burst_limit:
             with th.no_grad():
                 self.model.ent_coef_optimizer = None
                 ent_coef = 0.00
@@ -676,19 +681,26 @@ class RewardCallback(BaseCallback):
         if self.num_timesteps % self.check_freq == 0:
 
             ## UPLOAD TB LOG TO SB3
-            # self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join(self.RLM.log_name,self.TB_Log))
+            self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,self.TB_Log))
 
             
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
             if ep_rew_mean > self.best_mean_reward:
                 self.best_mean_reward = ep_rew_mean
 
-                ## SAVE MODEL AND REPLAY BUFFER
-                model_path = os.path.join(self.RLM.Model_subdir, f"model_{self.num_timesteps}_steps_BestModel")
-                replay_buffer_path = os.path.join(self.RLM.Model_subdir, f"replay_buffer_{self.num_timesteps}_steps_BestModel")
+                model_name = f"model_{self.num_timesteps}_steps_BestModel.zip"
+                model_path = os.path.join(self.RLM.Model_subdir, model_name)
 
+                replay_buffer_name = f"replay_buffer_{self.num_timesteps}_steps_BestModel.pkl"
+                replay_buffer_path = os.path.join(self.RLM.Model_subdir, replay_buffer_name)
+
+                ## SAVE MODEL AND REPLAY BUFFER
                 self.model.save(model_path)
                 self.model.save_replay_buffer(replay_buffer_path)
+
+                ## UPLOAD MODEL AND REPLAY BUFFER TO S3
+                self.RLM.upload_file_to_S3(model_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,"Models",model_name))
+                self.RLM.upload_file_to_S3(replay_buffer_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,"Models",replay_buffer_name))
 
                 if self.verbose > 0:
                     print(f"New best mean reward: {self.best_mean_reward:.2f} - Model and replay buffer saved.")
@@ -701,11 +713,18 @@ class RewardCallback(BaseCallback):
         if self.num_timesteps % self.save_freq == 0:
 
             ## SAVE NEWEST MODEL AND REPLAY BUFFER
-            model_path = os.path.join(self.RLM.Model_subdir, f"model_{self.num_timesteps}_steps")
-            replay_buffer_path = os.path.join(self.RLM.Model_subdir, f"replay_buffer_{self.num_timesteps}_steps")
+            model_name = f"model_{self.num_timesteps}_steps.zip"
+            model_path = os.path.join(self.RLM.Model_subdir,model_name)
+
+            replay_buffer_name = f"replay_buffer_{self.num_timesteps}_steps.pkl"
+            replay_buffer_path = os.path.join(self.RLM.Model_subdir, replay_buffer_name)
 
             self.model.save(model_path)
             self.model.save_replay_buffer(replay_buffer_path)
+
+            ## UPLOAD MODEL AND REPLAY BUFFER TO S3
+            self.RLM.upload_file_to_S3(model_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,"Models",model_name))
+            self.RLM.upload_file_to_S3(replay_buffer_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,"Models",replay_buffer_name))
 
         ## LOG VARIANCE HISTORY
         self.logger.record("rollout/ep_rew_var", ep_rew_var)

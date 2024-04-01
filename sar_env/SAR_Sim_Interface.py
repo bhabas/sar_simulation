@@ -436,7 +436,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         print(f"{node_name} has fully launched.")
         return True
     
-    def callService(self,srv_addr,srv_msg,srv_type,num_retries=5,call_timeout=30):
+    def callService(self,srv_addr,srv_msg,srv_type,num_retries=5,call_timeout=5):
             
         ## CALL SERVICE AND RETURN RESPONSE
         service_proxy = rospy.ServiceProxy(srv_addr, srv_type)

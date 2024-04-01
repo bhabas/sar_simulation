@@ -60,20 +60,20 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [2.5,2.5],
-        "V_angle_range": [60,60],
+        "V_mag_range": [1.5,4.5],
+        "V_angle_range": [10,90],
         "Plane_Angle_range": [0,0],
         "Render": False,
         "Fine_Tune": False,
     }
     
-    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs,S3_Upload=True)
 
     model_kwargs = {
         "gamma": 0.999,
         "learning_rate": 2e-3,
         "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
-        "ent_coef": "auto_0.0000001",
+        "ent_coef": "auto_0.005",
         "target_entropy": -2,
         "batch_size": 256,
         "buffer_size": int(100e3),
