@@ -87,11 +87,7 @@ class RL_Training_Manager():
         if Params_only:
             print(f"Loading Model params...")
             model_path = model_files[0]  # Taking the first match
-            loaded_model = SAC.load(
-                model_path,
-                device='cpu',
-            )
-            self.model.policy.load_state_dict(loaded_model.policy.state_dict())
+            self.model.set_parameters(model_path,exact_match=False,device='cpu')
         
         else:
             print(f"Loading Model...")
@@ -346,7 +342,7 @@ class RL_Training_Manager():
 
                             TTC = np.round(t_delta_avg*(num_trials-idx)) # Time to completion
                             t_now = np.round(t_now)
-                            print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg, {Plane_Angle:.02f} deg) Index: {idx}/{num_trials} \tPercent: {100*idx/num_trials:.2f}% \tTTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
+                            print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg, {Plane_Angle:.02f} deg) Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% \tTTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
 
     def plot_landing_performance(self,PlaneAngle=0,fileName=None,saveFig=False,showFig=True):
 
@@ -636,9 +632,10 @@ class RewardCallback(BaseCallback):
         self.keep_last_n_models = keep_last_n_models
 
         self.rew_var_threshold = 0.09                       # Threshold for variance of episode rewards
-        self.var_history_window = deque(maxlen=int(10e3))   # Keep a window of the last 10k variance values
+        self.var_history_window = deque(maxlen=int(5e3))    # Keep a window of the last 10k variance values
         self.ent_burst_cooldown = int(20e3)                 # Cooldown period for entropy burst
         self.ent_burst_limit = int(100e3)                   # Limit the entropy burst to the first 100k steps
+        self.ent_coef = 0.05                                # Initial entropy coefficient
         self.last_ent_burst_step = 0                        # Last step when entropy burst was applied
 
 
@@ -663,14 +660,17 @@ class RewardCallback(BaseCallback):
         ## UPDATE VARIANCE HISTORY WINDOW
         self.var_history_window.append(ep_rew_var)
 
-        if (all(var < self.rew_var_threshold for var in self.var_history_window) 
-            and self.num_timesteps - self.last_ent_burst_step > self.ent_burst_cooldown
-            and self.num_timesteps < self.ent_burst_limit):
-
-            self.last_ent_burst_step = self.num_timesteps
+        if self.num_timesteps in [30_000, 60_000, 90_000, 120_000]:
             with th.no_grad():
-                ent_coef = 0.05
-                self.model.log_ent_coef.fill_(np.log(ent_coef))
+                self.model.log_ent_coef.fill_(np.log(self.ent_coef))
+                self.ent_coef -= 0.01
+
+        elif self.num_timesteps > 130_000:
+            with th.no_grad():
+                self.model.ent_coef_optimizer = None
+                ent_coef = 0.00
+                self.model.ent_coef_tensor = th.tensor(float(ent_coef), device=self.model.device)
+
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
         if self.num_timesteps % self.check_freq == 0:

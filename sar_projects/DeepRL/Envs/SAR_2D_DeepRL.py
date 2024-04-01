@@ -92,8 +92,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Tau_trg = np.inf
 
         ## DOMAIN RANDOMIZATION
-        self.Mass_std = 0.001*self.Ref_Mass
-        self.Iyy_std = 0.001*self.Ref_Iyy
+        self.Mass_std = 0.005*self.Ref_Mass
+        self.Iyy_std = 0.005*self.Ref_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)

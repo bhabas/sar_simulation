@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # Define the environment parameters
     env_kwargs = {
         "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [1.5,4.5],
+        "V_mag_range": [1.3,5.2],
         "V_angle_range": [10,90],
         "Plane_Angle_range": [0,0],
         "Render": False,
@@ -83,17 +83,17 @@ if __name__ == '__main__':
 
     Model_to_Load = "A30_L200_0deg_PreTraining_Agent"
     RL_Manager.load_model(t_step=55500,Log_name=Model_to_Load,Params_only=True,load_replay_buffer=False)
-    RL_Manager.train_model(reset_timesteps=False,total_timesteps=int(120e3))
+    RL_Manager.train_model(reset_timesteps=False,total_timesteps=int(151e3))
 
-    # RL_Manager.collect_landing_performance(
-    #     fileName="PolicyPerformance_Data.csv",
-    #     Plane_Angle_range=[0,0,45],
-    #     V_mag_range=[1.6,4.4,0.4],
-    #     V_angle_range=[15,165,10],
-    #     n_trials=4
-    #     )
+    RL_Manager.collect_landing_performance(
+        fileName="PolicyPerformance_Data.csv",
+        Plane_Angle_range=[0,0,45],
+        V_mag_range=[1.6,4.4,0.4],
+        V_angle_range=[15,165,10],
+        n_trials=4
+        )
     
-    # RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=0,saveFig=True,showFig=False)
+    RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=0,saveFig=True,showFig=False)
     # RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=45,saveFig=True,showFig=False)
     # RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=90,saveFig=True,showFig=False)
     # RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=135,saveFig=True,showFig=False)
