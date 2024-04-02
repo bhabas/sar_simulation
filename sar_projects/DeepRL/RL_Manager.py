@@ -66,6 +66,8 @@ class RL_Training_Manager():
             policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=model_kwargs["net_arch"]),
             replay_buffer_kwargs=dict(handle_timeout_termination=False),
             learning_starts=0,
+            train_freq=(1,'episode'),
+            gradient_steps=-1,
             verbose=1,
             device='cpu',
             tensorboard_log=self.TB_log_subdir
@@ -662,10 +664,10 @@ class RewardCallback(BaseCallback):
 
         if (all(var < self.rew_var_threshold for var in self.var_history_window) 
             and ep_rew_mean > 0.3 
-            and self.num_timesteps > self.last_increase_step + self.ent_burst_cooldown
+            and self.num_timesteps > self.last_ent_burst_step + self.ent_burst_cooldown
             and int(20e3) < self.num_timesteps < int(80e3)):
 
-            self.last_increase_step = self.num_timesteps
+            self.last_ent_burst_step = self.num_timesteps
             with th.no_grad():
                 ent_coef = 0.05
                 self.model.log_ent_coef.fill_(np.log(ent_coef))
@@ -676,14 +678,12 @@ class RewardCallback(BaseCallback):
                 ent_coef = 0.00
                 self.model.ent_coef_tensor = th.tensor(float(ent_coef), device=self.model.device)
 
+        ## UPLOAD TB LOG TO SB3
+        self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,self.TB_Log))
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
         if self.num_timesteps % self.check_freq == 0:
 
-            ## UPLOAD TB LOG TO SB3
-            self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,self.TB_Log))
-
-            
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
             if ep_rew_mean > self.best_mean_reward:
                 self.best_mean_reward = ep_rew_mean

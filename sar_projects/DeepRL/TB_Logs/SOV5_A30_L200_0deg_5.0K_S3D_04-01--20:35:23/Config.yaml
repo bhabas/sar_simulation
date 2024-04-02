@@ -5,16 +5,16 @@ PLANE_SETTINGS:
   Plane_Type: Landing_Surface
   Plane_Config: Checkerboard_L02
 ENV_SETTINGS:
-  Env_Name: SAR_2D_DeepRL_Env
+  Env_Name: SAR_Sim_DeepRL_Env
   V_mag_Limts:
   - 1.5
-  - 4.5
+  - 3.5
   V_angle_Limits:
-  - 10
-  - 90
+  - 5
+  - 175
   Plane_Angle_Limits:
   - 0
-  - 0
+  - 180
   Ang_Acc_Limits:
   - -100
   - 0

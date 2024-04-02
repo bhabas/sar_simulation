@@ -48,18 +48,18 @@ if __name__ == '__main__':
 
 
     
-    log_name = "A15_L250_HV_03-31--15:49:39"
+    log_name = "SOV5_A30_L200_0deg_5.0K_S3D_04-01--20:35:23"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
+    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
     RL_Manager.create_model(model_kwargs)
-    RL_Manager.load_model(t_step=125000,Log_name=log_name,Params_only=True,load_replay_buffer=False)
+    RL_Manager.load_model(t_step=25000,Log_name=log_name,Params_only=True,load_replay_buffer=False)
 
     RL_Manager.collect_landing_performance(
         fileName="PolicyPerformance_Data.csv",
         Plane_Angle_range=[0,0,45],
-        V_mag_range=[1.5,7.0,0.5],
-        V_angle_range=[10,90,5],
-        n_trials=5
+        V_mag_range=[1.5,4.5,0.5],
+        V_angle_range=[10,90,10],
+        n_trials=3
         )
     
     RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=0,saveFig=True,showFig=False)
