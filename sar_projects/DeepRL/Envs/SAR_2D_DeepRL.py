@@ -20,7 +20,7 @@ from sar_env import SAR_2D_Sim_Interface
 
 class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
-    def __init__(self,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=False,GZ_Timeout=False):
+    def __init__(self,Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=False,GZ_Timeout=False):
         SAR_2D_Sim_Interface.__init__(self,Render)
         gym.Env.__init__(self)
 
@@ -76,12 +76,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0,0])
         self.reward_weights = {
-            "W_Dist":0.1,
+            "W_Dist":0.4,
             "W_tau_cr":0.1,
             "W_tx":1.0,
             "W_LT":1.0,
             "W_GM":1.0,
-            "W_Phi_rel":1.0,
+            "W_Phi_rel":2.0,
             "W_Legs":2.0
         }
         self.W_max = sum(self.reward_weights.values())
@@ -92,8 +92,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Tau_trg = np.inf
 
         ## DOMAIN RANDOMIZATION
-        self.Mass_std = 0.005*self.Ref_Mass
-        self.Iyy_std = 0.005*self.Ref_Iyy
+        self.Mass_std = 0.00*self.Ref_Mass
+        self.Iyy_std = 0.00*self.Ref_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -684,7 +684,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_2D_Env(Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
+    env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
 
     for ep in range(50):
 
@@ -709,7 +709,7 @@ if __name__ == '__main__':
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
             action[1] = -1.0
-            if env.Tau_CR <= 0.25:
+            if 0.0 < env.Tau_CR <= 0.25:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated

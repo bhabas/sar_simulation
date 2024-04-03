@@ -12,6 +12,7 @@ import rospy
 import rospkg
 import glob
 import boto3
+
 from collections import deque
 
 import matplotlib.pyplot as plt
@@ -24,7 +25,7 @@ from stable_baselines3.common.callbacks import *
 from stable_baselines3.common import utils
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.utils import safe_mean
-
+from stable_baselines3.common.logger import Figure
 
 
 
@@ -53,7 +54,18 @@ class RL_Training_Manager():
         os.makedirs(self.Model_subdir, exist_ok=True)
         os.makedirs(self.TB_log_subdir, exist_ok=True)
 
-    def create_model(self,model_kwargs,write_config=True):
+    def create_model(self,model_kwargs=None,write_config=True):
+
+        if model_kwargs is None:
+            model_kwargs = {
+                "gamma": 0.999,
+                "learning_rate": 1.5e-3,
+                "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
+                "ent_coef": "auto_0.05",
+                "target_entropy": -2,
+                "batch_size": 256,
+                "buffer_size": int(200e3),
+            }
 
         self.model = SAC(
             "MlpPolicy",
@@ -394,7 +406,7 @@ class RL_Training_Manager():
         ax.set_thetamin(0-PlaneAngle)
         ax.set_thetamax(180-PlaneAngle)
 
-        ax.set_rticks([0.0,1.0,2.0,3.0,4.0,4.5])
+        ax.set_rticks([0.0,1.0,2.0,3.0,4.0,5.0])
         ax.set_rmin(0)
         ax.set_rmax(R.max())
         
@@ -616,11 +628,13 @@ class RL_Training_Manager():
 class RewardCallback(BaseCallback):
     def __init__(self, RLM, 
                  check_freq: int = 500, 
+                 upload_freq: int = 250,
                  save_freq: int = 5_000, 
                  keep_last_n_models: int = 5,
                  verbose=0):
         super(RewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
+        self.upload_freq = upload_freq
         self.save_freq = save_freq
         self.best_mean_reward = -np.inf
         self.RLM = RLM
@@ -632,8 +646,9 @@ class RewardCallback(BaseCallback):
         self.saved_models = []
         self.keep_last_n_models = keep_last_n_models
 
-        self.rew_var_threshold = 0.09                       # Threshold for variance of episode rewards
-        self.var_history_window = deque(maxlen=int(7.5e3))  # Keep a window of the last 10k variance values
+        self.rew_mean_window = deque(maxlen=int(5e3))
+        self.rew_stab_threshold = 0.11
+
         self.ent_burst_cooldown = int(20e3)                 # Cooldown period for entropy burst
         self.ent_burst_limit = int(100e3)                   # Limit the entropy burst to the first 100k steps
         self.ent_coef = 0.05                                # Initial entropy coefficient
@@ -650,28 +665,51 @@ class RewardCallback(BaseCallback):
         self.TB_Log = os.listdir(TB_Log_folders[0])[0]
         self.TB_Log_path = os.path.join(TB_Log_folders[0],self.TB_Log)
 
-        
-
+    
     def _on_step(self) -> bool:
 
         ## COMPUTE EPISODE REWARD MEAN AND VARIANCE
         ep_info_buffer = self.locals['self'].ep_info_buffer
         ep_rew_mean = safe_mean([ep_info["r"] for ep_info in ep_info_buffer])
-        ep_rew_var = np.var([ep_info["r"] for ep_info in ep_info_buffer])
+        self.rew_mean_window.append(ep_rew_mean)
+        
+        ep_rew_mean_max = np.nanmax(self.rew_mean_window)
+        ep_rew_mean_min = np.nanmin(self.rew_mean_window)
+        ep_rew_mean_var = np.var(self.rew_mean_window)
+        ep_rew_mean_diff = ep_rew_mean_max - ep_rew_mean_min
 
-        # Update the variance history
-        self.var_history_window.append(ep_rew_var)
+        # if self.num_timesteps % 10 == 0:
+        #     fig = plt.figure()
+        #     ax = fig.add_subplot()
 
-        if (all(var < self.rew_var_threshold for var in self.var_history_window) 
+        #     Vx_list = np.random.uniform(0.5,5.0,100)
+        #     Vz_list = np.random.uniform(0.5,5.0,100)
+        #     rew_list = np.random.uniform(0.0,1.0,100)
+
+        #     # Discretize the space
+        #     Vx_bins = np.linspace(min(Vx_list), max(Vx_list), num=number_of_bins_x)
+        #     Vz_bins = np.linspace(min(Vz_list), max(Vz_list), num=number_of_bins_z)
+            
+        #     # Close the figure after logging it
+        #     self.logger.record("LandingSuccess/figure", Figure(fig, close=True), exclude=("stdout", "log", "json", "csv"))
+        #     plt.close()
+
+
+
+
+
+        ## REWARD STABILITY BASED ENTROPY KICK
+        if (ep_rew_mean_diff < self.rew_stab_threshold
             and ep_rew_mean > 0.3 
             and self.num_timesteps > self.last_ent_burst_step + self.ent_burst_cooldown
             and int(20e3) < self.num_timesteps < int(80e3)):
 
             self.last_ent_burst_step = self.num_timesteps
             with th.no_grad():
-                ent_coef = 0.05
+                ent_coef = 0.03
                 self.model.log_ent_coef.fill_(np.log(ent_coef))
 
+        ## SET ENTROPY COEFFICIENT TO ZERO AFTER BURST LIMIT
         elif self.num_timesteps > self.ent_burst_limit:
             with th.no_grad():
                 self.model.ent_coef_optimizer = None
@@ -679,10 +717,11 @@ class RewardCallback(BaseCallback):
                 self.model.ent_coef_tensor = th.tensor(float(ent_coef), device=self.model.device)
 
         ## UPLOAD TB LOG TO SB3
-        self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,self.TB_Log))
+        if self.num_timesteps % self.upload_freq == 0:
+            self.RLM.upload_file_to_S3(self.TB_Log_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,self.TB_Log))
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
-        if self.num_timesteps % self.check_freq == 0:
+        if self.num_timesteps % self.check_freq == 0 and self.num_timesteps > 5000:
 
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
             if ep_rew_mean > self.best_mean_reward:
@@ -727,7 +766,8 @@ class RewardCallback(BaseCallback):
             self.RLM.upload_file_to_S3(replay_buffer_path,"robotlandingproject--deeprl--logs",object_name=os.path.join("S3_TB_Logs",self.RLM.Log_name,"Models",replay_buffer_name))
 
         ## LOG VARIANCE HISTORY
-        self.logger.record("rollout/ep_rew_var", ep_rew_var)
+        self.logger.record("rollout/ep_rew_mean_var", ep_rew_mean_var)
+        self.logger.record("rollout/ep_rew_mean_diff", ep_rew_mean_diff)
 
 
         ## CHECK IF EPISODE IS DONE
@@ -763,10 +803,10 @@ class RewardCallback(BaseCallback):
         if len(self.saved_models) > self.keep_last_n_models:
 
             for model_path, replay_buffer_path in self.saved_models[:-self.keep_last_n_models]:
-                if os.path.exists(model_path + ".zip"):
-                    os.remove(model_path + ".zip")
-                if os.path.exists(replay_buffer_path + ".pkl"):
-                    os.remove(replay_buffer_path + ".pkl")
+                if os.path.exists(model_path):
+                    os.remove(model_path)
+                if os.path.exists(replay_buffer_path):
+                    os.remove(replay_buffer_path)
 
             self.saved_models = self.saved_models[-self.keep_last_n_models:]
 

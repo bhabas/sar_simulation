@@ -32,34 +32,24 @@ if __name__ == '__main__':
 
     # Define the environment parameters
     env_kwargs = {
-        "Ang_Acc_range": [-100, 0],
+        "Ang_Acc_range": [-90, 0],
         "Render": False,
     }
 
-    model_kwargs = {
-        "gamma": 0.999,
-        "learning_rate": 2e-3,
-        "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
-        "ent_coef": "auto_0.005",
-        "target_entropy": -2,
-        "batch_size": 256,
-        "buffer_size": int(100e3),
-    }
+    Model_to_Load = "Test2_04-03--10:51:58"
+    t_step = 45000
 
-
-    
-    log_name = "SOV5_A30_L200_0deg_5.0K_S3D_04-01--20:35:23"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
-    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,log_dir,log_name,env_kwargs=env_kwargs)
-    RL_Manager.create_model(model_kwargs)
-    RL_Manager.load_model(t_step=25000,Log_name=log_name,Params_only=True,load_replay_buffer=False)
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,Model_to_Load,env_kwargs=env_kwargs)
+    RL_Manager.create_model(write_config=False)
+    RL_Manager.load_model(t_step=t_step,Log_name=Model_to_Load,Params_only=True,load_replay_buffer=False)
 
     RL_Manager.collect_landing_performance(
         fileName="PolicyPerformance_Data.csv",
         Plane_Angle_range=[0,0,45],
-        V_mag_range=[1.5,4.5,0.5],
-        V_angle_range=[10,90,10],
-        n_trials=3
+        V_mag_range=[0.5,5.0,0.5],
+        V_angle_range=[10,90,5],
+        n_trials=5
         )
     
     RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=0,saveFig=True,showFig=False)
