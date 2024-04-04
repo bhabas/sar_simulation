@@ -1,64 +1,63 @@
+## IMPORT ENVIRONMENTS
 from RL_Manager import RL_Training_Manager
+from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
+from Envs.SAR_2D_DeepRL import SAR_2D_Env
 
 ## STANDARD IMPORTS
 import os
-from datetime import datetime,timedelta
-import numpy as np
-import pandas as pd
-import yaml
-import pandas as pd
-import csv
-import time 
-import rospy
+from datetime import datetime
 import rospkg
-import glob
-from typing import Callable
-
+import argparse
+import json
 
 ## DEFINE BASE PATH
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
 
 
+## ARGUMENT PARSER
+parser = argparse.ArgumentParser(description='Policy Pre-Training Script')
+parser.add_argument('--config', help='Path to configuration file', required=True)
+parser.add_argument('--S3_Upload', help='Upload to S3', default=False, type=bool)
+args = parser.parse_args()
+
+# Load configuration from the specified file
+with open(args.config, 'r') as config_file:
+    config = json.load(config_file)
+
+# config = "sar_projects/DeepRL/configs/config.yaml"
+# with open(config, 'r') as config_file:
+#     config = json.load(config_file)
+
 
 if __name__ == '__main__':
 
-
-    ## IMPORT ENVIRONMENTS
-    from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    from Envs.SAR_2D_DeepRL import SAR_2D_Env
-
-
-    current_datetime = datetime.now()
-    current_time = current_datetime.strftime("%m-%d--%H:%M:%S")
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
-    log_name = input("Enter the name of the log file: ")
-    log_name = f"{log_name}_{current_time}"
-
+    ## LOGGING CONFIGURATION
+    LogDir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
+    current_time = datetime.now().strftime("%m-%d--%H:%M:%S")
+    LogName = f"{config['TRAINING']['LogName']}_{current_time}"
     # ================================================================= ##
-
-    # Define the environment parameters
-    env_kwargs = {
-        "Ang_Acc_range": [-90, 0],
-        "V_mag_range": [0.4,5.1],
-        "V_angle_range": [5,135],
-        "Plane_Angle_range": [45,45],
-        "Render": False,
-    }
     
-    RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs,S3_Upload=False)
+    ## SELECT ENVIRONMENT
+    if config['TRAINING']['ENV_Type'] == "SAR_2D_Env":
+        env = SAR_2D_Env
+    elif config['TRAINING']['ENV_Type'] == "SAR_Sim_DeepRL":
+        env = SAR_Sim_DeepRL
 
-    model_kwargs = {
-        "gamma": 0.999,
-        "learning_rate": 2.0e-3,
-        "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
-        "ent_coef": "auto_0.05",
-        "target_entropy": -2,
-        "batch_size": 256,
-        "buffer_size": int(200e3),
-    }
+    ## SET UP TRAINING CONDITIONS FROM CONFIG
+    env_kwargs = config['TRAINING']['ENV_KWARGS']
+    policy_kwargs = config['TRAINING']['POLICY_KWARGS']
 
-    RL_Manager.create_model(model_kwargs)
+    ## CREATE RL MANAGER
+    RL_Manager = RL_Training_Manager(env,LogDir,LogName,env_kwargs=env_kwargs,S3_Upload=False)
 
-    # Model_to_Load = "IM_A45_L100_45deg_S2D_PreTraining_Agent"
-    # RL_Manager.load_model(t_step=125e3,Log_name=Model_to_Load,Params_only=True,load_replay_buffer=True)
-    RL_Manager.train_model(reset_timesteps=False,total_timesteps=int(151e3))
+    ## CHECK SAR CONFIGURATION
+    if config['SAR_SETTINGS']['SAR_Type'] != RL_Manager.env.SAR_Type:
+        raise ValueError(f"Environment type mismatch: {config['SAR_SETTINGS']['SAR_Type']} vs {RL_Manager.env.SAR_Type}")
+    
+    elif config['SAR_SETTINGS']['SAR_Config'] != RL_Manager.env.SAR_Config:
+        raise ValueError(f"Environment config mismatch: {config['SAR_SETTINGS']['SAR_Config']} vs {RL_Manager.env.SAR_Config}")
+
+    
+    ## CREATE MODEL AND TRAIN
+    RL_Manager.create_model(policy_kwargs)
+    RL_Manager.train_model(reset_timesteps=False,total_timesteps=config['TRAINING']['t_step_limit'])
