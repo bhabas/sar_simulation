@@ -33,7 +33,6 @@ if __name__ == '__main__':
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
     log_name = input("Enter the name of the log file: ")
     log_name = f"{log_name}_{current_time}"
-    # log_name = "SOV5_A45_L150_0deg_S2D_PreTraining_Agent_04-03--08:56:07"
 
     # ================================================================= ##
 
@@ -52,7 +51,7 @@ if __name__ == '__main__':
         "gamma": 0.999,
         "learning_rate": 2.0e-3,
         "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
-        "ent_coef": "auto_0.005",
+        "ent_coef": "auto_0.05",
         "target_entropy": -2,
         "batch_size": 256,
         "buffer_size": int(200e3),
@@ -60,7 +59,6 @@ if __name__ == '__main__':
 
     RL_Manager.create_model(model_kwargs)
 
-    # Model_to_Load = "SOV5_A45_L150_0deg_S2D_PreTraining_Agent"
-    # RL_Manager.load_model(t_step=125e3,Log_name=Model_to_Load,Params_only=True,load_replay_buffer=False)
-    RL_Manager.train_model(reset_timesteps=False,total_timesteps=int(126e3))
-
+    # Model_to_Load = "IM_A45_L100_45deg_S2D_PreTraining_Agent"
+    # RL_Manager.load_model(t_step=125e3,Log_name=Model_to_Load,Params_only=True,load_replay_buffer=True)
+    RL_Manager.train_model(reset_timesteps=False,total_timesteps=int(151e3))

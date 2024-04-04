@@ -402,7 +402,7 @@ class RL_Training_Manager():
         # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
         # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
-        # ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
+        ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
         ax.set_thetamin(0-PlaneAngle)
         ax.set_thetamax(180-PlaneAngle)
 
@@ -411,13 +411,12 @@ class RL_Training_Manager():
         ax.set_rmax(R.max())
         
 
-
-        # ## AXIS LABELS    
-        # ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
-        #     rotation=18,ha='center',va='center')
-
-        # ax.text(np.radians(60),4.5,'Flight Angle (deg)',
-        #     rotation=0,ha='left',va='center')
+        config_str = f"Policy: {self.Log_name} \
+            \nModel: {self.env.SAR_Type} \
+            \nSAR_Config: {self.env.SAR_Config} \
+            \nPlane_Angle: {PlaneAngle} deg \
+            \nEnv_Name: {self.env.Env_Name}" 
+        fig.text(0,1,config_str,transform=plt.gcf().transFigure,ha='left',va='top',fontsize=8)
 
         if saveFig==True:
             plt.savefig(f'{self.Log_subdir}/Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}.pdf',dpi=300)
@@ -654,6 +653,13 @@ class RewardCallback(BaseCallback):
         self.ent_coef = 0.05                                # Initial entropy coefficient
         self.last_ent_burst_step = 0                        # Last step when entropy burst was applied
 
+        self.flight_tuple_list = []
+        self.last_processed_idx = 0
+
+        self.Vx_bins = np.arange(0,5,step=0.25)
+        self.Vz_bins = np.arange(-5.0,5,step=0.25)
+        self.reward_grid = np.full((len(self.Vx_bins), len(self.Vz_bins)), np.nan)
+
 
     def _on_training_start(self) -> None:
         """
@@ -664,8 +670,8 @@ class RewardCallback(BaseCallback):
         TB_Log_folders = glob.glob(os.path.join(self.RLM.TB_log_subdir, TB_Log_pattern))
         self.TB_Log = os.listdir(TB_Log_folders[0])[0]
         self.TB_Log_path = os.path.join(TB_Log_folders[0],self.TB_Log)
+      
 
-    
     def _on_step(self) -> bool:
 
         ## COMPUTE EPISODE REWARD MEAN AND VARIANCE
@@ -678,21 +684,45 @@ class RewardCallback(BaseCallback):
         ep_rew_mean_var = np.var(self.rew_mean_window)
         ep_rew_mean_diff = ep_rew_mean_max - ep_rew_mean_min
 
-        # if self.num_timesteps % 10 == 0:
-        #     fig = plt.figure()
-        #     ax = fig.add_subplot()
 
-        #     Vx_list = np.random.uniform(0.5,5.0,100)
-        #     Vz_list = np.random.uniform(0.5,5.0,100)
-        #     rew_list = np.random.uniform(0.0,1.0,100)
 
-        #     # Discretize the space
-        #     Vx_bins = np.linspace(min(Vx_list), max(Vx_list), num=number_of_bins_x)
-        #     Vz_bins = np.linspace(min(Vz_list), max(Vz_list), num=number_of_bins_z)
+        if self.num_timesteps % 5000 == 0:
+
+            # Process only new data points added since the last update
+            for Vx, Vz, reward in self.flight_tuple_list[self.last_processed_idx:]:
+                Vx_idx = np.digitize(Vx, self.Vx_bins) - 1
+                Vz_idx = np.digitize(Vz, self.Vz_bins) - 1
+                self.last_processed_idx += 1
+
+                if 0 <= Vx_idx < len(self.Vx_bins)-1 and 0 <= Vz_idx < len(self.Vz_bins)-1:
+                    self.reward_grid[Vx_idx, Vz_idx] = reward
+
+            fig = plt.figure()
+            ax = fig.add_subplot()
+            cmap = plt.cm.jet
+            norm = mpl.colors.Normalize(vmin=0,vmax=1)
+
+            ax.imshow(self.reward_grid.T, 
+                      interpolation='nearest', 
+                      cmap=cmap, 
+                      extent=[0.0,5.0,-5.0,5.0], 
+                      aspect='equal', 
+                      origin='lower',
+                      zorder=0,
+                      norm=norm)
+
+            ax.set_xlim(0.0, 5.0)
+            ax.set_ylim(-5.0, 5.0)
+
+            ax.set_xlabel('Vx (m/s)')
+            ax.set_ylabel('Vz (m/s)')
+            ax.set_title('Reward Bins')
             
-        #     # Close the figure after logging it
-        #     self.logger.record("LandingSuccess/figure", Figure(fig, close=True), exclude=("stdout", "log", "json", "csv"))
-        #     plt.close()
+            
+            # Close the figure after logging it
+            self.logger.record("LandingSuccess/figure", Figure(fig, close=True), exclude=("stdout", "log", "json", "csv"))
+            self.logger.dump(self.num_timesteps)
+            plt.close()
 
 
 
@@ -773,8 +803,20 @@ class RewardCallback(BaseCallback):
         ## CHECK IF EPISODE IS DONE
         if self.locals["dones"].item():
 
-            ## TB LOGGING VALUES
             info_dict = self.locals["infos"][0]
+
+            ## CONVERT RELATIVE ANGLES TO GLOBAL ANGLE
+            V_angle_global = info_dict["V_angle"] - info_dict["Plane_Angle"]
+            V_mag = info_dict["V_mag"]
+
+            Vx = V_mag*np.cos(np.radians(V_angle_global))
+            Vz = V_mag*np.sin(np.radians(V_angle_global))
+            reward = self.locals["rewards"].item()
+
+            self.flight_tuple_list.append((Vx,Vz,reward))
+
+
+            ## TB LOGGING VALUES
             self.logger.record('Custom/K_ep',self.env.K_ep)
             self.logger.record('Custom/Reward',self.locals["rewards"].item())
 

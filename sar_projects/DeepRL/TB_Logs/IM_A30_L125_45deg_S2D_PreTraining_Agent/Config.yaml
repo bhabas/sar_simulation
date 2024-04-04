@@ -1,0 +1,59 @@
+SAR_SETTINGS:
+  SAR_Type: Impulse_Micro
+  SAR_Config: A30_L125
+PLANE_SETTINGS:
+  Plane_Type: Landing_Surface
+  Plane_Config: Checkerboard_L02
+ENV_SETTINGS:
+  Env_Name: SAR_2D_DeepRL_Env
+  V_mag_Limts:
+  - 0.4
+  - 5.1
+  V_angle_Limits:
+  - 5
+  - 135
+  Plane_Angle_Limits:
+  - 45
+  - 45
+  Ang_Acc_Limits:
+  - -90
+  - 0
+MODEL_SETTINGS:
+  Mass_Std: 0.0
+  Iyy_Std: 0.0
+  Ref_Mass: 0.3648
+  Ref_Ixx: 0.00188
+  Ref_Iyy: 0.00171
+  Ref_Izz: 0.00159
+  L_eff: 0.14127
+  Gamma_eff: 28.29
+  Forward_Reach: 0.1
+LEARNING_MODEL:
+  Policy: SACPolicy
+  Observation_Layer: 4
+  Network_Layers:
+    pi:
+    - 10
+    - 10
+    - 10
+    qf:
+    - 64
+    - 64
+    - 64
+  Action_Layer: 4
+  Action_Space_High:
+  - 1.0
+  - 1.0
+  Action_Space_Low:
+  - -1.0
+  - -1.0
+  Gamma: 0.999
+  Learning_Rate: 0.002
+REWARD_SETTINGS:
+  W_Dist: 0.4
+  W_tau_cr: 0.1
+  W_tx: 1.0
+  W_LT: 1.0
+  W_GM: 1.0
+  W_Phi_rel: 2.0
+  W_Legs: 2.0

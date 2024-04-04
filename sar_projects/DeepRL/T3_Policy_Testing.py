@@ -33,13 +33,13 @@ if __name__ == '__main__':
     env_kwargs = {
         "Ang_Acc_range": [-90, 0],
         "V_mag_range": [0.5,5.0],
-        "V_angle_range": [10,90],
-        "Plane_Angle_range": [0,0],
+        "V_angle_range": [10,170],
+        "Plane_Angle_range": [90,90],
         "Render": True,
     }
 
-    Model_to_Load = "Test2_04-03--10:51:58"
-    t_step = 45000
+    Model_to_Load = "SOV5_A45_L150_90deg_S2D_PreTraining_Agent_04-03--18:11:41"
+    t_step = 5500
 
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,Model_to_Load,env_kwargs=env_kwargs)

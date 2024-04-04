@@ -415,6 +415,10 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
             # 4) CHECK TERMINATION/TRUNCATED
 
+            r_B_O,Phi_B_O,V_B_O,dPhi_B_O = self._getState()
+            r_P_B = self.R_WP(self.r_P_O - r_B_O,self.Plane_Angle_rad) # {t_x,n_p}
+            V_B_P = self.R_WP(V_B_O,self.Plane_Angle_rad) # {t_x,n_p}
+
             # ============================
             ##    Termination Criteria 
             # ============================
@@ -438,9 +442,16 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 terminated = False
                 truncated = True
                 # print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
+            
+            # ## VELOCITY AWAY FROM SURFACE
+            # elif V_B_P[2] <= -1.0 and (self.D_perp > 1.5*self.L_eff): 
+            #     self.error_str = "Episode Completed: Falling [Terminated]"
+            #     terminated = True
+            #     truncated = False
+            #     # print(YELLOW,self.error_str,RESET)
 
-            elif self._getState()[2][2] <= -8: # Vz < -8 m/s
-                self.error_str = "Episode Completed: Falling [Terminated]"
+            elif np.abs(r_P_B[0]) > 0.7 and r_P_B[2] < 1.5*self.L_eff:
+                self.error_str = "Episode Completed: Out of Bounds [Terminated]"
                 terminated = True
                 truncated = False
                 # print(YELLOW,self.error_str,RESET)
@@ -690,7 +701,7 @@ if __name__ == '__main__':
 
         V_mag = 2.5
         V_angle = 60
-        Plane_Angle = 0
+        Plane_Angle = 90
 
         if V_mag != None:
             env.V_mag_range = [V_mag,V_mag]
@@ -708,8 +719,8 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -1.0
-            if 0.0 < env.Tau_CR <= 0.25:
+            action[1] = 1.0
+            if 0.0 < env.Tau_CR <= 0.5:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated

@@ -36,8 +36,9 @@ if __name__ == '__main__':
         "Render": False,
     }
 
-    Model_to_Load = "Test2_04-03--10:51:58"
-    t_step = 45000
+    Model_to_Load = "SOV5_A30_L200_90deg_S2D_PreTraining_Agent"
+    t_step = 173500
+    PlaneAngle = 90
 
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
     RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,Model_to_Load,env_kwargs=env_kwargs)
@@ -46,13 +47,11 @@ if __name__ == '__main__':
 
     RL_Manager.collect_landing_performance(
         fileName="PolicyPerformance_Data.csv",
-        Plane_Angle_range=[0,0,45],
+        Plane_Angle_range=[PlaneAngle,PlaneAngle,180],
         V_mag_range=[0.5,5.0,0.5],
-        V_angle_range=[10,90,5],
+        V_angle_range=[10,170,5],
         n_trials=5
         )
     
-    RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=0,saveFig=True,showFig=False)
-    # RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=45,saveFig=True,showFig=False)
-    # RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=90,saveFig=True,showFig=False)
-    # RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=135,saveFig=True,showFig=False)
+
+    RL_Manager.plot_landing_performance(fileName="PolicyPerformance_Data.csv",PlaneAngle=PlaneAngle,saveFig=True,showFig=False)
