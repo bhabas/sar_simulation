@@ -12,6 +12,8 @@ import json
 
 ## DEFINE BASE PATH
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
+LOG_DIR = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
+
 
 
 ## ARGUMENT PARSER
@@ -20,44 +22,56 @@ parser.add_argument('--config', help='Path to configuration file', required=True
 parser.add_argument('--S3_Upload', help='Upload to S3', default=False, type=bool)
 args = parser.parse_args()
 
-# Load configuration from the specified file
+## LOAD CONFIGURATION
 with open(args.config, 'r') as config_file:
     config = json.load(config_file)
 
-# config = "sar_projects/DeepRL/configs/config.yaml"
-# with open(config, 'r') as config_file:
-#     config = json.load(config_file)
+
+## UPDATE SAR TYPE AND SAR CONFIG IN BASE SETTINGS FILE
+Base_Settings_yaml = f"{BASE_PATH}/sar_config/Base_Settings.yaml"
+with open(Base_Settings_yaml, 'r') as file:
+    lines = file.readlines()
+
+for i, line in enumerate(lines):
+    if line.strip().startswith('SAR_Type:'):
+        lines[i] = f"  SAR_Type: '{config['SAR_SETTINGS']['SAR_Type']}'\n"
+    elif line.strip().startswith('SAR_Config:'):
+        lines[i] = f"  SAR_Config: '{config['SAR_SETTINGS']['SAR_Config']}'\n"
+
+with open(Base_Settings_yaml, 'w') as file:
+    file.writelines(lines)
 
 
 if __name__ == '__main__':
 
     ## LOGGING CONFIGURATION
-    LogDir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs" 
-    current_time = datetime.now().strftime("%m-%d--%H:%M:%S")
-    LogName = f"{config['TRAINING']['LogName']}_{current_time}"
-    # ================================================================= ##
+    LogName = f"{config['LogName']}"
+
+    POLICY_KWARGS = {
+        "gamma": 0.999,
+        "learning_rate": 0.002,
+        "ent_coef": "auto_0.05",
+        "target_entropy": -2,
+        "batch_size": 256,
+        "buffer_size": 200000,
+        "net_arch": {
+            "pi": [10, 10, 10],
+            "qf": [64, 64, 64]
+        }
+    }
     
     ## SELECT ENVIRONMENT
-    if config['TRAINING']['ENV_Type'] == "SAR_2D_Env":
+    if config['ENV_Type'] == "SAR_2D_Env":
         env = SAR_2D_Env
-    elif config['TRAINING']['ENV_Type'] == "SAR_Sim_DeepRL":
+    elif config['ENV_Type'] == "SAR_Sim_DeepRL":
         env = SAR_Sim_DeepRL
 
     ## SET UP TRAINING CONDITIONS FROM CONFIG
-    env_kwargs = config['TRAINING']['ENV_KWARGS']
-    policy_kwargs = config['TRAINING']['POLICY_KWARGS']
+    env_kwargs = config['ENV_KWARGS']
 
     ## CREATE RL MANAGER
-    RL_Manager = RL_Training_Manager(env,LogDir,LogName,env_kwargs=env_kwargs,S3_Upload=False)
-
-    ## CHECK SAR CONFIGURATION
-    if config['SAR_SETTINGS']['SAR_Type'] != RL_Manager.env.SAR_Type:
-        raise ValueError(f"Environment type mismatch: {config['SAR_SETTINGS']['SAR_Type']} vs {RL_Manager.env.SAR_Type}")
-    
-    elif config['SAR_SETTINGS']['SAR_Config'] != RL_Manager.env.SAR_Config:
-        raise ValueError(f"Environment config mismatch: {config['SAR_SETTINGS']['SAR_Config']} vs {RL_Manager.env.SAR_Config}")
-
+    RL_Manager = RL_Training_Manager(env,LOG_DIR,LogName,env_kwargs=env_kwargs,S3_Upload=False)
     
     ## CREATE MODEL AND TRAIN
-    RL_Manager.create_model(policy_kwargs)
+    RL_Manager.create_model(POLICY_KWARGS)
     RL_Manager.train_model(reset_timesteps=False,total_timesteps=config['TRAINING']['t_step_limit'])

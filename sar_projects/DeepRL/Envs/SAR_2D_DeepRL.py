@@ -359,8 +359,9 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             # 3) CALC REWARD
             try:
                 reward = self._CalcReward()  
-            except (UnboundLocalError,ValueError):
-                reward = 0.0
+            except (UnboundLocalError,ValueError) as e:
+                reward = np.nan
+                print(RED + f"Error: {e}" + RESET)
 
             info_dict = {
                 "reward_vals": self.reward_vals,
@@ -414,7 +415,6 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
             # 4) CHECK TERMINATION/TRUNCATED
-
             r_B_O,Phi_B_O,V_B_O,dPhi_B_O = self._getState()
             r_P_B = self.R_WP(self.r_P_O - r_B_O,self.Plane_Angle_rad) # {t_x,n_p}
             V_B_P = self.R_WP(V_B_O,self.Plane_Angle_rad) # {t_x,n_p}
@@ -449,6 +449,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             #     terminated = True
             #     truncated = False
             #     # print(YELLOW,self.error_str,RESET)
+
+            elif r_B_O[2] < -5:
+                self.error_str = "Episode Completed: Out of bounds [Terminated]"
+                terminated = True
+                truncated = False
+                # print(YELLOW,self.error_str,RESET)
 
             elif np.abs(r_P_B[0]) > 0.7 and r_P_B[2] < 1.5*self.L_eff:
                 self.error_str = "Episode Completed: Out of Bounds [Terminated]"
