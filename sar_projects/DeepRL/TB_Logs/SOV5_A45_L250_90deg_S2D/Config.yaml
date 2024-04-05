@@ -7,11 +7,11 @@ PLANE_SETTINGS:
 ENV_SETTINGS:
   Env_Name: SAR_2D_DeepRL_Env
   V_mag_Limts:
-  - 0.4
-  - 5.1
+  - 0.5
+  - 5.0
   V_angle_Limits:
-  - 5
-  - 175
+  - 10
+  - 170
   Plane_Angle_Limits:
   - 90
   - 90

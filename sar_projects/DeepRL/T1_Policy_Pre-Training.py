@@ -70,8 +70,8 @@ if __name__ == '__main__':
     env_kwargs = config['ENV_KWARGS']
 
     ## CREATE RL MANAGER
-    RL_Manager = RL_Training_Manager(env,LOG_DIR,LogName,env_kwargs=env_kwargs,S3_Upload=False)
+    RL_Manager = RL_Training_Manager(env,LOG_DIR,LogName,env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)
     
     ## CREATE MODEL AND TRAIN
     RL_Manager.create_model(POLICY_KWARGS)
-    RL_Manager.train_model(reset_timesteps=False,total_timesteps=config['TRAINING']['t_step_limit'])
+    RL_Manager.train_model(reset_timesteps=False,total_timesteps=config['t_step_limit'])

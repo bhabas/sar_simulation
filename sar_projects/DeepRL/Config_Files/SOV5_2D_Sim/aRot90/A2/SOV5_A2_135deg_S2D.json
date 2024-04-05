@@ -1,0 +1,20 @@
+{
+    "LogName": "SOV5_A15_L150_135deg_aRot90_S2D",
+    "ENV_Type": "SAR_2D_Env",
+    
+    "SAR_SETTINGS": {
+      "SAR_Type": "Source_One_V5",
+      "SAR_Config": "A15_L150"
+    },
+    
+    "ENV_KWARGS": {
+        "Ang_Acc_range": [ -90, 0 ],
+        "Plane_Angle_range": [135, 135],
+        "V_mag_range": [ 0.5, 5.0 ],
+        "V_angle_range": [ 45, 170 ] ,
+        "Render": false
+    },
+
+    "t_step_limit": 151000, 
+    "t_step_optim": 0
+}

@@ -646,10 +646,10 @@ class RewardCallback(BaseCallback):
         self.keep_last_n_models = keep_last_n_models
 
         self.rew_mean_window = deque(maxlen=int(5e3))
-        self.rew_stab_threshold = 0.11
+        self.rew_stab_threshold = 0.05
 
-        self.ent_burst_cooldown = int(20e3)                 # Cooldown period for entropy burst
-        self.ent_burst_limit = int(100e3)                   # Limit the entropy burst to the first 100k steps
+        self.ent_burst_cooldown = int(30e3)                 # Cooldown period for entropy burst
+        self.ent_burst_limit = int(80e3)                   # Limit the entropy burst to the first 100k steps
         self.ent_coef = 0.05                                # Initial entropy coefficient
         self.last_ent_burst_step = 0                        # Last step when entropy burst was applied
 
@@ -684,7 +684,24 @@ class RewardCallback(BaseCallback):
         ep_rew_mean_var = np.var(self.rew_mean_window)
         ep_rew_mean_diff = ep_rew_mean_max - ep_rew_mean_min
 
+        ## REWARD STABILITY BASED ENTROPY KICK
+        if (ep_rew_mean_diff < self.rew_stab_threshold
+            and ep_rew_mean > 0.3 
+            and self.num_timesteps > self.last_ent_burst_step + self.ent_burst_cooldown
+            and int(20e3) < self.num_timesteps < self.ent_burst_limit):
 
+            self.last_ent_burst_step = self.num_timesteps
+            with th.no_grad():
+                ent_coef = 0.03
+                self.model.log_ent_coef.fill_(np.log(ent_coef))
+
+        ## SET ENTROPY COEFFICIENT TO ZERO AFTER BURST LIMIT
+        elif self.ent_burst_limit <= self.num_timesteps:
+            with th.no_grad():
+                self.model.ent_coef_optimizer = None
+                ent_coef = 0.00
+                self.model.ent_coef_tensor = th.tensor(float(ent_coef), device=self.model.device)
+                
 
         if self.num_timesteps % 5000 == 0:
 
@@ -728,23 +745,7 @@ class RewardCallback(BaseCallback):
 
 
 
-        ## REWARD STABILITY BASED ENTROPY KICK
-        if (ep_rew_mean_diff < self.rew_stab_threshold
-            and ep_rew_mean > 0.3 
-            and self.num_timesteps > self.last_ent_burst_step + self.ent_burst_cooldown
-            and int(20e3) < self.num_timesteps < int(80e3)):
-
-            self.last_ent_burst_step = self.num_timesteps
-            with th.no_grad():
-                ent_coef = 0.03
-                self.model.log_ent_coef.fill_(np.log(ent_coef))
-
-        ## SET ENTROPY COEFFICIENT TO ZERO AFTER BURST LIMIT
-        elif self.num_timesteps > self.ent_burst_limit:
-            with th.no_grad():
-                self.model.ent_coef_optimizer = None
-                ent_coef = 0.00
-                self.model.ent_coef_tensor = th.tensor(float(ent_coef), device=self.model.device)
+        
 
         ## UPLOAD TB LOG TO SB3
         if self.num_timesteps % self.upload_freq == 0:
@@ -819,6 +820,7 @@ class RewardCallback(BaseCallback):
             ## TB LOGGING VALUES
             self.logger.record('Custom/K_ep',self.env.K_ep)
             self.logger.record('Custom/Reward',self.locals["rewards"].item())
+            self.logger.record('Custom/LogName',self.RLM.Log_name)
 
             self.logger.record('z_Custom/Vel_mag',info_dict["V_mag"])
             self.logger.record('z_Custom/Vel_angle',info_dict["V_angle"])
