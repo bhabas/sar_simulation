@@ -16,13 +16,14 @@ LOG_DIR = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs"
 
 
 ## ARGUMENT PARSER
-parser = argparse.ArgumentParser(description='Policy Data Collection Script')
-parser.add_argument('--TrainConfig',    help='Path to training config file',required=True)
+parser = argparse.ArgumentParser(description='Policy Pre-Training Script')
 parser.add_argument('--GroupName',      help='Log group name', default='')
+parser.add_argument('--TrainConfig',    help='Path to training config file', required=True)
+parser.add_argument('--t_step_load',    help='Time step to load model', default=None, type=int)
 parser.add_argument('--S3_Upload',      help='Upload to S3', default=False, type=bool)
 args = parser.parse_args()
 
-## LOAD TRAINED MODEL CONFIGURATION
+## LOAD TRAINING MODEL CONFIGURATION
 with open(args.TrainConfig, 'r') as TrainConfig_File:
     TrainConfig = json.load(TrainConfig_File)
 
@@ -46,6 +47,11 @@ if __name__ == '__main__':
     ## LOGGING CONFIGURATION
     LogName = TrainConfig['LogName']
     PlaneAngle = TrainConfig['ENV_KWARGS']['Plane_Angle_range'][0]
+    if args.t_step_load == None:
+        t_step_load = TrainConfig['t_step_optim']
+    else:
+        t_step_load = args.t_step_load
+
     
     ## SELECT ENVIRONMENT
     if TrainConfig['ENV_Type'] == "SAR_2D_Env":
@@ -62,8 +68,9 @@ if __name__ == '__main__':
     ## CREATE MODEL AND TRAIN
     RL_Manager.create_model()
     RL_Manager.load_model(
-        Log_name=TrainConfig['LogName'],
-        t_step=TrainConfig['t_step_optim'],
+        GroupName=args.GroupName,
+        LogName=TrainConfig['LogName'],
+        t_step_load=t_step_load,
         Params_only=True,
     )
 

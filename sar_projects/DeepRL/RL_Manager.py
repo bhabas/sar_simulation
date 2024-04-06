@@ -95,20 +95,26 @@ class RL_Training_Manager():
         if write_config:
             self.write_config_file()
         
-    def load_model(self,t_step: int, Log_name: str, Params_only=False, load_replay_buffer=False):
+    def load_model(self,t_step_load: int, GroupName=None, LogName=None, Params_only=False, load_replay_buffer=False):
         
+        if GroupName is None:
+            GroupName = self.Group_Name
+        
+        if LogName is None:
+            LogName = self.Log_Name
+
         ## SEARCH FOR BOTH MODEL AND REPLAY BUFFER WITH WILDCARD FOR OPTIONAL SUFFIX
-        model_pattern = f"model_{int(t_step)}_steps*.zip" 
-        replay_buffer_pattern = f"replay_buffer_{int(t_step)}_steps*.pkl" 
+        model_pattern = f"model_{int(t_step_load)}_steps*.zip" 
+        replay_buffer_pattern = f"replay_buffer_{int(t_step_load)}_steps*.pkl" 
 
         ## FIND MODEL AND REPLAY BUFFER FILES
-        model_files = glob.glob(os.path.join(self.Log_Dir, "Models", model_pattern))
-        replay_buffer_files = glob.glob(os.path.join(self.Log_Dir, "Models", replay_buffer_pattern))
+        model_files = glob.glob(os.path.join(LOG_DIR,GroupName,LogName,"Models", model_pattern))
+        replay_buffer_files = glob.glob(os.path.join(LOG_DIR,GroupName,LogName, "Models", replay_buffer_pattern))
 
         ## LOAD MODEL AND REPLAY BUFFER
         if Params_only:
-            print(f"Loading Model params...")
             model_path = model_files[0]  # Taking the first match
+            print(f"Loading Model params from model: {model_path}")
             self.model.set_parameters(model_path,exact_match=False,device='cpu')
             # loaded_model = SAC.load(
             #     model_path,
