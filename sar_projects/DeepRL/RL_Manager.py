@@ -248,52 +248,52 @@ class RL_Training_Manager():
         t_delta_prev = 0
         t_init = time.time()
 
-        if not os.path.exists(filePath):
-            with open(filePath,'w') as file:
-                writer = csv.writer(file,delimiter=',')
-                writer.writerow([
-                    "V_mag", "V_angle", "Plane_Angle", "Trial_num",
 
-                    "--",
+        with open(filePath,'w') as file:
+            writer = csv.writer(file,delimiter=',')
+            writer.writerow([
+                "V_mag", "V_angle", "Plane_Angle", "Trial_num",
 
-                    "Pad_Connections",
-                    "BodyContact","ForelegContact","HindlegContact",
+                "--",
 
-                    "--",
-                    
-                    "a_Trg_trg",
-                    "a_Rot_trg",
-                    "Vel_mag_B_O_trg","Vel_angle_B_O_trg",
-                    "Vel_mag_B_P_trg","Vel_angle_B_P_trg",
+                "Pad_Connections",
+                "BodyContact","ForelegContact","HindlegContact",
 
-                    "Tau_CR_trg",
-                    "Tau_trg",
-                    "Theta_x_trg",
-                    "D_perp_CR_trg",
-                    "D_perp_trg",
+                "--",
+                
+                "a_Trg_trg",
+                "a_Rot_trg",
+                "Vel_mag_B_O_trg","Vel_angle_B_O_trg",
+                "Vel_mag_B_P_trg","Vel_angle_B_P_trg",
 
-                    "--",
+                "Tau_CR_trg",
+                "Tau_trg",
+                "Theta_x_trg",
+                "D_perp_CR_trg",
+                "D_perp_trg",
 
-                    "Phi_B_O_impact",
-                    "Phi_B_P_impact",
-                    "Omega_B_O_impact",
+                "--",
 
-                    "Vel_B_P_impact_x","Vel_B_P_impact_z",
-                    
-                    "Impact_Magnitude",
-                    "Force_Impact_x","Force_Impact_y","Force_Impact_z",
+                "Phi_B_O_impact",
+                "Phi_B_P_impact",
+                "Omega_B_O_impact",
 
-                    "--",
+                "Vel_B_P_impact_x","Vel_B_P_impact_z",
+                
+                "Impact_Magnitude",
+                "Force_Impact_x","Force_Impact_y","Force_Impact_z",
 
-                    "reward","reward_vals",
-                    "NN_Output_trg","a_Rot_scale",
+                "--",
 
-                    "--",
+                "reward","reward_vals",
+                "NN_Output_trg","a_Rot_scale",
 
-                    "4_Leg_NBC","4_Leg_BC",
-                    "2_Leg_NBC","2_Leg_BC",
-                    "0_Leg_NBC","0_Leg_BC",
-                ])
+                "--",
+
+                "4_Leg_NBC","4_Leg_BC",
+                "2_Leg_NBC","2_Leg_BC",
+                "0_Leg_NBC","0_Leg_BC",
+            ])
 
         for Plane_Angle in Plane_Angle_arr:
             for V_mag in V_mag_arr:
