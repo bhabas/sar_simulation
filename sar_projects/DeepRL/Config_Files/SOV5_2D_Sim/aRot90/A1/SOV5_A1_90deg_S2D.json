@@ -16,5 +16,5 @@
     },
 
     "t_step_limit": 151000, 
-    "t_step_optim": 0
+    "t_step_optim": 150000
 }

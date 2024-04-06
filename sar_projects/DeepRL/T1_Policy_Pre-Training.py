@@ -19,7 +19,7 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
 ## ARGUMENT PARSER
 parser = argparse.ArgumentParser(description='Policy Pre-Training Script')
 parser.add_argument('--TrainConfig',    help='Path to training config file',        required=True)
-parser.add_argument('--Group_Name',     help='Log group name', default='')
+parser.add_argument('--GroupName',      help='Log group name', default='')
 parser.add_argument('--S3_Upload',      help='Upload to S3', default=False, type=bool)
 args = parser.parse_args()
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     env_kwargs = TrainConfig['ENV_KWARGS']
 
     ## CREATE RL MANAGER
-    RL_Manager = RL_Training_Manager(env,args.Group_Name,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)
+    RL_Manager = RL_Training_Manager(env,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)
     
     ## CREATE MODEL AND TRAIN
     RL_Manager.create_model()

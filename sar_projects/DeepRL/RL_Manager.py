@@ -95,7 +95,7 @@ class RL_Training_Manager():
         if write_config:
             self.write_config_file()
         
-    def load_model(self,t_step: int, Log_name: str, Params_only=False, load_replay_buffer=True):
+    def load_model(self,t_step: int, Log_name: str, Params_only=False, load_replay_buffer=False):
         
         ## SEARCH FOR BOTH MODEL AND REPLAY BUFFER WITH WILDCARD FOR OPTIONAL SUFFIX
         model_pattern = f"model_{int(t_step)}_steps*.zip" 
@@ -110,6 +110,11 @@ class RL_Training_Manager():
             print(f"Loading Model params...")
             model_path = model_files[0]  # Taking the first match
             self.model.set_parameters(model_path,exact_match=False,device='cpu')
+            # loaded_model = SAC.load(
+            #     model_path,
+            #     device='cpu',
+            # )
+            # self.model.policy.load_state_dict(loaded_model.policy.state_dict())
         
         else:
             print(f"Loading Model...")
@@ -124,10 +129,10 @@ class RL_Training_Manager():
 
             print(f"Loading Replay Buffer...")
             replay_buffer_path = replay_buffer_files[0]  # Similarly, taking the first match
-            self.model.load_replay_buffer(replay_buffer_path)
+            # self.model.load_replay_buffer(replay_buffer_path)
 
 
-    def train_model(self,model_save_freq=5e3,reward_check_freq=500,S3_upload_freq=500,reset_timesteps=False,t_step_max=500e3):
+    def train_model(self,model_save_freq=25e3,reward_check_freq=1000,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
 
         if reset_timesteps == True:
 
@@ -171,9 +176,15 @@ class RL_Training_Manager():
     
     def sweep_policy(self,Plane_Angle_Step=45,V_mag_Step=0.5,V_angle_Step=10,n=1):
 
-        Plane_Angle_arr = np.arange(self.env.Plane_Angle_range[0], self.env.Plane_Angle_range[1] + Plane_Angle_Step, Plane_Angle_Step)
-        V_mag_arr = np.arange(self.env.V_mag_range[0], self.env.V_mag_range[1] + V_mag_Step, V_mag_Step)
-        V_angle_arr = np.arange(self.env.V_angle_range[0], self.env.V_angle_range[1] + V_angle_Step, V_angle_Step)
+        ## GENERATE SWEEP ARRAYS
+        Plane_Angle_num = np.ceil((self.env.Plane_Angle_range[1] - self.env.Plane_Angle_range[0]) / Plane_Angle_Step).astype(int) + 1
+        Plane_Angle_arr = np.linspace(self.env.Plane_Angle_range[0], self.env.Plane_Angle_range[1], Plane_Angle_num, endpoint=True)
+
+        V_mag_num = np.ceil((self.env.V_mag_range[1] - self.env.V_mag_range[0]) / V_mag_Step).astype(int) + 1
+        V_mag_arr = np.linspace(self.env.V_mag_range[0], self.env.V_mag_range[1], V_mag_num, endpoint=True)
+
+        V_angle_num = np.ceil((self.env.V_angle_range[1] - self.env.V_angle_range[0]) / V_angle_Step).astype(int) + 1
+        V_angle_arr = np.linspace(self.env.V_angle_range[0], self.env.V_angle_range[1], V_angle_num, endpoint=True)
         
         for Plane_Angle in Plane_Angle_arr:
             for V_mag in V_mag_arr:
@@ -194,16 +205,21 @@ class RL_Training_Manager():
                         print(f"Plane_Angle: {Plane_Angle:.2f}  V_mag: {V_mag:.2f}  V_angle: {V_angle:.2f}")
                         print(f"Reward: {reward:.3f} \t Tau_CR: {obs[0]:.2f}  Theta_x: {obs[1]:.2f}  D_perp: {obs[2]:.2f}\n\n")
 
-    def collect_landing_performance(self,fileName=None,Plane_Angle_range=[0,0,1],V_angle_range=[30,90,7],V_mag_range=[1.0,4.0,7],n_trials=1):
+    def collect_landing_performance(self,fileName=None,Plane_Angle_Step=45,V_mag_Step=0.5,V_angle_Step=10,n=1):
 
         if fileName is None:
             fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.Log_Dir,fileName)
          
         ## GENERATE SWEEP ARRAYS
-        Plane_Angle_arr = np.arange(Plane_Angle_range[0],Plane_Angle_range[1] + Plane_Angle_range[2],Plane_Angle_range[2])
-        V_mag_arr = np.arange(V_mag_range[0],V_mag_range[1] + V_mag_range[2],V_mag_range[2])
-        V_angle_arr = np.arange(V_angle_range[0],V_angle_range[1] + V_angle_range[2],V_angle_range[2])
+        Plane_Angle_num = np.ceil((self.env.Plane_Angle_range[1] - self.env.Plane_Angle_range[0]) / Plane_Angle_Step).astype(int) + 1
+        Plane_Angle_arr = np.linspace(self.env.Plane_Angle_range[0], self.env.Plane_Angle_range[1], Plane_Angle_num, endpoint=True)
+
+        V_mag_num = np.ceil((self.env.V_mag_range[1] - self.env.V_mag_range[0]) / V_mag_Step).astype(int) + 1
+        V_mag_arr = np.linspace(self.env.V_mag_range[0], self.env.V_mag_range[1], V_mag_num, endpoint=True)
+
+        V_angle_num = np.ceil((self.env.V_angle_range[1] - self.env.V_angle_range[0]) / V_angle_Step).astype(int) + 1
+        V_angle_arr = np.linspace(self.env.V_angle_range[0], self.env.V_angle_range[1], V_angle_num, endpoint=True)
 
 
         def EMA(cur_val,prev_val,alpha = 0.15):            
@@ -220,7 +236,7 @@ class RL_Training_Manager():
             return rounded_list
 
         ## TIME ESTIMATION FILTER INITIALIZATION
-        num_trials = len(V_mag_arr)*len(V_angle_arr)*len(Plane_Angle_arr)*n_trials
+        num_trials = len(V_mag_arr)*len(V_angle_arr)*len(Plane_Angle_arr)*n
         idx = 0
         t_delta = 0
         t_delta_prev = 0
@@ -276,7 +292,7 @@ class RL_Training_Manager():
         for Plane_Angle in Plane_Angle_arr:
             for V_mag in V_mag_arr:
                 for V_angle in V_angle_arr:
-                    for trial in range(n_trials):
+                    for trial in range(n):
 
                         ## CONVERT RELATIVE ANGLES TO GLOBAL ANGLE
                         A1 = V_angle - Plane_Angle
@@ -304,7 +320,7 @@ class RL_Training_Manager():
                         PC = self.env.Pad_Connections
                         BC = self.env.BodyContact_Flag
 
-                        if PC >= 3 and BC == False:       # 4_Leg_NBC
+                        if PC >= 3 and BC == False:         # 4_Leg_NBC
                             LS = [1,0,0,0,0,0]
                         elif PC >= 3 and BC == True:        # 4_Leg_BC
                             LS = [0,1,0,0,0,0]
@@ -357,7 +373,6 @@ class RL_Training_Manager():
                             writer.writerow(rounded_row_data)
 
 
-
                             ## CALCULATE AVERAGE TIME PER EPISODE
                             t_now = time.time() - t_init
                             t_delta = time.time() - t_trial_start
@@ -367,7 +382,9 @@ class RL_Training_Manager():
 
                             TTC = np.round(t_delta_avg*(num_trials-idx)) # Time to completion
                             t_now = np.round(t_now)
-                            print(f"Flight Conditions: ({V_mag:.02f} m/s,{V_angle:.02f} deg, {Plane_Angle:.02f} deg) Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% \tTTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
+                            print(f"Flight Conditions: ({V_mag:.02f} m/s, {V_angle:.02f} deg, {Plane_Angle:.02f} deg) Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% \tTTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
+                    
+                self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
 
     def plot_landing_performance(self,PlaneAngle=0,fileName=None,saveFig=False,showFig=True):
 
@@ -412,7 +429,7 @@ class RL_Training_Manager():
         # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
         # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
-        ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
+        ax.set_xticks(np.radians(np.arange(0-PlaneAngle,180-PlaneAngle+15,15)))
         ax.set_thetamin(0-PlaneAngle)
         ax.set_thetamax(180-PlaneAngle)
 
@@ -426,18 +443,26 @@ class RL_Training_Manager():
             \nSAR_Config: {self.env.SAR_Config} \
             \nPlane_Angle: {PlaneAngle} deg \
             \nEnv_Name: {self.env.Env_Name}" 
-        fig.text(0,1,config_str,transform=plt.gcf().transFigure,ha='left',va='top',fontsize=8)
+        fig.text(0,1,config_str,transform=plt.gcf().transFigure,ha='left',va='top',fontsize=6)
 
         if saveFig==True:
-            plt.savefig(f'{self.Log_Dir}/Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}.pdf',dpi=300)
+            fileName = f"Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}.pdf"
+            filePath = os.path.join(self.Log_Dir,fileName)
+
+            ## SAVE FIGURE LOCALLY
+            plt.savefig(filePath,dpi=300)
+
+            ## UPLOAD FILE TO S3
+            self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
 
         if showFig==True:
             plt.show(block=True)
         
     def save_NN_to_C_header(self):
 
-        FileName = f"NN_Params_DeepRL.h"
-        f = open(os.path.join(self.Log_Dir,FileName),'a')
+        fileName = f"NN_Params_DeepRL.h"
+        filePath = os.path.join(self.Log_Dir,fileName)
+        f = open(filePath,'a')
         f.truncate(0) ## Clears contents of file
 
         f.write(f"// Model: {self.Log_Name} \t SAR_Type: {self.env.SAR_Type} \t SAR_Config: {self.env.SAR_Config}\n")
@@ -523,6 +548,10 @@ class RL_Training_Manager():
 
         f.write("};")
         f.close()
+
+        ## UPLOAD FILE TO S3
+        self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
+
 
     def write_config_file(self):
         config_path = os.path.join(self.Log_Dir,"Config.yaml")
@@ -631,7 +660,8 @@ class RL_Training_Manager():
             s3_client.upload_file(local_file_path, S3_bucket_name, S3_file_path)
 
         except Exception as e:
-            print(f"File {local_file_path} failed to upload to {S3_bucket_name}/{S3_file_path}")
+            print(f"Error uploading file to S3: {e}")
+            print(f"File {local_file_path} failed to upload to {S3_bucket_name}:{S3_file_path}")
 
 
 
@@ -659,7 +689,7 @@ class RewardCallback(BaseCallback):
 
         ## REWARD TRACKING
         self.best_mean_reward = -np.inf
-        self.rew_mean_window = deque(maxlen=int(5e3))
+        self.rew_mean_window = deque(maxlen=int(15e3))
 
         ## REWARD STABILITY
         self.rew_mean_diff_threshold = 0.05
@@ -708,7 +738,7 @@ class RewardCallback(BaseCallback):
         ## GIVE ENTROPY KICK BASED ON REWARD STABILITY
         self._give_entropy_burst(ep_rew_mean,ep_rew_mean_diff)
 
-        if self.num_timesteps % 1000 == 0:
+        if self.num_timesteps % 5000 == 0:
             self._save_reward_grid_plot_to_TB()
         
         ## SAVE REWARD GRID PLOT AND MODEL EVERY N TIMESTEPS
@@ -854,11 +884,11 @@ class RewardCallback(BaseCallback):
         replay_buffer_path = os.path.join(self.RLM.Model_Dir, replay_buffer_name)
 
         self.model.save(model_path)
-        self.model.save_replay_buffer(replay_buffer_path)
+        # self.model.save_replay_buffer(replay_buffer_path)
 
         ## UPLOAD MODEL AND REPLAY BUFFER TO S3
         self.RLM.upload_file_to_S3(local_file_path=model_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",model_name))
-        self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
+        # self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
 
     def _save_best_model_and_replay_buffer(self):
 
@@ -870,11 +900,11 @@ class RewardCallback(BaseCallback):
 
         ## SAVE MODEL AND REPLAY BUFFER
         self.model.save(model_path)
-        self.model.save_replay_buffer(replay_buffer_path)
+        # self.model.save_replay_buffer(replay_buffer_path)
 
         ## UPLOAD MODEL AND REPLAY BUFFER TO S3
         self.RLM.upload_file_to_S3(local_file_path=model_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",model_name))
-        self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
+        # self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
 
 
         if self.verbose > 0:
@@ -891,57 +921,8 @@ class RewardCallback(BaseCallback):
             for model_path, replay_buffer_path in self.saved_models[:-self.keep_last_n_models]:
                 if os.path.exists(model_path):
                     os.remove(model_path)
-                if os.path.exists(replay_buffer_path):
-                    os.remove(replay_buffer_path)
+                # if os.path.exists(replay_buffer_path):
+                #     os.remove(replay_buffer_path)
 
             self.saved_models = self.saved_models[-self.keep_last_n_models:]
 
-
-if __name__ == '__main__':
-
-
-    ## IMPORT ENVIRONMENTS
-    from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    from Envs.SAR_2D_DeepRL import SAR_2D_Env
-
-
-    current_datetime = datetime.now()
-    current_time = current_datetime.strftime("%m-%d--%H:%M:%S")
-    log_name = f"DeepRL_Policy_{current_time}"
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL" 
-
-    # ================================================================= ##
-
-    # Define the environment parameters
-    env_kwargs = {
-        "Ang_Acc_range": [-100, 0],
-        "V_mag_range": [1.5,4.0],
-        "V_angle_range": [10,90],
-        "Plane_Angle_range": [0,0],
-        "Render": False,
-        "GZ_Timeout": False,
-    }
-
-
-    
-
-
-    
-
-
-    # log_name = "DeepRL_Policy_03-26--21:50:22"
-    # model_dir = f"/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs/SAR_2D_DeepRL/{log_name}/Models"
-    # RL_Manager = RL_Training_Manager(SAR_2D_Env,log_dir,log_name,env_kwargs=env_kwargs)
-    # RL_Manager.load_model(model_dir,t_step=35000)
-    # RL_Manager.sweep_policy(Plane_Angle_range=[0,180,45],V_mag_range=[1.5,4.0,1.0],V_angle_range=[10,170,20],n=1)
-
-
-    # RL_Manager.collect_landing_performance(
-    #     fileName="PolicyPerformance_Data.csv",
-    #     Plane_Angle_range=[0,180,45],
-    #     V_mag_range=[1.0,4.0,0.5],
-    #     V_angle_range=[10,170,5],
-    #     n_trials=5
-    #     )
-    # RL_Manager.plot_landing_performance(PlaneAngle=180)
-    
