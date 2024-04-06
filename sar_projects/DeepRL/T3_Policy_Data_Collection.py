@@ -66,15 +66,13 @@ if __name__ == '__main__':
         t_step=TrainConfig['t_step_optim'],
         Params_only=True,
     )
-    # RL_Manager.sweep_policy(V_mag_Step=1.0,V_angle_Step=10,n=1)
 
-    # RL_Manager.collect_landing_performance(
-    #     Plane_Angle_Step=45,
-    #     V_mag_Step=1.5,
-    #     V_angle_Step=5,
-    #     n=1,
-    # )
+    RL_Manager.collect_landing_performance(
+        Plane_Angle_Step=45,
+        V_mag_Step=0.5,
+        V_angle_Step=5,
+        n=5,
+    )
     
-
     RL_Manager.plot_landing_performance(PlaneAngle=PlaneAngle,saveFig=True,showFig=False)
     RL_Manager.save_NN_to_C_header()

@@ -425,7 +425,7 @@ class RL_Training_Manager():
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
 
-        ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
+        ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=60)
         # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
         # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
