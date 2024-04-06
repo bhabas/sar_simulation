@@ -388,7 +388,7 @@ class RL_Training_Manager():
 
                             TTC = np.round(t_delta_avg*(num_trials-idx)) # Time to completion
                             t_now = np.round(t_now)
-                            print(f"Flight Conditions: ({V_mag:.02f} m/s, {V_angle:.02f} deg, {Plane_Angle:.02f} deg) Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% \tTTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
+                            print(f"Flight Conditions: ({V_mag:.02f} m/s, {V_angle:.02f} deg, {Plane_Angle:.02f} deg) Reward: {self.env.reward:.2f} Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% TTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
                     
                 self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
 
