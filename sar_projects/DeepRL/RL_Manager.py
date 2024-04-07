@@ -109,13 +109,13 @@ class RL_Training_Manager():
 
         ## FIND MODEL AND REPLAY BUFFER FILES
         model_files_path = os.path.join(LOG_DIR,GroupName,LogName,"Models", model_pattern)
+        print(f"Loading Model params from model: {model_files_path}")
         model_files = glob.glob(os.path.join(LOG_DIR,GroupName,LogName,"Models", model_pattern))
         replay_buffer_files = glob.glob(os.path.join(LOG_DIR,GroupName,LogName, "Models", replay_buffer_pattern))
 
         ## LOAD MODEL AND REPLAY BUFFER
         if Params_only:
             model_path = model_files[0]  # Taking the first match
-            print(f"Loading Model params from model: {model_path}")
             self.model.set_parameters(model_path,exact_match=False,device='cpu')
             # loaded_model = SAC.load(
             #     model_path,
