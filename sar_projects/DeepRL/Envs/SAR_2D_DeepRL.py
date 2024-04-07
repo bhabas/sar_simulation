@@ -615,12 +615,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         if self.Pad_Connections >= 3: 
             R_Legs = 1.0
         elif self.Pad_Connections == 2:
-            R_Legs = 0.2
+            R_Legs = 0.5
         else:
             R_Legs = 0.0
 
         if self.BodyContact_Flag:
-            R_Legs = R_Legs*0.5
+            R_Legs = R_Legs*0.75
 
         self.reward_vals = [R_dist,R_tau_cr,R_tx,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))

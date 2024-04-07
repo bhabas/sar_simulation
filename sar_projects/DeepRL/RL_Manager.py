@@ -399,12 +399,24 @@ class RL_Training_Manager():
             fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.Log_Dir,fileName)
 
+        def extract_last_val(string):
+            # Strip the square brackets and split the string by spaces
+            string = string.strip('[]')
+            list_of_strings = string.split()
+            
+            # Convert to float and get the last value
+            last_val = float(list_of_strings[-1])  # Convert the last item directly to float
+            
+            return last_val
+
         ## READ CSV FILE
         df = pd.read_csv(filePath,sep=',',comment="#")
 
         cols_to_keep = [col for col in df.columns if not col.startswith('--')]
         df = df[cols_to_keep]
+        df['R_legs'] = df['reward_vals'].apply(extract_last_val)
         df.drop(["reward_vals","NN_Output_trg","a_Rot_scale"],axis=1,inplace=True)
+
 
         df2 = df.groupby(["V_mag","V_angle","Plane_Angle"]).mean().round(3).reset_index()
         df2.query(f"Plane_Angle == {PlaneAngle}",inplace=True)
@@ -413,7 +425,8 @@ class RL_Training_Manager():
         ## COLLECT DATA
         R = df2.iloc[:]['V_mag']
         Theta = df2.iloc[:]['V_angle']-PlaneAngle
-        C = df2.iloc[:]['4_Leg_NBC']
+        # C = df2.iloc[:]['4_Leg_NBC']
+        C = df2.iloc[:]['R_legs']
 
 
 
