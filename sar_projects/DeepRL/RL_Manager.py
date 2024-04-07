@@ -108,6 +108,7 @@ class RL_Training_Manager():
         replay_buffer_pattern = f"replay_buffer_{int(t_step_load)}_steps*.pkl" 
 
         ## FIND MODEL AND REPLAY BUFFER FILES
+        model_files_path = os.path.join(LOG_DIR,GroupName,LogName,"Models", model_pattern)
         model_files = glob.glob(os.path.join(LOG_DIR,GroupName,LogName,"Models", model_pattern))
         replay_buffer_files = glob.glob(os.path.join(LOG_DIR,GroupName,LogName, "Models", replay_buffer_pattern))
 
@@ -660,14 +661,15 @@ class RL_Training_Manager():
         if self.S3_Upload_Flag == False:
             return 
         
-        ## UPLOAD FILE
-        s3_client = boto3.client('s3')
-        try:
-            s3_client.upload_file(local_file_path, S3_bucket_name, S3_file_path)
+        else:
+            ## UPLOAD FILE
+            s3_client = boto3.client('s3')
+            try:
+                s3_client.upload_file(local_file_path, S3_bucket_name, S3_file_path)
 
-        except Exception as e:
-            print(f"Error uploading file to S3: {e}")
-            print(f"File {local_file_path} failed to upload to {S3_bucket_name}:{S3_file_path}")
+            except Exception as e:
+                print(f"Error uploading file to S3: {e}")
+                print(f"File {local_file_path} failed to upload to {S3_bucket_name}:{S3_file_path}")
 
 
 
