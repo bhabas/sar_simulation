@@ -10,3 +10,4 @@ Misc:
 - At high vertical velocity, rigid models suffer from momentum pushing them into the ceiling.   
     Flexible legs will absorb this momentum as well as close leg angle and lead to success
 
+

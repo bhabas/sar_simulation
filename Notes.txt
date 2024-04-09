@@ -1,4 +1,6 @@
 sudo apt-get install libncurses5-dev libncursesw5-dev
+python3 -m pip install --upgrade pip setuptools wheel
+
 
 
 If things don't compile correctly try compiling with catkin_make several times and see if it makes incremental progress. 

@@ -6,12 +6,12 @@ DEEP_RL_PATH=$(find ~/catkin_ws/src -name 'sar_simulation' -type d | head -n 1)/
 
 ## 0 DEG TRAINING AND DATA COLLECTION
 python $DEEP_RL_PATH/T1_Policy_Pre-Training.py \
-    --GroupName 2D_0deg_aRot30 \
+    --GroupName SOV5_2D_0deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_0deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
-    --GroupName 2D_0deg_aRot30 \
+    --GroupName SOV5_2D_0deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_0deg_S2D.json \
     --S3_Upload true \
     --t_step_load 150000
@@ -20,12 +20,12 @@ python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
 
 ## 45 DEG TRAINING AND DATA COLLECTION
 python $DEEP_RL_PATH/T1_Policy_Pre-Training.py \
-    --GroupName 2D_45deg_aRot30 \
+    --GroupName SOV5_2D_45deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_45deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
-    --GroupName 2D_45deg_aRot30 \
+    --GroupName SOV5_2D_45deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_45deg_S2D.json \
     --S3_Upload true \
     --t_step_load 150000
@@ -34,12 +34,12 @@ python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
 
 ## 90 DEG TRAINING AND DATA COLLECTION
 python $DEEP_RL_PATH/T1_Policy_Pre-Training.py \
-    --GroupName 2D_90deg_aRot30 \
+    --GroupName SOV5_2D_90deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_90deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
-    --GroupName 2D_90deg_aRot30 \
+    --GroupName SOV5_2D_90deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_90deg_S2D.json \
     --S3_Upload true \
     --t_step_load 150000
@@ -48,12 +48,12 @@ python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
 
 ## 135 DEG TRAINING AND DATA COLLECTION
 python $DEEP_RL_PATH/T1_Policy_Pre-Training.py \
-    --GroupName 2D_135deg_aRot30 \
+    --GroupName SOV5_2D_135deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_135deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
-    --GroupName 2D_135deg_aRot30 \
+    --GroupName SOV5_2D_135deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_135deg_S2D.json \
     --S3_Upload true \
     --t_step_load 150000
@@ -62,12 +62,12 @@ python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
 
 ## 180 DEG TRAINING AND DATA COLLECTION
 python $DEEP_RL_PATH/T1_Policy_Pre-Training.py \
-    --GroupName 2D_180deg_aRot30 \
+    --GroupName SOV5_2D_180deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_180deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
-    --GroupName 2D_180deg_aRot30 \
+    --GroupName SOV5_2D_180deg_aRot30 \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot30/B1/SOV5_B1_180deg_S2D.json \
     --S3_Upload true \
     --t_step_load 150000
