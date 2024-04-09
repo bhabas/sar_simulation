@@ -1,128 +1,13 @@
-- Legs contact before rotation trigger
-- Starting position doesn't have clean trajectory and impact happens automatically or too soon
+Misc:
+- What would non-dimensionalizing velocity look like? It'd be body length but FR length or L_eff length?
 
 
-## STARTING CONDITIONS ##
-- Collision radius about CoG
-- Tau_CR (TTC of collision radius) >= minimum rotation time (t_rot)
-    - t_rot is conservative time estimate for a full rotation given 50% max My and current Iyy
-- Tau_B is TTC of CoG (What body reads for given Tau_CR)
-- Tau_Cam is TTC of camera position
-- Tau_extra is extra flight time
+0_Deg Landing Plane
+- At low vel, system needs sufficient Z vel to allow for rotation of legs to ceiling. 
+    Gravity pulls model down and if insufficient Z vel, it will fall and distance itself from ceiling as rotating
+    
+
+- At high vertical velocity, rigid models suffer from momentum pushing them into the ceiling.   
+    Flexible legs will absorb this momentum as well as close leg angle and lead to success
 
 
-
-
-
-
-## REWARD FUNCTION ## 
-- Distance reward 
-    - Encourages getting close to surface
-    - Maxes out when within collision radius of ceiling
-    - Encourages impact and getting close to surface
-        - Later rewards encourage optimal impact angle
-
-- Tau reward
-    - Encourages triggering of policy
-    - We want impact so Tau the reward is based off of is Tau_CR (allows Tau_B to be large for low flight angles)
-    - Optimal reward is when Tau_CR <= 0
-    - Need to add recording of Tau_CR
-
-- Impact angle reward
-    - Encourage impact angle to be within geometric limits of robot
-    - Increase reward when within appropriate Beta range (defined by L, gamma, and PD)
-    - This is based on relative angle
-    - Need to calc Beta_min (geometric) -> Phi_rel_min (body angle) value
-    - Set over rotation reward to zero to discourage excessive rotation landings
-
-- Pad Attachment reward
-    - Final tuning of landing
-    - Optimal cases are those with four leg attachment and no body contact
-    - Body contact isn't needed here because it's counted in the impact angle
-        - However, it should still be recorded to classify landing success
-
-
-## EDGE CASES TO TEST ##
-- 180 Deg surface
-    - Low Angle
-        - Low Vel
-            - What does theta_x look like in these conditions?
-        - High Vel
-        - Find reasonable start condition
-            - Allow for full rotation
-            - Minimize flight time
-    - High Angle
-        - Low Vel
-        - High Vel
-
-- 135 Deg surface
-    - Low Angle
-        - Low Vel
-        - High Vel
-    - High Angle
-        - Low Vel
-        - High Vel
-
-- 90 Deg surface
-    - Low Angle
-        - Low Vel
-        - High Vel
-    - High Angle
-        - Low Vel
-        - High Vel
-
-- 45 Deg surface
-    - Low Angle
-        - Low Vel
-        - High Vel
-    - High Angle
-        - Low Vel
-        - High Vel
-
-- 0 Deg surface
-    - Low Angle
-        - Low Vel
-        - High Vel
-    - High Angle
-        - Low Vel
-        - High Vel
-
-- -45 Deg surface
-    - Low Angle
-        - Low Vel
-        - High Vel
-    - High Angle
-        - Low Vel
-        - High Vel
-
-
-
-## TO DO ##
-- Sweep parameter space of testing conditions to validate behavior
-
-- For a given Tau and flight angle, if vel increases then distance increases
-- What kind of activation functions are useful?
-    - ReLu
-    - Leaky ReLu
-    - Tanh
-    - Positive and Negative function?
-        - What are the impacts of just positive function
-
-- How well does learning rate work?
-    - Increase it
-    - Decrease it
-
-- What are impacts of discount factor?
-    - Increase it
-    - Decrease it
-
-- Any impacts for architechture size?
-    - 8x8
-    - 12x12
-    - 24x24
-    - 48x48
-
-- Also, look at normalization of observations
-    - Theta_x should be inverted because much like RREV, the expansion causes inverse scaling
-        - This is very hard for normalization
-        - We can clamp this value at [-5,5]

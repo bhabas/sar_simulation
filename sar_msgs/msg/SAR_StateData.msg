@@ -15,7 +15,8 @@ geometry_msgs/Vector3 Eul_P_B
 float64 Vel_mag_B_P
 float64 Vel_angle_B_P
 float64 D_perp
-float64 D_perp_min
+float64 D_perp_pad_min
+float64 D_perp_pad
 float64 D_perp_CR
 
 
@@ -33,9 +34,10 @@ geometry_msgs/Vector3 a_d
 ## CONTROL ACTIONS
 float64[4] FM
 float64[4] MotorThrusts
-uint32[4] MS_PWM
+uint32[4] Motor_CMD
 
 ## POLICY ACTIONS
-float64 Policy_Trg_Action
-float64 Policy_Rot_Action
+float64[4] NN_Output
+float64 a_Trg
+float64 a_Rot
 

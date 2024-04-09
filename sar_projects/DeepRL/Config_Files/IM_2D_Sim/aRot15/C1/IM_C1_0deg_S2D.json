@@ -1,0 +1,20 @@
+{
+    "LogName": "IM_A45_L150_0deg_aRot15_S2D",
+    "ENV_Type": "SAR_2D_Env",
+    
+    "SAR_SETTINGS": {
+      "SAR_Type": "Impulse_Micro",
+      "SAR_Config": "A45_L150"
+    },
+    
+    "ENV_KWARGS": {
+        "Ang_Acc_range": [ -15, 0 ],
+        "Plane_Angle_range": [0, 0],
+        "V_mag_range": [ 0.5, 5.0 ],
+        "V_angle_range": [ 10,   90   ],
+        "Render": false
+    },
+
+    "t_step_limit": 151000, 
+    "t_step_optim": 0
+}

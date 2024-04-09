@@ -1,0 +1,58 @@
+<sdf version='1.7'>
+  <model name='Landing_Platform'>
+
+    <include>
+      <uri>model://Plane_Base_Model</uri>
+    </include>
+
+    <link name='Landing_Platform'>
+      <pose>0 0 0 0 0 0</pose>
+      <visual name='Landing_Platform_Support'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://Landing_Platform/meshes/Landing_Platform_Support.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Grey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+      </visual>
+      <visual name='Landing_Platform_Panels'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://Landing_Platform/meshes/Landing_Platform_Panels.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+      </visual>
+    </link>
+
+    <joint name='Surface_Pattern_Joint' type='fixed'>
+      <parent>Plane_Base_Model::Surface_Link</parent>
+      <child>Landing_Platform</child>
+    </joint>
+
+    <static>0</static>
+  <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

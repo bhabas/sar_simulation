@@ -12,6 +12,7 @@
 #include <ncurses.h>
 #include <unistd.h>
 #include <ctime>
+#include <Eigen/Dense>
 
 // ROS INCLUDES
 #include <ros/ros.h>
@@ -67,11 +68,12 @@ class SAR_DataConverter {
             SAR_Sticky_Pad_Connect_Sub = nh->subscribe("/SAR_Internal/Leg_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
-            cf1_FullState_Sub = nh->subscribe("/cf1/FullState", 1, &SAR_DataConverter::cf1_FullState_Callback, this, ros::TransportHints().tcpNoDelay());
-            cf1_PolicyState_Sub = nh->subscribe("/cf1/PolicyState", 1, &SAR_DataConverter::cf1_PolicyState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_States_B_O_Sub = nh->subscribe("/cf1/States_B_O", 1, &SAR_DataConverter::cf1_States_B_O_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_States_B_P_Sub = nh->subscribe("/cf1/States_B_P", 1, &SAR_DataConverter::cf1_States_B_P_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_TrgState_Sub = nh->subscribe("/cf1/TrgState", 1, &SAR_DataConverter::cf1_TrgState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_ImpactOBState_Sub = nh->subscribe("/cf1/ImpactOBState", 1, &SAR_DataConverter::cf1_Impact_OB_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_CTRL_Output_Sub = nh->subscribe("/cf1/CTRL_Output", 1, &SAR_DataConverter::cf1_CTRL_Output_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_SetPoints_Sub = nh->subscribe("/cf1/SetPoints", 1, &SAR_DataConverter::cf1_SetPoints_Callback, this, ros::TransportHints().tcpNoDelay());
-            cf1_TrgState_Sub = nh->subscribe("/cf1/TrgState", 1, &SAR_DataConverter::cf1_TrgState_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_Flags_Sub = nh->subscribe("/cf1/Flags", 1, &SAR_DataConverter::cf1_Flags_Callback, this, ros::TransportHints().tcpNoDelay());
             cf1_Misc_Sub = nh->subscribe("/cf1/Misc", 1, &SAR_DataConverter::cf1_Misc_Callback, this, ros::TransportHints().tcpNoDelay());
 
@@ -79,9 +81,8 @@ class SAR_DataConverter {
 
             // INITIALIZE CTRL COMMAND PIPELINE
             CMD_Input_Service = nh->advertiseService("/SAR_DC/CMD_Input",&SAR_DataConverter::CMD_SAR_DC_Callback,this); // CTRL COMMAND
-            CMD_Output_Service = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
-            CMD_Output_Topic = nh->advertise<sar_msgs::CTRL_Cmd>("/SAR_DC/CMD_Output_Topic",1);        // Msg publisher for Crazyswarm->CF->Controller
-
+            CMD_Output_Service_Sim = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
+            CMD_Output_Service_Exp = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/cf1/Cmd_ctrl");          // Service client for exp controller
 
             // INITIALIZE STATE DATA PUBLISHERS
             StateData_Pub = nh->advertise<sar_msgs::SAR_StateData>("/SAR_DC/StateData",1);
@@ -131,11 +132,12 @@ class SAR_DataConverter {
         //     EXPERIMENT DATA CALLBACKS
         // =================================
         void decompressXY(uint32_t xy, float xy_arr[]);
-        void cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
-        void cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_States_B_O_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_States_B_P_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_Impact_OB_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
         void cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
 
@@ -188,6 +190,7 @@ class SAR_DataConverter {
         std::thread SAR_DC_Thread;
         std::thread ConsoleOutput_Thread;
         std::thread Logging_Thread;
+        std::thread CrazyswarmPing_Thread;
 
         // =====================
         //     SYSTEM PARAMS
@@ -261,8 +264,8 @@ class SAR_DataConverter {
         // ===========================
         ros::ServiceServer CMD_Input_Service;
         ros::ServiceServer CMD_Service_Dashboard;
-        ros::ServiceClient CMD_Output_Service;
-        ros::Publisher CMD_Output_Topic;
+        ros::ServiceClient CMD_Output_Service_Sim;
+        ros::ServiceClient CMD_Output_Service_Exp;
 
         // ============================
         //     DATA PUBLISH OBJECTS
@@ -280,11 +283,12 @@ class SAR_DataConverter {
         // ===================================
         //     EXP COMPRESSED DATA OBJECTS
         // ===================================
-        ros::Subscriber cf1_FullState_Sub;
-        ros::Subscriber cf1_PolicyState_Sub;
+        ros::Subscriber cf1_States_B_O_Sub;
+        ros::Subscriber cf1_States_B_P_Sub;
         ros::Subscriber cf1_CTRL_Output_Sub;
         ros::Subscriber cf1_SetPoints_Sub;
         ros::Subscriber cf1_TrgState_Sub;
+        ros::Subscriber cf1_ImpactOBState_Sub;
         ros::Subscriber cf1_Flags_Sub;
         ros::Subscriber cf1_Misc_Sub;
 
@@ -317,7 +321,8 @@ class SAR_DataConverter {
         double Vel_angle_B_P = NAN;
         double D_perp = NAN;
         double D_perp_CR = NAN;
-        double D_perp_min = INFINITY;   
+        double D_perp_pad = INFINITY;
+        double D_perp_pad_min = INFINITY;   
 
         geometry_msgs::Vector3 Optical_Flow;
         geometry_msgs::Vector3 Optical_Flow_Cam;
@@ -339,10 +344,11 @@ class SAR_DataConverter {
 
         boost::array<double,4> FM{0,0,0,0};
         boost::array<double,4> MotorThrusts{0,0,0,0};
-        boost::array<uint16_t,4> MS_PWM{0,0,0,0};
+        boost::array<uint16_t,4> Motor_CMD{0,0,0,0};
 
-        double Policy_Trg_Action = NAN;
-        double Policy_Rot_Action = NAN;
+        boost::array<double,4> NN_Output{NAN,NAN,NAN,NAN};
+        double a_Trg = NAN;
+        double a_Rot = NAN;
         double Rot_Sum = 0.0;
 
         // ==========================
@@ -374,8 +380,9 @@ class SAR_DataConverter {
         double Theta_x_trg = NAN;
         double Theta_y_trg = NAN;
 
-        double Policy_Trg_Action_trg = NAN;
-        double Policy_Rot_Action_trg = NAN;
+        boost::array<double,4> NN_Output_trg{NAN,NAN,NAN,NAN};
+        double a_Trg_trg = NAN;
+        double a_Rot_trg = NAN;
 
         // =======================
         //   ONBOARD IMPACT DATA
@@ -386,10 +393,12 @@ class SAR_DataConverter {
 
         geometry_msgs::Pose Pose_B_O_impact_OB;
         geometry_msgs::Vector3 Eul_B_O_impact_OB;
+        double Vel_mag_B_P_impact_OB = NAN;
+        double Vel_angle_B_P_impact_OB = NAN;
 
         geometry_msgs::Twist Twist_B_P_impact_OB;
         geometry_msgs::Vector3 Eul_P_B_impact_OB;
-        float Accel_B_O_Mag_impact_OB = NAN;
+        float dOmega_B_O_y_impact_OB = NAN;
 
 
         // ==========================
@@ -424,11 +433,11 @@ class SAR_DataConverter {
         double Impact_Magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
-        boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {4};
-        boost::circular_buffer<geometry_msgs::Vector3> Eul_B_O_impact_buff {4};
+        boost::circular_buffer<geometry_msgs::Pose> Pose_B_O_impact_buff {2};
+        boost::circular_buffer<geometry_msgs::Vector3> Eul_B_O_impact_buff {2};
 
-        boost::circular_buffer<geometry_msgs::Twist> Twist_P_B_impact_buff {4};
-        boost::circular_buffer<geometry_msgs::Vector3> Eul_P_B_impact_buff {4};
+        boost::circular_buffer<geometry_msgs::Twist> Twist_P_B_impact_buff {2};
+        boost::circular_buffer<geometry_msgs::Vector3> Eul_P_B_impact_buff {2};
 
         // ==================
         //     MISC DATA
@@ -451,9 +460,9 @@ class SAR_DataConverter {
         bool TumbleDetect_Flag = false;
         bool MotorStop_Flag = false;
         bool AngAccel_Flag = false;
-        bool SafeMode_Flag = false;
+        bool Armed_Flag = false;
         bool CustomThrust_Flag = false;
-        bool CustomPWM_Flag = false;
+        bool CustomMotorCMD_Flag = false;
 
         bool Pos_Ctrl_Flag = false;
         bool Vel_Ctrl_Flag = false;
@@ -522,10 +531,6 @@ inline void SAR_DataConverter::loadInitParams()
 
     // PLANE SETTINGS
     ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
-    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_deg);
-    ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos.x);
-    ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
-    ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
 
     
     // DATA SETTINGS
@@ -577,7 +582,7 @@ inline void SAR_DataConverter::updateParams()
 
 inline void SAR_DataConverter::resetStateData()
 {
-    D_perp_min = INFINITY;
+    D_perp_pad_min = INFINITY;
 }
 
 inline void SAR_DataConverter::resetTriggerData()
@@ -599,14 +604,15 @@ inline void SAR_DataConverter::resetTriggerData()
     Vel_mag_B_P_trg = NAN;
     Vel_angle_B_P_trg = NAN;
     D_perp_trg = NAN;
+    D_perp_CR_trg = NAN;
 
     // OPTICAL FLOW
     Optical_Flow_trg = geometry_msgs::Vector3();
     Tau_CR_trg = NAN;
 
     // POLICY ACTIONS
-    Policy_Trg_Action_trg = NAN;
-    Policy_Rot_Action_trg = NAN;
+    a_Trg_trg = NAN;
+    a_Rot_trg = NAN;
 }
 
 inline void SAR_DataConverter::resetImpactData()
@@ -624,7 +630,7 @@ inline void SAR_DataConverter::resetImpactData()
 
     Twist_B_P_impact_OB = geometry_msgs::Twist();
     Eul_P_B_impact_OB = geometry_msgs::Vector3();
-    Accel_B_O_Mag_impact_OB = NAN;
+    dOmega_B_O_y_impact_OB = NAN;
 
     // EXTERNAL IMPACT DATA
     Impact_Flag_Ext = false;
@@ -674,11 +680,15 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
             }
             break;
 
+        case 9: // UPDATE PLANE POSITION
+            SAR_DataConverter::setLandingSurfacePose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);            
+            break;
+
         case 21:  // UPDATE PARAMS IN SAR_DC 
-            SAR_DataConverter::updateParams();
+            SAR_DataConverter::loadInitParams();
             break;
         
-        case 92: // ACTIVATE STICKY FEET
+        case 91: // ACTIVATE STICKY FEET
 
             if (DATA_TYPE.compare("SIM") == 0)
             {
@@ -695,15 +705,7 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
             }
             break;
 
-        case 93: // UPDATE PLANE POSITION
-            SAR_DataConverter::setLandingSurfacePose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
-
-            Plane_Pos.x = req.cmd_vals.x;
-            Plane_Pos.y = req.cmd_vals.y;
-            Plane_Pos.z = req.cmd_vals.z;
-            Plane_Angle_deg = req.cmd_flag;
-            
-            break;
+        
 
         default:
             break;
@@ -711,25 +713,27 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Reque
 
 
     // SIMULATION: SEND COMMAND VALUES TO SIM CONTROLLER (SEND AS SERVICE REQUEST)
-    sar_msgs::CTRL_Cmd_srv srv;
-    srv.request = req;
-    CMD_Output_Service.call(srv);
-
-
-    // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER (BROADCAST CMD VALUES AS ROS MESSAGE)
-    sar_msgs::CTRL_Cmd cmd_msg;
-    cmd_msg.cmd_type = req.cmd_type;
-    cmd_msg.cmd_vals = req.cmd_vals;
-    cmd_msg.cmd_flag = req.cmd_flag;
-    cmd_msg.cmd_rx = req.cmd_rx;
-
-    for (int i = 0; i < 3; i++)
+    if (DATA_TYPE.compare("SIM") == 0)
     {
-        CMD_Output_Topic.publish(cmd_msg);
+        sar_msgs::CTRL_Cmd_srv srv;
+        srv.request = req;
+        CMD_Output_Service_Sim.call(srv);
+        return true;
+    }
+    else
+    {
+        // EXPERIMENT: SEND COMMAND VALUES TO PHYSICAL CONTROLLER
+        sar_msgs::CTRL_Cmd_srv srv;
+        srv.request = req;
+        CMD_Output_Service_Exp.call(srv);
+
+        return true;
     }
     
-    return srv.response.srv_Success; // Return if service request successful (true/false)
+    
 }
+
+
 
 
 // CONVERT QUATERNION TO EULER ANGLES (YZX NOTATION)

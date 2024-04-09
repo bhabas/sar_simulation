@@ -133,7 +133,7 @@ class EPHE_Agent():
     
 
 if __name__ == "__main__":
-    np.set_printoptions(precision=2, suppress=True)
+    # np.set_printoptions(precision=2, suppress=True)
     mu = np.array([[0.0],[0.0]])
     sigma = np.array([[0.25],[0.5]])
 

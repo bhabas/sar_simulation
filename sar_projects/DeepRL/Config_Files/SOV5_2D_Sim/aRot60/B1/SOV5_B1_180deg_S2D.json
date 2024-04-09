@@ -1,0 +1,20 @@
+{
+    "LogName": "SOV5_A30_L250_180deg_aRot60_S2D",
+    "ENV_Type": "SAR_2D_Env",
+    
+    "SAR_SETTINGS": {
+      "SAR_Type": "Source_One_V5",
+      "SAR_Config": "A30_L250"
+    },
+    
+    "ENV_KWARGS": {
+        "Ang_Acc_range": [ -60, 0 ],
+        "Plane_Angle_range": [180, 180],
+        "V_mag_range": [ 0.5, 5.0 ],
+        "V_angle_range": [ 90, 170 ],
+        "Render": false
+    },
+
+    "t_step_limit": 151000, 
+    "t_step_optim": 0
+}

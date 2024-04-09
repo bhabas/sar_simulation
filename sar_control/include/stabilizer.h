@@ -22,7 +22,7 @@
 #include "sar_msgs/CTRL_Get_Obs.h"
 #include "sar_msgs/CTRL_Data.h"
 #include "sar_msgs/CTRL_Debug.h"
-#include "sar_msgs/SAR_MiscData.h"
+#include "sar_msgs/SAR_ImpactData.h"
 
 
 
@@ -48,7 +48,7 @@ class Controller
             CTRL_Debug_Publisher = nh->advertise<sar_msgs::CTRL_Debug>("CTRL/debug",1);
             CTRL_CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
             Get_Obs_Service = nh->advertiseService("/CTRL/Get_Obs",&Controller::Get_Obs_Resp,this);
-            SAR_DC_Subscriber = nh->subscribe("/SAR_DC/MiscData",1,&Controller::Plane_Pose_Callback,this,ros::TransportHints().tcpNoDelay());
+            SAR_DC_Subscriber = nh->subscribe("/SAR_DC/ImpactData",1,&Controller::SAR_DC_ExtImpact_Callback,this,ros::TransportHints().tcpNoDelay());
 
 
 
@@ -110,35 +110,34 @@ class Controller
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         bool CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
         bool Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res);
-        void Plane_Pose_Callback(const sar_msgs::SAR_MiscData::ConstPtr &msg);
+        void SAR_DC_ExtImpact_Callback(const sar_msgs::SAR_ImpactData::ConstPtr &msg);
 
 
         void appLoop();
         void stabilizerLoop();
 
         void loadInitParams();
+        void loadParams();
         void publishCtrlData();
         void publishCtrlDebug();
 
 
 };
 
-void Controller::Plane_Pose_Callback(sar_msgs::SAR_MiscData::ConstPtr const &msg)
+void Controller::SAR_DC_ExtImpact_Callback(sar_msgs::SAR_ImpactData::ConstPtr const &msg)
 {
-    Plane_Angle_deg = msg->Plane_Angle;
-    r_P_O.x = msg->Plane_Pos.x;
-    r_P_O.y = msg->Plane_Pos.y;
-    r_P_O.z = msg->Plane_Pos.z;
+    Impact_Flag_Ext = msg->Impact_Flag_Ext;
 }
 
 bool Controller::Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res)
 {
     res.Tick = tick;
     res.Tau = Tau;
+    res.Tau_CR = Tau_CR;
     res.Theta_x = Theta_x;
     res.D_perp = D_perp;
+    res.D_perp_CR = D_perp_CR;
     res.Plane_Angle_deg = Plane_Angle_deg;
-    res.Tau_CR = Tau_CR;
 
     return 1;
 }
@@ -158,8 +157,7 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
 
     if(req.cmd_type == 21) // RESET ROS PARAM VALUES
     {
-        Controller::loadInitParams();
-
+        Controller::loadParams();
     }
 
     return 1;
@@ -215,7 +213,7 @@ void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
 void Controller::loadInitParams()
 {
-    printf("Updating Parameters\n");
+    printf("Loading Initial Parameters\n");
 
     ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
@@ -242,12 +240,29 @@ void Controller::loadInitParams()
     Prop_14_x = Prop_Front_Vec[0];
     Prop_14_y = Prop_Front_Vec[1];
 
-
     ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
     Prop_23_x = Prop_Rear_Vec[0];
     Prop_23_y = Prop_Rear_Vec[1];
 
+    // LOAD INITIAL PLANE POSE
+    ros::param::get("/PLANE_SETTINGS/Pos_X_init",r_P_O.x);
+    ros::param::get("/PLANE_SETTINGS/Pos_Y_init",r_P_O.y);
+    ros::param::get("/PLANE_SETTINGS/Pos_Z_init",r_P_O.z);
+    ros::param::get("/PLANE_SETTINGS/Plane_Angle_init",Plane_Angle_deg);
 
+
+    int Vicon_Delay_ms;
+    ros::param::get("/SIM_SETTINGS/Vicon_Delay",Vicon_Delay_ms);
+    Ext_Position_msgBuffer.set_capacity(Vicon_Delay_ms);
+
+    // LOAD CONTROLLER GAINS
+    Controller::loadParams();
+
+}
+
+void Controller::loadParams()
+{
+    printf("Updating Parameters\n");
 
     // UPDATE CTRL GAINS
     ros::param::get("/SAR_Type/" + SAR_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
@@ -272,7 +287,6 @@ void Controller::loadInitParams()
 
     ros::param::get("/SAR_SETTINGS/Cam_Active",CamActive_Flag);
 
-
     // SIMULATION SETTINGS FROM CONFIG FILE
     ros::param::get("SAR_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
     if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
@@ -287,11 +301,6 @@ void Controller::loadInitParams()
     {
         Policy = DEEP_RL_SB3;
     }    
-
-    int Vicon_Delay_ms;
-    ros::param::get("/SIM_SETTINGS/Vicon_Delay",Vicon_Delay_ms);
-    Ext_Position_msgBuffer.set_capacity(Vicon_Delay_ms);
-
 }
 
 
@@ -301,9 +310,9 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.TumbleDetect_Flag = TumbleDetect_Flag;
     CtrlDebug_msg.MotorStop_Flag = MotorStop_Flag;
     CtrlDebug_msg.AngAccel_Flag = AngAccel_Flag; 
-    CtrlDebug_msg.SafeMode_Flag = SafeMode_Flag;
+    CtrlDebug_msg.Armed_Flag = Armed_Flag;
     CtrlDebug_msg.CustomThrust_Flag = CustomThrust_Flag;
-    CtrlDebug_msg.CustomPWM_Flag = CustomPWM_Flag;
+    CtrlDebug_msg.CustomMotorCMD_Flag = CustomMotorCMD_Flag;
 
     CtrlDebug_msg.Pos_Ctrl_Flag = (bool)kp_xf;
     CtrlDebug_msg.Vel_Ctrl_Flag = (bool)kd_xf;
@@ -372,6 +381,12 @@ void Controller::publishCtrlData()
     CtrlData_msg.Vel_mag_B_P = Vel_mag_B_P;
     CtrlData_msg.Vel_angle_B_P = Vel_angle_B_P;
 
+    // PLANE STATES
+    CtrlData_msg.Plane_Pos.x = r_P_O.x;
+    CtrlData_msg.Plane_Pos.y = r_P_O.y;
+    CtrlData_msg.Plane_Pos.z = r_P_O.z;
+    CtrlData_msg.Plane_Angle_deg = Plane_Angle_deg;
+
     // OPTICAL FLOW DATA
     CtrlData_msg.Optical_Flow.x = Theta_x;
     CtrlData_msg.Optical_Flow.y = Theta_y;
@@ -385,13 +400,14 @@ void Controller::publishCtrlData()
     CtrlData_msg.Optical_Flow_Cam.z = Tau_Cam;
 
     // POLICY ACTIONS
-    CtrlData_msg.Policy_Trg_Action = Policy_Trg_Action;
-    CtrlData_msg.Policy_Rot_Action = Policy_Rot_Action;
+    CtrlData_msg.NN_Output = {tanhf(Y_output->data[0][0]),tanhf(Y_output->data[1][0]),Y_output->data[2][0],Y_output->data[3][0]};
+    CtrlData_msg.a_Trg = a_Trg;
+    CtrlData_msg.a_Rot = a_Rot;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
     CtrlData_msg.MotorThrusts = {M1_thrust,M2_thrust,M3_thrust,M4_thrust};
-    CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+    CtrlData_msg.Motor_CMD = {M1_CMD,M2_CMD,M3_CMD,M4_CMD};
 
     CtrlData_msg.x_d.x = x_d.x;
     CtrlData_msg.x_d.y = x_d.y;
@@ -462,31 +478,29 @@ void Controller::publishCtrlData()
     CtrlData_msg.Tau_CR_trg = Tau_CR_trg;
 
     // POLICY ACTIONS (TRIGGER)
-    CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
+    CtrlData_msg.NN_Output_trg = {tanhf(Y_output_trg[0]),tanhf(Y_output_trg[1]),Y_output_trg[2],Y_output_trg[3]};
+    CtrlData_msg.a_Trg_trg = a_Trg_trg;
+    CtrlData_msg.a_Rot_trg = a_Rot_trg;
 
     // ==========================
     //      STATES AT IMPACT
     // ==========================
     CtrlData_msg.Impact_Flag_OB = Impact_Flag_OB;
-    CtrlData_msg.Accel_B_O_Mag_impact_OB = Accel_B_O_Mag_impact_OB;
 
-    CtrlData_msg.Pose_B_O_impact_OB.position.x = Pos_B_O_impact_OB.x;
-    CtrlData_msg.Pose_B_O_impact_OB.position.y = Pos_B_O_impact_OB.y;
-    CtrlData_msg.Pose_B_O_impact_OB.position.z = Pos_B_O_impact_OB.z;
+    CtrlData_msg.Vel_mag_B_P_impact_OB = Vel_mag_B_P_impact_OB;
+    CtrlData_msg.Vel_angle_B_P_impact_OB = Vel_angle_B_P_impact_OB;
 
     CtrlData_msg.Pose_B_O_impact_OB.orientation.x = Quat_B_O_impact_OB.x;
     CtrlData_msg.Pose_B_O_impact_OB.orientation.y = Quat_B_O_impact_OB.y;
     CtrlData_msg.Pose_B_O_impact_OB.orientation.z = Quat_B_O_impact_OB.z;
     CtrlData_msg.Pose_B_O_impact_OB.orientation.w = Quat_B_O_impact_OB.w;
 
-    CtrlData_msg.Twist_B_P_impact_OB.linear.x = Vel_B_P_impact_OB.x;
-    CtrlData_msg.Twist_B_P_impact_OB.linear.y = Vel_B_P_impact_OB.y;
-    CtrlData_msg.Twist_B_P_impact_OB.linear.z = Vel_B_P_impact_OB.z;
 
-    CtrlData_msg.Twist_B_P_impact_OB.angular.x = Omega_B_P_impact_OB.x;
-    CtrlData_msg.Twist_B_P_impact_OB.angular.y = Omega_B_P_impact_OB.y;
-    CtrlData_msg.Twist_B_P_impact_OB.angular.z = Omega_B_P_impact_OB.z;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.x = Omega_B_O_impact_OB.x;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.y = Omega_B_O_impact_OB.y;
+    CtrlData_msg.Twist_B_P_impact_OB.angular.z = Omega_B_O_impact_OB.z;
+
+    CtrlData_msg.dOmega_B_O_y_impact_OB = dOmega_B_O_impact_OB.y;
     
     CTRL_Data_Publisher.publish(CtrlData_msg);
 }

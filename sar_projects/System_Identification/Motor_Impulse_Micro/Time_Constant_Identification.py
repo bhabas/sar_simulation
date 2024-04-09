@@ -14,11 +14,11 @@ NUM_BATT_CELLS = 4
 THRUST_TRANSITION_CMD = 600
 GF_2_NEWTON = 0.001*9.81
 NEWTON_2_GF = 1/GF_2_NEWTON
-K_F = 1.45e-7
+K_F = 1.521e-7
 
 ## DATAPATHS
 dataPath = f"{BASE_PATH}/sar_projects/System_Identification/Motor_Impulse_Micro/Logs/"
-fileName = f"TimeConstant_Test_2023-12-17_162234.csv"
+fileName = f"TimeConstant_Test_2024-02-06_134515.csv"
 filePath = os.path.join(dataPath,fileName)
 
 ## DEFINE FITTING FUNCTIONS AND SYSTEM CONSTANTS
@@ -112,26 +112,26 @@ ax_current.grid(True)
 
 ## CURVE FITS
 curve_fits = {
-    'a': (exp_rise, [3.93, 4.2]),
-    'b': (exp_decay, [6.28, 6.75]),
+    'a': (exp_rise, [2.57, 2.8]),
+    'b': (exp_decay, [4.108, 4.5]),
 
-    'c': (exp_rise, [8.77, 9.3]),
-    'd': (exp_rise, [10.0, 10.5]),
-    'e': (exp_rise, [11.59, 11.95]),
-    'f': (exp_decay, [12.79, 13.2]),
-    'g': (exp_decay, [14.53, 15.0]),
-    'h': (exp_decay, [15.87, 16.3]),
+    'c': (exp_decay, [8.346, 8.7]),
+    'd': (exp_decay, [12.58, 13.0]),
+    # 'e': (exp_rise, [11.59, 11.95]),
+    # 'f': (exp_decay, [12.79, 13.2]),
+    # 'g': (exp_decay, [14.53, 15.0]),
+    # 'h': (exp_decay, [15.87, 16.3]),
 
 
-    'i': (exp_rise, [18.34, 18.6]),
-    'j': (exp_rise, [20.54, 20.8]),
+    # 'i': (exp_rise, [18.34, 18.6]),
+    # 'j': (exp_rise, [20.54, 20.8]),
 
-    'k': (exp_decay, [22.63, 23.0]),
-    'l': (exp_decay, [31.61, 32.6]),
+    # 'k': (exp_decay, [22.63, 23.0]),
+    # 'l': (exp_decay, [31.61, 32.6]),
 
-    'm': (exp_rise, [34.14, 34.6]),
-    'n': (exp_decay, [38.03, 38.4]),
-    'o': (exp_decay, [39.77, 40.2]),
+    # 'm': (exp_rise, [34.14, 34.6]),
+    # 'n': (exp_decay, [38.03, 38.4]),
+    # 'o': (exp_decay, [39.77, 40.2]),
 }
 
 

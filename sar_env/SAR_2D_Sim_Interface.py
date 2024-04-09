@@ -23,9 +23,7 @@ GREEN_PG = (0,153,0)
 PURPLE_PG = (76,0,153)
 ORANGE_PG = (255,128,0)
 
-EPS = 1e-6 # Epsilon (Prevent division by zero)
 GRAM_2_NEWTON = 9.81/1000.0
-COORD_FLIP = -1  # Swap sign to match proper coordinate notation
 
 EPS = 1e-6 # Epsilon (Prevent division by zero)
 YELLOW = '\033[93m'
@@ -57,10 +55,11 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
         self.V_mag = np.nan
         self.V_angle = np.nan
-        self.Tau = np.nan
-        self.Theta_x = np.nan
-        self.D_perp = np.nan
-        self.Tau_CR = np.nan
+        self.Tau = np.inf
+        self.Theta_x = np.inf
+        self.D_perp = np.inf
+        self.Tau_CR = np.inf
+        self.D_perp_pad = np.inf
 
         ## INITIAL LEARNING/REWARD CONFIGS
         self.Trg_Flag = False
@@ -83,6 +82,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         self.V_B_P_impact_Ext = np.full(3,np.nan)
         self.Eul_B_O_impact_Ext = np.full(3,np.nan)
+        self.Eul_P_B_impact_Ext = np.full(3,np.nan)
         self.Rot_Sum_impact_Ext = 0
 
         
@@ -94,7 +94,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.screen_width = 1000    # [pixels]
         self.screen_height = self.screen_width*self.world_height/self.world_width # [pixels]
         
-        self.RENDER = Render
+        self.Render_Flag = Render
         self.screen = None
         self.clock = None
         self.isopen = True
@@ -143,6 +143,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 self.State_Impact = self._getState()
                 self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
                 self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+                self.Eul_P_B_impact_Ext[1] = np.degrees(self.R_WP([0,self.State_Impact[1],0],self.Plane_Angle_rad)[1])
+                self.Omega_B_P_impact_Ext[1] = self.State_Impact[3]
 
                 self.render()
 
@@ -161,6 +163,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.State_Impact = self._getState()
             self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
             self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+            self.Eul_P_B_impact_Ext[1] = np.degrees(-self.R_WP([0,self.State_Impact[1],0],self.Plane_Angle_rad)[1])
+            self.Omega_B_P_impact_Ext[1] = self.State_Impact[3]
 
             self._impactConversion()
             self.render()
@@ -181,6 +185,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.State_Impact = self._getState()
             self.V_B_P_impact_Ext = self.R_WP(self.State_Impact[2],self.Plane_Angle_rad)
             self.Eul_B_O_impact_Ext[1] = np.degrees(self.State_Impact[1])
+            self.Eul_P_B_impact_Ext[1] = np.degrees(-self.R_WP([0,self.State_Impact[1],0],self.Plane_Angle_rad)[1])
+            self.Omega_B_P_impact_Ext[1] = self.State_Impact[3]
 
             self._impactConversion()
             self.render()
@@ -200,7 +206,6 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ## PLANE POSITION AND UNIT VECTORS
         r_B_O,Phi_B_O,V_B_O,dPhi = self._getState()
         r_P_O = self.r_P_O
-
 
         ## CALC DISPLACEMENT FROM PLANE CENTER
         r_P_B = r_P_O - r_B_O # {X_W,Z_W}
@@ -225,40 +230,60 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         self.D_perp = D_perp
         self.D_perp_CR = D_perp_CR
 
+        obs_list = [Tau_CR,Theta_x,D_perp_CR,self.Plane_Angle_rad]
+
+        Tau_CR_scaled = self.scaleValue(Tau_CR,original_range=[-5,5],target_range=[-1,1])
+        Theta_x_scaled = self.scaleValue(Theta_x,original_range=[-20,20],target_range=[-1,1])
+        D_perp_CR_scaled = self.scaleValue(D_perp_CR,original_range=[-0.5,2.0],target_range=[-1,1])
+        Plane_Angle_scaled = self.scaleValue(self.Plane_Angle_deg,original_range=[0,180],target_range=[-1,1])
+
+        scaled_obs_list = [Tau_CR_scaled,Theta_x_scaled,D_perp_CR_scaled,Plane_Angle_scaled]
+
+
         ## OBSERVATION VECTOR
-        obs = np.array([Tau_CR,Theta_x,D_perp,self.Plane_Angle_rad],dtype=np.float32)
+        obs = np.array(scaled_obs_list,dtype=np.float32)
 
         return obs
     
-    def resetPose(self,z_0=0.4):
-        self._setModelState()
+    def resetPose(self,z_0=0.5):
+        self._setModelState(pos=[0,0,-0.5])
 
     def Sim_VelTraj(self,pos,vel): 
-        self._setState(pos,0*DEG2RAD,vel,0)
-        
+        self._setState(pos,0*DEG2RAD,vel,0)  
 
-    def _setModelState(self,pos=[0,0,0.4],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
+    def _setModelState(self,pos=[0,0,0.5],quat=[0,0,0,1],vel=[0,0,0],ang_vel=[0,0,0]):
 
         self._setState(np.array(pos),0,np.array(vel),0)
+
+    def _setModelInertia(self,Mass=0,Inertia=[0,0,0]):
+
+        self.Ref_Mass = Mass
+        self.Ref_Iyy = Inertia[1]
 
     def _setPlanePose(self,Pos,Plane_Angle):
         self.Plane_Pos = Pos
         self.Plane_Angle_deg = Plane_Angle
         self.Plane_Angle_rad = np.radians(Plane_Angle)
 
-
     def _iterStep(self,n_steps=10,a_Rot=0):
 
         for _ in range(n_steps):
 
-            if self.Trg_Flag == False:
+            ## FLIGHT STAGE
+            if self.Trg_Flag == False and self.Impact_Flag_Ext == False:
                 self._iterStep_Flight()
                 self._checkImpact()
-
+            
+            ## IMPACT BEFORE ROTATION
+            elif self.Trg_Flag == False and self.Impact_Flag_Ext == True:
+                self.Done = True
+                
+            ## ROTATION STAGE
             elif self.Trg_Flag == True and self.Impact_Flag_Ext == False:
                 self._iterStep_Rot(a_Rot)
                 self._checkImpact()
 
+            ## IMPACT AFTER ROTATION
             elif self.Trg_Flag == True and self.Impact_Flag_Ext == True:
 
                 if self.BodyContact_Flag == True:
@@ -272,16 +297,31 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     self._iterStep_Swing(a_Rot)
                     self._checkTouchdown()
 
-
-            # UPDATE MINIMUM DISTANCE
-            D_perp = self._getObs()[2]
-            if D_perp <= self.D_perp_min:
-                self.D_perp_min = D_perp 
-
             if self.Done:
                 break
 
+        ## UPDATE MINIMUM DISTANCE OF PAD
+        r_C1_O = self._getPose()[1]                                     # {X_W,Z_W}
+        r_C1_P = self.R_WP(r_C1_O - self.r_P_O, self.Plane_Angle_rad)   # {tx,n_p}
+
+        r_C2_O = self._getPose()[2]                 
+        r_C2_P = self.R_WP(r_C2_O - self.r_P_O, self.Plane_Angle_rad)
+
+        self.D_perp_pad = min(abs(r_C1_P[2]),abs(r_C2_P[2]))
+
+        # UPDATE MINIMUM DISTANCE
+        if self.D_perp_CR <= self.D_perp_CR_min:
+            self.D_perp_CR_min = self.D_perp_CR 
+
+        r_B_O,Phi_B_O,V_B_O,dPhi_B_O = self._getState()
+        if self.D_perp_pad <= self.D_perp_pad_min and np.abs(Phi_B_O) < np.deg2rad(360):
+            self.D_perp_pad_min = self.D_perp_pad
+
+
     def render(self):
+
+        if self.Render_Flag == False:
+            return
 
         ## SET DEFAULT WINDOW POSITION
         Win_Loc_z = 500
@@ -336,12 +376,12 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         ## LANDING SURFACE
         pg.draw.line(self.surf,GREY_PG,
-                         c2p(self.r_P_O + self.R_PW(np.array([-2,0,0]),self.Plane_Angle_rad)),
-                         c2p(self.r_P_O + self.R_PW(np.array([+2,0,0]),self.Plane_Angle_rad)),width=2)
+                         c2p(self.r_P_O + self.R_PW(np.array([-5.0,0,0]),self.Plane_Angle_rad)),
+                         c2p(self.r_P_O + self.R_PW(np.array([+5.0,0,0]),self.Plane_Angle_rad)),width=2)
         
         pg.draw.line(self.surf,BLACK_PG,
-                         c2p(self.r_P_O + self.R_PW(np.array([-0.5,0,0]),self.Plane_Angle_rad)),
-                         c2p(self.r_P_O + self.R_PW(np.array([+0.5,0,0]),self.Plane_Angle_rad)),width=5)
+                         c2p(self.r_P_O + self.R_PW(np.array([-0.6,0,0]),self.Plane_Angle_rad)),
+                         c2p(self.r_P_O + self.R_PW(np.array([+0.6,0,0]),self.Plane_Angle_rad)),width=5)
     
         ## LANDING SURFACE AXES
         pg.draw.line(self.surf,GREEN_PG,c2p(self.r_P_O),c2p(self.r_P_O + self.R_PW(np.array([0.1,0,0]),self.Plane_Angle_rad)),width=7)  # t_x   
@@ -366,7 +406,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         pg.draw.line(self.surf,PURPLE_PG,c2p(Pose[0]),c2p(Pose[0] + g_hat*0.1),width=3)
 
         ## VELOCITY UNIT VECTOR
-        v_hat = V_B_O/np.linalg.norm(V_B_O)
+        v_hat = V_B_O/(np.linalg.norm(V_B_O) + EPS)
         pg.draw.line(self.surf,ORANGE_PG,c2p(Pose[0]),c2p(Pose[0] + v_hat*0.1),width=3)
 
 
@@ -547,16 +587,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 + self.Ref_Mass * self.g * self.L_eff * np.sin(self.Beta) * np.sin(self.Plane_Angle_rad)
             
 
-            ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+            ## TURN OFF BODY MOMENT AT CONTACT
             _,Phi_B_O,_,_ = self._getState()
-            if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
-                M_yd = self.Ref_Iyy*a_Rot
-                M_yd *= 2
-
-            else: 
-
-                M_yd = 0
-                self.MomentCutoff= True
+            M_yd = 0
+            self.MomentCutoff= True
 
             ## THRUST MIXING
             M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
@@ -626,16 +660,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             M_g = -self.Ref_Mass * self.g * self.L_eff * np.cos(self.Beta) * np.cos(self.Plane_Angle_rad) \
                 + self.Ref_Mass * self.g * self.L_eff * np.sin(self.Beta) * np.sin(self.Plane_Angle_rad)
             
-            ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+            ## TURN OFF BODY MOMENT AT CONTACT
             _,Phi_B_O,_,_ = self._getState()
-            if np.abs(Phi_B_O) < np.deg2rad(90) and self.MomentCutoff == False:
-                M_yd = self.Ref_Iyy*a_Rot
-                M_yd *= 2
-
-            else: 
-
-                M_yd = 0
-                self.MomentCutoff= True
+            M_yd = 0
+            self.MomentCutoff= True
 
             ## THRUST MIXING
             M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
@@ -703,32 +731,46 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             return
 
         elif self.ForelegContact_Flag == True:
-        
-            if self.Beta <= -(90 + self.Gamma_eff)*DEG2RAD:
+
+            r_B_O,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._getPose()
+
+            ## CHECK FOR PROP CONTACT
+            for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
+                Prop_wrt_Plane = self.R_WP((Prop_Pos - self.r_P_O),self.Plane_Angle_rad)
+                if Prop_wrt_Plane[2] >= 0:
+                    self.BodyContact_Flag = True
+                    self.Pad_Connections = 2
+                    self.render()
+                    self.Done = True
+                    return
+
+            ## CHECK FOR HINDLEG CONTACT
+            Hindleg_wrt_Plane = self.R_WP((Leg2_Pos - self.r_P_O),self.Plane_Angle_rad)
+            if Hindleg_wrt_Plane[2] >= 0:
                 self.Pad_Connections = 4
                 self.render()
                 self.Done = True
                 return
-
-            elif self.Beta >= self.Beta_Min_deg*DEG2RAD:
-                self.BodyContact_Flag = True
-                self.Pad_Connections = 2
-                self.render()
-                self.Done = True
-                return
-
-            
+                        
         elif self.HindlegContact_Flag == True:
             
-            if self.Beta >= -(90 - self.Gamma_eff)*DEG2RAD:
-                self.Pad_Connections = 4
-                self.render()
-                self.Done = True
-                return
+            r_B_O,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._getPose()
 
-            elif self.Beta <= -(180 + self.Beta_Min_deg)*DEG2RAD:
-                self.BodyContact_Flag = True
-                self.Pad_Connections = 2
+            ## CHECK FOR PROP CONTACT
+            for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
+                Prop_wrt_Plane = self.R_WP((Prop_Pos - self.r_P_O),self.Plane_Angle_rad)
+                if Prop_wrt_Plane[2] >= 0:
+                    self.BodyContact_Flag = True
+                    self.Pad_Connections = 2
+                    self.render()
+                    self.Done = True
+                    return
+
+            ## CHECK FOR FORELEG CONTACT
+            Foreleg_wrt_Plane = self.R_WP((Leg1_Pos - self.r_P_O),self.Plane_Angle_rad)
+
+            if Foreleg_wrt_Plane[2] >= 0:
+                self.Pad_Connections = 4
                 self.render()
                 self.Done = True
                 return
@@ -742,12 +784,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         if self.ForelegContact_Flag:
 
             ## CALC BETA ANGLE
-            Beta_1_deg = Phi_B_O*RAD2DEG - self.Gamma_eff - self.Plane_Angle_deg + 90
+            Phi_B_P = Phi_B_O - self.Plane_Angle_rad
+            Beta_1_deg = Phi_B_P*RAD2DEG - self.Gamma_eff + 90
             Beta_1_rad = np.radians(Beta_1_deg)
-
-            # Beta_1 = np.arctan2(np.cos(self.Gamma_eff - phi + self.Plane_Angle_rad), \
-            #                     np.sin(self.Gamma_eff - phi + self.Plane_Angle_rad))
-            # Beta_1_deg = np.degrees(Beta_1)
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
             H_V_perp = self.Ref_Mass*self.L_eff*V_perp*np.cos(Beta_1_rad)
@@ -774,9 +813,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             dBeta_2 = 1/(self.I_c)*(H_V_perp + H_V_tx + H_dphi)
 
             self.Beta = Beta_2_rad
-            self.dBeta = dBeta_2
-
-  
+            self.dBeta = dBeta_2 
 
     def draw_line_dashed(self,surface, color, start_pos, end_pos, width = 1, dash_length = 10, exclude_corners = True):
 
@@ -807,6 +844,18 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             alpha_down = np.exp(-self.dt/self.Tau_down)
             Thrust = alpha_down*Prev_Thrust + (1 - alpha_down)*Thrust_input
             return Thrust
+        
+    def scaleValue(self,x, original_range=(-1, 1), target_range=(-1, 1)):
+
+        original_min, original_max = original_range
+        target_min, target_max = target_range
+
+        # Scale x to [0, 1] in original range
+        x_scaled = (x - original_min) / (original_max - original_min)
+
+        # Scale [0, 1] to target range
+        x_target = x_scaled * (target_max - target_min) + target_min
+        return x_target
 
     
 if __name__ == "__main__":

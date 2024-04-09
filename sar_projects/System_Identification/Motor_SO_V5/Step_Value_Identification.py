@@ -18,7 +18,7 @@ NEWTON_2_GF = 1/GF_2_NEWTON
 
 ## DATAPATHS
 dataPath = f"{BASE_PATH}/sar_projects/System_Identification/Motor_SO_V5/Logs/"
-fileName = f"StepsTestV2_2023-12-14_111824.csv"
+fileName = f"StepsTest_Collated.csv"
 filePath = os.path.join(dataPath,fileName)
 
 ## DEFINE FITTING FUNCTIONS AND SYSTEM CONSTANTS
@@ -54,7 +54,7 @@ def piecewise_func_inv(x, a, b):
 
 ## LOAD DATA
 df = pd.read_csv(filePath,comment="#")
-df = df.query("`Voltage (V)` >= 3.85*@NUM_BATT_CELLS")
+# df = df.query("`Voltage (V)` >= 3.85*@NUM_BATT_CELLS")
 
 
 ## INITIALIZE PLOTS

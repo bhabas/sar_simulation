@@ -1,0 +1,351 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='A15_L50'>
+
+    <include>
+      <uri>model://SAR_Base</uri>
+    </include>
+
+    <link name='Leg_1'>
+      <pose>18.5e-3 -18.5e-3 -4.0e-3 0 1.309 -0.785</pose>
+      <inertial>
+        <mass>2.03E-2</mass>
+        <pose>4.31E-2 0 -5.00E-4 0 0 0 </pose>
+        <inertia>
+          <ixx>1.43E-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.72E-5</iyy>
+          <iyz>0</iyz>
+          <izz>1.61E-5</izz>
+        </inertia>
+      </inertial>
+      <gravity>1</gravity>
+      <self_collide>1</self_collide>
+      <visual name='Leg_Visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_15_deg--50mm.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red </name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+      <collision name="Leg_Collision_1">
+        <pose>60.2e-3 0 -1.6e-3 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>13.9e-3</radius>
+          </sphere>
+        </geometry>
+      </collision>
+      <sensor name="Contact_Sensor" type="contact">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>Leg_Collision_1</collision>
+        </contact>
+      </sensor>
+      <self_collide>1</self_collide>
+    </link>
+
+    <link name='Leg_2'>
+      <pose>-18.5e-3 -18.5e-3 -4.0e-3 0 1.309 -2.35</pose>
+      <inertial>
+        <mass>2.03E-2</mass>
+        <pose>4.31E-2 0 -5.00E-4 0 0 0 </pose>
+        <inertia>
+          <ixx>1.43E-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.72E-5</iyy>
+          <iyz>0</iyz>
+          <izz>1.61E-5</izz>
+        </inertia>
+      </inertial>
+      <gravity>1</gravity>
+      <self_collide>1</self_collide>
+      <visual name='Leg_Visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_15_deg--50mm.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey </name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+      <collision name="Leg_Collision_2">
+        <pose>60.2e-3 0 -1.6e-3 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>13.9e-3</radius>
+          </sphere>
+        </geometry>
+      </collision>
+      <sensor name="Contact_Sensor" type="contact">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>Leg_Collision_2</collision>
+        </contact>
+      </sensor>
+      <self_collide>1</self_collide>
+    </link>
+
+    <link name='Leg_3'>
+      <pose>-18.5e-3 18.5e-3 -4.0e-3 0 1.309 2.35</pose>
+      <inertial>
+        <mass>2.03E-2</mass>
+        <pose>4.31E-2 0 -5.00E-4 0 0 0 </pose>
+        <inertia>
+          <ixx>1.43E-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.72E-5</iyy>
+          <iyz>0</iyz>
+          <izz>1.61E-5</izz>
+        </inertia>
+      </inertial>
+      <gravity>1</gravity>
+      <self_collide>1</self_collide>
+      <visual name='Leg_Visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_15_deg--50mm.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey </name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+      <collision name="Leg_Collision_3">
+        <pose>60.2e-3 0 -1.6e-3 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>13.9e-3</radius>
+          </sphere>
+        </geometry>
+      </collision>
+      <sensor name="Contact_Sensor" type="contact">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>Leg_Collision_3</collision>
+        </contact>
+      </sensor>
+      <self_collide>1</self_collide>
+    </link>
+
+    <link name='Leg_4'>
+      <pose>18.5e-3 18.5e-3 -4.0e-3 0 1.309 0.785</pose>
+      <inertial>
+        <mass>2.03E-2</mass>
+        <pose>4.31E-2 0 -5.00E-4 0 0 0 </pose>
+        <inertia>
+          <ixx>1.43E-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.72E-5</iyy>
+          <iyz>0</iyz>
+          <izz>1.61E-5</izz>
+        </inertia>
+      </inertial>
+      <gravity>1</gravity>
+      <self_collide>1</self_collide>
+      <visual name='Leg_Visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_15_deg--50mm.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red </name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+      <collision name="Leg_Collision_4">
+        <pose>60.2e-3 0 -1.6e-3 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>13.9e-3</radius>
+          </sphere>
+        </geometry>
+      </collision>
+      <sensor name="Contact_Sensor" type="contact">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>Leg_Collision_4</collision>
+        </contact>
+      </sensor>
+      <self_collide>1</self_collide>
+    </link>
+
+
+
+    <joint name='Hinge_1_Joint' type='universal'>
+      <parent>SAR_Base::SAR_Body</parent>
+      <child>Leg_1</child>
+      <pose>0 0 0 0 0.2618 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-5</lower>
+          <upper>5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-5</lower>
+          <upper>5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis2>
+    </joint>
+
+    <joint name='Hinge_2_Joint' type='universal'>
+      <parent>SAR_Base::SAR_Body</parent>
+      <child>Leg_2</child>
+      <pose>0 0 0 0 0.2618 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-5</lower>
+          <upper>5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-5</lower>
+          <upper>5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis2>
+    </joint>
+
+    <joint name='Hinge_3_Joint' type='universal'>
+      <parent>SAR_Base::SAR_Body</parent>
+      <child>Leg_3</child>
+      <pose>0 0 0 0 0.2618 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-5</lower>
+          <upper>5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-5</lower>
+          <upper>5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis2>
+    </joint>
+
+    <joint name='Hinge_4_Joint' type='universal'>
+      <parent>SAR_Base::SAR_Body</parent>
+      <child>Leg_4</child>
+      <pose>0 0 0 0 0.2618 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-5</lower>
+          <upper>5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-5</lower>
+          <upper>5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis2>
+    </joint>
+
+
+    <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>1</LegNumber>
+      <LinkName>Leg_1</LinkName>
+      <CollisionName>Leg_Collision_1</CollisionName>
+      <JointName>Leg_1_Contact_Joint</JointName>
+    </plugin>
+
+    <plugin name='Leg_2_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>2</LegNumber>
+      <LinkName>Leg_2</LinkName>
+      <CollisionName>Leg_Collision_2</CollisionName>
+      <JointName>Leg_2_Contact_Joint</JointName>
+    </plugin>
+
+    <plugin name='Leg_3_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>3</LegNumber>
+      <LinkName>Leg_3</LinkName>
+      <CollisionName>Leg_Collision_3</CollisionName>
+      <JointName>Leg_3_Contact_Joint</JointName>
+    </plugin>
+
+    <plugin name='Leg_4_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>4</LegNumber>
+      <LinkName>Leg_4</LinkName>
+      <CollisionName>Leg_Collision_4</CollisionName>
+      <JointName>Leg_4_Contact_Joint</JointName>
+    </plugin>
+
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

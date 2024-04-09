@@ -1,0 +1,73 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Landing_Cage'>
+
+    <include>
+      <uri>model://Ground_Base_Model</uri>
+    </include>
+
+    <link name='Landing_Cage_Link'>
+      <pose>0 0 0 0 0 0</pose>
+      <visual name='Landing_Cage_Visual'>
+        <cast_shadows>0</cast_shadows>
+        <pose>4 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://Landing_Cage/meshes/Landing_Cage.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Grey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+      </visual>
+      <collision name='Ground_Collision'>
+        <pose>0 0 -0.02 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>8 4.25 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name='Ceiling_Collision'>
+        <pose>0 0 2.82 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>8 4.25 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name='Left_Wall_Collision'>
+        <pose>-4.02 0 1.4 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 4.25 2.8</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name='Right_Wall_Collision'>
+        <pose>4.02 0 1.4 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 4.25 2.8</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+
+
+    <!-- <joint name='Surface_Pattern_Joint' type='fixed'>
+      <parent>Ground_Base_Model::Ground_Link</parent>
+      <child>Ground_Pattern</child>
+    </joint> -->
+
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

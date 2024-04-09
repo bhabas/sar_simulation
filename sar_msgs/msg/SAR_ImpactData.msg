@@ -8,7 +8,6 @@ geometry_msgs/Vector3 Eul_B_O_impact_OB
 
 geometry_msgs/Twist Twist_B_P_impact_OB
 geometry_msgs/Vector3 Eul_P_B_impact_OB
-float64 Accel_B_O_Mag_impact_OB
 
 ## EXTERNAL IMPACT DETECTION
 bool Impact_Flag_Ext

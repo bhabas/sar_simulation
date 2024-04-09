@@ -25,7 +25,7 @@ typedef enum {
     NONE = 0,
     P2P = 1,
     CONST_VEL = 2,
-    CONST_VEL_GZ = 3,
+    GZ_CONST_VEL= 3,
 }Trajectory_Type;
 extern Trajectory_Type Traj_Type;
 
@@ -52,11 +52,13 @@ extern float s_0_t[3];              // Traj Start Point [m]
 extern float s_f_t[3];              // Traj End Point [m]
 extern float v_t[3];                // Traj Vel [m/s]
 extern float a_t[3];                // Traj Accel [m/s^2]
+extern float j_t[3];                // Traj Jerk [m/s^3]
 extern float T[3];                  // Traj completion time [s]
 extern float t_traj[3];             // Traj time counter [s]
 
 
 void set_vec_element(struct vec *v, int index, float value);
+void resetTraj_Vals(uint8_t axis);
 void point2point_Traj();
 void const_velocity_Traj();
 void const_velocity_GZ_Traj();

@@ -5,10 +5,10 @@
 // =================================
 //    INITIAL SYSTEM PARAMETERS
 // =================================
-float m = 0.0f;             // [kg]
-float Ixx = 0.0f;           // [kg*m^2]
-float Iyy = 0.0f;           // [kg*m^2]
-float Izz = 0.0f;           // [kg*m^2]
+float m = 0.00f;            // [kg]
+float Ixx = 0.00f;          // [kg*m^2]
+float Iyy = 0.00f;          // [kg*m^2]
+float Izz = 0.00f;          // [kg*m^2]
 struct mat33 J;             // Rotational Inertia Matrix [kg*m^2]
 
 float C_tf = 0.0f;          // Moment Coeff [Nm/N]
@@ -18,8 +18,10 @@ const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
 
 float dt = (float)(1.0f/RATE_100_HZ);
+uint32_t PrevCrazyswarmTick = 0;
 uint32_t prev_tick = 0;
 struct CTRL_CmdPacket CTRL_Cmd;
+SAR_Types SAR_Type = SAR_NONE;
 
 
 // =================================
@@ -158,14 +160,14 @@ float M2_thrust = 0.0f;     // Motor 2 [g]
 float M3_thrust = 0.0f;     // Motor 3 [g]
 float M4_thrust = 0.0f;     // Motor 4 [g]
 
-// MOTOR PWM VALUES
-uint16_t M1_pwm = 0;        // [0 - 65,535]
-uint16_t M2_pwm = 0;        // [0 - 65,535]
-uint16_t M3_pwm = 0;        // [0 - 65,535]
-uint16_t M4_pwm = 0;        // [0 - 65,535]
+// MOTOR M_CMD VALUES
+uint16_t M1_CMD = 0;        // [0 - 65,535]
+uint16_t M2_CMD = 0;        // [0 - 65,535]
+uint16_t M3_CMD = 0;        // [0 - 65,535]
+uint16_t M4_CMD = 0;        // [0 - 65,535]
 
 // CONTROL OVERRIDE VALUES
-uint16_t PWM_override[4] = {0,0,0,0};               // Motor PWM values
+uint16_t M_CMD_override[4] = {0,0,0,0};               // Motor M_CMD values
 float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f};   // Motor thrusts [g] 
 
 
@@ -223,9 +225,10 @@ bool Tumbled_Flag = false;
 bool TumbleDetect_Flag = true;
 bool MotorStop_Flag = false;
 bool AngAccel_Flag = false;
-bool SafeMode_Flag = true;
+bool Armed_Flag = false;
 bool CustomThrust_Flag = false;
-bool CustomPWM_Flag = false;
+bool CustomMotorCMD_Flag = false;
+uint16_t CMD_ID = 0;
 
 
 // SENSOR FLAGS
@@ -238,8 +241,9 @@ bool CamActive_Flag = false;
 
 // DEFINE POLICY TYPE ACTIVATED
 PolicyType Policy = PARAM_OPTIM;
-nml_mat* X_input;   // STATE MATRIX TO BE INPUT INTO POLICY
-nml_mat* Y_output;  // POLICY OUTPUT MATRIX
+nml_mat* X_input;       // STATE MATRIX TO BE INPUT INTO POLICY
+nml_mat* Y_output;      // POLICY OUTPUT MATRIX
+float Y_output_trg[4];  // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 bool Policy_Armed_Flag = false;
@@ -247,19 +251,15 @@ bool Trg_Flag = false;
 bool onceFlag = false;
 
 // POLICY TRIGGER/ACTION VALUES
-float Policy_Trg_Action = 0.0f;  
-float Policy_Rot_Action = 0.0f;
-
-float ACTION_MIN = 0.0f;
-float ACTION_MAX = 8.0f;
+float a_Trg = 0.0f;  
+float a_Rot = 0.0f;
+float a_Rot_bounds[2] = {-1.0f,1.0f};
 
 // ===============================
 //  DEEP RL POLICY INITIALIZATION
 // ===============================
 
 NN NN_DeepRL;
-float Policy_Rot_threshold = 1.50f;
-
 
 
 // ==========================================
@@ -297,19 +297,27 @@ float Theta_x_Cam_trg = 0.0f;       // [rad/s]
 float Theta_y_Cam_trg = 0.0f;       // [rad/s]
 
 // POLICY TRIGGER/ACTION VALUES
-float Policy_Trg_Action_trg = 0.0f;    
-float Policy_Rot_Action_trg = 0.0f;
+float a_Trg_trg = 0.0f;    
+float a_Rot_trg = 0.0f;
 
-// =================================
-//  RECORD SYSTEM STATES AT IMPACT
-// =================================
+// ==================================================
+//  RECORD SYSTEM STATES AT ONBOARD IMPACT DETECTION
+// ==================================================
 bool Impact_Flag_OB = false;
-float Accel_B_O_Mag_impact_OB = 0.0f;                    // Linear Acceleration Magnitude [m/s^2]
-struct vec Pos_B_O_impact_OB = {0.0f,0.0f,0.0f};         // Pos [m]
-struct quat Quat_B_O_impact_OB = {0.0f,0.0f,0.0f,1.0f};  // Orientation\
+bool Impact_Flag_Ext = false;
 
-struct vec Vel_B_P_impact_OB = {0.0f,0.0f,0.0f};         // Vel [m/s]
-struct vec Omega_B_P_impact_OB = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+float Vel_mag_B_P_impact_OB = 0.0f;                     // Velocity magnitude relative [m/s]
+float Vel_angle_B_P_impact_OB = 0.0f;                   // Velocity angle relative [deg]
+struct quat Quat_B_O_impact_OB = {0.0f,0.0f,0.0f,1.0f}; // Orientation
+struct vec Omega_B_O_impact_OB = {0.0f,0.0f,0.0f};      // Angular Rate [rad/s]
+struct vec dOmega_B_O_impact_OB = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
+
+uint16_t cycleCounter = 0;                              // Cycle counter to delay recorded impact states   
+float Vel_mag_B_P_prev_N = 0.0f;                        // Velocity magnitude relative [m/s]
+float Vel_angle_B_P_prev_N = 0.0f;                      // Velocity angle relative [deg]
+struct quat Quat_B_O_prev_N = {0.0f,0.0f,0.0f,1.0f};    // Orientation
+struct vec Omega_B_O_prev_N = {0.0f,0.0f,0.0f};         // Angular Rate [rad/s]
+struct vec dOmega_B_O_prev_N = {0.0f,0.0f,0.0f};        // Angular Accel [rad/s^2]
 
 // =================================
 //    LANDING SURFACE PARAMETERS
@@ -329,6 +337,8 @@ struct mat33 R_PW;                      // Rotation matrix from plane to world
 
 void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 {
+    // consolePrintf("Cmd ID: %d | Cmd Type: %d | Cmd Val1: %.3f | Cmd Val2: %.3f | Cmd Val3: %.3f | Cmd Flag: %.3f\n",CTRL_Cmd->cmd_ID,CTRL_Cmd->cmd_type,CTRL_Cmd->cmd_val1,CTRL_Cmd->cmd_val2,CTRL_Cmd->cmd_val3,CTRL_Cmd->cmd_flag);
+    CMD_ID = CTRL_Cmd->cmd_ID;
     switch(CTRL_Cmd->cmd_type){
         case 0: // Reset
             controllerOutOfTreeReset();
@@ -361,7 +371,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             break;        
 
         case 5: // Hard Set All Motorspeeds to Zero
-            MotorStop_Flag = true;
+            MotorStop_Flag = !MotorStop_Flag;
             break;
 
         case 7: // Execute Moment Corresponding to Angular Acceleration
@@ -374,13 +384,26 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             break;
 
         case 8: // Arm Policy Maneuver
-            Policy_Trg_Action = CTRL_Cmd->cmd_val1;
-            Policy_Rot_Action = CTRL_Cmd->cmd_val2;
+            a_Trg = CTRL_Cmd->cmd_val1;
+            a_Rot = CTRL_Cmd->cmd_val2;
+            a_Rot_bounds[0] = CTRL_Cmd->cmd_val3;
+            a_Rot_bounds[1] = CTRL_Cmd->cmd_flag;
 
-            Policy_Armed_Flag = (bool)CTRL_Cmd->cmd_flag;
+            Policy_Armed_Flag = !Policy_Armed_Flag;
             break;
 
-        case 10: // Point-to-Point Trajectory
+        case 9: // UPDATE PLANE POSITION
+
+            r_P_O.x = CTRL_Cmd->cmd_val1;
+            r_P_O.y = CTRL_Cmd->cmd_val2;
+            r_P_O.z = CTRL_Cmd->cmd_val3;
+            Plane_Angle_deg = CTRL_Cmd->cmd_flag;
+
+            updateRotationMatrices();
+            
+            break;
+
+        case 10: // Upload Point-to-Point Trajectory Values
 
             Traj_Type = P2P;
             axis = (axis_direction)CTRL_Cmd->cmd_flag;
@@ -389,81 +412,35 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
                 case x_axis:
 
-                    Traj_Active[0] = true;
-                    s_0_t[0] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_0_t[0] = Pos_B_O.x;           // Starting position [m]
                     s_f_t[0] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[0] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
+                    t_traj[0] = 0.0f;               // Reset timer
 
-                    T[0] = sqrtf(6.0f/a_t[0]*fabsf(s_f_t[0] - s_0_t[0])); // Calc trajectory manuever time [s]
-                    t_traj[0] = 0.0f; // Reset timer
                     break;
 
                 case y_axis:
 
-                    Traj_Active[1] = true;
-                    s_0_t[1] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_0_t[1] = Pos_B_O.y;           // Starting position [m]
                     s_f_t[1] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[1] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
+                    t_traj[1] = 0.0f;               // Reset timer
 
-                    T[1] = sqrtf(6.0f/a_t[1]*fabsf(s_f_t[1] - s_0_t[1])); // Calc trajectory manuever time [s]
-                    t_traj[1] = 0.0f; // Reset timer
                     break;
 
                 case z_axis:
 
-                    Traj_Active[2] = true;
-                    s_0_t[2] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_0_t[2] = Pos_B_O.z;           // Starting position [m]
                     s_f_t[2] = CTRL_Cmd->cmd_val2;  // Ending position [m]
                     a_t[2] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
+                    t_traj[2] = 0.0f;               // Reset timer
 
-                    T[2] = sqrtf(6.0f/a_t[2]*fabsf(s_f_t[2] - s_0_t[2])); // Calc trajectory manuever time [s]
-                    t_traj[2] = 0.0f; // Reset timer
                     break;
-                    
             }
 
             break;
 
-
-        case 91: // Gazebo Velocity Trajectory (Instantaneous Acceleration)
-
-            Traj_Type = CONST_VEL_GZ;
-            axis = (axis_direction)CTRL_Cmd->cmd_flag;
-
-            switch(axis){
-
-                case x_axis:
-
-                    s_0_t[0] = CTRL_Cmd->cmd_val1;   // Starting position [m]
-                    v_t[0] = CTRL_Cmd->cmd_val2;     // Desired velocity [m/s]
-                    a_t[0] = 0.0f;                  // Acceleration [m/s^2]
-
-                    t_traj[0] = 0.0f; // Reset timer
-                    break;
-
-                case y_axis:
-
-                    s_0_t[1] = CTRL_Cmd->cmd_val1;
-                    v_t[1] = CTRL_Cmd->cmd_val2;
-                    a_t[1] = 0.0f;
-
-                    t_traj[1] = 0.0f;
-                    break;
-
-                case z_axis:
-
-                    s_0_t[2] = CTRL_Cmd->cmd_val1;
-                    v_t[2] = CTRL_Cmd->cmd_val2;
-                    a_t[2] = 0.0f;
-
-                    t_traj[2] = 0.0f;
-                    break;
-                    
-            }
-
-            break;
-
-        case 11: // Constant Velocity Trajectory
+        case 11: // Upload Constant Velocity Trajectory Values
 
             Traj_Type = CONST_VEL;
             axis = (axis_direction)CTRL_Cmd->cmd_flag;
@@ -472,28 +449,78 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
                 case x_axis:
 
-                    s_0_t[0] = CTRL_Cmd->cmd_val1;               // Starting position [m]
-                    v_t[0] = CTRL_Cmd->cmd_val2;                 // Desired velocity [m/s]
-                    a_t[0] = CTRL_Cmd->cmd_val3;                 // Acceleration [m/s^2]
+                    s_0_t[0] = Pos_B_O.x;           // Starting position [m]
+                    v_t[0] = CTRL_Cmd->cmd_val1;    // Desired velocity [m/s]
+                    a_t[0] = CTRL_Cmd->cmd_val2;    // Acceleration [m/s^2]
+                    j_t[0] = CTRL_Cmd->cmd_val3;    // Jerk [m/s^3]
+                    t_traj[0] = 0.0f;               // Reset timer
+                    T[0] = 0.0f;                    // Reset completion time
 
-                    t_traj[0] = 0.0f; // Reset timer
                     break;
 
                 case y_axis:
 
-                    s_0_t[1] = CTRL_Cmd->cmd_val1;
-                    v_t[1] = CTRL_Cmd->cmd_val2;
-                    a_t[1] = CTRL_Cmd->cmd_val3;
+                    s_0_t[1] = Pos_B_O.y;
+                    v_t[1] = CTRL_Cmd->cmd_val1;    
+                    a_t[1] = CTRL_Cmd->cmd_val2;    
+                    j_t[1] = CTRL_Cmd->cmd_val3;    
+                    t_traj[1] = 0.0f;
+                    T[1] = 0.0f;
 
+                    break;
+
+                case z_axis:
+
+                    s_0_t[2] = Pos_B_O.z;
+                    v_t[2] = CTRL_Cmd->cmd_val1;    
+                    a_t[2] = CTRL_Cmd->cmd_val2;    
+                    j_t[2] = CTRL_Cmd->cmd_val3;    
+                    t_traj[2] = 0.0f;
+                    T[2] = 0.0f;
+                    
+                    break;
+                    
+            }
+
+            break;
+
+        case 19: // ACTIVATE TRAJECTORY
+
+            Traj_Active[0] = (bool)CTRL_Cmd->cmd_val1;
+            Traj_Active[1] = (bool)CTRL_Cmd->cmd_val2;
+            Traj_Active[2] = (bool)CTRL_Cmd->cmd_val3;
+
+            break;
+    
+
+        case 92: // Upload Gazebo Velocity Trajectory Values (Instantaneous Acceleration)
+
+            Traj_Type = GZ_CONST_VEL;
+            axis = (axis_direction)CTRL_Cmd->cmd_flag;
+
+            switch(axis){
+
+                case x_axis:
+
+                    s_0_t[0] = Pos_B_O.x;           // Starting position [m]
+                    v_t[0] = CTRL_Cmd->cmd_val2;    // Desired velocity [m/s]
+                    a_t[0] = 0.0f;                  // Acceleration [m/s^2]
+                    t_traj[0] = 0.0f;               // Reset timer
+                    break;
+
+                case y_axis:
+
+                    s_0_t[1] = Pos_B_O.y;
+                    v_t[1] = CTRL_Cmd->cmd_val2;
+                    a_t[1] = 0.0f;
                     t_traj[1] = 0.0f;
                     break;
 
                 case z_axis:
 
-                    s_0_t[2] = CTRL_Cmd->cmd_val1;
+                    s_0_t[2] = Pos_B_O.z;
                     v_t[2] = CTRL_Cmd->cmd_val2;
-                    a_t[2] = CTRL_Cmd->cmd_val3;
-
+                    a_t[2] = 0.0f;
                     t_traj[2] = 0.0f;
                     break;
                     
@@ -501,9 +528,15 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
             break;
 
+        
+
 
         case 20: // Tumble-Detection
             TumbleDetect_Flag = CTRL_Cmd->cmd_flag;
+            break;
+
+        case 24: // Quad Arming
+            Armed_Flag = CTRL_Cmd->cmd_flag;
             break;
 
         case 30: // Custom Thrust Values
@@ -516,28 +549,20 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
             break;
 
-        case 31: // Custom PWM Values
+        case 31: // Custom M_CMD Values
 
-            CustomPWM_Flag = true;
-            PWM_override[0] = CTRL_Cmd->cmd_val1;
-            PWM_override[1] = CTRL_Cmd->cmd_val2;
-            PWM_override[2] = CTRL_Cmd->cmd_val3;
-            PWM_override[3] = CTRL_Cmd->cmd_flag;
+            CustomMotorCMD_Flag = true;
+            M_CMD_override[0] = CTRL_Cmd->cmd_val1;
+            M_CMD_override[1] = CTRL_Cmd->cmd_val2;
+            M_CMD_override[2] = CTRL_Cmd->cmd_val3;
+            M_CMD_override[3] = CTRL_Cmd->cmd_flag;
 
             break;
 
-        
+        case 99:           
 
-        case 93: // UPDATE PLANE POSITION
-
-            r_P_O.x = CTRL_Cmd->cmd_val1;
-            r_P_O.y = CTRL_Cmd->cmd_val2;
-            r_P_O.z = CTRL_Cmd->cmd_val3;
-            Plane_Angle_deg = CTRL_Cmd->cmd_flag;
-
-            // updatePlaneNormal(Plane_Angle);
-            
             break;
+
     }
 
 }
@@ -640,47 +665,99 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
 
     F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
     M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
-
 }
 
-// Converts thrust in grams to their respective PWM values
-uint16_t thrust2PWM(float f) 
+// Converts thrust in grams to their respective M_CMD values
+uint16_t thrust2Motor_CMD(float f) 
 {
-    // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST PWM TO MEET VOLTAGE NEED
-    // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
-
     float a,b,c;
+    float y0;
+    float Motor_CMD;
 
-    if(f<=5.2f)
+    switch (SAR_Type)
     {
-        a = 1.28533f;
-        b = 1.51239;
-        c = 0.0f;
+        case SAR_NONE:
+
+            return 0;
+
+        case CRAZYFLIE:
+
+            // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST M_CMD TO MEET VOLTAGE NEED
+            // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
+
+            if(f<=5.2f)
+            {
+                a = 1.28533f;
+                b = 1.51239;
+                c = 0.0f;
+            }
+            else
+            {
+                a = 3.23052f;
+                b = -5.46911f;
+                c = 5.97889f;
+            }
+            float voltage_needed = -b/(2*a) + sqrtf(4*a*(f-c) + b*b)/(2*a);
+
+
+            // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
+            float supply_voltage = pmGetBatteryVoltage();
+            float percentage = voltage_needed / supply_voltage;
+            percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
+
+            // CONVERT RATIO TO M_CMD OF MOTOR_CMD_MAX
+            Motor_CMD = percentage * (float)UINT16_MAX; // Remap percentage back to M_CMD range
+
+            // IF MINIMAL THRUST ENSURE M_CMD = 0
+            if(f <= 0.25f)
+            {
+                Motor_CMD = 0.0f;
+            }
+            return Motor_CMD;
+    
+
+        case IMPULSE_MICRO:
+            
+            a = 600.0f;
+            b = 9.93e-5f;
+            c = 2.00e-1f;
+
+            // Calculate the command threshold
+            y0 = b * a * a;
+            
+            // Conditionally calculate the inverse
+            if (f < y0) {
+                Motor_CMD = sqrtf(f / b); // Use sqrtf for float
+            } 
+            else {
+                Motor_CMD = (f - (b * a * a - c * a)) / c;
+            }
+
+            return Motor_CMD*32.0f;
+
+        case SO_V5:
+
+            a = 500.0f;
+            b = 5.35e-4f;
+            c = 7.78e-1f;
+
+            // Calculate the command threshold
+            y0 = b * a * a;
+            
+            // Conditionally calculate the inverse
+            if (f < y0) {
+                Motor_CMD = sqrtf(f / b); // Use sqrtf for float
+            } 
+            else {
+                Motor_CMD = (f - (b * a * a - c * a)) / c;
+            }
+
+            return Motor_CMD*32.0f;
+
+        default:
+            return 0;
     }
-    else
-    {
-        a = 3.23052f;
-        b = -5.46911f;
-        c = 5.97889f;
-    }
-    float voltage_needed = -b/(2*a) + sqrtf(4*a*(f-c) + b*b)/(2*a);
 
-
-    // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
-    float supply_voltage = pmGetBatteryVoltage();
-    float percentage = voltage_needed / supply_voltage;
-    percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
-
-    // CONVERT RATIO TO PWM OF PWM_MAX
-    float PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
-
-    // IF MINIMAL THRUST ENSURE PWM = 0
-    if(f <= 0.25f)
-    {
-        PWM = 0.0f;
-    }
-
-    return PWM;
 }
 
 
@@ -725,40 +802,40 @@ bool updateOpticalFlowEst()
     if (UpdateOpticalFlow)
     {
 
-        double spatial_Grad_mat[9] = {
-            3, 1,-1,
-            2,-2, 1,
-            1, 1, 1,
-        };
+        // double spatial_Grad_mat[9] = {
+        //     3, 1,-1,
+        //     2,-2, 1,
+        //     1, 1, 1,
+        // };
 
-        double temp_Grad_vec[3] = {
-             9,
-            -3,
-             7,
-        };
+        // double temp_Grad_vec[3] = {
+        //      9,
+        //     -3,
+        //      7,
+        // };
 
 
-        // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR
-        nml_mat* A_mat = nml_mat_from(3,3,9,spatial_Grad_mat);
-        nml_mat* b_vec = nml_mat_from(3,1,3,temp_Grad_vec);
-        nml_mat_lup* LUP = nml_mat_lup_solve(A_mat);
-        nml_mat* OF_vec = nml_ls_solve(LUP,b_vec);
+        // // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR
+        // nml_mat* A_mat = nml_mat_from(3,3,9,spatial_Grad_mat);
+        // nml_mat* b_vec = nml_mat_from(3,1,3,temp_Grad_vec);
+        // nml_mat_lup* LUP = nml_mat_lup_solve(A_mat);
+        // nml_mat* OF_vec = nml_ls_solve(LUP,b_vec);
 
         // CLAMP OPTICAL FLOW VALUES
         // Theta_x_Cam = clamp(OF_vec->data[0][0],-20.0f,20.0f);
         // Theta_y_Cam = clamp(OF_vec->data[1][0],-20.0f,20.0f);
         // Tau_Cam = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
 
-        Theta_x_Cam = OF_vec->data[0][0];
-        Theta_y_Cam = OF_vec->data[1][0];
-        Tau_Cam = 1/(OF_vec->data[2][0] + 1.0e-6);
+        // Theta_x_Cam = OF_vec->data[0][0];
+        // Theta_y_Cam = OF_vec->data[1][0];
+        // Tau_Cam = 1/(OF_vec->data[2][0] + 1.0e-6);
         // Tau_Cam = (float)UART_arr[0];
 
 
-        nml_mat_lup_free(LUP);
-        nml_mat_free(A_mat);
-        nml_mat_free(b_vec);
-        nml_mat_free(OF_vec);
+        // nml_mat_lup_free(LUP);
+        // nml_mat_free(A_mat);
+        // nml_mat_free(b_vec);
+        // nml_mat_free(OF_vec);
 
 
         return true;

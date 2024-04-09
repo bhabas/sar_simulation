@@ -14,6 +14,9 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     def __init__(self,GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180]):
         SAR_Sim_Interface.__init__(self,GZ_Timeout=GZ_Timeout)        
 
+        if self.Policy_Type != "PARAM_OPTIM":
+            raise Exception('[ERROR] Incorrect Policy Type Activated')
+
         ######################
         #    GENERAL CONFIGS
         ######################
@@ -51,11 +54,33 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         }
         self.W_max = sum(self.reward_weights.values())
 
-        self.D_perp_min = np.inf
+        self.D_perp_CR_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
-        
+    def setTestingConditions(self,V_mag=None,V_angle=None,Plane_Angle=None):
+
+        ## SET PLANE POSE
+        if Plane_Angle == None:
+
+            Plane_Angle_Low = self.Plane_Angle_range[0]
+            Plane_Angle_High = self.Plane_Angle_range[1]
+            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+            self._setPlanePose(self.r_P_O,Plane_Angle)
+
+        else:
+            self._setPlanePose(self.r_P_O,Plane_Angle)
+
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
+        if V_mag == None or V_angle == None:
+            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
+
+        else:
+            V_mag = V_mag       # Flight velocity
+            V_angle = V_angle   # Flight angle  
+
+        self.V_mag = V_mag
+        self.V_angle = V_angle
 
 
     def ParamOptim_reset(self,V_mag=None,V_angle=None,Plane_Angle=None):
@@ -70,7 +95,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.Pol_Trg_Flag = False
         self.reward = 0
 
-        self.D_perp_min = np.inf
+        self.D_perp_CR_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
@@ -83,33 +108,10 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         self.resetPose()
 
-        ## SET PLANE POSE
-        if Plane_Angle == None:
-
-            Plane_Angle_Low = self.Plane_Angle_range[0]
-            Plane_Angle_High = self.Plane_Angle_range[1]
-            Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-            self._setPlanePose(self.Plane_Pos,Plane_Angle)
-            self._iterStep(n_steps=2)
-
-        else:
-            self._setPlanePose(self.Plane_Pos,Plane_Angle)
-            self._iterStep(n_steps=2)
-
-        ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if V_mag == None or V_angle == None:
-            V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
-
-        else:
-            V_mag = V_mag       # Flight velocity
-            V_angle = V_angle   # Flight angle  
-
-        self.V_mag = V_mag
-        self.V_angle = V_angle
 
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
-        V_tx = V_mag*np.cos(np.deg2rad(V_angle))
-        V_perp = V_mag*np.sin(np.deg2rad(V_angle))
+        V_tx = self.V_mag*np.cos(np.deg2rad(self.V_angle))
+        V_perp = self.V_mag*np.sin(np.deg2rad(self.V_angle))
         V_B_P = np.array([V_tx,0,V_perp])               # {t_x,n_p}
         V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
 
@@ -121,7 +123,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
-        r_P_O = np.array(self.Plane_Pos)                                        # Plane Position wrt to Origin - {X_W,Z_W}
+        r_P_O = np.array(self.r_P_O)                                        # Plane Position wrt to Origin - {X_W,Z_W}
         r_P_B = np.array([(self.Tau_CR_start + self.Tau_Accel_start)*V_tx,
                           0,
                           (self.Tau_Body_start + self.Tau_Accel_start)*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
@@ -166,8 +168,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             t_now = self._getTime()
 
             ## RECORD LOWEST D_perp VALUE
-            if self.D_perp < self.D_perp_min:
-                self.D_perp_min = self.D_perp 
+            if self.D_perp_CR < self.D_perp_CR_min:
+                self.D_perp_CR_min = self.D_perp_CR
 
             ## START TRIGGER AND IMPACT TERMINATION TIMERS
             if (self.Trg_Flag == True and OnceFlag_Trg == False):
@@ -334,7 +336,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius*0.8)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_CR_min,self.Collision_Radius*0.5)
         else:
             R_dist = 0
 
@@ -360,7 +362,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         return R_t/self.W_max
     
     def Reward_Exp_Decay(self,x,threshold,k=5):
-        if -0.1 < x < threshold:
+        if x < threshold:
             return 1
         elif threshold <= x:
             return np.exp(-k*(x-threshold))
@@ -429,12 +431,13 @@ if __name__ == "__main__":
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
-        Tau_CR_trg = 0.23
-        Rot_acc = -50
-        V_mag = 2.5
-        V_angle = 60
+        Tau_CR_trg = 0.15
+        Rot_acc = -100
+        V_mag = 1.0
+        V_angle = 30
         Plane_Angle = 0
-        env.ParamOptim_reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+        env.setTestingConditions(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+        env.ParamOptim_reset()
         obs,reward,done,info = env.ParamOptim_Flight(Tau_CR_trg,Rot_acc)
         print(f"Ep: {ii} \t Reward: {reward:.02f} \t Reward_vec: ",end='')
         print(' '.join(f"{val:.2f}" for val in env.reward_vals))

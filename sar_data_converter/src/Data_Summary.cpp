@@ -48,7 +48,8 @@ void SAR_DataConverter::Publish_StateData()
     StateData_msg.Vel_angle_B_P = Vel_angle_B_P;
     StateData_msg.D_perp = D_perp;
     StateData_msg.D_perp_CR = D_perp_CR;
-    StateData_msg.D_perp_min = D_perp_min;
+    StateData_msg.D_perp_pad = D_perp_pad;
+    StateData_msg.D_perp_pad_min = D_perp_pad_min;
 
 
     // OPTICAL FLOW STATES
@@ -64,11 +65,12 @@ void SAR_DataConverter::Publish_StateData()
     // CONTROL ACTIONS
     StateData_msg.FM = FM;
     StateData_msg.MotorThrusts = MotorThrusts;
-    StateData_msg.MS_PWM = MS_PWM;
+    StateData_msg.Motor_CMD = Motor_CMD;
 
     // POLICY ACTIONS
-    StateData_msg.Policy_Trg_Action = Policy_Trg_Action;
-    StateData_msg.Policy_Rot_Action = Policy_Rot_Action;
+    StateData_msg.NN_Output = NN_Output;
+    StateData_msg.a_Trg = a_Trg;
+    StateData_msg.a_Rot = a_Rot;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CONTROLLER
@@ -90,6 +92,9 @@ void SAR_DataConverter::Publish_TriggerData()
     TriggerData_msg.Twist_B_O_trg = Twist_B_O_trg;
     TriggerData_msg.Eul_B_O_trg = Eul_B_O_trg;
 
+    TriggerData_msg.Vel_mag_B_O_trg = Vel_mag_B_O_trg;
+    TriggerData_msg.Vel_angle_B_O_trg = Vel_angle_B_O_trg;
+
     // STATES WRT PLANE
     TriggerData_msg.Pose_P_B_trg = Pose_P_B_trg;
     TriggerData_msg.Twist_B_P_trg = Twist_B_P_trg;
@@ -105,8 +110,9 @@ void SAR_DataConverter::Publish_TriggerData()
     TriggerData_msg.Tau_CR_trg = Tau_CR_trg;
 
     // POLICY ACTIONS
-    TriggerData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    TriggerData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
+    TriggerData_msg.NN_Output_trg = NN_Output_trg;
+    TriggerData_msg.a_Trg_trg = a_Trg_trg;
+    TriggerData_msg.a_Rot_trg = a_Rot_trg;
 
     TriggerData_Pub.publish(TriggerData_msg);
 }
@@ -124,9 +130,9 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Impact_Flag_OB = Impact_Flag_OB;
 
     ImpactData_msg.Pose_B_O_impact_OB = Pose_B_O_impact_OB;
+    ImpactData_msg.Eul_B_O_impact_OB = Eul_B_O_impact_OB;
     ImpactData_msg.Twist_B_P_impact_OB = Twist_B_P_impact_OB;
     ImpactData_msg.Eul_P_B_impact_OB = Eul_P_B_impact_OB;
-    ImpactData_msg.Accel_B_O_Mag_impact_OB = Accel_B_O_Mag_impact_OB;
 
     // EXTERNAL IMPACT DATA
     ros::Duration Time_delta_Ext(Time_impact_Ext-Time_start);

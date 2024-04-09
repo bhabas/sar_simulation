@@ -21,6 +21,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 
     // INITIATE CONTROLLER
     controllerOutOfTreeInit();
+    Armed_Flag = true;
 
     // RUN STABILIZER LOOP
     while(ros::ok)

@@ -15,6 +15,10 @@ float64 Vel_angle_B_P
 float64 D_perp
 float64 D_perp_CR
 
+## PLANE STATES
+geometry_msgs/Vector3 Plane_Pos
+float64 Plane_Angle_deg
+
 ## OPTICAL FLOW STATES
 geometry_msgs/Vector3 Optical_Flow
 geometry_msgs/Vector3 Optical_Flow_Cam
@@ -26,10 +30,11 @@ geometry_msgs/Vector3 a_d
 
 float64[4] FM
 float64[4] MotorThrusts
-uint32[4] MS_PWM
+uint32[4] Motor_CMD
 
-float64 Policy_Trg_Action
-float64 Policy_Rot_Action
+float64[4] NN_Output
+float64 a_Trg
+float64 a_Rot
 
 
 # ==========================
@@ -49,8 +54,10 @@ float64 D_perp_CR_trg
 
 geometry_msgs/Vector3 Optical_Flow_trg
 float64 Tau_CR_trg
-float64 Policy_Trg_Action_trg
-float64 Policy_Rot_Action_trg
+
+float64[4] NN_Output_trg
+float64 a_Trg_trg
+float64 a_Rot_trg
 
 # =========================
 #      STATES AT IMPACT
@@ -60,7 +67,9 @@ bool Impact_Flag_OB
 
 geometry_msgs/Pose Pose_B_O_impact_OB
 geometry_msgs/Twist Twist_B_P_impact_OB
-float64 Accel_B_O_Mag_impact_OB
+float64 Vel_mag_B_P_impact_OB
+float64 Vel_angle_B_P_impact_OB
+float64 dOmega_B_O_y_impact_OB
 
 
 

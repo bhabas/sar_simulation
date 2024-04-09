@@ -44,7 +44,7 @@ extern "C" {
 #define YELLOW "\033[0;33m"
 #define RESET "\033[0m"
 
-double nml_rand_interval(double min, double max);
+float nml_rand_interval(float min, float max);
 void nml_log(const char* str);
 void NP_CHECK(void* ptr);
 

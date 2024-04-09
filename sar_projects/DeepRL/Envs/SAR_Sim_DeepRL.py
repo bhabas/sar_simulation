@@ -3,8 +3,11 @@
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
+from threading import Thread,Event
 
 import rospy
+import csv
+import random
 import time
 import math
 from gazebo_msgs.srv import GetModelState, GetModelStateRequest
@@ -22,10 +25,17 @@ RESET = '\033[0m'  # Reset to default color
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
-    def __init__(self,GZ_Timeout=True,Ang_Acc_range=[-100,100],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180]):
+    def __init__(self,Ang_Acc_range=[-100,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=False,GZ_Timeout=False):
 
         SAR_Sim_Interface.__init__(self, GZ_Timeout=GZ_Timeout)
         gym.Env.__init__(self)
+
+        if self.Policy_Type != "DEEP_RL_SB3":
+            str_input = self.userInput(YELLOW + "Incorrect Policy Activated. Continue? (y/n): " + RESET,str)
+            if str_input.lower() == 'n':
+                raise Exception('[ERROR] Incorrect Policy Type Activated')
+            else:
+                pass
 
         ######################
         #    GENERAL CONFIGS
@@ -35,43 +45,61 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Env_Name = "SAR_Sim_DeepRL_Env"
 
         ## TESTING CONDITIONS     
+        self.Fine_Tuning_Flag = Fine_Tune
         self.V_mag_range = V_mag_range  
         self.V_angle_range = V_angle_range
         self.Plane_Angle_range = Plane_Angle_range
         self.setAngAcc_range(Ang_Acc_range)
+        self.TestCondition_idx = 0
+
+        if self.Fine_Tuning_Flag:
+            
+            ## LOAD TESTING CONDITIONS
+            self.TestingConditions = []
+            csv_file_path = f"{self.BASE_PATH}/sar_projects/DeepRL/Finetuning_Training_Conditions.csv"
+
+            with open(csv_file_path, mode='r') as csv_file:
+                csv_reader = csv.DictReader(csv_file)
+                for row in csv_reader:
+                    self.TestingConditions.append((float(row['Plane_Angle']),float(row['V_angle']),float(row['V_mag']),))
+
+            ## SHUFFLE TESTING CONDITIONS
+            random.shuffle(self.TestingConditions)
 
 
         ## TIME CONSTRAINTS
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
         self.t_impact_max = 1.0     # [s]
         self.t_ep_max = 5.0         # [s]
-        self.t_real_max = 120      # [s]
+        self.t_real_max = 120       # [s]
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
+        self.Initial_Step = False
         self.K_ep = 0
         self.Pol_Trg_Threshold = 0.5
         self.Done = False
         self.reward = 0
-        self.reward_vals = np.array([0,0,0,0,0,0])
+        self.reward_vals = np.array([0,0,0,0,0,0,0])
         self.reward_weights = {
-            "W_Dist":0.5,
-            "W_tau_cr":0.5,
+            "W_Dist":0.1,
+            "W_tau_cr":0.1,
+            "W_tx":1.0,
             "W_LT":1.0,
             "W_GM":1.0,
-            "W_Phi_rel":2.0,
+            "W_Phi_rel":1.0,
             "W_Legs":2.0
         }
         self.W_max = sum(self.reward_weights.values())
 
-        self.D_perp_min = np.inf
-        self.Tau_trg = np.inf
+        self.D_perp_CR_min = np.inf
+        self.D_perp_pad_min = np.inf
         self.Tau_CR_trg = np.inf
+        self.Tau_trg = np.inf
 
         ## DOMAIN RANDOMIZATION
-        self.Base_Iyy_std = 0.1
-        self.Base_Mass_std = 0.1
-
+        self.Mass_std = 0.005*self.Ref_Mass
+        self.Iyy_std = 0.005*self.Ref_Iyy
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -81,7 +109,44 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-    def reset(self, seed=None, options=None, V_mag=None,V_angle=None,Plane_Angle=None):
+        self._start_RealTimeTimer()
+
+    def _start_RealTimeTimer(self):
+        
+        self.start_time_real = time.time()
+        RealTimeTimer_thread = Thread(target=self._RealTimeTimer)
+        RealTimeTimer_thread.daemon = True
+        RealTimeTimer_thread.start()
+
+    def _RealTimeTimer(self):
+
+        ## IF REAL TIME EXCEEDS TIMEOUT VALUE THEN RESTART SIM
+        while True:
+            if (time.time() - self.start_time_real > self.t_real_max) and not self.Done:
+                self.Done = True
+                print(YELLOW + f"Real Time Exceeded: {time.time() - self.start_time_real:.3f} s" + RESET)
+                print(YELLOW + f"Sim Likely Frozen: Restarting Simulation Env" + RESET)
+
+                self._kill_Sim()
+                
+            time.sleep(1)
+
+
+    def reset(self,seed=None,options=None):
+
+        self._wait_for_sim_running()
+
+
+        self.start_time_real = time.time()
+        self.resetPose()
+
+        self._resetParams()
+        self._setTestingConditions()
+        self._initialStep()
+
+        return self._getObs(), {}
+    
+    def _resetParams(self):
 
         ######################
         #    GENERAL CONFIGS
@@ -91,43 +156,62 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.K_ep += 1
         self.Done = False
         self.reward = 0
+        self.reward_vals = np.array([0,0,0,0,0,0,0])
 
-        self.D_perp_min = np.inf
-        self.Tau_trg = np.inf
+        self.D_perp_CR_min = np.inf
+        self.D_perp_pad_min = np.inf
         self.Tau_CR_trg = np.inf
+        self.Tau_trg = np.inf
 
-        
-        self.start_time_real = time.time()
+        self.obs_trg = np.full(self.obs_trg.shape[0],np.nan)
+        self.action_trg = np.full(self.action_trg.shape[0],np.nan)
 
-        self.resetPose()
+        self.a_Trg_trg = np.nan
+        self.a_Rot_trg = np.nan
 
-        ## SET PLANE POSE
-        if Plane_Angle == None:
+    def _setTestingConditions(self):
 
+        if self.Fine_Tuning_Flag:
+
+            ## SET TESTING CONDITIONS
+            Plane_Angle = self.TestingConditions[self.TestCondition_idx][0]
+            V_angle_B_O = self.TestingConditions[self.TestCondition_idx][1]
+            V_mag_B_O = self.TestingConditions[self.TestCondition_idx][2]
+
+            ## CONVERT GLOBAL ANGLE TO RELATIVE ANGLE
+            self._setPlanePose(self.r_P_O,Plane_Angle)
+            self.V_angle = self.Plane_Angle_deg + V_angle_B_O
+            self.V_mag = V_mag_B_O
+
+
+            ## UPDATE TESTING CONDITION INDEX
+            self.TestCondition_idx += 1
+            if self.TestCondition_idx >= len(self.TestingConditions):
+                self.TestCondition_idx = 0
+
+        else:
+
+            ## SAMPLE SET PLANE POSE
             Plane_Angle_Low = self.Plane_Angle_range[0]
             Plane_Angle_High = self.Plane_Angle_range[1]
             Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-            self._setPlanePose(self.Plane_Pos,Plane_Angle)
-            self._iterStep(n_steps=2)
+            self._setPlanePose(self.r_P_O,Plane_Angle)
 
-        else:
-            self._setPlanePose(self.Plane_Pos,Plane_Angle)
-            self._iterStep(n_steps=2)
-
-        ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if V_mag == None or V_angle == None:
+            ## SAMPLE VELOCITY AND FLIGHT ANGLE
             V_mag,V_angle = self._sampleFlightConditions(self.V_mag_range,self.V_angle_range)
+            self.V_mag = V_mag
+            self.V_angle = V_angle
+    
+    def _initialStep(self):
 
-        else:
-            V_mag = V_mag       # Flight velocity
-            V_angle = V_angle   # Flight angle  
-
-        self.V_mag = V_mag
-        self.V_angle = V_angle
+        ## DOMAIN RANDOMIZATION (UPDATE INERTIAL VALUES)
+        Iyy_DR = self.Base_Iyy + np.random.normal(0,self.Iyy_std)
+        Mass_DR = self.Base_Mass + np.random.normal(0,self.Mass_std)
+        self._setModelInertia(Mass_DR,[self.Base_Ixx,Iyy_DR,self.Base_Izz])
 
         ## CALC STARTING VELOCITY IN GLOBAL COORDS
-        V_tx = V_mag*np.cos(np.deg2rad(V_angle))
-        V_perp = V_mag*np.sin(np.deg2rad(V_angle))
+        V_tx = self.V_mag*np.cos(np.deg2rad(self.V_angle))
+        V_perp = self.V_mag*np.sin(np.deg2rad(self.V_angle))
         V_B_P = np.array([V_tx,0,V_perp])               # {t_x,n_p}
         V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
 
@@ -138,8 +222,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
-
-        r_P_O = np.array(self.Plane_Pos)                                        # Plane Position wrt to Origin - {X_W,Z_W}
+        r_P_O = np.array(self.r_P_O)                                        # Plane Position wrt to Origin - {X_W,Z_W}
         r_P_B = np.array([(self.Tau_CR_start + self.Tau_Accel_start)*V_tx,
                           0,
                           (self.Tau_Body_start + self.Tau_Accel_start)*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
@@ -149,11 +232,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.initial_state = (r_B_O,V_B_O)
         self.Sim_VelTraj(pos=r_B_O,vel=V_B_O)
         self._iterStep(n_steps=1000)
-
-        # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
-        # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
-        # self.setModelInertia()
 
         ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         if self._getTick()%10 != 0:
@@ -165,9 +243,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
         self.t_flight_max = self.Tau_Body_start*2.0   # [s]
-        self.t_trg_max = self.Tau_Body_start*1.5 # [s]
-        
-        return self._get_obs(), {}
+        self.t_trg_max = self.Tau_Body_start*2.5 # [s]
+
     
     def step(self, action):
 
@@ -177,18 +254,20 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # 4. CHECK TERMINATION
         # 5. RETURN VALUES
 
+
+        self._wait_for_sim_running()
+
         ## ROUND OUT STEPS TO BE IN SYNC WITH CONTROLLER
         if self._getTick()%10 != 0:
             n_steps = 10 - (self._getTick()%10)
             self._iterStep(n_steps=n_steps)
 
-
         a_Trg = action[0]
-        a_Rot = 0.5 * (action[1] + 1) * (self.Ang_Acc_range[1] - self.Ang_Acc_range[0]) + self.Ang_Acc_range[0]
-        
-        if self._get_obs()[0] <= 0.20:
-            a_Trg = 1
+        a_Rot = self.scaleValue(action[1],original_range=[-1,1], target_range=self.Ang_Acc_range)
 
+        if self.Policy_Type != "DEEP_RL_SB3":
+            a_Trg = 1.0
+        
         ########## POLICY PRE-TRIGGER ##########
         if a_Trg <= self.Pol_Trg_Threshold:
 
@@ -196,9 +275,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             self._iterStep(n_steps=10)
             t_now = self._getTime()
 
-            # GRAB NEXT OBS
-            next_obs = self._get_obs()
+            # UPDATE RENDER
+            self.render()
 
+            # GRAB NEXT OBS
+            next_obs = self._getObs()
 
             # 3) CALCULATE REWARD
             reward = 0.0
@@ -213,32 +294,46 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 self.error_str = "Episode Completed: Done [Terminated]"
                 terminated = True
                 truncated = False
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
             
             ## IMPACT TERMINATION
             elif self.Impact_Flag_Ext == True:
                 self.error_str = "Episode Completed: Impact [Terminated]"
                 terminated = True
                 truncated = False
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
 
             ## EPISODE TIMEOUT
             elif (t_now - self.start_time_ep) > self.t_flight_max:
                 self.error_str = "Episode Completed: Time Exceeded [Truncated]"
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
 
             ## REAL-TIME TIMEOUT
             elif (time.time() - self.start_time_real) > self.t_real_max:
                 self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
 
             else:
                 terminated = False
                 truncated = False
+            
+            info_dict = {
+                            "reward_vals": self.reward_vals,
+                            "reward": reward,
+                            "a_Rot": a_Rot,
+                            "Trg_Flag": self.Trg_Flag,
+                            "Impact_Flag_Ext": self.Impact_Flag_Ext,
+                            "D_perp_pad_min": self.D_perp_pad_min,
+                            "Tau_CR_trg": self.Tau_CR_trg,
+                            "Plane_Angle": self.Plane_Angle_deg,
+                            "V_mag": self.V_mag,
+                            "V_angle": self.V_angle,
+                            "TestCondition_idx": self.TestCondition_idx,
+                        }
             
             # 5) RETURN VALUES
             return(
@@ -246,14 +341,14 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 reward,
                 terminated,
                 truncated,
-                {},
+                info_dict,
             )
 
         ########## POLICY POST-TRIGGER ##########
         elif a_Trg >= self.Pol_Trg_Threshold:
 
             # GRAB TERMINAL OBS/ACTION
-            self.obs_trg = self._get_obs()
+            self.obs_trg = self._getObs()
             self.action_trg = action
 
             # 2) FINISH EPISODE
@@ -262,7 +357,24 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             self.Done = terminated 
 
             # 3) CALC REWARD
-            reward = self._CalcReward()  
+            try:
+                reward = self._CalcReward()  
+            except (UnboundLocalError,ValueError):
+                reward = 0.0
+
+            info_dict = {
+                "reward_vals": self.reward_vals,
+                "reward": reward,
+                "a_Rot": a_Rot,
+                "Trg_Flag": self.Trg_Flag,
+                "Impact_Flag_Ext": self.Impact_Flag_Ext,
+                "D_perp_pad_min": self.D_perp_pad_min,
+                "Tau_CR_trg": self.Tau_CR_trg,
+                "Plane_Angle": self.Plane_Angle_deg,
+                "V_mag": self.V_mag,
+                "V_angle": self.V_angle,
+                "TestCondition_idx": self.TestCondition_idx,
+            }
 
 
             # 5) RETURN VALUES
@@ -271,22 +383,9 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 reward,
                 terminated,
                 truncated,
-                {},
+                info_dict,
             )
         
-
-        return obs, reward, terminated, truncated, {}
-
-
-    def render(self):
-        ## DO NOTHING ##
-        return
-
-
-    def close(self):
-        ## DO NOTHING ##
-        return
-    
 
     def _finishSim(self,a_Rot):
         
@@ -297,7 +396,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         truncated = False
         
         ## SEND TRIGGER ACTION TO CONTROLLER
-        self.sendCmd("Policy",[0,a_Rot,0],cmd_flag=1)
+        self.sendCmd("Policy",[0,a_Rot,self.Ang_Acc_range[0]],cmd_flag=self.Ang_Acc_range[1])
 
         ## RUN REMAINING STEPS AT FULL SPEED
         self.pausePhysics(False)
@@ -312,11 +411,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 OnceFlag_Trg = True             # Turns on to make sure this only runs once per rollout
 
             if (self.Impact_Flag_Ext and OnceFlag_Impact == False):
+                self.start_time_trg = np.nan    # Nullify trigger timer
                 self.start_time_impact = t_now
                 OnceFlag_Impact = True
 
 
-            # 4) CHECK TERMINATION/TRUNCATED
+                        # 4) CHECK TERMINATION/TRUNCATED
 
             # ============================
             ##    Termination Criteria 
@@ -326,28 +426,28 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 self.error_str = "Episode Completed: Done [Terminated] "
                 terminated = True
                 truncated = False
-                print(YELLOW,self.error_str,RESET)
+                # print(YELLOW,self.error_str,RESET)
 
             ## TRIGGER TIMEOUT  
             elif (t_now - self.start_time_trg) > self.t_trg_max:
                 self.error_str = "Episode Completed: Pitch Timeout [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(t_now - self.start_time_trg):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(t_now - self.start_time_trg):.3f} s",RESET)
 
             ## IMPACT TIMEOUT
             elif (t_now - self.start_time_impact) > self.t_impact_max:
                 self.error_str = "Episode Completed: Impact Timeout [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(t_now - self.start_time_impact):.3f} s",RESET)
 
             ## REAL-TIME TIMEOUT
             elif (time.time() - self.start_time_real) > self.t_real_max:
                 self.error_str = "Episode Completed: Episode Time Exceeded [Truncated] "
                 terminated = False
                 truncated = True
-                print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
+                # print(YELLOW,self.error_str,f"{(time.time() - self.start_time_real):.3f} s",RESET)
 
             else:
                 terminated = False
@@ -375,6 +475,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         else:
             ## CALC REWARD VALUES
+            R_tx = 0
             R_LT = 0
             R_GM = 0
             R_Phi = 0
@@ -400,13 +501,17 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             r_C1_B = -r_B_C1                        # {X_W,Y_W,Z_W}
             e_r_hat = r_C1_B/np.linalg.norm(r_C1_B) # {X_W,Y_W,Z_W}
 
+            ## IMPACT LOCATION REWARD
+            r_B_P = self.r_B_O_impact_Ext - self.r_P_O                      # {X_W,Z_W}
+            r_C1_P = self.R_WP(r_B_P - r_B_C1,self.Plane_Angle_rad)         # {tx,n_p}
+            R_tx = self.Reward_Exp_Decay(np.abs(r_C1_P[0]),0.1,k=5.0)
+
             ## MOMENTUM TRANSFER REWARD
             CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
             DP_LT = np.dot(V_hat_impact,e_r_hat)
             CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))[1]
             R_LT = self.Reward_LT(CP_LT_angle_deg,self.ForelegContact_Flag,self.HindlegContact_Flag)
 
-            
             ## GRAVITY MOMENT REWARD
             g_hat = np.array([0,0,-1])              # {X_W,Y_W,Z_W}
             CP_GM = np.cross(g_hat,e_r_hat)         # {X_W,Y_W,Z_W}
@@ -437,6 +542,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             r_C2_B = -r_B_C2                        # {X_W,Y_W,Z_W}
             e_r_hat = r_C2_B/np.linalg.norm(r_C2_B) # {X_W,Y_W,Z_W}
 
+            ## IMPACT LOCATION REWARD
+            r_B_P = self.r_B_O_impact_Ext - self.r_P_O                      # {X_W,Z_W}
+            r_C2_P = self.R_WP(r_B_P - r_B_C2,self.Plane_Angle_rad)         # {tx,n_p}
+            R_tx = self.Reward_Exp_Decay(np.abs(r_C2_P[0]),0.1,k=5.0)
+
             ## MOMENTUM TRANSFER REWARD
             CP_LT = np.cross(V_hat_impact,e_r_hat) # {X_W,Y_W,Z_W}
             DP_LT = np.dot(V_hat_impact,e_r_hat)
@@ -465,6 +575,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             Phi_P_B_impact_deg = -Phi_B_P_impact_deg
 
             ## CALC REWARD VALUES
+            R_tx = 0
             R_LT = 0
             R_GM = 0
             R_Phi = self.Reward_ImpactAngle(Phi_P_B_impact_deg,self.Phi_P_B_impact_Min_deg,Phi_B_P_Impact_Condition)
@@ -472,12 +583,13 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_min,self.Collision_Radius)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_pad_min,0,k=5)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.2)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=5)
+
 
         ## REWARD: PAD CONNECTIONS
         if self.Pad_Connections >= 3: 
@@ -490,10 +602,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         if self.BodyContact_Flag:
             R_Legs = R_Legs*0.5
 
-        self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
+        self.reward_vals = [R_dist,R_tau_cr,R_tx,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
-        print(f"R_t_norm: {R_t/self.W_max:.3f}")
-        print(np.round(self.reward_vals,2))
+        self.reward = R_t/self.W_max
+        # print(f"R_t_norm: {R_t/self.W_max:.3f}")
+        # print(np.round(self.reward_vals,2))
 
         return R_t/self.W_max
     
@@ -559,27 +672,44 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## CALCULATE REWARD
         return -np.sin(np.radians(CP_angle_deg)) * 1/2 + 0.5
+    
+    def render(self):
+        ## DO NOTHING ##
+        return
+
+    def close(self):
+        ## DO NOTHING ##
+        return
 
 if __name__ == "__main__":
 
     env = SAR_Sim_DeepRL(GZ_Timeout=False,Ang_Acc_range=[-100,100],V_mag_range=[2.5,2.5],V_angle_range=[5,175],Plane_Angle_range=[0,135])
 
-    for ep in range(20):
+    for ep in range(50):
 
-        V_mag = None
-        V_angle = None
-        Plane_Angle = None
+        V_mag = 2.5
+        V_angle = 60
+        Plane_Angle = 0
 
-        obs,_ = env.reset(V_mag=V_mag,V_angle=V_angle,Plane_Angle=Plane_Angle)
+        if V_mag != None:
+            env.V_mag_range = [V_mag,V_mag]
 
-        
+        if V_angle != None:
+            env.V_angle_range = [V_angle,V_angle]
+
+        if Plane_Angle != None:
+            env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
+
+        obs,_ = env.reset()
 
         Done = False
         while not Done:
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -0.5
+            action[1] = -1.0
+            if 0.0 < env.Tau_CR <= 0.25:
+                action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 

@@ -119,7 +119,6 @@ namespace gazebo {
             ros::ServiceServer Cam_Update_Service = nh.advertiseService("/SAR_Internal/Camera_Update", &SAR_Update_Plugin::Update_Camera_Service, this);
             ros::ServiceServer Inertia_Update_Service = nh.advertiseService("/SAR_Internal/Inertia_Update", &SAR_Update_Plugin::Update_Inertia_Service, this);
             ros::ServiceServer Hinge_Update_Service = nh.advertiseService("/SAR_Internal/Hinge_Joint_Update", &SAR_Update_Plugin::Update_Hinge_Service, this);
-
     };
 
 }

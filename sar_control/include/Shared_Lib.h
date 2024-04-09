@@ -17,10 +17,11 @@ extern "C" {
 #include "ML_Funcs.h"
 #include "Compress_States.h"
 
-// #include "ML_Params/NN_Layers_NL_DeepRL.h"
+#include "ML_Params/NN_Params_DeepRL.h"
 
 
-#define PWM_MAX 60000
+
+#define MOTOR_CMD_MAX 60000
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 #define Deg2Rad (float)M_PI/180.0f
@@ -41,7 +42,16 @@ extern float C_tf;              // Moment Coeff [Nm/N]
 extern float Thrust_max;        // Max thrust per motor [g]
 
 extern float dt;                // Controller cycle time
+extern uint32_t PrevCrazyswarmTick;
 extern uint32_t prev_tick;
+
+typedef enum {
+    SAR_NONE = 0,
+    CRAZYFLIE = 1,
+    IMPULSE_MICRO = 2,
+    SO_V5 = 3,
+}SAR_Types;
+extern SAR_Types SAR_Type;
 
 
 // =================================
@@ -181,14 +191,14 @@ extern float M2_thrust;
 extern float M3_thrust;
 extern float M4_thrust;
 
-// MOTOR PWM VALUES
-extern uint16_t M1_pwm; 
-extern uint16_t M2_pwm; 
-extern uint16_t M3_pwm; 
-extern uint16_t M4_pwm; 
+// MOTOR M_CMD VALUES
+extern uint16_t M1_CMD; 
+extern uint16_t M2_CMD; 
+extern uint16_t M3_CMD; 
+extern uint16_t M4_CMD; 
 
 // CONTROL OVERRIDE VALUES
-extern uint16_t PWM_override[4];    // Motor PWM values
+extern uint16_t M_CMD_override[4];    // Motor M_CMD values
 extern float thrust_override[4];    // Motor thrusts [g] 
 
 
@@ -227,9 +237,10 @@ extern bool Tumbled_Flag;
 extern bool TumbleDetect_Flag;
 extern bool MotorStop_Flag;
 extern bool AngAccel_Flag;
-extern bool SafeMode_Flag;
+extern bool Armed_Flag;
 extern bool CustomThrust_Flag;
-extern bool CustomPWM_Flag;
+extern bool CustomMotorCMD_Flag;
+extern uint16_t CMD_ID;
 
 // SENSOR FLAGS
 extern bool CamActive_Flag;
@@ -246,8 +257,10 @@ typedef enum {
 }PolicyType;
 extern PolicyType Policy;
 
-extern nml_mat* X_input;    // STATE MATRIX TO BE INPUT INTO POLICY
-extern nml_mat* Y_output;   // POLICY OUTPUT MATRIX
+extern nml_mat* X_input;        // STATE MATRIX TO BE INPUT INTO POLICY
+extern nml_mat* Y_output;       // POLICY OUTPUT MATRIX
+extern float Y_output_trg[4];   // POLICY OUTPUT ARRAY
+
 
 // POLICY FLAGS
 extern bool Policy_Armed_Flag;
@@ -255,11 +268,9 @@ extern bool Trg_Flag;
 extern bool onceFlag;
 
 // POLICY TRIGGER/ACTION VALUES
-extern float Policy_Trg_Action;  
-extern float Policy_Rot_Action;
-
-extern float ACTION_MIN;
-extern float ACTION_MAX;
+extern float a_Trg;  
+extern float a_Rot;
+extern float a_Rot_bounds[2];
 
 
 // ===============================
@@ -267,9 +278,6 @@ extern float ACTION_MAX;
 // ===============================
 
 extern NN NN_DeepRL;
-extern float Policy_Rot_threshold;
-
-
 
 
 // ==========================================
@@ -308,19 +316,26 @@ extern float Theta_x_Cam_trg;           // [rad/s]
 extern float Theta_y_Cam_trg;           // [rad/s]
 
 // POLICY TRIGGER/ACTION VALUES
-extern float Policy_Trg_Action_trg;    
-extern float Policy_Rot_Action_trg;
+extern float a_Trg_trg;    
+extern float a_Rot_trg;
 
 // =================================
 //  RECORD SYSTEM STATES AT IMPACT
 // =================================
 extern bool Impact_Flag_OB;
-extern float Accel_B_O_Mag_impact_OB;      // Linear Accel. Magnitude [m/s^2]
-extern struct vec Pos_B_O_impact_OB;       // Pos [m]
+extern bool Impact_Flag_Ext;
 extern struct quat Quat_B_O_impact_OB;     // Orientation
+extern float Vel_mag_B_P_impact_OB;        // Velocity magnitude relative [m/s]
+extern float Vel_angle_B_P_impact_OB;      // Velocity angle relative [deg]
+extern struct vec Omega_B_O_impact_OB;     // Angular Rate [rad/s]
+extern struct vec dOmega_B_O_impact_OB;    // Angular Accel [rad/s^2]
 
-extern struct vec Vel_B_P_impact_OB;       // Vel [m/s]
-extern struct vec Omega_B_P_impact_OB;     // Angular Rate [rad/s]
+extern uint16_t cycleCounter;               // Cycle counter to delay recorded impact states   
+extern float Vel_mag_B_P_prev_N;            // Velocity magnitude relative [m/s]
+extern float Vel_angle_B_P_prev_N;          // Velocity angle relative [deg]
+extern struct quat Quat_B_O_prev_N;         // Orientation
+extern struct vec Omega_B_O_prev_N;         // Angular Rate [rad/s]
+extern struct vec dOmega_B_O_prev_N;        // Angular Accel [rad/s^2]
 
 // =================================
 //    LANDING SURFACE PARAMETERS
@@ -340,6 +355,7 @@ extern struct mat33 R_PW;       // Rotation matrix from plane to world
 
 // CTRL COMMAND PACKETS
 struct CTRL_CmdPacket{
+    uint16_t cmd_ID; 
     uint8_t cmd_type; 
     float cmd_val1;
     float cmd_val2;
@@ -355,7 +371,7 @@ extern struct CTRL_CmdPacket CTRL_Cmd;
 
 void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
-uint16_t thrust2PWM(float f);
+uint16_t thrust2Motor_CMD(float f);
 void updateRotationMatrices();
 bool updateOpticalFlowEst();
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);
