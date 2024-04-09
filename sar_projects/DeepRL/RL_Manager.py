@@ -718,7 +718,7 @@ class RewardCallback(BaseCallback):
         self.rew_mean_window = deque(maxlen=int(15e3))
 
         ## REWARD STABILITY
-        self.rew_mean_diff_threshold = 0.07
+        self.rew_mean_diff_threshold = 0.1
         self.ent_burst_cooldown = int(30e3)                 # Cooldown period for entropy burst
         self.ent_burst_limit = int(100e3)                    # Limit the entropy burst to the first 100k steps
         self.ent_coef = 0.07                                # Initial entropy coefficient
