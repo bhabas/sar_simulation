@@ -389,7 +389,7 @@ class RL_Training_Manager():
 
                             TTC = np.round(t_delta_avg*(num_trials-idx)) # Time to completion
                             t_now = np.round(t_now)
-                            print(f"Flight Conditions: ({V_mag:.02f} m/s, {V_angle:.02f} deg, {Plane_Angle:.02f} deg) Reward: {self.env.reward:.2f} Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% TTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
+                            print(f"Flight Conditions: ({V_mag:.02f} m/s, {V_angle:.02f} deg, {Plane_Angle:.02f} deg) Reward: {self.env.reward_vals[-1]:.2f} Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% TTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
                     
                 self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
 
@@ -684,6 +684,11 @@ class RL_Training_Manager():
                 print(f"Error uploading file to S3: {e}")
                 print(f"File {local_file_path} failed to upload to {S3_bucket_name}:{S3_file_path}")
 
+    def delete_file_from_S3(self, S3_file_path):
+
+        S3_bucket_name = "robotlandingproject--deeprl--logs"
+        self.S3_client.delete_object(Bucket=S3_bucket_name, Key=S3_file_path)
+
 
 
 class RewardCallback(BaseCallback):
@@ -713,7 +718,7 @@ class RewardCallback(BaseCallback):
         self.rew_mean_window = deque(maxlen=int(15e3))
 
         ## REWARD STABILITY
-        self.rew_mean_diff_threshold = 0.05
+        self.rew_mean_diff_threshold = 0.07
         self.ent_burst_cooldown = int(30e3)                 # Cooldown period for entropy burst
         self.ent_burst_limit = int(100e3)                    # Limit the entropy burst to the first 100k steps
         self.ent_coef = 0.07                                # Initial entropy coefficient
@@ -915,9 +920,11 @@ class RewardCallback(BaseCallback):
 
         model_name = f"model_{self.num_timesteps}_steps_BestModel.zip"
         model_path = os.path.join(self.RLM.Model_Dir, model_name)
+        s3_model_path = os.path.join("S3_TB_Logs", self.RLM.Group_Name, self.RLM.Log_Name, "Models", model_name)
 
         replay_buffer_name = f"replay_buffer_{self.num_timesteps}_steps_BestModel.pkl"
         replay_buffer_path = os.path.join(self.RLM.Model_Dir, replay_buffer_name)
+        s3_replay_buffer_path = os.path.join("S3_TB_Logs", self.RLM.Group_Name, self.RLM.Log_Name, "Models", replay_buffer_name)
 
         ## SAVE MODEL AND REPLAY BUFFER
         self.model.save(model_path)
@@ -932,18 +939,25 @@ class RewardCallback(BaseCallback):
             print(f"New best mean reward: {self.best_mean_reward:.2f} - Model and replay buffer saved.")
 
         ## TRACK SAVED MODELS FOR DELETION
-        self.saved_models.append((model_path, replay_buffer_path))
+        self.saved_models.append((model_path, replay_buffer_path, s3_model_path, s3_replay_buffer_path))
+
     
     def _keep_last_n_models(self):
 
         ## REMOVE OLDER TOP MODELS AND REPLAY BUFFERS
         if len(self.saved_models) > self.keep_last_n_models:
 
-            for model_path, replay_buffer_path in self.saved_models[:-self.keep_last_n_models]:
+            for model_path, replay_buffer_path, s3_model_path, s3_replay_buffer_path in self.saved_models[:-self.keep_last_n_models]:
+                
+                # Delete local files
                 if os.path.exists(model_path):
                     os.remove(model_path)
-                # if os.path.exists(replay_buffer_path):
-                #     os.remove(replay_buffer_path)
+                if os.path.exists(replay_buffer_path):
+                    os.remove(replay_buffer_path)
+                
+                # Delete from S3
+                self.RLM.delete_file_from_S3(s3_model_path)
+                self.RLM.delete_file_from_S3(s3_replay_buffer_path)
 
             self.saved_models = self.saved_models[-self.keep_last_n_models:]
 
