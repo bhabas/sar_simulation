@@ -209,7 +209,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
 
         ## CALCULATE STARTING TAU VALUE
-        self.Tau_CR_start = self.t_rot_max*np.random.uniform(1.9,2.1) # Add noise to starting condition
+        # self.Tau_CR_start = self.t_rot_max*np.random.uniform(1.9,2.1) # Add noise to starting condition
+        self.Tau_CR_start = 0.7 + np.random.uniform(-0.1,0.1)
         self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
         self.Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
 
@@ -603,12 +604,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_pad_min,0,k=5)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_pad_min,0,k=1)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=5)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=2.5)
 
 
         ## REWARD: PAD CONNECTIONS
