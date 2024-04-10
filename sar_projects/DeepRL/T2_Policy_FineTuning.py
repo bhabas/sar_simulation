@@ -72,7 +72,7 @@ if __name__ == '__main__':
                 "gamma": 0.999,
                 "learning_rate": 1.5e-3,
                 "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
-                "ent_coef": "auto_0.05",
+                "ent_coef": "auto_0.008",
                 "target_entropy": -2,
                 "batch_size": 256,
                 "buffer_size": int(200e3),
@@ -83,12 +83,15 @@ if __name__ == '__main__':
     
     ## CREATE MODEL AND TRAIN
     RL_Manager.create_model(model_kwargs=model_kwargs)
-    RL_Manager.load_model(
-        GroupName=args.PT_GroupName,
-        LogName=PT_TrainConfig['LogName'],
-        t_step_load=t_step_load,
-        Params_only=True,
-    )
+    try:
+        RL_Manager.load_model(
+            GroupName=args.PT_GroupName,
+            LogName=PT_TrainConfig['LogName'],
+            t_step_load=t_step_load,
+            Params_only=True,
+        )
+    except:
+        print("No model loaded")
     RL_Manager.train_model(reset_timesteps=False,t_step_max=TrainConfig['t_step_limit'])
 
 
