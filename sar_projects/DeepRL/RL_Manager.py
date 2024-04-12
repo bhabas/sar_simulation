@@ -420,6 +420,7 @@ class RL_Training_Manager():
 
         df2 = df.groupby(["V_mag","V_angle","Plane_Angle"]).mean().round(3).reset_index()
         df2.query(f"Plane_Angle == {PlaneAngle}",inplace=True)
+        df2.query(f"V_mag >= 1.0",inplace=True)
         
         
         ## COLLECT DATA
@@ -456,6 +457,13 @@ class RL_Training_Manager():
         ax.set_rticks([0.0,1.0,2.0,3.0,4.0,5.0])
         ax.set_rmin(0)
         ax.set_rmax(R.max())
+
+
+        # fig_cbar = plt.figure(figsize=(1.5, 6))  # Adjust the figure size as needed
+        # ax_cbar = fig_cbar.add_axes([0.05, 0.05, 0.25, 0.9])  # This creates a new set of axes for the colorbar
+        # mpl.colorbar.ColorbarBase(ax_cbar, cmap=cmap, norm=norm, orientation='vertical')
+        # ax_cbar.set_yticks([0.0,0.25,0.5,0.75,1.0])
+        # ax_cbar.set_yticklabels(['0_Leg','2_Leg_BC','2_Leg_NBC','4_Leg_BC','4_Leg_NBC'])
         
 
         config_str = f"Policy: {self.Log_Name} \

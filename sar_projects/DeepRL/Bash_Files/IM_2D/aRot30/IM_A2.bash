@@ -14,7 +14,7 @@ python $DEEP_RL_PATH/T2_Policy_FineTuning.py \
     --PT_GroupName IM_2D_aRot60/45deg \
     --PT_TrainConfig $DEEP_RL_PATH/Config_Files/IM_2D_Sim/aRot60/A2/IM_A2_45deg_S2D.json \
     --t_step_load 150000 \
-    --S3_Upload true
+    --S3_Upload true && \
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
     --GroupName IM_2D_aRot30/45deg \
@@ -31,7 +31,7 @@ python $DEEP_RL_PATH/T2_Policy_FineTuning.py \
     --PT_GroupName IM_2D_aRot60/90deg \
     --PT_TrainConfig $DEEP_RL_PATH/Config_Files/IM_2D_Sim/aRot60/A2/IM_A2_90deg_S2D.json \
     --t_step_load 150000 \
-    --S3_Upload true
+    --S3_Upload true && \
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
     --GroupName IM_2D_aRot30/90deg \
@@ -48,7 +48,7 @@ python $DEEP_RL_PATH/T2_Policy_FineTuning.py \
     --PT_GroupName IM_2D_aRot60/135deg \
     --PT_TrainConfig $DEEP_RL_PATH/Config_Files/IM_2D_Sim/aRot60/A2/IM_A2_135deg_S2D.json \
     --t_step_load 150000 \
-    --S3_Upload true
+    --S3_Upload true && \
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
     --GroupName IM_2D_aRot30/135deg \
@@ -65,7 +65,7 @@ python $DEEP_RL_PATH/T2_Policy_FineTuning.py \
     --PT_GroupName IM_2D_aRot60/180deg \
     --PT_TrainConfig $DEEP_RL_PATH/Config_Files/IM_2D_Sim/aRot60/A2/IM_A2_180deg_S2D.json \
     --t_step_load 150000 \
-    --S3_Upload true
+    --S3_Upload true && \
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
     --GroupName IM_2D_aRot30/180deg \
@@ -80,7 +80,7 @@ python $DEEP_RL_PATH/T2_Policy_FineTuning.py \
     --PT_GroupName IM_2D_aRot60/0deg \
     --PT_TrainConfig $DEEP_RL_PATH/Config_Files/IM_2D_Sim/aRot60/A2/IM_A2_0deg_S2D.json \
     --t_step_load 150000 \
-    --S3_Upload true
+    --S3_Upload true && \
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
     --GroupName IM_2D_aRot30/0deg \

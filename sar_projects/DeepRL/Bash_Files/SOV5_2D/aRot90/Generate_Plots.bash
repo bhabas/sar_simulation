@@ -1,3 +1,6 @@
+#!/bin/bash
+
+## FIND SIMULATION PATH
 DEEP_RL_PATH=$(find ~/catkin_ws/src -name 'sar_simulation' -type d | head -n 1)/sar_projects/DeepRL
 
 ## 0 deg plots
