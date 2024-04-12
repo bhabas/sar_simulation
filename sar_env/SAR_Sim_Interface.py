@@ -340,9 +340,21 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
             if not (self.GZ_ping_ok and self.SAR_DC_ping_ok and self.SAR_Ctrl_ping_ok):
                 self.Sim_Status = "Restarting"
-                error_msg = YELLOW + "[WARNING] One or more subprocesses not responding. Restarting all subprocesses..." + RESET
-                self.Done = True
+                unresponsive_processes = []
+                
+                if not self.GZ_ping_ok:
+                    unresponsive_processes.append("GZ")
+                if not self.SAR_DC_ping_ok:
+                    unresponsive_processes.append("SAR_DC")
+                if not self.SAR_Ctrl_ping_ok:
+                    unresponsive_processes.append("SAR_Ctrl")
+                
+                # Creating a comma-separated string of unresponsive subprocesses
+                unresponsive_str = ", ".join(unresponsive_processes)
+                error_msg = YELLOW + f"[WARNING] The following subprocesses are not responding: {unresponsive_str}. Restarting all subprocesses..." + RESET
+                
                 print(error_msg)
+                self.Done = True
                 self._restart_Sim()
 
             elif not (self.NaN_check_ok):
