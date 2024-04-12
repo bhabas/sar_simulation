@@ -5,7 +5,7 @@ GROUND_SETTINGS:
   Ground_Config: "None"
 
 SIM_SETTINGS:
-  GUI_Flag: False
+  GUI_Flag: True
   Pause_Flag: False
   Sim_Speed: 0.5
   Sim_Slowdown_Speed: 0.3
