@@ -1,0 +1,21 @@
+{
+    "LogName": "IM_A60_L50_90deg_aRot60_S3D",
+    "ENV_Type": "SAR_Sim_DeepRL",
+    
+    "SAR_SETTINGS": {
+      "SAR_Type": "Impulse_Micro",
+      "SAR_Config": "A60_L50"
+    },
+    
+    "ENV_KWARGS": {
+        "Ang_Acc_range": [ -60, 0 ],
+        "Plane_Angle_range": [90, 90],
+        "V_mag_range": [ 0.5, 5.0 ],
+        "V_angle_range": [ 10,   170 ],
+        "Render": false,
+        "GZ_Timeout":true
+    },
+
+    "t_step_limit": 151000, 
+    "t_step_optim": 0
+}

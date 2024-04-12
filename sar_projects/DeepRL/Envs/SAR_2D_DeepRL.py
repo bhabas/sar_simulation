@@ -621,7 +621,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             R_Legs = 0.0
 
         if self.BodyContact_Flag:
-            R_Legs = R_Legs*0.75
+            R_Legs = max(R_Legs-0.25,0)
 
         self.reward_vals = [R_dist,R_tau_cr,R_tx,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
@@ -726,7 +726,7 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = 1.0
+            action[1] = -1.0
             if 0.0 < env.Tau_CR <= 0.5:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)

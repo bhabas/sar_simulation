@@ -63,7 +63,7 @@ if __name__ == '__main__':
     env_kwargs = TrainConfig['ENV_KWARGS']
 
     ## CREATE RL MANAGER
-    RL_Manager = RL_Training_Manager(env,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)
+    RL_Manager = RL_Training_Manager(SAR_Sim_DeepRL,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)
     
     ## CREATE MODEL AND TRAIN
     RL_Manager.create_model()
@@ -76,6 +76,6 @@ if __name__ == '__main__':
 
     RL_Manager.env.Render_Flag = True
     RL_Manager.sweep_policy(Plane_Angle_Step=45,
-        V_mag_Step=1.0,
-        V_angle_Step=10,
+        V_mag_Step=1.5,
+        V_angle_Step=15,
         n=1)
