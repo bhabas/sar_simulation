@@ -333,9 +333,9 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         while True:
 
-            self.GZ_ping_ok = self._ping_service("/gazebo/get_loggers",timeout=5)
-            self.SAR_DC_ping_ok = self._ping_service("/SAR_DataConverter_Node/get_loggers",timeout=5)
-            self.SAR_Ctrl_ping_ok = self._ping_service("/SAR_Controller_Node/get_loggers",timeout=5)
+            self.GZ_ping_ok = self._ping_service("/gazebo/get_loggers",timeout=10)
+            self.SAR_DC_ping_ok = self._ping_service("/SAR_DataConverter_Node/get_loggers",timeout=10)
+            self.SAR_Ctrl_ping_ok = self._ping_service("/SAR_Controller_Node/get_loggers",timeout=10)
             self.NaN_check_ok = not np.isnan(self.r_B_O[0])
 
             if not (self.GZ_ping_ok and self.SAR_DC_ping_ok and self.SAR_Ctrl_ping_ok):
