@@ -408,16 +408,16 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         if rospy.get_param(f"/SIM_SETTINGS/GUI_Flag") == True:
             self._wait_for_node(node_name="gazebo_gui",timeout=60,interval=2)
         else:
-            self._wait_for_node(node_name="gazebo",timeout=60,interval=2)
+            self._wait_for_node(node_name="gazebo",timeout=120,interval=2)
 
 
         ## LAUNCH CONTROLLER
         self._launch_Controller()
-        self._wait_for_node(node_name="SAR_Controller_Node",timeout=10,interval=0.5)
+        self._wait_for_node(node_name="SAR_Controller_Node",timeout=120,interval=0.5)
 
         ## LAUNCH SAR_DC
         self._launch_SAR_DC()
-        self._wait_for_node(node_name="SAR_DataConverter_Node",timeout=10,interval=0.5)
+        self._wait_for_node(node_name="SAR_DataConverter_Node",timeout=120,interval=0.5)
 
     
     def _wait_for_node(self,node_name,timeout=None,interval=1.0):
