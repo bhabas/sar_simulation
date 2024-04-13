@@ -139,7 +139,7 @@ class RL_Training_Manager():
             # self.model.load_replay_buffer(replay_buffer_path)
 
 
-    def train_model(self,model_save_freq=25e3,reward_check_freq=1000,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
+    def train_model(self,model_save_freq=15e3,reward_check_freq=500,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
 
         if reset_timesteps == True:
 
@@ -728,8 +728,7 @@ class RewardCallback(BaseCallback):
         ## REWARD STABILITY
         self.rew_mean_diff_threshold = 0.1
         self.ent_burst_cooldown = int(30e3)                 # Cooldown period for entropy burst
-        self.ent_burst_limit = int(120e3)                   # Limit the entropy burst to the first 100k steps
-        self.ent_coef = 0.07                                # Initial entropy coefficient
+        self.ent_burst_limit = int(40e3)                    # Limit the entropy burst to the first 100k steps
         self.last_ent_burst_step = 0                        # Last step when entropy burst was applied
 
         ## REWARD GRID

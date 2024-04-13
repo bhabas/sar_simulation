@@ -16,6 +16,6 @@
         "GZ_Timeout":true
     },
 
-    "t_step_limit": 151000, 
+    "t_step_limit": 61000, 
     "t_step_optim": 0
 }

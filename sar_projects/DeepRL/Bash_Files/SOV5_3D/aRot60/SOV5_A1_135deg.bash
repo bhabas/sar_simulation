@@ -16,5 +16,5 @@ python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
     --GroupName SOV5_3D_aRot60/135deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot60/A1/SOV5_A1_135deg_S2D.json \
     --S3_Upload true \
-    --t_step_load 150000
+    --t_step_load 60000
     
