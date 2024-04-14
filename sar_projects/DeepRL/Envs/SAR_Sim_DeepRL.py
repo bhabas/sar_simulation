@@ -490,6 +490,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 Phi_B_P_Impact_Condition = 1
             elif math.isnan(temp_angle_deg):
                 Phi_B_P_Impact_Condition = 1
+            else:
+                Phi_B_P_Impact_Condition = 1
 
         else:
             ## CALC REWARD VALUES

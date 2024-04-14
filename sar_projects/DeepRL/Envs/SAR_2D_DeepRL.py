@@ -489,9 +489,11 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
             if temp_angle_deg < 0:
                 Phi_B_P_Impact_Condition = -1
-            elif temp_angle_deg > 0:
+            elif temp_angle_deg >= 0:
                 Phi_B_P_Impact_Condition = 1
             elif math.isnan(temp_angle_deg):
+                Phi_B_P_Impact_Condition = 1
+            else:
                 Phi_B_P_Impact_Condition = 1
 
         else:
