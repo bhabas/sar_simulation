@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     model_kwargs = {
                 "gamma": 0.999,
-                "learning_rate": 1.5e-3,
+                "learning_rate": 1.0e-3,
                 "net_arch": dict(pi=[10,10,10], qf=[64,64,64]),
                 "ent_coef": "auto_0.005",
                 "target_entropy": -2,
