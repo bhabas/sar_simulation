@@ -457,7 +457,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
                 truncated = False
                 # print(YELLOW,self.error_str,RESET)
 
-            elif np.abs(r_P_B[0]) > 0.7 and r_P_B[2] < 1.5*self.L_eff:
+            elif np.abs(r_P_B[0]) > 1.4 and (r_P_B[2] < self.Forward_Reach):
                 self.error_str = "Episode Completed: Out of Bounds [Terminated]"
                 terminated = True
                 truncated = False
