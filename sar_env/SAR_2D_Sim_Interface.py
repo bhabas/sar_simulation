@@ -444,7 +444,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ## ACTIONS TEXT
         text_Actions = my_font.render(f'Actions:', True, GREY_PG)
         # text_Trg_Action = my_font.render(f'Trg_Action: {self.action_trg[0]:3.1f}', True, BLACK_PG)
-        # text_Rot_Action = my_font.render(f'Rot_Action: {self.action_trg[1]:3.1f}', True, BLACK_PG)
+        text_Rot_Action = my_font.render(f'a_Rot: {self.a_Rot_trg:3.1f} [rad/s^2]', True, BLACK_PG)
 
         ## OTHER TEXT
         text_Other = my_font.render(f'Other:', True, GREY_PG)
@@ -473,7 +473,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         self.screen.blit(text_Actions,      (5,5 + 25*11))
         # self.screen.blit(text_Trg_Action,   (5,5 + 25*12))
-        # self.screen.blit(text_Rot_Action,   (5,5 + 25*13))
+        self.screen.blit(text_Rot_Action,   (5,5 + 25*13))
 
         self.screen.blit(text_Other,        (5,5 + 25*15))
         # self.screen.blit(text_reward,       (5,5 + 25*16))
