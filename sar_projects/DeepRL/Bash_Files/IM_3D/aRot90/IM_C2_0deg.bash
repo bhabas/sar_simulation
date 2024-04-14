@@ -14,8 +14,7 @@ python $DEEP_RL_PATH/T2_Policy_FineTuning.py \
     --S3_Upload true && \
 
 
-echo "Enter the t_step_load value for T3_Policy_Data_Collection.py:"
-read T_STEP_LOAD
+
 
 
 python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
