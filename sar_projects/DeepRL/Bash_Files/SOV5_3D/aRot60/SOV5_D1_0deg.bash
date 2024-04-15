@@ -9,7 +9,7 @@ python $DEEP_RL_PATH/T2_Policy_FineTuning.py \
     --GroupName SOV5_3D_aRot60/0deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot60/D1/SOV5_D1_0deg_S2D.json \
     --PT_GroupName SOV5_2D_aRot60/0deg \
-    --PT_TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot60/D1/SOV5_D1_0deg_S2D.json \
+    --PT_TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_2D_Sim/aRot60/D2/SOV5_D2_0deg_S2D.json \
     --t_step_load 150000 \
     --S3_Upload true && \
 
