@@ -8,7 +8,7 @@ python $DEEP_RL_PATH/T2_Policy_FineTuning.py \
     --GroupName IM_3D_aRot90/90deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/IM_3D_Sim/aRot90/C2/IM_C2_90deg_S2D.json \
     --PT_GroupName IM_2D_aRot90/90deg \
-    --PT_TrainConfig $DEEP_RL_PATH/Config_Files/IM_2D_Sim/aRot90/C2/IM_C2_90deg_S2D.json \
+    --PT_TrainConfig $DEEP_RL_PATH/Config_Files/IM_2D_Sim/aRot90/C1/IM_C1_90deg_S2D.json \
     --t_step_load 150000 \
     --S3_Upload true && \
 

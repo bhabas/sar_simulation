@@ -524,12 +524,12 @@ SAR_Type:
 
       Leg_Params:
 
-        K_Pitch: 0.5                    # Y-Axis Stiffness [N*m/rad]
+        K_Pitch: 0.4                    # Y-Axis Stiffness [N*m/rad]
         DR_Pitch: 0.3                   # Y-Axis Damping Ratio
         PosDir_Pitch_Limit: 0.0         # Y-Axis Upper Limit [deg]
         NegDir_Pitch_Limit: 75.0         # Y-Axis Upper Limit [deg]
 
-        K_Yaw: 0.5                     # Z-Axis Stiffness [N*m/rad]
+        K_Yaw: 0.4                     # Z-Axis Stiffness [N*m/rad]
         DR_Yaw: 0.7                     # Z-Axis Damping Ratio
         PosDir_Yaw_Limit: 20.0           # Z-Axis Upper Limit [deg]
         NegDir_Yaw_Limit: 20.0           # Z-Axis Upper Limit [deg]
