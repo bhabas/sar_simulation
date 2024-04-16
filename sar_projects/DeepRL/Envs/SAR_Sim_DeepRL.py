@@ -454,7 +454,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 truncated = False
                 # print(YELLOW,self.error_str,RESET)
 
-            elif np.abs(r_P_B[0]) > 1.2 and (self.D_perp < 1.5*self.L_eff):
+            elif np.abs(r_P_B[0]) > 1.0 and (self.D_perp < 1.5*self.L_eff):
                 self.error_str = "Episode Completed: Out of Bounds [Terminated]"
                 terminated = True
                 truncated = False
