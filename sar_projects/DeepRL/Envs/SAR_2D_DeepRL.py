@@ -20,7 +20,7 @@ from sar_env import SAR_2D_Sim_Interface
 
 class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
-    def __init__(self,Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=False,GZ_Timeout=False):
+    def __init__(self,Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=True,GZ_Timeout=False):
         SAR_2D_Sim_Interface.__init__(self,Render)
         gym.Env.__init__(self)
 
@@ -50,7 +50,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             
             ## LOAD TESTING CONDITIONS
             self.TestingConditions = []
-            csv_file_path = f"{self.BASE_PATH}/sar_projects/DeepRL/Finetuning_Training_Conditions.csv"
+            csv_file_path = f"{self.BASE_PATH}/sar_projects/DeepRL/Training_Conditions/TrainingConditions_{int(self.Plane_Angle_range[0])}deg.csv"
 
             with open(csv_file_path, mode='r') as csv_file:
                 csv_reader = csv.DictReader(csv_file)
@@ -209,8 +209,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
 
         ## CALCULATE STARTING TAU VALUE
-        self.Tau_CR_start = self.t_rot_max*np.random.uniform(0.9,1.1) # Add noise to starting condition
-        # self.Tau_CR_start = 0.7 + np.random.uniform(-0.1,0.1)
+        # self.Tau_CR_start = self.t_rot_max*np.random.uniform(0.9,1.1) # Add noise to starting condition
+        self.Tau_CR_start = 0.5 + np.random.uniform(-0.05,0.05)
         self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
         self.Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
 
@@ -451,13 +451,13 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             #     truncated = False
             #     # print(YELLOW,self.error_str,RESET)
 
-            elif r_B_O[2] < -5:
+            elif r_B_O[2] < -15:
                 self.error_str = "Episode Completed: Out of bounds [Terminated]"
                 terminated = True
                 truncated = False
                 # print(YELLOW,self.error_str,RESET)
 
-            elif np.abs(r_P_B[0]) > 1.0:
+            elif np.abs(r_P_B[0]) > 1.2 and (self.D_perp < 1.5*self.L_eff):
                 self.error_str = "Episode Completed: Out of Bounds [Terminated]"
                 terminated = True
                 truncated = False
@@ -704,22 +704,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
+
+    Plane_Angle = 90
+    V_mag = 2.5
+    V_angle = 60
+
+    env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[V_mag,V_mag],V_angle_range=[V_angle,V_angle],Plane_Angle_range=[Plane_Angle,Plane_Angle],Render=True)
 
     for ep in range(50):
-
-        V_mag = 2.5
-        V_angle = 60
-        Plane_Angle = 90
-
-        if V_mag != None:
-            env.V_mag_range = [V_mag,V_mag]
-
-        if V_angle != None:
-            env.V_angle_range = [V_angle,V_angle]
-
-        if Plane_Angle != None:
-            env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
 
         obs,_ = env.reset()
 
