@@ -64,6 +64,7 @@ if __name__ == '__main__':
 
     ## CREATE RL MANAGER
     RL_Manager = RL_Training_Manager(env,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)
+    RL_Manager.env.Fine_Tuning_Flag = False
     
     ## CREATE MODEL AND TRAIN
     RL_Manager.create_model()

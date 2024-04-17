@@ -139,7 +139,7 @@ class RL_Training_Manager():
             # self.model.load_replay_buffer(replay_buffer_path)
 
 
-    def train_model(self,model_save_freq=15e3,reward_check_freq=500,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
+    def train_model(self,model_save_freq=10e3,reward_check_freq=500,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
 
         if reset_timesteps == True:
 
@@ -823,6 +823,7 @@ class RewardCallback(BaseCallback):
             self.logger.record('z_Custom/Trg_Flag',int(info_dict["Trg_Flag"]))
             self.logger.record('z_Custom/Impact_Flag_Ext',int(info_dict["Impact_Flag_Ext"]))
             self.logger.record('z_Custom/D_perp_pad_min',info_dict["D_perp_pad_min"])
+            self.logger.record('z_Custom/TestCondition_idx',info_dict["TestCondition_idx"])
 
             self.logger.record('z_Rewards_Components/R_Dist',info_dict["reward_vals"][0])
             self.logger.record('z_Rewards_Components/R_tau',info_dict["reward_vals"][1])
