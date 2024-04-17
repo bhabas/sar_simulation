@@ -44,12 +44,14 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Env_Name = "SAR_Sim_DeepRL_Env"
 
         ## TESTING CONDITIONS     
-        self.Fine_Tuning_Flag = Fine_Tune
         self.V_mag_range = V_mag_range  
         self.V_angle_range = V_angle_range
         self.Plane_Angle_range = Plane_Angle_range
         self.setAngAcc_range(Ang_Acc_range)
+
+        self.Fine_Tuning_Flag = Fine_Tune
         self.TestCondition_idx = 0
+        self.TestCondition_Wrap = False
 
         if self.Fine_Tuning_Flag:
             
@@ -185,7 +187,14 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             ## UPDATE TESTING CONDITION INDEX
             self.TestCondition_idx += 1
             if self.TestCondition_idx >= len(self.TestingConditions):
+
+                if self.TestCondition_Wrap == True:
+                    self.Fine_Tuning_Flag = False
+                    self.TestCondition_idx = np.nan
+
                 self.TestCondition_idx = 0
+                self.TestCondition_Wrap = True
+            
 
         else:
 
