@@ -780,7 +780,7 @@ class RewardCallback(BaseCallback):
 
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
-        if self.num_timesteps % self.reward_check_freq == 0 and self.num_timesteps > 5000:
+        if self.num_timesteps % self.reward_check_freq == 0 and self.env.K_ep > 1500:
 
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
             if ep_rew_mean > self.best_mean_reward:
