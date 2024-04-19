@@ -1,0 +1,22 @@
+{
+    "LogName": "IM_A15_L150_135deg_aRot90_K0.4_DR1.3_S3D",
+    "ENV_Type": "SAR_Sim_DeepRL",
+    
+    "SAR_SETTINGS": {
+      "SAR_Type": "Impulse_Micro",
+      "SAR_Config": "A15_L150"
+    },
+    
+    "ENV_KWARGS": {
+        "Ang_Acc_range": [ -90, 0 ],
+        "Plane_Angle_range": [135, 135],
+        "V_mag_range": [ 0.5, 5.0 ],
+        "V_angle_range": [ 45, 170 ] ,
+        "Render": false,
+        "GZ_Timeout":true
+    },
+
+    "t_step_limit": 96000, 
+    "t_step_optim": 0,
+    "K_eff":0.4
+}

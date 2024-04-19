@@ -75,8 +75,9 @@ if __name__ == '__main__':
     )
 
     RL_Manager.env.Render_Flag = True
+    RL_Manager.env.Fine_Tuning_Flag = False
     RL_Manager.sweep_policy(Plane_Angle_Step=45,
         V_mag_Step=0.75,
         V_angle_Step=15,
-        n=2)
+        n=1)
 ## ADJUST HORIZONTAL CUTOFF AND REEVALUATE PERFORMANCE
