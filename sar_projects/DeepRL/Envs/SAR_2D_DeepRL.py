@@ -714,11 +714,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 if __name__ == '__main__':
 
-    Plane_Angle = 90
+    Plane_Angle = 45
     V_mag = 2.5
-    V_angle = 60
+    V_angle = 135
 
-    env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[V_mag,V_mag],V_angle_range=[V_angle,V_angle],Plane_Angle_range=[Plane_Angle,Plane_Angle],Render=True)
+    env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[V_mag,V_mag],V_angle_range=[V_angle,V_angle],Plane_Angle_range=[Plane_Angle,Plane_Angle],Render=True,Fine_Tune=False)
+
+    a_Rot = -90
+    Tau_CR_trg = 0.21
 
     for ep in range(50):
 
@@ -729,8 +732,8 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = -1.0
-            if 0.0 < env.Tau_CR <= 0.5:
+            action[1] = env.scaleValue(a_Rot,env.Ang_Acc_range,[-1,1])
+            if 0.0 < env.Tau_CR <= Tau_CR_trg:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated

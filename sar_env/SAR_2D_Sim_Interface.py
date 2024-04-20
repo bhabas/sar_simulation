@@ -286,15 +286,16 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             ## IMPACT AFTER ROTATION
             elif self.Trg_Flag == True and self.Impact_Flag_Ext == True:
 
-                if self.BodyContact_Flag == True:
-                    self._checkTouchdown()
 
-                elif self.ForelegContact_Flag == True:
+                if self.ForelegContact_Flag == True:
                     self._iterStep_Swing(a_Rot)
                     self._checkTouchdown()
                 
                 elif self.HindlegContact_Flag == True:
                     self._iterStep_Swing(a_Rot)
+                    self._checkTouchdown()
+
+                elif self.BodyContact_Flag == True:
                     self._checkTouchdown()
 
             if self.Done:
@@ -724,13 +725,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.State = (r_B_O,Phi_B_O,V_B_O,0)
 
     def _checkTouchdown(self):
-        if self.BodyContact_Flag == True:
-            self.Pad_Connections = 0
-            self.render()
-            self.Done = True
-            return
+        
 
-        elif self.ForelegContact_Flag == True:
+        if self.ForelegContact_Flag == True:
 
             r_B_O,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._getPose()
 
@@ -741,7 +738,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     self.BodyContact_Flag = True
                     self.Pad_Connections = 2
                     self.render()
-                    self.Done = True
+
+                    ## INVERT ANGULAR MOMENTUM FROM COLLISION
+                    self.dBeta = -1*self.dBeta
                     return
 
             ## CHECK FOR HINDLEG CONTACT
@@ -763,7 +762,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     self.BodyContact_Flag = True
                     self.Pad_Connections = 2
                     self.render()
-                    self.Done = True
+                    
+                    ## INVERT ANGULAR M
+                    # OMENTUM FROM COLLISION
+                    self.dBeta = -1*self.dBeta
                     return
 
             ## CHECK FOR FORELEG CONTACT
@@ -774,6 +776,12 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 self.render()
                 self.Done = True
                 return
+            
+        elif self.BodyContact_Flag == True:
+            self.Pad_Connections = 0
+            self.render()
+            self.Done = True
+            return
 
     def _impactConversion(self):
 
