@@ -9,25 +9,10 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/0deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/A1/SOV5_A1_0deg_S2D.json \
     --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/0deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/A2/SOV5_A2_0deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/0deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B1/SOV5_B1_0deg_S2D.json \
-    --S3_Upload true
-
+    
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/0deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B2/SOV5_B2_0deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/0deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C1/SOV5_C1_0deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -37,17 +22,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/0deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C3/SOV5_C3_0deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/0deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D1/SOV5_D1_0deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/0deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D2/SOV5_D2_0deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -67,22 +42,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/45deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/A2/SOV5_A2_45deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/45deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B1/SOV5_B1_45deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/45deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B2/SOV5_B2_45deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/45deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C1/SOV5_C1_45deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -92,17 +52,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/45deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C3/SOV5_C3_45deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/45deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D1/SOV5_D1_45deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/45deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D2/SOV5_D2_45deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -120,22 +70,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/90deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/A2/SOV5_A2_90deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/90deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B1/SOV5_B1_90deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/90deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B2/SOV5_B2_90deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/90deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C1/SOV5_C1_90deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -145,17 +80,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/90deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C3/SOV5_C3_90deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/90deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D1/SOV5_D1_90deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/90deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D2/SOV5_D2_90deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -173,22 +98,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/135deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/A2/SOV5_A2_135deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/135deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B1/SOV5_B1_135deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/135deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B2/SOV5_B2_135deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/135deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C1/SOV5_C1_135deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -198,17 +108,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/135deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C3/SOV5_C3_135deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/135deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D1/SOV5_D1_135deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/135deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D2/SOV5_D2_135deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -226,22 +126,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/180deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/A2/SOV5_A2_180deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/180deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B1/SOV5_B1_180deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/180deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/B2/SOV5_B2_180deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/180deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C1/SOV5_C1_180deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
@@ -251,17 +136,7 @@ python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
     --GroupName SOV5_3D_aRot90/180deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/C3/SOV5_C3_180deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/180deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D1/SOV5_D1_180deg_S2D.json \
-    --S3_Upload true
-
-python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \
-    --GroupName SOV5_3D_aRot90/180deg \
-    --TrainConfig $DEEP_RL_PATH/Config_Files/SOV5_3D_Sim/aRot90/D2/SOV5_D2_180deg_S2D.json \
     --S3_Upload true
 
 python $DEEP_RL_PATH/T4_Policy_Data_Plotting.py \

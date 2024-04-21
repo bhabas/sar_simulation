@@ -57,5 +57,5 @@ if __name__ == '__main__':
     env_kwargs = TrainConfig['ENV_KWARGS']
 
     ## CREATE RL MANAGER
-    RL_Manager = RL_Training_Manager(env,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)    
+    RL_Manager = RL_Training_Manager(SAR_2D_Env,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)    
     RL_Manager.plot_landing_performance(PlaneAngle=PlaneAngle,saveFig=True,showFig=False)

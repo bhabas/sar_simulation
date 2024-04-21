@@ -441,7 +441,7 @@ class RL_Training_Manager():
         LR_interp += 0.001
 
         ## INIT PLOT INFO
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(4,4))
         ax = fig.add_subplot(projection='polar')
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
@@ -451,8 +451,8 @@ class RL_Training_Manager():
         # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
         ax.set_xticks(np.radians(np.arange(0-PlaneAngle,180-PlaneAngle+15,15)))
-        ax.set_thetamin(0-PlaneAngle)
-        ax.set_thetamax(180-PlaneAngle)
+        ax.set_thetamin(max(0-PlaneAngle,-90))
+        ax.set_thetamax(min(180-PlaneAngle,90))
 
         ax.set_rticks([0.0,1.0,2.0,3.0,4.0,5.0])
         ax.set_rmin(0)
@@ -464,8 +464,19 @@ class RL_Training_Manager():
         # mpl.colorbar.ColorbarBase(ax_cbar, cmap=cmap, norm=norm, orientation='vertical')
         # ax_cbar.set_yticks([0.0,0.25,0.5,0.75,1.0])
         # ax_cbar.set_yticklabels(['0_Leg','2_Leg_BC','2_Leg_NBC','4_Leg_BC','4_Leg_NBC'])
-        
 
+        ## SAVE FIGURE WITHOUT TEXT
+        if saveFig==True:
+            fileName = f"Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}_NoText.pdf"
+            filePath = os.path.join(self.Log_Dir,fileName)
+
+            ## SAVE FIGURE LOCALLY
+            plt.savefig(filePath,dpi=300)
+
+            ## UPLOAD FILE TO S3
+            self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
+        
+        ## SAVE FIGURE WITH TEXT
         config_str = f"Policy: {self.Log_Name} \
             \nModel: {self.env.SAR_Type} \
             \nSAR_Config: {self.env.SAR_Config} \
@@ -478,6 +489,7 @@ class RL_Training_Manager():
             filePath = os.path.join(self.Log_Dir,fileName)
 
             ## SAVE FIGURE LOCALLY
+            fig.set_size_inches(4,6)
             plt.savefig(filePath,dpi=300)
 
             ## UPLOAD FILE TO S3
