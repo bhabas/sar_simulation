@@ -714,14 +714,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 if __name__ == '__main__':
 
-    Plane_Angle = 45
-    V_mag = 2.5
-    V_angle = 135
+    Plane_Angle = 0
+    V_mag = 4.0
+    V_angle = 85
 
     env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[V_mag,V_mag],V_angle_range=[V_angle,V_angle],Plane_Angle_range=[Plane_Angle,Plane_Angle],Render=True,Fine_Tune=False)
 
     a_Rot = -90
-    Tau_CR_trg = 0.21
+    Tau_CR_trg = 0.25
 
     for ep in range(50):
 

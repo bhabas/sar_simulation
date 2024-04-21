@@ -20,4 +20,4 @@ python $DEEP_RL_PATH/T3_Policy_Data_Collection.py \
     --GroupName IM_3D/aRot90/K0.4_DR1.0/45deg \
     --TrainConfig $DEEP_RL_PATH/Config_Files/IM_3D_Sim/aRot90_K0.4_DR1.0/D1/IM_D1_45deg_S2D.json \
     --S3_Upload true \
-    --t_step_load 99500 
+    --t_step_load 90000 

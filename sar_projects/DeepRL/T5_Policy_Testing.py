@@ -61,6 +61,7 @@ if __name__ == '__main__':
 
     ## SET UP TRAINING CONDITIONS FROM CONFIG
     env_kwargs = TrainConfig['ENV_KWARGS']
+    env_kwargs['V_mag_range'] = [3.5,5.0]
 
     ## CREATE RL MANAGER
     RL_Manager = RL_Training_Manager(env,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)
@@ -77,7 +78,7 @@ if __name__ == '__main__':
     RL_Manager.env.Render_Flag = True
     RL_Manager.env.Fine_Tuning_Flag = False
     RL_Manager.sweep_policy(Plane_Angle_Step=45,
-        V_mag_Step=0.75,
-        V_angle_Step=15,
+        V_mag_Step=0.5,
+        V_angle_Step=5,
         n=1)
 ## ADJUST HORIZONTAL CUTOFF AND REEVALUATE PERFORMANCE
