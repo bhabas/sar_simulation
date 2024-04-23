@@ -52,12 +52,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Fine_Tuning_Flag = Fine_Tune
         self.TestCondition_idx = 0
         self.TestCondition_Wrap = False
+        self.TestingConditions = []
 
         if self.Fine_Tuning_Flag:
             
             ## LOAD TESTING CONDITIONS
-            self.TestingConditions = []
-            csv_file_path = f"{self.BASE_PATH}/sar_projects/DeepRL/Training_Conditions/TrainingConditions_{int(self.Plane_Angle_range[0])}deg.csv"
+            csv_file_path = f"{self.BASE_PATH}/sar_projects/DeepRL/Training_Conditions/TrainingConditions_{int(self.Plane_Angle_range[1])}deg.csv"
 
             with open(csv_file_path, mode='r') as csv_file:
                 csv_reader = csv.DictReader(csv_file)
