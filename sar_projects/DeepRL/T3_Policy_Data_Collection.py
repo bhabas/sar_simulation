@@ -66,21 +66,25 @@ if __name__ == '__main__':
     RL_Manager = RL_Training_Manager(env,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)
     RL_Manager.env.Fine_Tuning_Flag = False
     
-    ## CREATE MODEL AND TRAIN
-    RL_Manager.create_model()
-    RL_Manager.load_model(
-        GroupName=args.GroupName,
-        LogName=TrainConfig['LogName'],
-        t_step_load=t_step_load,
-        Params_only=True,
-    )
+    # ## CREATE MODEL AND TRAIN
+    # RL_Manager.create_model()
+    # RL_Manager.load_model(
+    #     GroupName=args.GroupName,
+    #     LogName=TrainConfig['LogName'],
+    #     t_step_load=t_step_load,
+    #     Params_only=True,
+    # )
 
-    RL_Manager.collect_landing_performance(
-        Plane_Angle_Step=45,
-        V_mag_Step=0.5,
-        V_angle_Step=5,
-        n=5,
-    )
+    # RL_Manager.collect_landing_performance(
+    #     Plane_Angle_Step=45,
+    #     V_mag_Step=0.5,
+    #     V_angle_Step=5,
+    #     n=5,
+    # )
     
-    RL_Manager.plot_landing_performance(PlaneAngle=PlaneAngle,saveFig=True,showFig=False)
+    for i in [0,45,90,135,180]:
+        try:
+            RL_Manager.plot_landing_performance(PlaneAngle=i,saveFig=True,showFig=False)
+        except:
+            pass
     RL_Manager.save_NN_to_C_header()

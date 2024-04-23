@@ -738,9 +738,9 @@ class RewardCallback(BaseCallback):
         self.rew_mean_window = deque(maxlen=int(15e3))
 
         ## REWARD STABILITY
-        self.rew_mean_diff_threshold = 0.1
+        self.rew_mean_diff_threshold = 0.12
         self.ent_burst_cooldown = int(30e3)                 # Cooldown period for entropy burst
-        self.ent_burst_limit = int(40e3)                    # Limit the entropy burst to the first 100k steps
+        self.ent_burst_limit = int(100e3)                    # Limit the entropy burst to the first 100k steps
         self.last_ent_burst_step = 0                        # Last step when entropy burst was applied
 
         ## REWARD GRID
@@ -792,7 +792,7 @@ class RewardCallback(BaseCallback):
 
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
-        if self.num_timesteps % self.reward_check_freq == 0 and self.env.K_ep > 1500:
+        if self.num_timesteps % self.reward_check_freq == 0 and self.env.K_ep > 2.5*len(self.env.TestingConditions):
 
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
             if ep_rew_mean > self.best_mean_reward:
