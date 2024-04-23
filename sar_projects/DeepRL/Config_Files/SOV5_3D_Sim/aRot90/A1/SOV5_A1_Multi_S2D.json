@@ -9,8 +9,8 @@
     
     "ENV_KWARGS": {
         "Ang_Acc_range": [ -90, 0 ],
-        "Plane_Angle_range": [0, 180],
-        "V_mag_range": [ 1.0, 5.0 ],
+        "Plane_Angle_range": [0, 181],
+        "V_mag_range": [ 0.5, 5.0 ],
         "V_angle_range": [ 10, 170 ],
         "Render": false
     },
