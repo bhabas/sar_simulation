@@ -220,24 +220,20 @@ class SAR_Base_Interface():
         else:
             self.Ang_Acc_range = Ang_Acc_range
                 
-    def startPos_ImpactTraj(self,V_B_P,Acc=None,Tau_CR_start=None):
+    def startPos_ImpactTraj(self,V_B_P,Acc=None,Tau_CR_start=1.0):
 
         ## DESIRED RELATIVE VELOCITY VALUES
         V_tx,_,V_perp = V_B_P
 
         ## CALCULATE STARTING TAU VALUE
-        if Tau_CR_start == None:
-            t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
-            Tau_CR_start = t_rot_max*np.random.uniform(1.9,2.1) # Add noise to starting condition
-            Tau_Body_start = (Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
-            Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
+        Tau_Body_start = (Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
         r_P_O = np.array(self.r_P_O)                        # Plane Position wrt to Origin - {X_W,Y_W,Z_W}
-        r_P_B = np.array([(Tau_CR_start + Tau_Accel_start)*V_tx,
+        r_P_B = np.array([(Tau_CR_start)*V_tx,
                           0,
-                          (Tau_Body_start + Tau_Accel_start)*V_perp])             # Body Position wrt to Plane - {t_x,t_y,n_p}
+                          (Tau_Body_start)*V_perp])             # Body Position wrt to Plane - {t_x,t_y,n_p}
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)   # Body Position wrt to Origin - {X_W,Y_W,Z_W}
 
 
@@ -407,20 +403,20 @@ class SAR_Base_Interface():
 
     def handle_Impact_traj(self):
 
-        ## GET RELATIVE VEL CONDITIONS 
+        ## GET GLOBAL VEL CONDITIONS 
         V_mag,V_angle = self.userInput("Flight Velocity (V_mag,V_angle):",float)
 
-        ## CALC RELATIVE VELOCITIES
-        V_tx = V_mag*np.cos(np.radians(V_angle))
-        V_ty = 0
-        V_perp = V_mag*np.sin(np.radians(V_angle))
-        V_B_P = np.array([V_tx,V_ty,V_perp])
+        V_x = V_mag*np.cos(np.radians(V_angle))
+        V_y = 0
+        V_z = V_mag*np.sin(np.radians(V_angle))
+        V_B_O = np.array([V_x,V_y,V_z])
 
-        ## CALCULATE GLOBAL VELOCITIES
-        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)
+
+        ## CALC RELATIVE VELOCITIES
+        V_B_P = self.R_WP(V_B_O,self.Plane_Angle_rad)
 
         ## POS VELOCITY CONDITIONS MET
-        r_B_O = self.startPos_ImpactTraj(V_B_P,Acc=None,Tau_CR_start=None)
+        r_B_O = self.startPos_ImpactTraj(V_B_P,Acc=None)
 
         ## APPROVE START POSITION
         print(YELLOW,f"Start Position: ({r_B_O[0]:.2f},{self.r_B_O[1]:.2f},{r_B_O[2]:.2f})",RESET)
