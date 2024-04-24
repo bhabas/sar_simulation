@@ -227,13 +227,14 @@ class SAR_Base_Interface():
 
         ## CALCULATE STARTING TAU VALUE
         Tau_Body_start = (Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
+        Tau_Bonus = 0.25 # Bonus time to ensure smooth flight
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
         r_P_O = np.array(self.r_P_O)                        # Plane Position wrt to Origin - {X_W,Y_W,Z_W}
-        r_P_B = np.array([(Tau_CR_start)*V_tx,
+        r_P_B = np.array([(Tau_CR_start + Tau_Bonus)*V_tx,
                           0,
-                          (Tau_Body_start)*V_perp])             # Body Position wrt to Plane - {t_x,t_y,n_p}
+                          (Tau_Body_start + Tau_Bonus)*V_perp])             # Body Position wrt to Plane - {t_x,t_y,n_p}
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)   # Body Position wrt to Origin - {X_W,Y_W,Z_W}
 
 
@@ -431,7 +432,7 @@ class SAR_Base_Interface():
         
         ## POLICY SENDING
         cmd_vals = self.userInput("Set desired (Tau,AngAcc) Policy: ",float)
-        cmd_vals.append(-100) # Append extra value to match framework
+        cmd_vals.append(-90) # Append extra value to match framework
         self.sendCmd('Policy',cmd_vals,cmd_flag=0)
 
         ## APPROVE FLIGHT
