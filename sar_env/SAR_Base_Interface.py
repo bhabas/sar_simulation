@@ -227,7 +227,7 @@ class SAR_Base_Interface():
 
         ## CALCULATE STARTING TAU VALUE
         Tau_Body_start = (Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
-        Tau_Bonus = 0.25 # Bonus time to ensure smooth flight
+        Tau_Bonus = 0.35 # Bonus time to ensure smooth flight
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))

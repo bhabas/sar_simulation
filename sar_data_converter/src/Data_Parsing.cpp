@@ -500,19 +500,29 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
     Optical_Flow_trg.y = NAN;
     Optical_Flow_trg.z = Tau_trg;
 
+    // VELOCITY
+    float vxy_arr[2];
+    decompressXY(log_msg->values[3],vxy_arr);
+    
+    Twist_B_O_trg.linear.x = vxy_arr[0];
+    Twist_B_O_trg.linear.y = vxy_arr[1];
+    Twist_B_O_trg.linear.z = log_msg->values[4]*1e-3;
+
+    Vel_mag_B_O_trg = sqrt(pow(Twist_B_O_trg.linear.x,2)+pow(Twist_B_O_trg.linear.z,2));
+    Vel_angle_B_O_trg = atan2(Twist_B_O_trg.linear.z,Twist_B_O_trg.linear.x)*180/M_PI;
+
     // RELATIVE VELOCITY
-    float VelRel_BP_arr[2];
-    decompressXY(log_msg->values[3],VelRel_BP_arr);
+    Vel_mag_B_P_trg = Vel_mag_B_O_trg;
+    Vel_angle_B_P_trg = Vel_angle_B_O_trg + Plane_Angle_deg;
 
-    Vel_mag_B_P_trg = VelRel_BP_arr[0];
-    Vel_angle_B_P_trg = VelRel_BP_arr[1];
+    Twist_B_P_trg.linear.x = Vel_mag_B_P_trg*cos(Vel_angle_B_P_trg*M_PI/180);
+    Twist_B_P_trg.linear.y = NAN;
+    Twist_B_P_trg.linear.z = Vel_mag_B_P_trg*sin(Vel_angle_B_P_trg*M_PI/180);
 
-    Vel_mag_B_O_trg = Vel_mag_B_P_trg;
-    Vel_angle_B_O_trg = Plane_Angle_deg - Vel_angle_B_P_trg;
 
     // ORIENTATION
     float quat[4];
-    uint32_t quatZ = (uint32_t)log_msg->values[4];
+    uint32_t quatZ = (uint32_t)log_msg->values[5];
     quatdecompress(quatZ,quat);
 
     Pose_B_O_trg.orientation.x = quat[0];
@@ -532,12 +542,12 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
     Eul_P_B_trg.z = NAN;
 
     // ANGULAR VELOCITY
-    Twist_B_O_trg.angular.y = log_msg->values[5]*1e-3;
+    Twist_B_O_trg.angular.y = log_msg->values[6]*1e-3;
 
 
     // POLICY ACTIONS
     float Policy_Action_arr[2];
-    decompressXY(log_msg->values[6],Policy_Action_arr);
+    decompressXY(log_msg->values[7],Policy_Action_arr);
     a_Trg_trg = Policy_Action_arr[0];
     a_Rot_trg = Policy_Action_arr[1]*10.0;
     
