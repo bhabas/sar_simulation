@@ -18,7 +18,7 @@
       <self_collide>0</self_collide>
       <gravity>0</gravity>
 
-      <visual name='Surface_Center'>
+      <!-- <visual name='Surface_Center'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
@@ -35,7 +35,7 @@
             <normal_map>__default__</normal_map>
           </shader>
         </material>
-      </visual>
+      </visual> -->
       <collision name='Surface_Collision'>
         <max_contacts>10</max_contacts>
         <pose>0 0 0.025 0 0 0</pose>

@@ -2,14 +2,14 @@ DATA_TYPE: "SIM"
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "Debug"
+  Ground_Config: "Landing_Cage"
 
 SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: False
   Sim_Speed: 0.5
   Sim_Slowdown_Speed: 0.3
-  Landing_Slowdown_Flag: True
+  Landing_Slowdown_Flag: False
   Vicon_Delay: 15 # [ms]
 
 

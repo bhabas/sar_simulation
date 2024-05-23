@@ -136,6 +136,7 @@
 
 
     <scene>
+      <shadows>0</shadows>
       <sky>
         <clouds>
           <speed>0</speed>
