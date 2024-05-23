@@ -136,10 +136,10 @@ class RL_Training_Manager():
 
             print(f"Loading Replay Buffer...")
             replay_buffer_path = replay_buffer_files[0]  # Similarly, taking the first match
-            # self.model.load_replay_buffer(replay_buffer_path)
+            self.model.load_replay_buffer(replay_buffer_path)
 
 
-    def train_model(self,model_save_freq=10e3,reward_check_freq=500,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
+    def train_model(self,model_save_freq=2e3,reward_check_freq=500,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
 
         if reset_timesteps == True:
 
@@ -930,11 +930,11 @@ class RewardCallback(BaseCallback):
         replay_buffer_path = os.path.join(self.RLM.Model_Dir, replay_buffer_name)
 
         self.model.save(model_path)
-        # self.model.save_replay_buffer(replay_buffer_path)
+        self.model.save_replay_buffer(replay_buffer_path)
 
         ## UPLOAD MODEL AND REPLAY BUFFER TO S3
         self.RLM.upload_file_to_S3(local_file_path=model_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",model_name))
-        # self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
+        self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
 
     def _save_best_model_and_replay_buffer(self):
 
@@ -948,11 +948,11 @@ class RewardCallback(BaseCallback):
 
         ## SAVE MODEL AND REPLAY BUFFER
         self.model.save(model_path)
-        # self.model.save_replay_buffer(replay_buffer_path)
+        self.model.save_replay_buffer(replay_buffer_path)
 
         ## UPLOAD MODEL AND REPLAY BUFFER TO S3
         self.RLM.upload_file_to_S3(local_file_path=model_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",model_name))
-        # self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
+        self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
 
 
         if self.verbose > 0:

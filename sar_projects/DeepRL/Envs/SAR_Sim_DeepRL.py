@@ -72,7 +72,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.t_rot_max = np.sqrt(np.radians(360)/np.max(np.abs(self.Ang_Acc_range))) # Allow enough time for a full rotation [s]
         self.t_impact_max = 1.5     # [s]
         self.t_ep_max = 5.0         # [s]
-        self.t_real_max = 120       # [s]
+        self.t_real_max = 5*60      # [s]
 
 
         ## INITIAL LEARNING/REWARD CONFIGS
@@ -226,7 +226,10 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## CALCULATE STARTING TAU VALUE
         # self.Tau_CR_start = self.t_rot_max*np.random.uniform(0.9,1.1) # Add noise to starting condition
         self.Tau_CR_start = 0.5 + np.random.uniform(-0.05,0.05)
-        self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
+        try:
+            self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/(V_perp+EPS)) # Tau read by body
+        except:
+            print("Exception")
         self.Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
@@ -463,7 +466,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
                 truncated = False
                 # print(YELLOW,self.error_str,RESET)
 
-            elif np.abs(r_P_B[0]) > 1.0 and (self.D_perp < 1.5*self.L_eff):
+            elif np.abs(r_P_B[0]) > 1.4 and (self.D_perp < 1.5*self.L_eff) and (self.D_perp >= 0):
                 self.error_str = "Episode Completed: Out of Bounds [Terminated]"
                 terminated = True
                 truncated = False
