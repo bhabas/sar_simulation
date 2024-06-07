@@ -151,4 +151,4 @@ browse.vc.db*
 c_cpp_properities.json
 !.gitkeep
 
-!sar_projects/DeepRL/TB_Logs/SO_V5_A30_L200_0deg_S2D_PreTraining_Agent/**/*
+sar_projects/DeepRL/TB_Logs/*

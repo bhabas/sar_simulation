@@ -286,15 +286,16 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             ## IMPACT AFTER ROTATION
             elif self.Trg_Flag == True and self.Impact_Flag_Ext == True:
 
-                if self.BodyContact_Flag == True:
-                    self._checkTouchdown()
 
-                elif self.ForelegContact_Flag == True:
+                if self.ForelegContact_Flag == True:
                     self._iterStep_Swing(a_Rot)
                     self._checkTouchdown()
                 
                 elif self.HindlegContact_Flag == True:
                     self._iterStep_Swing(a_Rot)
+                    self._checkTouchdown()
+
+                elif self.BodyContact_Flag == True:
                     self._checkTouchdown()
 
             if self.Done:
@@ -444,7 +445,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ## ACTIONS TEXT
         text_Actions = my_font.render(f'Actions:', True, GREY_PG)
         # text_Trg_Action = my_font.render(f'Trg_Action: {self.action_trg[0]:3.1f}', True, BLACK_PG)
-        # text_Rot_Action = my_font.render(f'Rot_Action: {self.action_trg[1]:3.1f}', True, BLACK_PG)
+        text_Rot_Action = my_font.render(f'a_Rot: {self.a_Rot_trg:3.1f} [rad/s^2]', True, BLACK_PG)
 
         ## OTHER TEXT
         text_Other = my_font.render(f'Other:', True, GREY_PG)
@@ -473,7 +474,7 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
 
         self.screen.blit(text_Actions,      (5,5 + 25*11))
         # self.screen.blit(text_Trg_Action,   (5,5 + 25*12))
-        # self.screen.blit(text_Rot_Action,   (5,5 + 25*13))
+        self.screen.blit(text_Rot_Action,   (5,5 + 25*13))
 
         self.screen.blit(text_Other,        (5,5 + 25*15))
         # self.screen.blit(text_reward,       (5,5 + 25*16))
@@ -724,13 +725,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
             self.State = (r_B_O,Phi_B_O,V_B_O,0)
 
     def _checkTouchdown(self):
-        if self.BodyContact_Flag == True:
-            self.Pad_Connections = 0
-            self.render()
-            self.Done = True
-            return
+        
 
-        elif self.ForelegContact_Flag == True:
+        if self.ForelegContact_Flag == True:
 
             r_B_O,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._getPose()
 
@@ -741,7 +738,9 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     self.BodyContact_Flag = True
                     self.Pad_Connections = 2
                     self.render()
-                    self.Done = True
+
+                    ## INVERT ANGULAR MOMENTUM FROM COLLISION
+                    self.dBeta = -1*self.dBeta
                     return
 
             ## CHECK FOR HINDLEG CONTACT
@@ -763,7 +762,10 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                     self.BodyContact_Flag = True
                     self.Pad_Connections = 2
                     self.render()
-                    self.Done = True
+                    
+                    ## INVERT ANGULAR M
+                    # OMENTUM FROM COLLISION
+                    self.dBeta = -1*self.dBeta
                     return
 
             ## CHECK FOR FORELEG CONTACT
@@ -774,6 +776,12 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
                 self.render()
                 self.Done = True
                 return
+            
+        elif self.BodyContact_Flag == True:
+            self.Pad_Connections = 0
+            self.render()
+            self.Done = True
+            return
 
     def _impactConversion(self):
 

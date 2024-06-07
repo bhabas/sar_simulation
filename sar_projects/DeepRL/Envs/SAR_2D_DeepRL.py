@@ -20,7 +20,7 @@ from sar_env import SAR_2D_Sim_Interface
 
 class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
-    def __init__(self,Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=False,GZ_Timeout=False):
+    def __init__(self,Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=True,GZ_Timeout=False):
         SAR_2D_Sim_Interface.__init__(self,Render)
         gym.Env.__init__(self)
 
@@ -39,18 +39,20 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         self.Env_Name = "SAR_2D_DeepRL_Env"
 
         ## TESTING CONDITIONS     
-        self.Fine_Tuning_Flag = Fine_Tune
         self.V_mag_range = V_mag_range  
         self.V_angle_range = V_angle_range
         self.Plane_Angle_range = Plane_Angle_range
         self.setAngAcc_range(Ang_Acc_range)
+
+        self.Fine_Tuning_Flag = Fine_Tune
         self.TestCondition_idx = 0
+        self.TestCondition_Wrap = False
+        self.TestingConditions = []
 
         if self.Fine_Tuning_Flag:
             
             ## LOAD TESTING CONDITIONS
-            self.TestingConditions = []
-            csv_file_path = f"{self.BASE_PATH}/sar_projects/DeepRL/Finetuning_Training_Conditions.csv"
+            csv_file_path = f"{self.BASE_PATH}/sar_projects/DeepRL/Training_Conditions/TrainingConditions_{int(self.Plane_Angle_range[1])}deg.csv"
 
             with open(csv_file_path, mode='r') as csv_file:
                 csv_reader = csv.DictReader(csv_file)
@@ -179,7 +181,14 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             ## UPDATE TESTING CONDITION INDEX
             self.TestCondition_idx += 1
             if self.TestCondition_idx >= len(self.TestingConditions):
+
+                if self.TestCondition_Wrap == True:
+                    self.Fine_Tuning_Flag = False
+                    self.TestCondition_idx = np.nan
+
                 self.TestCondition_idx = 0
+                self.TestCondition_Wrap = True
+            
 
         else:
 
@@ -209,7 +218,8 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
         V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)   # {X_W,Z_W}
 
         ## CALCULATE STARTING TAU VALUE
-        self.Tau_CR_start = self.t_rot_max*np.random.uniform(1.9,2.1) # Add noise to starting condition
+        # self.Tau_CR_start = self.t_rot_max*np.random.uniform(0.9,1.1) # Add noise to starting condition
+        self.Tau_CR_start = 0.5 + np.random.uniform(-0.05,0.05)
         self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/V_perp) # Tau read by body
         self.Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
 
@@ -450,13 +460,13 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             #     truncated = False
             #     # print(YELLOW,self.error_str,RESET)
 
-            elif r_B_O[2] < -5:
+            elif r_B_O[2] < -15:
                 self.error_str = "Episode Completed: Out of bounds [Terminated]"
                 terminated = True
                 truncated = False
                 # print(YELLOW,self.error_str,RESET)
 
-            elif np.abs(r_P_B[0]) > 0.7 and r_P_B[2] < 1.5*self.L_eff:
+            elif np.abs(r_P_B[0]) > 1.2 and (self.D_perp < 1.5*self.L_eff):
                 self.error_str = "Episode Completed: Out of Bounds [Terminated]"
                 terminated = True
                 truncated = False
@@ -488,9 +498,11 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
             if temp_angle_deg < 0:
                 Phi_B_P_Impact_Condition = -1
-            elif temp_angle_deg > 0:
+            elif temp_angle_deg >= 0:
                 Phi_B_P_Impact_Condition = 1
             elif math.isnan(temp_angle_deg):
+                Phi_B_P_Impact_Condition = 1
+            else:
                 Phi_B_P_Impact_Condition = 1
 
         else:
@@ -603,12 +615,12 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
         ## REWARD: MINIMUM DISTANCE AFTER TRIGGER
         if self.Tau_CR_trg < np.inf:
-            R_dist = self.Reward_Exp_Decay(self.D_perp_pad_min,0,k=5)
+            R_dist = self.Reward_Exp_Decay(self.D_perp_pad_min,0,k=1)
         else:
             R_dist = 0
 
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=5)
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.15,k=2.5)
 
 
         ## REWARD: PAD CONNECTIONS
@@ -620,7 +632,7 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
             R_Legs = 0.0
 
         if self.BodyContact_Flag:
-            R_Legs = R_Legs*0.75
+            R_Legs = max(R_Legs-0.25,0)
 
         self.reward_vals = [R_dist,R_tau_cr,R_tx,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
@@ -701,22 +713,17 @@ class SAR_2D_Env(SAR_2D_Sim_Interface,gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True)
+
+    Plane_Angle = 0
+    V_mag = 4.0
+    V_angle = 85
+
+    env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[V_mag,V_mag],V_angle_range=[V_angle,V_angle],Plane_Angle_range=[Plane_Angle,Plane_Angle],Render=True,Fine_Tune=False)
+
+    a_Rot = -90
+    Tau_CR_trg = 0.25
 
     for ep in range(50):
-
-        V_mag = 2.5
-        V_angle = 60
-        Plane_Angle = 90
-
-        if V_mag != None:
-            env.V_mag_range = [V_mag,V_mag]
-
-        if V_angle != None:
-            env.V_angle_range = [V_angle,V_angle]
-
-        if Plane_Angle != None:
-            env.Plane_Angle_range = [Plane_Angle,Plane_Angle]
 
         obs,_ = env.reset()
 
@@ -725,8 +732,8 @@ if __name__ == '__main__':
 
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
-            action[1] = 1.0
-            if 0.0 < env.Tau_CR <= 0.5:
+            action[1] = env.scaleValue(a_Rot,env.Ang_Acc_range,[-1,1])
+            if 0.0 < env.Tau_CR <= Tau_CR_trg:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated

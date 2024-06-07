@@ -1,0 +1,21 @@
+{
+    "LogName": "SOV5_A45_L150_180deg_aRot60_S3D",
+    "ENV_Type": "SAR_Sim_DeepRL",
+    
+    "SAR_SETTINGS": {
+      "SAR_Type": "Source_One_V5",
+      "SAR_Config": "A45_L150"
+    },
+    
+    "ENV_KWARGS": {
+        "Ang_Acc_range": [ -60, 0 ],
+        "Plane_Angle_range": [180, 180],
+        "V_mag_range": [ 0.5, 5.0 ],
+        "V_angle_range": [ 90, 170 ],
+        "Render": false,
+        "GZ_Timeout":true
+    },
+
+    "t_step_limit": 16000, 
+    "t_step_optim": 0
+}

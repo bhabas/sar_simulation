@@ -136,10 +136,10 @@ class RL_Training_Manager():
 
             print(f"Loading Replay Buffer...")
             replay_buffer_path = replay_buffer_files[0]  # Similarly, taking the first match
-            # self.model.load_replay_buffer(replay_buffer_path)
+            self.model.load_replay_buffer(replay_buffer_path)
 
 
-    def train_model(self,model_save_freq=25e3,reward_check_freq=1000,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
+    def train_model(self,model_save_freq=2e3,reward_check_freq=500,S3_upload_freq=1000,reset_timesteps=False,t_step_max=500e3):
 
         if reset_timesteps == True:
 
@@ -389,7 +389,7 @@ class RL_Training_Manager():
 
                             TTC = np.round(t_delta_avg*(num_trials-idx)) # Time to completion
                             t_now = np.round(t_now)
-                            print(f"Flight Conditions: ({V_mag:.02f} m/s, {V_angle:.02f} deg, {Plane_Angle:.02f} deg) Reward: {self.env.reward:.2f} Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% TTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
+                            print(f"Flight Conditions: ({V_mag:.02f} m/s, {V_angle:.02f} deg, {Plane_Angle:.02f} deg) Reward: {self.env.reward_vals[-1]:.2f} Index: {idx}/{num_trials}  Percent: {100*idx/num_trials:.2f}% TTC: {str(timedelta(seconds=TTC))} \tElapsed: {str(timedelta(seconds=t_now))}")
                     
                 self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
 
@@ -420,6 +420,7 @@ class RL_Training_Manager():
 
         df2 = df.groupby(["V_mag","V_angle","Plane_Angle"]).mean().round(3).reset_index()
         df2.query(f"Plane_Angle == {PlaneAngle}",inplace=True)
+        df2.query(f"V_mag >= 1.0",inplace=True)
         
         
         ## COLLECT DATA
@@ -440,7 +441,7 @@ class RL_Training_Manager():
         LR_interp += 0.001
 
         ## INIT PLOT INFO
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(4,4))
         ax = fig.add_subplot(projection='polar')
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
@@ -450,14 +451,32 @@ class RL_Training_Manager():
         # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
         ax.set_xticks(np.radians(np.arange(0-PlaneAngle,180-PlaneAngle+15,15)))
-        ax.set_thetamin(0-PlaneAngle)
-        ax.set_thetamax(180-PlaneAngle)
+        ax.set_thetamin(max(0-PlaneAngle,-90))
+        ax.set_thetamax(min(180-PlaneAngle,90))
 
         ax.set_rticks([0.0,1.0,2.0,3.0,4.0,5.0])
         ax.set_rmin(0)
         ax.set_rmax(R.max())
-        
 
+
+        # fig_cbar = plt.figure(figsize=(1.5, 6))  # Adjust the figure size as needed
+        # ax_cbar = fig_cbar.add_axes([0.05, 0.05, 0.25, 0.9])  # This creates a new set of axes for the colorbar
+        # mpl.colorbar.ColorbarBase(ax_cbar, cmap=cmap, norm=norm, orientation='vertical')
+        # ax_cbar.set_yticks([0.0,0.25,0.5,0.75,1.0])
+        # ax_cbar.set_yticklabels(['0_Leg','2_Leg_BC','2_Leg_NBC','4_Leg_BC','4_Leg_NBC'])
+
+        ## SAVE FIGURE WITHOUT TEXT
+        if saveFig==True:
+            fileName = f"Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}_NoText.pdf"
+            filePath = os.path.join(self.Log_Dir,fileName)
+
+            ## SAVE FIGURE LOCALLY
+            plt.savefig(filePath,dpi=300)
+
+            ## UPLOAD FILE TO S3
+            self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
+        
+        ## SAVE FIGURE WITH TEXT
         config_str = f"Policy: {self.Log_Name} \
             \nModel: {self.env.SAR_Type} \
             \nSAR_Config: {self.env.SAR_Config} \
@@ -470,6 +489,7 @@ class RL_Training_Manager():
             filePath = os.path.join(self.Log_Dir,fileName)
 
             ## SAVE FIGURE LOCALLY
+            fig.set_size_inches(4,6)
             plt.savefig(filePath,dpi=300)
 
             ## UPLOAD FILE TO S3
@@ -684,6 +704,11 @@ class RL_Training_Manager():
                 print(f"Error uploading file to S3: {e}")
                 print(f"File {local_file_path} failed to upload to {S3_bucket_name}:{S3_file_path}")
 
+    def delete_file_from_S3(self, S3_file_path):
+
+        S3_bucket_name = "robotlandingproject--deeprl--logs"
+        self.S3_client.delete_object(Bucket=S3_bucket_name, Key=S3_file_path)
+
 
 
 class RewardCallback(BaseCallback):
@@ -713,10 +738,9 @@ class RewardCallback(BaseCallback):
         self.rew_mean_window = deque(maxlen=int(15e3))
 
         ## REWARD STABILITY
-        self.rew_mean_diff_threshold = 0.05
+        self.rew_mean_diff_threshold = 0.12
         self.ent_burst_cooldown = int(30e3)                 # Cooldown period for entropy burst
         self.ent_burst_limit = int(100e3)                    # Limit the entropy burst to the first 100k steps
-        self.ent_coef = 0.07                                # Initial entropy coefficient
         self.last_ent_burst_step = 0                        # Last step when entropy burst was applied
 
         ## REWARD GRID
@@ -768,7 +792,7 @@ class RewardCallback(BaseCallback):
 
 
         ## CHECK FOR MODEL PERFORMANCE AND SAVE IF IMPROVED
-        if self.num_timesteps % self.reward_check_freq == 0 and self.num_timesteps > 5000:
+        if self.num_timesteps % self.reward_check_freq == 0 and self.env.K_ep > 2.5*len(self.env.TestingConditions):
 
             ## COMPUTE THE MEAN REWARD FOR THE LAST 'CHECK_FREQ' EPISODES
             if ep_rew_mean > self.best_mean_reward:
@@ -811,6 +835,7 @@ class RewardCallback(BaseCallback):
             self.logger.record('z_Custom/Trg_Flag',int(info_dict["Trg_Flag"]))
             self.logger.record('z_Custom/Impact_Flag_Ext',int(info_dict["Impact_Flag_Ext"]))
             self.logger.record('z_Custom/D_perp_pad_min',info_dict["D_perp_pad_min"])
+            self.logger.record('z_Custom/TestCondition_idx',info_dict["TestCondition_idx"])
 
             self.logger.record('z_Rewards_Components/R_Dist',info_dict["reward_vals"][0])
             self.logger.record('z_Rewards_Components/R_tau',info_dict["reward_vals"][1])
@@ -905,45 +930,54 @@ class RewardCallback(BaseCallback):
         replay_buffer_path = os.path.join(self.RLM.Model_Dir, replay_buffer_name)
 
         self.model.save(model_path)
-        # self.model.save_replay_buffer(replay_buffer_path)
+        self.model.save_replay_buffer(replay_buffer_path)
 
         ## UPLOAD MODEL AND REPLAY BUFFER TO S3
         self.RLM.upload_file_to_S3(local_file_path=model_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",model_name))
-        # self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
+        self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
 
     def _save_best_model_and_replay_buffer(self):
 
         model_name = f"model_{self.num_timesteps}_steps_BestModel.zip"
         model_path = os.path.join(self.RLM.Model_Dir, model_name)
+        s3_model_path = os.path.join("S3_TB_Logs", self.RLM.Group_Name, self.RLM.Log_Name, "Models", model_name)
 
         replay_buffer_name = f"replay_buffer_{self.num_timesteps}_steps_BestModel.pkl"
         replay_buffer_path = os.path.join(self.RLM.Model_Dir, replay_buffer_name)
+        s3_replay_buffer_path = os.path.join("S3_TB_Logs", self.RLM.Group_Name, self.RLM.Log_Name, "Models", replay_buffer_name)
 
         ## SAVE MODEL AND REPLAY BUFFER
         self.model.save(model_path)
-        # self.model.save_replay_buffer(replay_buffer_path)
+        self.model.save_replay_buffer(replay_buffer_path)
 
         ## UPLOAD MODEL AND REPLAY BUFFER TO S3
         self.RLM.upload_file_to_S3(local_file_path=model_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",model_name))
-        # self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
+        self.RLM.upload_file_to_S3(local_file_path=replay_buffer_path, S3_file_path=os.path.join("S3_TB_Logs",self.RLM.Group_Name,self.RLM.Log_Name,"Models",replay_buffer_name))
 
 
         if self.verbose > 0:
             print(f"New best mean reward: {self.best_mean_reward:.2f} - Model and replay buffer saved.")
 
         ## TRACK SAVED MODELS FOR DELETION
-        self.saved_models.append((model_path, replay_buffer_path))
+        self.saved_models.append((model_path, replay_buffer_path, s3_model_path, s3_replay_buffer_path))
+
     
     def _keep_last_n_models(self):
 
         ## REMOVE OLDER TOP MODELS AND REPLAY BUFFERS
         if len(self.saved_models) > self.keep_last_n_models:
 
-            for model_path, replay_buffer_path in self.saved_models[:-self.keep_last_n_models]:
+            for model_path, replay_buffer_path, s3_model_path, s3_replay_buffer_path in self.saved_models[:-self.keep_last_n_models]:
+                
+                # Delete local files
                 if os.path.exists(model_path):
                     os.remove(model_path)
-                # if os.path.exists(replay_buffer_path):
-                #     os.remove(replay_buffer_path)
+                if os.path.exists(replay_buffer_path):
+                    os.remove(replay_buffer_path)
+                
+                # Delete from S3
+                self.RLM.delete_file_from_S3(s3_model_path)
+                self.RLM.delete_file_from_S3(s3_replay_buffer_path)
 
             self.saved_models = self.saved_models[-self.keep_last_n_models:]
 

@@ -19,7 +19,6 @@
           <iyz>0</iyz>
           <izz>1.17E-4</izz>
         </inertia>
-        </inertia>
       </inertial>
       <gravity>1</gravity>
       <self_collide>1</self_collide>
@@ -68,7 +67,6 @@
           <iyy>1.18E-4</iyy>
           <iyz>0</iyz>
           <izz>1.17E-4</izz>
-        </inertia>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -119,7 +117,6 @@
           <iyz>0</iyz>
           <izz>1.17E-4</izz>
         </inertia>
-        </inertia>
       </inertial>
       <gravity>1</gravity>
       <self_collide>1</self_collide>
@@ -168,7 +165,6 @@
           <iyy>1.18E-4</iyy>
           <iyz>0</iyz>
           <izz>1.17E-4</izz>
-        </inertia>
         </inertia>
       </inertial>
       <gravity>1</gravity>
