@@ -866,15 +866,15 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         return x_target
     
     def touchdown_ODE(self,t, y):
-        z, dz, theta, dtheta = y
+        D_perp, dD_perp, theta, dtheta = y
 
-        ddtheta = 30
+        ddtheta = -self.Ang_Acc_range[0]
         F_t = ddtheta*self.Ref_Iyy/self.Prop_Front[0]
 
-        # ddz = -self.g*np.cos(self.Plane_Angle_rad)
-        ddz = (F_t / self.Ref_Mass) * np.cos(theta) - self.g*np.cos(self.Plane_Angle_rad)
+        # ddD_perp = -(F_t / self.Ref_Mass) * np.cos(theta) + self.g*np.cos(self.Plane_Angle_rad)
+        ddD_perp = self.g*np.cos(self.Plane_Angle_rad)
 
-        return [dz, ddz, dtheta, ddtheta]
+        return [dD_perp, ddD_perp, dtheta, ddtheta]
 
 
     
