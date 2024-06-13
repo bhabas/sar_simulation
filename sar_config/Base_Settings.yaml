@@ -1,6 +1,6 @@
 SAR_SETTINGS:
   SAR_Type: 'Impulse_Micro'
-  SAR_Config: 'A45_L100'
+  SAR_Config: 'A60_L50'
 
   # Policy_Type: "PARAM_OPTIM"
   Policy_Type: "DEEP_RL_SB3" 

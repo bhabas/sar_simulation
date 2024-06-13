@@ -17,19 +17,17 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
 
 if __name__ == '__main__':
 
-    Plane_Angle = 0
-    V_mag = 1.5
-    V_angle = 90
 
     # Initial conditions
-    theta0 = np.radians(0+Plane_Angle)   # Initial angle in radians
+    Plane_Angle = 0
+    theta_0 = np.radians(0+Plane_Angle)   # Initial angle in radians
     D_perp_0 = 0.0    # Initial position
-    # V_perp = 3.0      # Initial velocity
+    V_perp = 3.0      # Initial velocity
     dtheta0 = 0.0  # Initial angular velocity
 
-    env = SAR_2D_Env(Ang_Acc_range=[-60,0],V_mag_range=[V_mag,V_mag],V_angle_range=[V_angle,V_angle],Plane_Angle_range=[Plane_Angle,Plane_Angle],Render=True,Fine_Tune=False)
+    env = SAR_2D_Env(Ang_Acc_range=[-60,0])
 
-    theta_L = np.radians(90-env.Gamma_eff)
+    theta_Leg = np.radians(90-env.Gamma_eff)
     env.Plane_Angle_deg = Plane_Angle
     env.Plane_Angle_rad = np.radians(Plane_Angle)
 
@@ -50,10 +48,10 @@ if __name__ == '__main__':
     def objective(V_perp):
 
         # Initial conditions vector
-        y0 = [D_perp_0, -V_perp, theta0, dtheta0]
+        y0 = [D_perp_0, -V_perp, theta_0, dtheta0]
 
         # Solve the differential equations using scipy.integrate.solve_ivp
-        sol = solve_ivp(env.touchdown_ODE, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
+        sol = solve_ivp(env.touchdown_ODE_NoThrust, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
 
         # Extract the results
         time = sol.t
@@ -64,20 +62,22 @@ if __name__ == '__main__':
 
         # Calculate prop and leg distances
         D_prop_values = D_perp_values - env.Forward_Reach*np.sin(theta_values)
-        D_Leg_values = D_perp_values - env.L_eff*np.sin(theta_values-theta_L)
+        D_Leg_values = D_perp_values - env.L_eff*np.sin(theta_values-theta_Leg)
 
         # Return the negative difference to use minimize_scalar for maximization
         return np.abs(first_min(D_prop_values, theta_values) - first_min(D_Leg_values, theta_values))
 
     # Use minimize_scalar to find the initial velocity that maximizes the first height difference
-    result = minimize_scalar(objective, bounds=(0, 5.0), method='bounded')
+    result = minimize_scalar(objective, bounds=(-2.0,5.0), method='bounded')
 
     # Extract the optimal initial velocity
     optimal_V_perp_0 = result.x
+    V_perp = optimal_V_perp_0
+
 
     # Solve the system with the optimal initial velocity
-    y0 = [D_perp_0, -optimal_V_perp_0, theta0, dtheta0]
-    sol = solve_ivp(env.touchdown_ODE, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
+    y0 = [D_perp_0, -V_perp, theta_0, dtheta0]
+    sol = solve_ivp(env.touchdown_ODE_NoThrust, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
 
     # Extract the results
     time = sol.t
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     # Calculate prop and leg distances
     D_prop_values = D_perp_values - env.Forward_Reach*np.sin(theta_values)
-    D_Leg_values = D_perp_values - env.L_eff*np.sin(theta_values-theta_L)
+    D_Leg_values = D_perp_values - env.L_eff*np.sin(theta_values-theta_Leg)
 
 
     # Print the optimal initial velocity and the corresponding first maxima
