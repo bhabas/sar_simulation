@@ -871,8 +871,8 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         ddtheta = 30
         F_t = ddtheta*self.Ref_Iyy/self.Prop_Front[0]
 
-        ddz = -self.g
-        ddz = (F_t / self.Ref_Mass) * np.cos(theta) - self.g
+        # ddz = -self.g*np.cos(self.Plane_Angle_rad)
+        ddz = (F_t / self.Ref_Mass) * np.cos(theta) - self.g*np.cos(self.Plane_Angle_rad)
 
         return [dz, ddz, dtheta, ddtheta]
 

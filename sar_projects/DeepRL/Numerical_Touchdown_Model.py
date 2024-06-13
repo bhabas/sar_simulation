@@ -15,24 +15,26 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
 
 if __name__ == '__main__':
 
-    Plane_Angle = 0
+    Plane_Angle = 45
     V_mag = 1.5
     V_angle = 90
 
     env = SAR_2D_Env(Ang_Acc_range=[-90,0],V_mag_range=[V_mag,V_mag],V_angle_range=[V_angle,V_angle],Plane_Angle_range=[Plane_Angle,Plane_Angle],Render=True,Fine_Tune=False)
 
     theta_L = np.radians(90-env.Gamma_eff)
+    env.Plane_Angle_deg = Plane_Angle
+    env.Plane_Angle_rad = np.radians(Plane_Angle)
 
     # Initial conditions
     theta0 = 0.0   # Initial angle in radians
     z0 = 0.0    # Initial position
-    dz0 = 1.9      # Initial velocity
+    dz0 = 1.7      # Initial velocity
     dtheta0 = 0.0  # Initial angular velocity
 
 
     # Initial conditions vector
     y0 = [z0, dz0, theta0, dtheta0]
-    t_max = 0.4  # Maximum time in seconds
+    t_max = 0.9  # Maximum time in seconds
 
     # Solve the differential equations using scipy.integrate.solve_ivp
     sol = solve_ivp(env.touchdown_ODE, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
@@ -57,7 +59,7 @@ if __name__ == '__main__':
     ax1.set_xlabel('Time (s)')
     ax1.set_ylabel('Position')
     # ax1.set_ylim([-0.5, 0.1])
-    ax1.set_xlim([0, 0.4])
+    ax1.set_xlim([0, t_max])
     ax1.legend()
     ax1.set_title('Position over Time')
 

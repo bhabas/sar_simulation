@@ -1,6 +1,6 @@
 SAR_SETTINGS:
   SAR_Type: 'Impulse_Micro'
-  SAR_Config: 'A60_L150'
+  SAR_Config: 'A45_L100'
 
   # Policy_Type: "PARAM_OPTIM"
   Policy_Type: "DEEP_RL_SB3" 
@@ -14,7 +14,7 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Pos_X_init: 3.0        # [m]
   Pos_Y_init: 0.0         # [m]
   Pos_Z_init: 2.59        # [m]
-  Plane_Angle_init: 0     # [deg]
+  Plane_Angle_init: 45     # [deg]
 
 
 CAM_SETTINGS:
