@@ -864,6 +864,18 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         # Scale [0, 1] to target range
         x_target = x_scaled * (target_max - target_min) + target_min
         return x_target
+    
+    def touchdown_ODE(self,t, y):
+        z, dz, theta, dtheta = y
+
+        ddtheta = 30
+        F_t = ddtheta*self.Ref_Iyy/self.Prop_Front[0]
+
+        ddz = -self.g
+        ddz = (F_t / self.Ref_Mass) * np.cos(theta) - self.g
+
+        return [dz, ddz, dtheta, ddtheta]
+
 
     
 if __name__ == "__main__":
