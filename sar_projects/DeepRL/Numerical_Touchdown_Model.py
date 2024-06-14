@@ -19,13 +19,13 @@ if __name__ == '__main__':
 
 
     # Initial conditions
-    Plane_Angle = 0
-    Phi_B_O_0 = np.radians(0)   # Initial angle in radians
+    Plane_Angle = 45
+    Phi_B_O_0 = 0   # Initial angle in radians
     dPhi_B_O_0 = 0  # Initial angular velocity
-    Z_np_0 = 0    # Initial position
-    V_perp = 3.48      # Initial velocity
+    Z_np_0 = 0      # Initial position
+    V_perp = 3.3   # Initial velocity
 
-    env = SAR_2D_Env(Ang_Acc_range=[-90,0])
+    env = SAR_2D_Env(Ang_Acc_range=[-30,0])
 
     Phi_Leg = np.radians(90-env.Gamma_eff)
     env.Plane_Angle_deg = Plane_Angle
@@ -57,6 +57,7 @@ if __name__ == '__main__':
         dZ_np_values = sol.y[1]
         Phi_B_O_values = sol.y[2]
         dPhi_B_O_values = sol.y[3]
+        Phi_B_P_values = Phi_B_O_values - env.Plane_Angle_rad
 
         # Calculate prop and leg distances
         D_perp_values = -Z_np_values
@@ -64,7 +65,7 @@ if __name__ == '__main__':
         D_Leg_values = D_perp_values + env.L_eff*np.sin(Phi_B_O_values - env.Plane_Angle_rad + Phi_Leg)
 
         # Return the negative difference to use minimize_scalar for maximization
-        return np.abs(first_min(D_prop_values, Phi_B_O_values) - first_min(D_Leg_values, Phi_B_O_values))
+        return np.abs(first_min(D_prop_values, Phi_B_P_values) - first_min(D_Leg_values, Phi_B_P_values))
 
     # Use minimize_scalar to find the initial velocity that maximizes the first height difference
     result = minimize_scalar(objective, bounds=(0.5,5.0), method='bounded')
@@ -83,14 +84,16 @@ if __name__ == '__main__':
     dZ_np_values = sol.y[1]
     Phi_B_O_values = sol.y[2]
     dPhi_B_O_values = sol.y[3]
+    Phi_B_P_values = Phi_B_O_values - env.Plane_Angle_rad
 
     # Apply the theta constraint
-    valid_indices = Phi_B_O_values > -np.pi
+    valid_indices = Phi_B_P_values >= -np.pi
     time = time[valid_indices]
     Z_np_values = Z_np_values[valid_indices]
     dZ_np_values = dZ_np_values[valid_indices]
     Phi_B_O_values = Phi_B_O_values[valid_indices]
     dPhi_B_O_values = dPhi_B_O_values[valid_indices]
+    Phi_B_P_values = Phi_B_P_values[valid_indices]
 
     # Calculate prop and leg distances
     D_perp_values = -Z_np_values
@@ -100,15 +103,18 @@ if __name__ == '__main__':
 
     # Print the optimal initial velocity and the corresponding first maxima
     print(f"Optimal Initial Velocity: {optimal_V_perp_0:.2f} m/s")
-    print(f"First Prop Min Distance: {first_min(D_prop_values, Phi_B_O_values):.2f} m")
-    print(f"First Leg Min Distance: {first_min(D_Leg_values, Phi_B_O_values):.2f} m")
-
+    print(f"First Prop Min Distance: {first_min(D_prop_values, Phi_B_P_values):.2f} m")
+    print(f"First Leg Min Distance: {first_min(D_Leg_values, Phi_B_P_values):.2f} m")
+    D_offset = np.min([first_min(D_prop_values, Phi_B_P_values), first_min(D_Leg_values, Phi_B_P_values)])
+    D_perp_values = D_perp_values - D_offset
+    D_prop_values = D_prop_values - D_offset
+    D_Leg_values = D_Leg_values - D_offset
 
 
     # Plotting using the axes method
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
-    ax1.plot(time, D_perp_values, label='D_perp')
+    ax1.plot(time, D_perp_values, label='D_cm')
     ax1.plot(time, D_prop_values, label='D_prop')
     ax1.plot(time, D_Leg_values, label='D_Leg')
     ax1.set_xlabel('Time (s)')
@@ -117,13 +123,16 @@ if __name__ == '__main__':
     ax1.set_xlim([0, time[-1]])
     ax1.legend()
     ax1.set_title('Distance over Time')
+    ax1.grid()
 
-    ax2.plot(time, np.degrees(Phi_B_O_values), label='Phi_B_O')
+    ax2.plot(time, np.degrees(Phi_B_P_values), label='Phi_B_P')
     ax2.set_xlabel('Time (s)')
     ax2.set_ylabel('Angle [deg]')
     ax2.set_ylim([0, -180])
     ax2.set_xlim([0, time[-1]])
+    ax2.set_yticks(np.arange(0, -181, -30))
     ax2.legend()
+    ax2.grid()
     ax2.set_title('Angle over Time')
 
     plt.tight_layout()
