@@ -20,14 +20,14 @@ if __name__ == '__main__':
 
     # Initial conditions
     Plane_Angle = 0
-    theta_0 = np.radians(0+Plane_Angle)   # Initial angle in radians
-    D_perp_0 = 0.0    # Initial position
-    V_perp = 3.0      # Initial velocity
-    dtheta0 = 0.0  # Initial angular velocity
+    Phi_B_O_0 = np.radians(0)   # Initial angle in radians
+    dPhi_B_O_0 = 0  # Initial angular velocity
+    Z_np_0 = 0    # Initial position
+    V_perp = 3.48      # Initial velocity
 
-    env = SAR_2D_Env(Ang_Acc_range=[-60,0])
+    env = SAR_2D_Env(Ang_Acc_range=[-90,0])
 
-    theta_Leg = np.radians(90-env.Gamma_eff)
+    Phi_Leg = np.radians(90-env.Gamma_eff)
     env.Plane_Angle_deg = Plane_Angle
     env.Plane_Angle_rad = np.radians(Plane_Angle)
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     def first_min(values, theta_values):
         for i in range(1, len(values) - 1):
 
-            if theta_values[i] >= np.pi:
+            if theta_values[i] <= -np.pi:
                 break
 
             if values[i] < values[i - 1] and values[i] < values[i + 1]:
@@ -47,62 +47,61 @@ if __name__ == '__main__':
 
     def objective(V_perp):
 
-        # Initial conditions vector
-        y0 = [D_perp_0, -V_perp, theta_0, dtheta0]
-
-        # Solve the differential equations using scipy.integrate.solve_ivp
-        sol = solve_ivp(env.touchdown_ODE_NoThrust, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
+        # Solve the system with the optimal initial velocity
+        y0 = [Z_np_0, V_perp, Phi_B_O_0, dPhi_B_O_0]
+        sol = solve_ivp(env.touchdown_ODE_MotorFilter, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
 
         # Extract the results
         time = sol.t
-        D_perp_values = sol.y[0]
-        dD_perp_values = sol.y[1]
-        theta_values = sol.y[2]
-        dtheta_values = sol.y[3]
+        Z_np_values = sol.y[0]
+        dZ_np_values = sol.y[1]
+        Phi_B_O_values = sol.y[2]
+        dPhi_B_O_values = sol.y[3]
 
         # Calculate prop and leg distances
-        D_prop_values = D_perp_values - env.Forward_Reach*np.sin(theta_values)
-        D_Leg_values = D_perp_values - env.L_eff*np.sin(theta_values-theta_Leg)
+        D_perp_values = -Z_np_values
+        D_prop_values = D_perp_values + env.Forward_Reach*np.sin(Phi_B_O_values - env.Plane_Angle_rad)
+        D_Leg_values = D_perp_values + env.L_eff*np.sin(Phi_B_O_values - env.Plane_Angle_rad + Phi_Leg)
 
         # Return the negative difference to use minimize_scalar for maximization
-        return np.abs(first_min(D_prop_values, theta_values) - first_min(D_Leg_values, theta_values))
+        return np.abs(first_min(D_prop_values, Phi_B_O_values) - first_min(D_Leg_values, Phi_B_O_values))
 
     # Use minimize_scalar to find the initial velocity that maximizes the first height difference
-    result = minimize_scalar(objective, bounds=(-2.0,5.0), method='bounded')
+    result = minimize_scalar(objective, bounds=(0.5,5.0), method='bounded')
 
     # Extract the optimal initial velocity
     optimal_V_perp_0 = result.x
     V_perp = optimal_V_perp_0
 
-
     # Solve the system with the optimal initial velocity
-    y0 = [D_perp_0, -V_perp, theta_0, dtheta0]
-    sol = solve_ivp(env.touchdown_ODE_NoThrust, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
+    y0 = [Z_np_0, V_perp, Phi_B_O_0, dPhi_B_O_0]
+    sol = solve_ivp(env.touchdown_ODE_MotorFilter, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
 
     # Extract the results
     time = sol.t
-    D_perp_values = sol.y[0]
-    dD_perp_values = sol.y[1]
-    theta_values = sol.y[2]
-    dtheta_values = sol.y[3]
+    Z_np_values = sol.y[0]
+    dZ_np_values = sol.y[1]
+    Phi_B_O_values = sol.y[2]
+    dPhi_B_O_values = sol.y[3]
 
     # Apply the theta constraint
-    valid_indices = theta_values < np.pi
+    valid_indices = Phi_B_O_values > -np.pi
     time = time[valid_indices]
-    D_perp_values = D_perp_values[valid_indices]
-    dD_perp_values = dD_perp_values[valid_indices]
-    theta_values = theta_values[valid_indices]
-    dtheta_values = dtheta_values[valid_indices]
+    Z_np_values = Z_np_values[valid_indices]
+    dZ_np_values = dZ_np_values[valid_indices]
+    Phi_B_O_values = Phi_B_O_values[valid_indices]
+    dPhi_B_O_values = dPhi_B_O_values[valid_indices]
 
     # Calculate prop and leg distances
-    D_prop_values = D_perp_values - env.Forward_Reach*np.sin(theta_values)
-    D_Leg_values = D_perp_values - env.L_eff*np.sin(theta_values-theta_Leg)
+    D_perp_values = -Z_np_values
+    D_prop_values = D_perp_values + env.Forward_Reach*np.sin(Phi_B_O_values - env.Plane_Angle_rad)
+    D_Leg_values = D_perp_values + env.L_eff*np.sin(Phi_B_O_values - env.Plane_Angle_rad + Phi_Leg)
 
 
     # Print the optimal initial velocity and the corresponding first maxima
     print(f"Optimal Initial Velocity: {optimal_V_perp_0:.2f} m/s")
-    print(f"First Prop Min Distance: {first_min(D_prop_values, theta_values):.2f} m")
-    print(f"First Leg Min Distance: {first_min(D_Leg_values, theta_values):.2f} m")
+    print(f"First Prop Min Distance: {first_min(D_prop_values, Phi_B_O_values):.2f} m")
+    print(f"First Leg Min Distance: {first_min(D_Leg_values, Phi_B_O_values):.2f} m")
 
 
 
@@ -117,37 +116,15 @@ if __name__ == '__main__':
     # ax1.set_ylim([-0.5, 0.1])
     ax1.set_xlim([0, time[-1]])
     ax1.legend()
-    ax1.set_title('Position over Time')
+    ax1.set_title('Distance over Time')
 
-    ax2.plot(time, np.degrees(theta_values), label='Phi_B_O')
+    ax2.plot(time, np.degrees(Phi_B_O_values), label='Phi_B_O')
     ax2.set_xlabel('Time (s)')
     ax2.set_ylabel('Angle [deg]')
-    ax2.set_ylim([0, 180])
+    ax2.set_ylim([0, -180])
     ax2.set_xlim([0, time[-1]])
     ax2.legend()
     ax2.set_title('Angle over Time')
 
     plt.tight_layout()
     plt.show(block=True)
-
-
-    # a_Rot = -90
-    # Tau_CR_trg = 0.25
-
-    # for ep in range(50):
-
-    #     obs,_ = env.reset()
-
-    #     Done = False
-    #     while not Done:
-
-    #         action = env.action_space.sample() # obs gets passed in here
-    #         action[0] = 0
-    #         action[1] = env.scaleValue(a_Rot,env.Ang_Acc_range,[-1,1])
-    #         if 0.0 < env.Tau_CR <= Tau_CR_trg:
-    #             action[0] = 1
-    #         obs,reward,terminated,truncated,_ = env.step(action)
-    #         Done = terminated or truncated
-
-    #     print(f"Episode: {ep} \t Reward: {reward:.3f} \t Reward_vec: ",end='')
-    #     print(' '.join(f"{val:.2f}" for val in env.reward_vals))
