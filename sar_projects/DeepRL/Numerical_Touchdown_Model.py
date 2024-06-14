@@ -16,17 +16,17 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
 
 
 if __name__ == '__main__':
-
+    optimal_V_perp_0 = np.nan
 
     # Initial conditions
     Plane_Angle = 45
     Phi_B_O_0 = 0   # Initial angle in radians
     dPhi_B_O_0 = 0  # Initial angular velocity
     Z_np_0 = 0      # Initial position
-    V_perp = 3.3   # Initial velocity
+    V_perp = 0.5   # Initial velocity
 
     env = SAR_2D_Env(Ang_Acc_range=[-30,0])
-
+ 
     Phi_Leg = np.radians(90-env.Gamma_eff)
     env.Plane_Angle_deg = Plane_Angle
     env.Plane_Angle_rad = np.radians(Plane_Angle)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
         # Solve the system with the optimal initial velocity
         y0 = [Z_np_0, V_perp, Phi_B_O_0, dPhi_B_O_0]
-        sol = solve_ivp(env.touchdown_ODE_MotorFilter, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
+        sol = solve_ivp(env.touchdown_ODE_InstantThrust, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
 
         # Extract the results
         time = sol.t
@@ -68,15 +68,13 @@ if __name__ == '__main__':
         return np.abs(first_min(D_prop_values, Phi_B_P_values) - first_min(D_Leg_values, Phi_B_P_values))
 
     # Use minimize_scalar to find the initial velocity that maximizes the first height difference
-    result = minimize_scalar(objective, bounds=(0.5,5.0), method='bounded')
-
-    # Extract the optimal initial velocity
+    result = minimize_scalar(objective, bounds=(0.0,3.0), method='bounded')
     optimal_V_perp_0 = result.x
     V_perp = optimal_V_perp_0
 
     # Solve the system with the optimal initial velocity
     y0 = [Z_np_0, V_perp, Phi_B_O_0, dPhi_B_O_0]
-    sol = solve_ivp(env.touchdown_ODE_MotorFilter, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
+    sol = solve_ivp(env.touchdown_ODE_InstantThrust, [0, t_max], y0, t_eval=np.linspace(0, t_max, 1000))
 
     # Extract the results
     time = sol.t
