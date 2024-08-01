@@ -20,9 +20,9 @@ import matplotlib as mpl
 from scipy.interpolate import griddata
 
 
-LOG_DIR = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/DeepRL/TB_Logs"
-LOG_1 = "IM_2D_aRot90/0deg/IM_A45_L100_0deg_aRot90_S2D"
-LOG_2 = "SOV5_2D_aRot90/0deg/SOV5_A45_L150_0deg_aRot90_S2D"
+LOG_DIR = "/home/bhabas/GoogleDrive/Grad_Research/Papers/ICRA_25/Figures/2D_3D_Model_Comparison/A1_0deg"
+LOG_1 = "2D"
+LOG_2 = "3D"
 
 
 
@@ -56,13 +56,13 @@ df_2.drop(["reward_vals","NN_Output_trg","a_Rot_scale"],axis=1,inplace=True)
 df_1 = df_1.groupby(["V_mag","V_angle","Plane_Angle"]).mean().round(3).reset_index()
 df_1.query(f"Plane_Angle == {PlaneAngle}",inplace=True)
 df_1.query(f"V_mag >= 1.0",inplace=True)
-df_1.query(f"V_angle >= {V_B_O_cutoff}",inplace=True)
+# df_1.query(f"V_angle >= {V_B_O_cutoff}",inplace=True)
 
 
 df_2 = df_2.groupby(["V_mag","V_angle","Plane_Angle"]).mean().round(3).reset_index()
 df_2.query(f"Plane_Angle == {PlaneAngle}",inplace=True)
 df_2.query(f"V_mag >= 1.0",inplace=True)
-df_2.query(f"V_angle >= {V_B_O_cutoff}",inplace=True)
+# df_2.query(f"V_angle >= {V_B_O_cutoff}",inplace=True)
     
     
 ## COLLECT DATA
@@ -110,10 +110,16 @@ ax.set_thetamax(min(180-PlaneAngle,90))
 ax.set_rticks([0.0,1.0,2.0,3.0,4.0,5.0])
 ax.set_rmin(0)
 ax.set_rmax(R_1.max())
+ax.set_xticklabels([])  # Remove x-axis labels
+ax.set_yticklabels([])  # Remove y-axis labels
 
-plotName = f"Landing_Rate_diffFig_PlaneAngle_{PlaneAngle:.0f}_NoText.pdf"
-plotPath = os.path.join(LOG_DIR,LOG_1,plotName)
+# plotName = f"Landing_Rate_diffFig_PlaneAngle_{PlaneAngle:.0f}_NoText.pdf"
+# plotPath = os.path.join(LOG_DIR,plotName)
+# plt.savefig(plotPath,dpi=300)
+
+plotName = f"Landing_Rate_diffFig_PlaneAngle_{PlaneAngle:.0f}_NoText.png"
+plotPath = os.path.join(LOG_DIR,plotName)
 plt.savefig(plotPath,dpi=300)
 
 
-plt.show(block=True)
+# plt.show(block=True)

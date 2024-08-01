@@ -46,6 +46,7 @@ if __name__ == '__main__':
     ## LOGGING CONFIGURATION
     LogName = TrainConfig['LogName']
     PlaneAngle = TrainConfig['ENV_KWARGS']['Plane_Angle_range'][0]
+    PlaneAngle = 0
     
     ## SELECT ENVIRONMENT
     if TrainConfig['ENV_Type'] == "SAR_2D_Env":

@@ -399,16 +399,6 @@ class RL_Training_Manager():
             fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.Log_Dir,fileName)
 
-        def extract_last_val(string):
-            # Strip the square brackets and split the string by spaces
-            string = string.strip('[]')
-            list_of_strings = string.split()
-            
-            # Convert to float and get the last value
-            last_val = float(list_of_strings[-1])  # Convert the last item directly to float
-            
-            return last_val
-
         ## READ CSV FILE
         df = pd.read_csv(filePath,sep=',',comment="#")
 
@@ -464,6 +454,8 @@ class RL_Training_Manager():
         ax.set_rticks([0.0,1.0,2.0,3.0,4.0,5.0])
         ax.set_rmin(0)
         ax.set_rmax(R.max())
+        ax.set_xticklabels([])  # Remove x-axis labels
+        ax.set_yticklabels([])  # Remove y-axis labels
 
 
         # fig_cbar = plt.figure(figsize=(1.5, 6))  # Adjust the figure size as needed
@@ -475,6 +467,15 @@ class RL_Training_Manager():
         ## SAVE FIGURE WITHOUT TEXT
         if saveFig==True:
             fileName = f"Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}_NoText.pdf"
+            filePath = os.path.join(self.Log_Dir,fileName)
+
+            ## SAVE FIGURE LOCALLY
+            plt.savefig(filePath,dpi=300)
+
+            ## UPLOAD FILE TO S3
+            self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
+
+            fileName = f"Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}_NoText.png"
             filePath = os.path.join(self.Log_Dir,fileName)
 
             ## SAVE FIGURE LOCALLY
