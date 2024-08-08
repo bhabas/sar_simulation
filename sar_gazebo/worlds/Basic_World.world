@@ -146,6 +146,6 @@
 
     <plugin name='Step_World_Plugin' filename='libStep_World_Plugin.so'>
     </plugin>
-
+    
   </world>
 </sdf>
