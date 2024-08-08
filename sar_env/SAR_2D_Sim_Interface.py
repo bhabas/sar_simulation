@@ -864,6 +864,136 @@ class SAR_2D_Sim_Interface(SAR_Base_Interface):
         # Scale [0, 1] to target range
         x_target = x_scaled * (target_max - target_min) + target_min
         return x_target
+    
+    def touchdown_ODE_NoThrust_Old(self,t, y):
+        D_perp, dD_perp, theta, dtheta = y
+
+        ddtheta = -self.Ang_Acc_range[0]
+        ddD_perp = self.g*np.cos(self.Plane_Angle_rad)
+
+        return [dD_perp, ddD_perp, dtheta, ddtheta]
+    
+    def touchdown_ODE_NoThrust(self,t, y):
+        Z_np, dZ_np, Phi_B_O, dPhi_B_O = y
+
+        ddPhi_B_O = self.Ang_Acc_range[0]
+        ddZ_np = -self.g*np.cos(self.Plane_Angle_rad)
+
+        return [dZ_np, ddZ_np, dPhi_B_O, ddPhi_B_O]
+    
+    def touchdown_ODE_InstantThrust_Old(self,t, y):
+        D_perp, dD_perp, theta, dtheta = y
+
+        ddtheta = -self.Ang_Acc_range[0]
+        F_t = ddtheta*self.Ref_Iyy/self.Prop_Front[0]
+
+        ddD_perp = -(F_t / self.Ref_Mass) * np.cos(theta) + self.g*np.cos(self.Plane_Angle_rad)
+
+        return [dD_perp, ddD_perp, dtheta, ddtheta]
+    
+    def touchdown_ODE_InstantThrust(self,t, y):
+
+        Z_np, dZ_np, Phi_B_O, dPhi_B_O = y
+
+        ddPhi_B_O = self.Ang_Acc_range[0]
+        F_t = ddPhi_B_O*self.Ref_Iyy/self.Prop_Front[0]
+        ddZ_np = F_t/self.Ref_Mass*(np.sin(Phi_B_O)*np.sin(self.Plane_Angle_rad) - np.cos(Phi_B_O)*np.cos(self.Plane_Angle_rad)) - self.g*np.cos(self.Plane_Angle_rad)
+
+        return [dZ_np, ddZ_np, dPhi_B_O, ddPhi_B_O]
+    
+    def touchdown_ODE_MotorFilter_Old(self,t, y):
+        D_perp, dD_perp, theta, dtheta = y
+
+        ## CALCULATE DESIRED BODY ROTATION MOMENT
+        a_Rot = -self.Ang_Acc_range[0]
+        M_yd = self.Ref_Iyy*a_Rot
+
+        ## CONVER MOMENT TO DESIRED INDIVIDUAL MOTOR THRUSTS
+        M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
+        M2_thrust_d =  M_yd/(4*self.Prop_Front[0])
+        M3_thrust_d =  M_yd/(4*self.Prop_Front[0])
+        M4_thrust_d = -M_yd/(4*self.Prop_Front[0])
+
+        ## CKLIP THRUSTS
+        M1_thrust_d = np.clip(M1_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M2_thrust_d = np.clip(M2_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M3_thrust_d = np.clip(M3_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M4_thrust_d = np.clip(M4_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+
+        ## APPLY TIME CONSTANT BEHAVIOR TO MOTOR THRUSTS
+        M1_thrust = self.MotorFilter(M1_thrust_d,self.M_thrust_prev[0])
+        M2_thrust = self.MotorFilter(M2_thrust_d,self.M_thrust_prev[1])
+        M3_thrust = self.MotorFilter(M3_thrust_d,self.M_thrust_prev[2])
+        M4_thrust = self.MotorFilter(M4_thrust_d,self.M_thrust_prev[3])
+
+        ## UPDATE PREVIOUS MOTOR THRUSTS
+        self.M_thrust_prev = np.array([M1_thrust,M2_thrust,M3_thrust,M4_thrust])
+
+        ## CALCULATE THRUST VECTOR
+        M1_thrust_vec = np.array([0,0,M1_thrust])   # {X_B,Z_B}
+        M2_thrust_vec = np.array([0,0,M2_thrust])   
+        M3_thrust_vec = np.array([0,0,M3_thrust])   
+        M4_thrust_vec = np.array([0,0,M4_thrust])   
+        F_vec = M1_thrust_vec + M2_thrust_vec + M3_thrust_vec + M4_thrust_vec # {X_B,Z_B}
+
+        ## CALCULATE TRUE MOMENT DUE TO THRUST
+        M_y = self.Prop_Front[0]*(-M1_thrust + M2_thrust + M3_thrust - M4_thrust)
+        ddtheta = M_y/self.Ref_Iyy
+
+
+        ddD_perp = -(F_vec[2]*np.cos(theta) / self.Ref_Mass) + self.g*np.cos(self.Plane_Angle_rad)
+
+        return [dD_perp, ddD_perp, dtheta, ddtheta]
+    
+    
+    
+    
+
+    
+    def touchdown_ODE_MotorFilter(self,t, y):
+        Z_np, dZ_np, Phi_B_O, dPhi_B_O = y
+
+        ## CALCULATE DESIRED BODY ROTATION MOMENT
+        a_Rot = self.Ang_Acc_range[0]
+        M_yd = self.Ref_Iyy*a_Rot
+
+        ## CONVER MOMENT TO DESIRED INDIVIDUAL MOTOR THRUSTS
+        M1_thrust_d = -M_yd/(4*self.Prop_Front[0])
+        M2_thrust_d =  M_yd/(4*self.Prop_Front[0])
+        M3_thrust_d =  M_yd/(4*self.Prop_Front[0])
+        M4_thrust_d = -M_yd/(4*self.Prop_Front[0])
+
+        ## CKLIP THRUSTS
+        M1_thrust_d = np.clip(M1_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M2_thrust_d = np.clip(M2_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M3_thrust_d = np.clip(M3_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+        M4_thrust_d = np.clip(M4_thrust_d,0,self.Thrust_max*GRAM_2_NEWTON)
+
+        ## APPLY TIME CONSTANT BEHAVIOR TO MOTOR THRUSTS
+        M1_thrust = self.MotorFilter(M1_thrust_d,self.M_thrust_prev[0])
+        M2_thrust = self.MotorFilter(M2_thrust_d,self.M_thrust_prev[1])
+        M3_thrust = self.MotorFilter(M3_thrust_d,self.M_thrust_prev[2])
+        M4_thrust = self.MotorFilter(M4_thrust_d,self.M_thrust_prev[3])
+
+        ## UPDATE PREVIOUS MOTOR THRUSTS
+        self.M_thrust_prev = np.array([M1_thrust,M2_thrust,M3_thrust,M4_thrust])
+
+        ## CALCULATE THRUST VECTOR
+        M1_thrust_vec = np.array([0,0,M1_thrust])   # {X_B,Z_B}
+        M2_thrust_vec = np.array([0,0,M2_thrust])   
+        M3_thrust_vec = np.array([0,0,M3_thrust])   
+        M4_thrust_vec = np.array([0,0,M4_thrust])   
+        F_vec = M1_thrust_vec + M2_thrust_vec + M3_thrust_vec + M4_thrust_vec # {X_B,Z_B}
+
+        ## CALCULATE TRUE MOMENT DUE TO THRUST
+        M_y = self.Prop_Front[0]*(-M1_thrust + M2_thrust + M3_thrust - M4_thrust)
+        ddPhi_B_O = M_y/self.Ref_Iyy
+        
+        F_t = ddPhi_B_O*self.Ref_Iyy/self.Prop_Front[0]
+        ddZ_np = F_t/self.Ref_Mass*(np.sin(Phi_B_O)*np.sin(self.Plane_Angle_rad) - np.cos(Phi_B_O)*np.cos(self.Plane_Angle_rad)) - self.g*np.cos(self.Plane_Angle_rad)
+
+        return [dZ_np, ddZ_np, dPhi_B_O, ddPhi_B_O]
+
 
     
 if __name__ == "__main__":

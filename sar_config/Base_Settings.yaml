@@ -3,8 +3,8 @@ SAR_SETTINGS:
   SAR_Config: 'A15_L250'
 
   # Policy_Type: "PARAM_OPTIM"
-  # Policy_Type: "DEEP_RL_SB3" 
-  Policy_Type: "DEEP_RL_ONBOARD" 
+  Policy_Type: "DEEP_RL_SB3" 
+  # Policy_Type: "DEEP_RL_ONBOARD" 
 
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS

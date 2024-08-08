@@ -46,7 +46,6 @@ if __name__ == '__main__':
     ## LOGGING CONFIGURATION
     LogName = TrainConfig['LogName']
     PlaneAngle = TrainConfig['ENV_KWARGS']['Plane_Angle_range'][0]
-    PlaneAngle = 0
     
     ## SELECT ENVIRONMENT
     if TrainConfig['ENV_Type'] == "SAR_2D_Env":
@@ -59,4 +58,4 @@ if __name__ == '__main__':
 
     ## CREATE RL MANAGER
     RL_Manager = RL_Training_Manager(SAR_2D_Env,args.GroupName,TrainConfig['LogName'],env_kwargs=env_kwargs,S3_Upload=args.S3_Upload)    
-    RL_Manager.plot_landing_performance(PlaneAngle=PlaneAngle,saveFig=True,showFig=False)
+    RL_Manager.fix_impact_leg_count()

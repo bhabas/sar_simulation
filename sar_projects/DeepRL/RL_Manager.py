@@ -399,28 +399,25 @@ class RL_Training_Manager():
             fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.Log_Dir,fileName)
 
-        def extract_last_val(string):
-            # Strip the square brackets and split the string by spaces
-            string = string.strip('[]')
-            list_of_strings = string.split()
-            
-            # Convert to float and get the last value
-            last_val = float(list_of_strings[-1])  # Convert the last item directly to float
-            
-            return last_val
-
         ## READ CSV FILE
         df = pd.read_csv(filePath,sep=',',comment="#")
 
         cols_to_keep = [col for col in df.columns if not col.startswith('--')]
         df = df[cols_to_keep]
-        df['R_legs'] = df['reward_vals'].apply(extract_last_val)
+
+        weight_vector = np.array([1.0, 0.75, 0.5, 0.25, 0.0, 0.0])
+        df['R_legs'] = df.iloc[:, -6:].dot(weight_vector)
+
         df.drop(["reward_vals","NN_Output_trg","a_Rot_scale"],axis=1,inplace=True)
 
 
         df2 = df.groupby(["V_mag","V_angle","Plane_Angle"]).mean().round(3).reset_index()
         df2.query(f"Plane_Angle == {PlaneAngle}",inplace=True)
         df2.query(f"V_mag >= 1.0",inplace=True)
+
+        V_B_O_cutoff = -PlaneAngle + 15
+        df2.query(f"V_angle >= {V_B_O_cutoff}",inplace=True)
+
         
         
         ## COLLECT DATA
@@ -457,6 +454,8 @@ class RL_Training_Manager():
         ax.set_rticks([0.0,1.0,2.0,3.0,4.0,5.0])
         ax.set_rmin(0)
         ax.set_rmax(R.max())
+        ax.set_xticklabels([])  # Remove x-axis labels
+        ax.set_yticklabels([])  # Remove y-axis labels
 
 
         # fig_cbar = plt.figure(figsize=(1.5, 6))  # Adjust the figure size as needed
@@ -468,6 +467,15 @@ class RL_Training_Manager():
         ## SAVE FIGURE WITHOUT TEXT
         if saveFig==True:
             fileName = f"Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}_NoText.pdf"
+            filePath = os.path.join(self.Log_Dir,fileName)
+
+            ## SAVE FIGURE LOCALLY
+            plt.savefig(filePath,dpi=300)
+
+            ## UPLOAD FILE TO S3
+            self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
+
+            fileName = f"Landing_Rate_Fig_PlaneAngle_{PlaneAngle:.0f}_NoText.png"
             filePath = os.path.join(self.Log_Dir,fileName)
 
             ## SAVE FIGURE LOCALLY
@@ -498,6 +506,42 @@ class RL_Training_Manager():
         if showFig==True:
             plt.show(block=True)
         
+    def fix_impact_leg_count(self,fileName=None):
+        if fileName == None:
+            fileName = "PolicyPerformance_Data.csv"
+        filePath = os.path.join(self.Log_Dir,fileName)
+
+        ## READ CSV FILE
+        data = pd.read_csv(filePath,sep=',',comment="#")
+        # Iterate through each row and apply the XOR logic with if statements
+        for index, row in data.iterrows():
+            foreleg_contact = row['ForelegContact']
+            hindleg_contact = row['HindlegContact']
+            body_contact = row['BodyContact']
+
+
+            if (foreleg_contact ^ hindleg_contact) and row['Pad_Connections'] == 0:
+                data.at[index, 'Pad_Connections'] = 2
+
+                data.at[index, '0_Leg_BC'] = 0
+                data.at[index, '0_Leg_NBC'] = 0
+
+
+                if body_contact == True:
+
+                    data.at[index, '2_Leg_BC'] = 1
+                    data.at[index, '2_Leg_NBC'] = 0
+                else:
+                    data.at[index, '2_Leg_BC'] = 0
+                    data.at[index, '2_Leg_NBC'] = 1
+                    
+
+        data.to_csv(filePath, index=False)
+
+        self.upload_file_to_S3(local_file_path=filePath,S3_file_path=os.path.join("S3_TB_Logs",self.Group_Name,self.Log_Name,fileName))
+
+
+
     def save_NN_to_C_header(self):
 
         fileName = f"NN_Params_DeepRL.h"
