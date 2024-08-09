@@ -418,7 +418,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self._launch_GZ_Sim()
 
         if rospy.get_param(f"/SIM_SETTINGS/GUI_Flag") == True:
-            self._wait_for_node(node_name="gazebo_gui",timeout=60,interval=2)
+            self._wait_for_node(node_name="gazebo_gui",timeout=180,interval=2)
         else:
             self._wait_for_node(node_name="gazebo",timeout=120,interval=2)
 
