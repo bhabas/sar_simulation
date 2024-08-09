@@ -22,7 +22,7 @@
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="--lockstep $(find sar_gazebo)/worlds/small_city.world"/>
+        <arg name="world_name" value="--lockstep $(find sar_gazebo)/worlds/Test_World.world"/>
         <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
         <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
         <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->

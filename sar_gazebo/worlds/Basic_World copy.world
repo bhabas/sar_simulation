@@ -8,17 +8,6 @@
         <pose>1.4 -5 1.9 0 0.12 1.57</pose>
       </camera>
     </gui>
-    <scene>
-      <grid>false</grid>
-      <origin_visual>true</origin_visual>
-      <ambient>0.85 0.85 0.85 1</ambient>
-      <sky>
-        <clouds>
-          <speed>12</speed>
-        </clouds>
-      </sky>
-      <background>0.35 0.35 0.35 1.0</background>
-    </scene>
 
     <model name='camera'>
       <static>true</static>
@@ -81,23 +70,49 @@
       </link>
     </model>
 
-    <!-- A global light source -->
     <light type="directional" name="sun">
-      <pose>0 0 1000 0 0 0</pose>
-      <cast_shadows>true</cast_shadows>
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
       <diffuse>0.8 0.8 0.8 1</diffuse>
-      <specular>0.5 0.5 0.5 1</specular>
+      <specular>0.2 0.2 0.2 1</specular>
       <attenuation>
         <range>1000</range>
         <constant>0.9</constant>
         <linear>0.01</linear>
         <quadratic>0.001</quadratic>
       </attenuation>
-      <direction>-0.5 0.1 -0.4</direction>
+      <direction>-0.5 0.1 -0.9</direction>
     </light>
 
+    <light name='Horizontal_Light' type='directional'>
+      <pose>-5 0 0 0 1.57 0</pose>
+      <diffuse>0.5 0.5 0.5 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <direction>0 0 1</direction>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+    </light>
 
-    <physics type="bullet">
+    <light name='Vertical_Light' type='directional'>
+      <pose>0 0 -5 0 0 0</pose>
+      <diffuse>0.5 0.5 0.5 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <direction>0 0 1</direction>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+    </light>
+
+    <physics type="bullet"> <!-- Or "ode", if you want to try with ODE first -->
         <max_step_size>0.001</max_step_size>
         <real_time_factor>1</real_time_factor>
         <real_time_update_rate>200</real_time_update_rate>
@@ -120,31 +135,17 @@
     </physics>
 
 
+    <scene>
+      <shadows>0</shadows>
+      <sky>
+        <clouds>
+          <speed>0</speed>
+        </clouds>
+      </sky>
+    </scene>
+
     <plugin name='Step_World_Plugin' filename='libStep_World_Plugin.so'>
     </plugin>
-
-    <!-- ground plane -->
-    <model name="ground_plane">
-      <static>true</static>
-      <link name="link">
-        <collision name="collision">
-          <geometry>
-            <plane>
-              <normal>0 0 1</normal>
-              <size>100 100</size>
-            </plane>
-          </geometry>
-          <surface>
-            <friction>
-              <ode>
-                <mu>100</mu>
-                <mu2>50</mu2>
-              </ode>
-            </friction>
-          </surface>
-        </collision>
-      </link>
-    </model>
     
   </world>
 </sdf>
