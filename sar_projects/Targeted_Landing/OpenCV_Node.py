@@ -6,6 +6,9 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from ultralytics import YOLO
 
+from pathlib import Path
+BASEPATH = Path("/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/Targeted_Landing")
+
 
 class YOLOv8Node:
     def __init__(self):
@@ -13,7 +16,7 @@ class YOLOv8Node:
         rospy.init_node('yolov8_node', anonymous=True)
 
         # Load the YOLOv8 model
-        self.model = YOLO("yolov8n-seg.pt")  # Replace with your model path if needed
+        self.model = YOLO(BASEPATH / "runs/detect/train8/weights/last.pt")
 
         # Initialize CV bridge
         self.bridge = CvBridge()

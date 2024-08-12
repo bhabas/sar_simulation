@@ -1,9 +1,9 @@
 from ultralytics import YOLO
 import cv2
 
-model = YOLO("yolov8n-seg.pt")  # load an official model
+model = YOLO("models/yolov8n-seg.pt")  # load an official model
 
-img_path = "input_image2.png"
+img_path = "Test_Image.png"
 
 img = cv2.imread(img_path)
 

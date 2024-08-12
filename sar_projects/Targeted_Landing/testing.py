@@ -1,8 +1,11 @@
 from ultralytics import YOLO
+from pathlib import Path
 
-model = YOLO("/home/bhabas/catkin_ws/src/sar_simulation/runs/detect/train8/weights/last.pt")
+BASEPATH = Path("/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/Targeted_Landing")
 
-results = model(["Test_Image.jpg"])
+model = YOLO(BASEPATH / "runs/detect/train8/weights/last.pt")
+
+results = model([BASEPATH / "Test_Image.jpg"])
 
 # Process results list
 for result in results:
