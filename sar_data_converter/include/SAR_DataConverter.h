@@ -242,8 +242,8 @@ class SAR_DataConverter {
         // ====================
         int SLOWDOWN_TYPE = 0;
         bool LANDING_SLOWDOWN_FLAG;
-        float SIM_SPEED = 0.5; 
-        float SIM_SLOWDOWN_SPEED = 0.5;
+        float SIM_SPEED = 1.0; 
+        float SIM_SLOWDOWN_SPEED = 1.0;
 
 
         // =====================
