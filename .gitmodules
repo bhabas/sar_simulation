@@ -1,0 +1,3 @@
+[submodule "gazebo_models_worlds_collection"]
+	path = gazebo_models_worlds_collection
+	url = git@github.com:leonhartyao/gazebo_models_worlds_collection.git
