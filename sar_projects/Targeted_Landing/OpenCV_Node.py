@@ -15,8 +15,8 @@ class YOLOv8Node:
         # Initialize the ROS node
         rospy.init_node('yolov8_node', anonymous=True)
 
-        # Load the YOLOv8 model
-        self.model = YOLO(BASEPATH / "runs/detect/train4/weights/last.pt")
+        # Load custom YOLOv8 model
+        self.model = YOLO(BASEPATH / "runs/detect/train4/weights/last.pt",verbose=False)
 
         # Initialize CV bridge
         self.bridge = CvBridge()
@@ -38,12 +38,35 @@ class YOLOv8Node:
         # Run the YOLO model on the image
         results = self.model(cv_image)
 
-        # Draw bounding boxes and labels on the image
-        annotated_img = results[0].plot()  # Plot the detections
+        landing_site_dict = {}
+        id_dict = {0: "Landing_Site_1", 1:"Landing_Site_2"}
+
+
+        ## Find Viable Landing Sites
+        for box in results[0].boxes:
+
+            if box.conf.tolist()[0] > 0.8:
+
+                landing_site_dict[0] = {"id": box.cls.tolist()[0], "box": box.xyxy[0].int().tolist()}
+
+
+                cv_image = cv2.rectangle(img=cv_image, 
+                                        pt1=box.xyxy[0][0:2].int().tolist(),
+                                        pt2=box.xyxy[0][2:4].int().tolist(),
+                                        color=(255,0,0),
+                                        thickness=2)
+                cv_image = cv2.putText(img=cv_image, 
+                                    text=f"{id_dict[box.cls.tolist()[0]]}: {box.conf.tolist()[0]:.2f}", 
+                                    org=(box.xyxy[0][0].int().item(), box.xyxy[0][1].int().item()-10), 
+                                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+                                    fontScale=0.5, 
+                                    color=(255,0,0), 
+                                    thickness=2)
+
 
         try:
             # Convert OpenCV image back to ROS Image message
-            image_msg = self.bridge.cv2_to_imgmsg(annotated_img, "bgr8")
+            image_msg = self.bridge.cv2_to_imgmsg(cv_image, "bgr8")
             # Publish the processed image
             self.image_pub.publish(image_msg)
         except CvBridgeError as e:

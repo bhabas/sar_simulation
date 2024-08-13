@@ -303,21 +303,31 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.Sim_VelTraj(self.r_B_O,V_B_O)
         self.pausePhysics(False)
 
+    def handle_GZ_Landing_Target(self):
+
+        ## GET LANDING TARGET
+        Landing_Target_id = self.userInput("Select Landing Target: ",int)
+        self.Landing_Target_pos = self.landing_site_locations[Landing_Target_id]
+
+        self._setPlanePose(self.Landing_Target_pos,90)
+
+
+
     
     # ================================
     ##     SIM MONITORING/LAUNCH
     # ================================
 
     def _launch_GZ_Sim(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 85x46+1050+0 -- rosrun sar_launch launch_gazebo.bash"
+        cmd = "gnome-terminal --disable-factory  --geometry 85x46+3790+0 -- rosrun sar_launch launch_gazebo.bash"
         self.GZ_Sim_process = subprocess.Popen(cmd, shell=True)
 
     def _launch_SAR_DC(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 85x46+1050+0 -- rosrun sar_data_converter SAR_DataConverter"
+        cmd = "gnome-terminal --disable-factory  --geometry 85x46+3790+0 -- rosrun sar_data_converter SAR_DataConverter"
         self.SAR_DC_process = subprocess.Popen(cmd, shell=True)
 
     def _launch_Controller(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 85x46+1050+0 -- rosrun sar_control SAR_Controller"
+        cmd = "gnome-terminal --disable-factory  --geometry 85x46+3790+0 -- rosrun sar_control SAR_Controller"
         self.SAR_Ctrl_process = subprocess.Popen(cmd, shell=True)
 
     

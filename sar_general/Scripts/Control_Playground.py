@@ -38,6 +38,7 @@ def cmd_send(env):
             91: env.handle_GZ_StickyPads,
             92: env.handle_GZ_Global_Vel_traj,
             93: env.handle_GZ_Rel_Vel_traj,
+            94: env.handle_GZ_Landing_Target,
 
         }
         

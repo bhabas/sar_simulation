@@ -7,6 +7,11 @@ import time
 import warnings 
 import yaml
 import rospkg
+import cv2
+from cv_bridge import CvBridge, CvBridgeError
+from sensor_msgs.msg import Image
+from ultralytics import YOLO
+
 
 ## ROS MESSAGES AND SERVICES
 from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
@@ -58,6 +63,16 @@ class SAR_Base_Interface():
 
         print(f"{RESET}")
 
+        # Load custom YOLOv8 model
+        self.model = YOLO(f"{self.BASE_PATH}/sar_projects/Targeted_Landing/runs/detect/train4/weights/last.pt",verbose=False)
+        self.bridge = CvBridge()
+
+        self.landing_site_locations = {
+            0: [31.3,18.5,10],
+            1: [32.0,-9.5,8.5],
+        }
+
+
 
 
         ## SAR DATA SUBSCRIBERS 
@@ -68,10 +83,12 @@ class SAR_Base_Interface():
         rospy.Subscriber("/SAR_DC/TriggerData",SAR_TriggerData,self._SAR_TriggerDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/ImpactData",SAR_ImpactData,self._SAR_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self._SAR_MiscDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_Internal/camera/image_raw", Image, self.image_callback)
 
         ## RL DATA PUBLISHERS
         self.RL_Data_Pub = rospy.Publisher("/RL/Data",RL_Data,queue_size=10)
         self.RL_History_Pub = rospy.Publisher("/RL/History",RL_History,queue_size=10)
+        self.image_pub = rospy.Publisher("/camera/image_yolov8", Image, queue_size=1)
 
     def loadBaseParams(self):
 
@@ -567,6 +584,8 @@ class SAR_Base_Interface():
         }
         self.inv_cmd_dict = {value: key for key, value in self.cmd_dict.items()}
 
+        self.landing_site_dict = {}
+
         ## RL BASED VALUES
         self.K_ep = np.nan
         self.K_run = np.nan
@@ -888,6 +907,52 @@ class SAR_Base_Interface():
             MiscData_msg.Plane_Pos.y,
             MiscData_msg.Plane_Pos.z,
         ]
+
+    def image_callback(self,data):
+
+        try:
+            # Convert ROS Image message to OpenCV image
+            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+        except CvBridgeError as e:
+            rospy.logerr(f"CV Bridge Error: {e}")
+            return
+        
+        # Run the YOLO model on the image
+        results = self.model.predict(cv_image,verbose=False,conf=0.8)
+
+        self.landing_site_dict = {}
+        id_dict = {0: "Landing_Site_0", 1:"Landing_Site_1"}
+
+
+        ## Find Viable Landing Sites
+        for ii,box in enumerate(results[0].boxes):
+
+            self.landing_site_dict[int(box.cls.tolist()[0])] = box.xyxy[0].int().tolist()
+
+            cv_image = cv2.rectangle(img=cv_image, 
+                                    pt1=box.xyxy[0][0:2].int().tolist(),
+                                    pt2=box.xyxy[0][2:4].int().tolist(),
+                                    color=(255,0,0),
+                                    thickness=2)
+            cv_image = cv2.putText(img=cv_image, 
+                                text=f"{id_dict[box.cls.tolist()[0]]}: {box.conf.tolist()[0]:.2f}", 
+                                org=(box.xyxy[0][0].int().item(), box.xyxy[0][1].int().item()-10), 
+                                fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+                                fontScale=0.5, 
+                                color=(255,0,0), 
+                                thickness=2)
+
+
+        try:
+            # Convert OpenCV image back to ROS Image message
+            image_msg = self.bridge.cv2_to_imgmsg(cv_image, "bgr8")
+            # Publish the processed image
+            self.image_pub.publish(image_msg)
+        except CvBridgeError as e:
+            rospy.logerr(f"CV Bridge Error: {e}")
+
+
+
 
     def _RL_Publish(self):
 
