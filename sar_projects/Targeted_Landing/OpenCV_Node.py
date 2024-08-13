@@ -16,7 +16,7 @@ class YOLOv8Node:
         rospy.init_node('yolov8_node', anonymous=True)
 
         # Load the YOLOv8 model
-        self.model = YOLO(BASEPATH / "runs/detect/train8/weights/last.pt")
+        self.model = YOLO(BASEPATH / "runs/detect/train4/weights/last.pt")
 
         # Initialize CV bridge
         self.bridge = CvBridge()
