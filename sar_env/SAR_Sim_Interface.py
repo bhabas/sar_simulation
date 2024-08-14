@@ -311,6 +311,9 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self._setPlanePose(self.Landing_Target_pos,90)
 
+    def handle_GZ_Target_Recognition(self):
+        self.CV_On = not self.CV_On
+
 
 
     

@@ -68,9 +68,11 @@ class SAR_Base_Interface():
         self.bridge = CvBridge()
 
         self.landing_site_locations = {
-            0: [31.3,18.5,10],
-            1: [32.0,-9.5,8.5],
+            0: [-0.7,-12,10],
+            1: [32.0,-9.5,9.5],
         }
+
+        self.CV_On = True
 
 
 
@@ -83,7 +85,7 @@ class SAR_Base_Interface():
         rospy.Subscriber("/SAR_DC/TriggerData",SAR_TriggerData,self._SAR_TriggerDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/ImpactData",SAR_ImpactData,self._SAR_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self._SAR_MiscDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_Internal/camera/image_raw", Image, self.image_callback)
+        rospy.Subscriber("/SAR_Internal/camera/image_raw", Image, self.image_callback,queue_size=500)
 
         ## RL DATA PUBLISHERS
         self.RL_Data_Pub = rospy.Publisher("/RL/Data",RL_Data,queue_size=10)
@@ -917,30 +919,32 @@ class SAR_Base_Interface():
             rospy.logerr(f"CV Bridge Error: {e}")
             return
         
-        # Run the YOLO model on the image
-        results = self.model.predict(cv_image,verbose=False,conf=0.8)
+        if self.CV_On:
+        
+            # Run the YOLO model on the image
+            results = self.model.predict(cv_image,verbose=False,conf=0.8)
 
-        self.landing_site_dict = {}
-        id_dict = {0: "Landing_Site_0", 1:"Landing_Site_1"}
+            self.landing_site_dict = {}
+            id_dict = {0: "Landing_Site_0", 1:"Landing_Site_1"}
 
 
-        ## Find Viable Landing Sites
-        for ii,box in enumerate(results[0].boxes):
+            ## Find Viable Landing Sites
+            for ii,box in enumerate(results[0].boxes):
 
-            self.landing_site_dict[int(box.cls.tolist()[0])] = box.xyxy[0].int().tolist()
+                self.landing_site_dict[int(box.cls.tolist()[0])] = box.xyxy[0].int().tolist()
 
-            cv_image = cv2.rectangle(img=cv_image, 
-                                    pt1=box.xyxy[0][0:2].int().tolist(),
-                                    pt2=box.xyxy[0][2:4].int().tolist(),
-                                    color=(255,0,0),
+                cv_image = cv2.rectangle(img=cv_image, 
+                                        pt1=box.xyxy[0][0:2].int().tolist(),
+                                        pt2=box.xyxy[0][2:4].int().tolist(),
+                                        color=(255,0,0),
+                                        thickness=2)
+                cv_image = cv2.putText(img=cv_image, 
+                                    text=f"{id_dict[box.cls.tolist()[0]]}: {box.conf.tolist()[0]:.2f}", 
+                                    org=(box.xyxy[0][0].int().item(), box.xyxy[0][1].int().item()-10), 
+                                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+                                    fontScale=0.5, 
+                                    color=(255,0,0), 
                                     thickness=2)
-            cv_image = cv2.putText(img=cv_image, 
-                                text=f"{id_dict[box.cls.tolist()[0]]}: {box.conf.tolist()[0]:.2f}", 
-                                org=(box.xyxy[0][0].int().item(), box.xyxy[0][1].int().item()-10), 
-                                fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
-                                fontScale=0.5, 
-                                color=(255,0,0), 
-                                thickness=2)
 
 
         try:

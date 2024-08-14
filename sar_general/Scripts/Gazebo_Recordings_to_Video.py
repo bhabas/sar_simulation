@@ -44,7 +44,7 @@ def convert_images_to_video(directory, fps, output_file):
     subprocess.run(ffmpeg_command)
 
 # Usage
-directory = '/home/bhabas/GoogleDrive/Grad_Research/Papers/T_RO_23/Images/Four_Leg_Landing_Efficient_Momentum_Transfer'  # Replace with your directory path
+directory = '/tmp/Gazebo_Recording'  # Replace with your directory path
 fps = 30  # Replace with your desired frames per second
-output_file = 'Four_Leg_Landing_Efficient_Momentum_Transfer.mov'  # Replace with your desired output file name
+output_file = 'Targeted_Landing_2.mov'  # Replace with your desired output file name
 convert_images_to_video(directory, fps, output_file)
