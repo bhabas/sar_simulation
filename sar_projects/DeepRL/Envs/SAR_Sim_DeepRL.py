@@ -230,7 +230,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             self.Tau_Body_start = (self.Tau_CR_start + self.Collision_Radius/(V_perp+EPS)) # Tau read by body
         except:
             print("Exception")
-        self.Tau_Accel_start = 1.0 # Acceleration time to desired velocity conditions [s]
+        self.Tau_Accel_start = 1.5 # Acceleration time to desired velocity conditions [s]
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
@@ -717,11 +717,13 @@ if __name__ == "__main__":
 
     env = SAR_Sim_DeepRL(Ang_Acc_range=[-90,0],V_mag_range=[1.5,3.5],V_angle_range=[5,175],Plane_Angle_range=[0,180],Render=True,Fine_Tune=False)
 
-    for ep in range(50):
 
-        V_mag = 2.5
-        V_angle = 60
-        Plane_Angle = 0
+    V_mag = 2.5
+    V_angle = 45
+    Plane_Angle = 45
+    Tau_trg = 0.1
+
+    for ep in range(200):
 
         if V_mag != None:
             env.V_mag_range = [V_mag,V_mag]
@@ -740,7 +742,7 @@ if __name__ == "__main__":
             action = env.action_space.sample() # obs gets passed in here
             action[0] = 0
             action[1] = -1.0
-            if 0.0 < env.Tau_CR <= 0.5:
+            if 0.0 < env.Tau_CR <= Tau_trg:
                 action[0] = 1
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated

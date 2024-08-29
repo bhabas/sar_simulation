@@ -44,7 +44,10 @@ def convert_images_to_video(directory, fps, output_file):
     subprocess.run(ffmpeg_command)
 
 # Usage
-directory = '/tmp/Gazebo_Recording'  # Replace with your directory path
-fps = 30  # Replace with your desired frames per second
-output_file = 'Targeted_Landing_2.mov'  # Replace with your desired output file name
-convert_images_to_video(directory, fps, output_file)
+
+for ii in range(17,33):
+    filename = f'Test{ii}'
+    directory = f'/tmp/Gazebo_Recording/{filename}'  # Replace with your directory path
+    fps = 30  # Replace with your desired frames per second
+    output_file = f'{filename}.mov'  # Replace with your desired output file name
+    convert_images_to_video(directory, fps, output_file)

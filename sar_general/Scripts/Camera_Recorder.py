@@ -8,7 +8,7 @@ import os
 class ImageSaver:
     def __init__(self):
         self.bridge = CvBridge()
-        self.image_sub = rospy.Subscriber("/camera/image_yolov8", Image, self.callback, queue_size=500)
+        self.image_sub = rospy.Subscriber("/ExternalCam/image_raw", Image, self.callback, queue_size=500)
         self.counter = 0
 
     def callback(self, data):
@@ -21,6 +21,7 @@ class ImageSaver:
             return
 
         # Save the image
+        os.makedirs("/tmp/Gazebo_Recording", exist_ok=True)
         filename = f"/tmp/Gazebo_Recording/image_{self.counter:d}.png"
         cv2.imwrite(filename, cv_image)
         rospy.loginfo("Saved image {}".format(filename))

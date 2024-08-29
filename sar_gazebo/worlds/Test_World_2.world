@@ -1,0 +1,274 @@
+<sdf version='1.7'>
+  <world name='basic_world'>
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>0.93 -6 2.3 0 0.1 1.571</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+    <scene>
+      <grid>0</grid>
+      <origin_visual>0</origin_visual>
+      <ambient>0.85 0.85 0.85 1</ambient>
+      <sky>
+        <clouds>
+          <speed>12</speed>
+        </clouds>
+      </sky>
+      <background>0.35 0.35 0.35 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <model name='Recording Camera'>
+      <static>1</static>
+      <pose>0.7 -2.5 2.3 0 -0.14 1.05</pose>
+      <link name='link'>
+        <sensor name='my_camera' type='camera'>
+          <camera>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+          </camera>
+          <plugin name='camera_controller' filename='libgazebo_ros_camera.so'>
+            <alwaysOn>1</alwaysOn>
+            <updateRate>0.0</updateRate>
+            <cameraName>ExternalCam</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          </plugin>
+          <always_on>1</always_on>
+          <update_rate>300</update_rate>
+        </sensor>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='World_Origin'>
+      <static>1</static>
+      <link name='Origin_Link'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='Origin_Visual'>
+          <cast_shadows>0</cast_shadows>
+          <pose>0 0 0 0 -0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.005</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Orange</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+            <shader type='pixel'>
+              <normal_map>__default__</normal_map>
+            </shader>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <light name='sun' type='directional'>
+      <pose>0 0 1000 0 -0 0</pose>
+      <cast_shadows>1</cast_shadows>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.5 0.5 0.5 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.4</direction>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
+    </light>
+    <physics type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>200</real_time_update_rate>
+      <bullet>
+        <solver>
+          <type>SequentialImpulse</type>
+          <min_step_size>0.0001</min_step_size>
+          <iters>50</iters>
+          <sor>1.3</sor>
+        </solver>
+        <constraints>
+          <cfm>1e-05</cfm>
+          <erp>0.3</erp>
+          <contact_surface_layer>0.001</contact_surface_layer>
+          <split_impulse>1</split_impulse>
+          <split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
+        </constraints>
+      </bullet>
+    </physics>
+    <gravity>0 0 -9.8066</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <model name='city_terrain'>
+      <link name='link'>
+        <pose>0 0 0 0 0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <heightmap>
+              <use_terrain_paging>0</use_terrain_paging>
+              <texture>
+                <diffuse>model://ocean/materials/textures/soil_sand_0045_01.jpg</diffuse>
+                <normal>file://media/materials/textures/flat_normal.png</normal>
+                <size>10</size>
+              </texture>
+              <blend>
+                <min_height>0</min_height>
+                <fade_dist>1.5</fade_dist>
+              </blend>
+              <texture>
+                <diffuse>model://ocean/materials/textures/soil_sand_0045_01.jpg</diffuse>
+                <normal>file://media/materials/textures/flat_normal.png</normal>
+                <size>10</size>
+              </texture>
+              <blend>
+                <min_height>2.5</min_height>
+                <fade_dist>5</fade_dist>
+              </blend>
+              <texture>
+                <diffuse>model://city_terrain/materials/textures/forest.jpg</diffuse>
+                <normal>file://media/materials/textures/flat_normal.png</normal>
+                <size>10</size>
+              </texture>
+              <uri>model://city_terrain/materials/textures/city_terrain.jpg</uri>
+              <size>500 500 75</size>
+              <pos>40 -100 -5</pos>
+            </heightmap>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose> 0 0 0 0 0</pose>
+    </model>
+    <model name='ocean'>
+      <static>1</static>
+      <link name='ocean_link'>
+        <visual name='ocean_visual1'>
+          <pose>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://ocean/mesh.dae</uri>
+              <scale>0.5 0.5 0.5</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://ocean/materials/scripts/ocean.material</uri>
+              <name>Waves_GLSL</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='ocean_below'>
+          <pose>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://ocean/mesh_below.dae</uri>
+              <scale>0.5 0.5 0.5</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://ocean/materials/scripts/ocean.material</uri>
+              <name>Waves_GLSL</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='north'>
+          <pose>250 0 -3.5 3.14159 -1.57079 3.14159</pose>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>7 500</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://ocean/materials/scripts/ocean.material</uri>
+              <name>Seabox</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='south'>
+          <pose>-250 0 -3.5 3.14159 1.57079 3.14159</pose>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>7 500</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://ocean/materials/scripts/ocean.material</uri>
+              <name>Seabox</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='west'>
+          <pose>0 250 -3.5 1.5708 -0 0</pose>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>500 7</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://ocean/materials/scripts/ocean.material</uri>
+              <name>Seabox</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='east'>
+          <pose>0 -250 -3.5 -1.5708 0 0</pose>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>500 7</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://ocean/materials/scripts/ocean.material</uri>
+              <name>Seabox</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose>40 -20 -2 0 -0 0</pose>
+    </model>
+    
+    <plugin name='Step_World_Plugin' filename='libStep_World_Plugin.so'/>
+    <wind/>
+  
+  </world>
+</sdf>
