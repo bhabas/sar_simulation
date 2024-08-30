@@ -33,7 +33,7 @@
     </inertial>
   </link>
 
-  <xacro:include filename="$(find sar_gazebo)/models/urdf/VLP-16.urdf.xacro"/>
+  <xacro:include filename="$(find sar_gazebo)/models/Source_One/urdf/VLP-16.urdf.xacro"/>
   <xacro:VLP-16 parent="base_link" name="velodyne" topic="/velodyne_points" hz="10" samples="440" gpu="${gpu}">
     <origin xyz="0 0 0.4" rpy="0 0 0" />
   </xacro:VLP-16>

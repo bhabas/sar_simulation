@@ -36,13 +36,14 @@
 
   </include>
 
-  <arg name="model" default="$(find sar_gazebo)/models/urdf/example.urdf.xacro"/>
+  <arg name="model" default="$(find sar_gazebo)/models/Source_One/urdf/model.urdf.xacro"/>
+
   <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
     <param name="publish_frequency" type="double" value="30.0" />
   </node>
 
-  <node pkg="gazebo_ros" type="spawn_model" name="spawn_model" args="-urdf -param /robot_description -model example"/>
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_model" args="-urdf -param /robot_description -model SAR_Robot"/>
 
 
   <!-- <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Config) -z 1.0" /> -->
