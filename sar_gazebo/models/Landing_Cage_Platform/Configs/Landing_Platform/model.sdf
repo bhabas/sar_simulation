@@ -7,7 +7,7 @@
 
     <link name='Landing_Platform'>
       <pose>0 0 0 0 0 0</pose>
-      <!-- <visual name='Landing_Platform_Support'>
+      <visual name='Landing_Platform_Support'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
@@ -25,8 +25,8 @@
             <normal_map>__default__</normal_map>
           </shader>
         </material>
-      </visual> -->
-      <!-- <visual name='Landing_Platform_Panels'>
+      </visual>
+      <visual name='Landing_Platform_Panels'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
@@ -44,7 +44,7 @@
             <normal_map>__default__</normal_map>
           </shader>
         </material>
-      </visual> -->
+      </visual>
     </link>
 
     <joint name='Surface_Pattern_Joint' type='fixed'>
