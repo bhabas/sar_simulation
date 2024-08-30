@@ -1,46 +1,55 @@
 <launch>
 
-    <!-- SAR MODEL ARGS -->
-    <arg name="SAR_Type" default="Crazyflie"/>
-    <arg name="SAR_Config" default="Camera_Model"/>
-    <arg name="SAR_SDF_Path" default="$(find sar_gazebo)/models/$(arg SAR_Type)/Configs/$(arg SAR_Config)/model.sdf"/>
+  <!-- SAR MODEL ARGS -->
+  <arg name="SAR_Type" default="Crazyflie"/>
+  <arg name="SAR_Config" default="Camera_Model"/>
+  <arg name="SAR_SDF_Path" default="$(find sar_gazebo)/models/$(arg SAR_Type)/Configs/$(arg SAR_Config)/model.sdf"/>
 
-    <!-- LANDING SURFACE ARGS -->
-    <arg name="Plane_Type" default="Landing_Surface"/>
-    <arg name="Plane_Config" default="Checkerboard_L02"/>
-    <arg name="Plane_SDF_Path" default="$(find sar_gazebo)/models/$(arg Plane_Type)/Configs/$(arg Plane_Config)/model.sdf"/>
+  <!-- LANDING SURFACE ARGS -->
+  <arg name="Plane_Type" default="Landing_Surface"/>
+  <arg name="Plane_Config" default="Checkerboard_L02"/>
+  <arg name="Plane_SDF_Path" default="$(find sar_gazebo)/models/$(arg Plane_Type)/Configs/$(arg Plane_Config)/model.sdf"/>
 
-    <!-- GROUND SURFACE ARGS -->
-    <arg name="Ground_Type" default="Ground_Surface"/>
-    <arg name="Ground_Config" default="Desert_Pattern"/>
-    <arg name="Ground_SDF_Path" default="$(find sar_gazebo)/models/$(arg Ground_Type)/Configs/$(arg Ground_Config)/model.sdf"/>
+  <!-- GROUND SURFACE ARGS -->
+  <arg name="Ground_Type" default="Ground_Surface"/>
+  <arg name="Ground_Config" default="Desert_Pattern"/>
+  <arg name="Ground_SDF_Path" default="$(find sar_gazebo)/models/$(arg Ground_Type)/Configs/$(arg Ground_Config)/model.sdf"/>
 
 
-    <!-- LOAD SETTINGS FLAGS -->
-    <arg name="Gui_Flag" default="true"/>
-    <arg name="Pause_Flag" default="false"/>
+  <!-- LOAD SETTINGS FLAGS -->
+  <arg name="Gui_Flag" default="true"/>
+  <arg name="Pause_Flag" default="false"/>
 
-    <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
-    <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="--lockstep $(find sar_gazebo)/worlds/Basic_World.world"/>
-        <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
-        <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
-        <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
+  <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="--lockstep $(find sar_gazebo)/worlds/Basic_World.world"/>
+    <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
+    <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
+    <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
 
-        <arg name="gui" value="$(arg Gui_Flag)"/>
-        <arg name="paused" value="$(arg Pause_Flag)"/>
-        <arg name="verbose" value="true"/>
-        <arg name="debug" value="false"/>
-        <arg name="use_sim_time" default="true"/>
-        <arg name="headless" default="false"/>
+    <arg name="gui" value="$(arg Gui_Flag)"/>
+    <arg name="paused" value="$(arg Pause_Flag)"/>
+    <arg name="verbose" value="true"/>
+    <arg name="debug" value="false"/>
+    <arg name="use_sim_time" default="true"/>
+    <arg name="headless" default="false"/>
 
-    </include>
+  </include>
 
-    <!-- <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Config) -z 1.0" /> -->
+  <arg name="model" default="$(find sar_gazebo)/models/urdf/example.urdf.xacro"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="30.0" />
+  </node>
 
-    <!-- <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Config) -y 4 -z 0" /> -->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_model" args="-urdf -param /robot_description -model example"/>
 
-    <!-- <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Config) -z 0" /> -->
+
+  <!-- <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Config) -z 1.0" /> -->
+
+  <!-- <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Config) -y 4 -z 0" /> -->
+
+  <!-- <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Config) -z 0" /> -->
 
 </launch>
 
