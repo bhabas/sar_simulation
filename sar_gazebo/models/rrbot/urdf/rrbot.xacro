@@ -32,7 +32,7 @@
   <xacro:include filename="$(find sar_gazebo)/models/rrbot/urdf/materials.xacro" />
 
   <!-- Used for fixing robot to Gazebo 'base_link' -->
-  
+
 
   <!-- Base Link -->
   <link name="link1">
@@ -159,5 +159,8 @@
       <alwaysOn>true</alwaysOn>
     </plugin>
   </gazebo>
+
+
+
 
 </robot>

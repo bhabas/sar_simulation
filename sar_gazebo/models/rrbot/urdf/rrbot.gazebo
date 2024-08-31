@@ -30,5 +30,15 @@
     <material>Gazebo/BlueTransparent</material>
   </gazebo>
 
+  <gazebo>
+    <plugin name='Motor_1_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>1</Motor_Number>
+      <Joint_Name>Prop_1_Joint</Joint_Name>
+      <Link_Name>Prop_1</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+  </gazebo>
+
 
 </robot>

@@ -25,7 +25,7 @@ namespace gazebo
 
 
 
-        // GRAB MOTOR JOINT FROM SDF
+        // // GRAB MOTOR JOINT FROM SDF
         Motor_Joint_Name = _sdf->GetElement("Joint_Name")->Get<std::string>();
         gzmsg << "\t Joint Name:\t" << Motor_Joint_Name << std::endl;
         Joint_Ptr = Model_Ptr->GetJoint(Motor_Joint_Name);
@@ -65,17 +65,18 @@ namespace gazebo
         // // // RUN FUNCTION EACH TIME SIMULATION UPDATES
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Motor_Plugin::OnUpdate, this));
 
-        // std::cout << "\n\n";
+        std::cout << "\n\n";
     }
 
     void Motor_Plugin::OnUpdate()
     {
         Sampling_time = World_Ptr->SimTime().Double() - Prev_Sim_time;
         Prev_Sim_time = World_Ptr->SimTime().Double();
-        UpdateForcesAndMoments();
+        // UpdateForcesAndMoments();
 
-        // SET VISUAL VELOCTIY OF ROTOR
+        // // SET VISUAL VELOCTIY OF ROTOR
         Rot_Vel = sqrt(Thrust/Thrust_Coeff);
+        Rot_Vel = 50.0f;
         Joint_Ptr->SetVelocity(0,Turn_Direction * Rot_Vel / Rot_Vel_Slowdown);
     }
 
