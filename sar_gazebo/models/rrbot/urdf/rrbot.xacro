@@ -83,10 +83,34 @@
     </inertial>
   </link>
 
+  <joint name="joint2" type="continuous">
+    <parent link="link1"/>
+    <child link="link3"/>
+    <origin xyz="-${prop_x_offset} -${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Middle Link -->
+  <link name="link3">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.0e-5"/>
+      <inertia ixx="1.0e-6" iyy="1.0e-6" izz="1.0e-6" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+  </link>
+
 
   <gazebo>
     <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
-      <jointName>joint1</jointName>
+      <jointName>joint1,joint2</jointName>
       <updateRate>100.0</updateRate>
       <alwaysOn>true</alwaysOn>
     </plugin>

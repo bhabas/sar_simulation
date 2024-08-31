@@ -19,5 +19,9 @@
     <material>Gazebo/BlueTransparent</material>
   </gazebo>
 
+  <gazebo reference="link3">
+    <material>Gazebo/BlueTransparent</material>
+  </gazebo>
+
 
 </robot>
