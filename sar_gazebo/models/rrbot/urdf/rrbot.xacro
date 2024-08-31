@@ -59,21 +59,20 @@
     </inertial>
   </link>
 
-  <joint name="joint1" type="continuous">
+  <joint name="Prop_1_Joint" type="continuous">
     <parent link="link1"/>
-    <child link="link2"/>
+    <child link="Prop_1"/>
     <origin xyz="${prop_x_offset} -${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
-  <!-- Middle Link -->
-  <link name="link2">
+  <link name="Prop_1">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
       </geometry>
-      <material name="orange"/>
+      <material name="BlueTransparent"/>
     </visual>
 
     <inertial>
@@ -83,21 +82,66 @@
     </inertial>
   </link>
 
-  <joint name="joint2" type="continuous">
+  <joint name="Prop_2_Joint" type="continuous">
     <parent link="link1"/>
-    <child link="link3"/>
+    <child link="Prop_2"/>
     <origin xyz="-${prop_x_offset} -${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
-  <!-- Middle Link -->
-  <link name="link3">
+  <link name="Prop_2">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
       </geometry>
-      <material name="orange"/>
+      <material name="BlueTransparent"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.0e-5"/>
+      <inertia ixx="1.0e-6" iyy="1.0e-6" izz="1.0e-6" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+  </link>
+
+  <joint name="Prop_3_Joint" type="continuous">
+    <parent link="link1"/>
+    <child link="Prop_3"/>
+    <origin xyz="-${prop_x_offset} ${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="Prop_3">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
+      </geometry>
+      <material name="BlueTransparent"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.0e-5"/>
+      <inertia ixx="1.0e-6" iyy="1.0e-6" izz="1.0e-6" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+  </link>
+
+  <joint name="Prop_4_Joint" type="continuous">
+    <parent link="link1"/>
+    <child link="Prop_4"/>
+    <origin xyz="${prop_x_offset} ${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="Prop_4">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
+      </geometry>
+      <material name="BlueTransparent"/>
     </visual>
 
     <inertial>
@@ -110,7 +154,7 @@
 
   <gazebo>
     <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
-      <jointName>joint1,joint2</jointName>
+      <jointName>Prop_1_Joint,Prop_2_Joint,Prop_3_Joint,Prop_4_Joint</jointName>
       <updateRate>100.0</updateRate>
       <alwaysOn>true</alwaysOn>
     </plugin>

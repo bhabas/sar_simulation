@@ -14,12 +14,19 @@
     <material>Gazebo/Orange</material>
   </gazebo>
 
-  <!-- Link2 -->
-  <gazebo reference="link2">
+  <gazebo reference="Prop_1">
     <material>Gazebo/BlueTransparent</material>
   </gazebo>
 
-  <gazebo reference="link3">
+  <gazebo reference="Prop_2">
+    <material>Gazebo/BlueTransparent</material>
+  </gazebo>
+
+  <gazebo reference="Prop_3">
+    <material>Gazebo/BlueTransparent</material>
+  </gazebo>
+
+  <gazebo reference="Prop_4">
     <material>Gazebo/BlueTransparent</material>
   </gazebo>
 
