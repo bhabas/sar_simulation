@@ -5,7 +5,7 @@
 
   <!-- Constants for robot dimensions -->
   <xacro:property name="PI" value="3.1415926535897931"/>
-  <xacro:property name="mass" value="1" />
+  <xacro:property name="mass" value="693.0e-3" />
   <!-- arbitrary value for mass -->
   <xacro:property name="width" value="0.1" />
   <!-- Square dimensions (widthxwidth) of beams -->
@@ -20,8 +20,9 @@
   <xacro:property name="axel_offset" value="0.05" />
   <!-- Space btw top of beam and the each joint -->
 
-  <xacro:property name="x_offset" value="72.6e-3" />
-  <xacro:property name="y_offset" value="86.6e-3" />
+  <xacro:property name="prop_x_offset" value="72.6e-3" />
+  <xacro:property name="prop_y_offset" value="86.6e-3" />
+  <xacro:property name="prop_z_offset" value="28.0e-3" />
 
 
 
@@ -35,10 +36,11 @@
 
   <!-- Base Link -->
   <link name="link1">
-    <collision>
-      <origin xyz="0 0 ${height1/2}" rpy="0 0 0"/>
+    <collision name="Body_Collision">
+      <origin xyz="0 0 20.5e-3" rpy="0 0 0"/>
       <geometry>
-        <box size="${width} ${width} ${height1}"/>
+        <!-- <cylinder radius="77.0e-3" length="41.0e-3"/> -->
+        <box size="255.2e-3 299.2e-3 41.0e-3"/>
       </geometry>
     </collision>
 
@@ -51,28 +53,21 @@
     </visual>
 
     <inertial>
-      <origin xyz="0 0 ${height1/2}" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="${mass}"/>
-      <inertia ixx="${mass / 12.0 * (width*width + height1*height1)}" ixy="0.0" ixz="0.0" iyy="${mass / 12.0 * (height1*height1 + width*width)}" iyz="0.0" izz="${mass / 12.0 * (width*width + width*width)}"/>
+      <inertia ixx="3.17e-3" iyy="2.71e-3" izz="5.27e-3" ixy="0.0" ixz="0.0" iyz="0.0" />
     </inertial>
   </link>
 
   <joint name="joint1" type="continuous">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="${x_offset} -${y_offset} 28.0e-3" rpy="0 0 0"/>
+    <origin xyz="${prop_x_offset} -${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
   <!-- Middle Link -->
   <link name="link2">
-    <collision>
-      <origin xyz="0 0 ${height2/2 - axel_offset}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${width} ${width} ${height2}"/>
-      </geometry>
-    </collision>
-
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -82,9 +77,9 @@
     </visual>
 
     <inertial>
-      <origin xyz="0 0 ${height2/2 - axel_offset}" rpy="0 0 0"/>
-      <mass value="${mass}"/>
-      <inertia ixx="${mass / 12.0 * (width*width + height2*height2)}" ixy="0.0" ixz="0.0" iyy="${mass / 12.0 * (height2*height2 + width*width)}" iyz="0.0" izz="${mass / 12.0 * (width*width + width*width)}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.0e-5"/>
+      <inertia ixx="1.0e-6" iyy="1.0e-6" izz="1.0e-6" ixy="0.0" ixz="0.0" iyz="0.0" />
     </inertial>
   </link>
 
