@@ -185,7 +185,7 @@
       <geometry>
         <mesh filename="package://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL"/>
       </geometry>
-      <material name="BlueTransparent"/>
+      <material name="red"/>
     </visual>
 
     <inertial>
@@ -204,9 +204,96 @@
   </link>
 
   <joint name="Hinge_1_Joint" type="fixed">
-    <origin xyz="${leg_x_offset} -${leg_y_offset} ${leg_z_offset}" rpy="0 ${leg_pitch} -${leg_yaw}"/>
+    <origin xyz="${leg_x_offset} -${leg_y_offset} ${leg_z_offset}" rpy="0 ${leg_pitch} -0.785"/>
     <parent link="SAR_Body"/>
     <child link="Leg_1"/>
+  </joint>
+
+  <link name="Leg_2">
+    <visual>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="2.6e-2"/>
+      <inertia ixx="1.53e-6" iyy="3.27e-4" izz="3.28e-4" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+
+    <collision>
+      <origin xyz="259.6e-3 0 -2.3e-3" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="13.9e-3"/>
+      </geometry>
+    
+    </collision>
+  </link>
+
+  <joint name="Hinge_2_Joint" type="fixed">
+    <origin xyz="-${leg_x_offset} -${leg_y_offset} ${leg_z_offset}" rpy="0 ${leg_pitch} -2.35"/>
+    <parent link="SAR_Body"/>
+    <child link="Leg_2"/>
+  </joint>
+
+  <link name="Leg_3">
+    <visual>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="2.6e-2"/>
+      <inertia ixx="1.53e-6" iyy="3.27e-4" izz="3.28e-4" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+
+    <collision>
+      <origin xyz="259.6e-3 0 -2.3e-3" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="13.9e-3"/>
+      </geometry>
+    
+    </collision>
+  </link>
+
+  <joint name="Hinge_3_Joint" type="fixed">
+    <origin xyz="-${leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0 ${leg_pitch} 2.35"/>
+    <parent link="SAR_Body"/>
+    <child link="Leg_3"/>
+  </joint>
+
+  <link name="Leg_4">
+    <visual>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="2.6e-2"/>
+      <inertia ixx="1.53e-6" iyy="3.27e-4" izz="3.28e-4" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+
+    <collision>
+      <origin xyz="259.6e-3 0 -2.3e-3" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="13.9e-3"/>
+      </geometry>
+    
+    </collision>
+  </link>
+
+  <joint name="Hinge_4_Joint" type="fixed">
+    <origin xyz="${leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0 ${leg_pitch} 0.785"/>
+    <parent link="SAR_Body"/>
+    <child link="Leg_4"/>
   </joint>
 
   
