@@ -9,6 +9,17 @@
   <xacro:property name="prop_x_offset" value="72.6e-3" />
   <xacro:property name="prop_y_offset" value="86.6e-3" />
   <xacro:property name="prop_z_offset" value="28.0e-3" />
+
+  <xacro:property name="leg_x_offset" value="18.5e-3" />
+  <xacro:property name="leg_y_offset" value="18.5e-3" />
+  <xacro:property name="leg_z_offset" value="-4.0e-3" />
+
+  <xacro:property name="leg_pitch"    value="0.524" />
+  <xacro:property name="leg_yaw"      value="0.785" />
+
+
+
+
   <xacro:property name="camera_link" value="0.015" />
 
 
@@ -168,6 +179,37 @@
       <inertia ixx="1.0e-6" iyy="1.0e-6" izz="1.0e-6" ixy="0.0" ixz="0.0" iyz="0.0" />
     </inertial>
   </link>
+
+  <link name="Leg_1">
+    <visual>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL"/>
+      </geometry>
+      <material name="BlueTransparent"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="2.6e-2"/>
+      <inertia ixx="1.53e-6" iyy="3.27e-4" izz="3.28e-4" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+
+    <collision>
+      <origin xyz="259.6e-3 0 -2.3e-3" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="13.9e-3"/>
+      </geometry>
+    
+    </collision>
+  </link>
+
+  <joint name="Hinge_1_Joint" type="fixed">
+    <origin xyz="${leg_x_offset} -${leg_y_offset} ${leg_z_offset}" rpy="0 ${leg_pitch} -${leg_yaw}"/>
+    <parent link="SAR_Body"/>
+    <child link="Leg_1"/>
+  </joint>
+
+  
 
   <!-- Camera -->
   <link name="camera_link">
