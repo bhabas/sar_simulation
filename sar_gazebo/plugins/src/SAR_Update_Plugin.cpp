@@ -9,8 +9,8 @@ namespace gazebo
 
         // LOAD MODEL AND LINK POINTERS
         Config_Model_Ptr = _parent;
-        SAR_Body_Ptr = Config_Model_Ptr->GetLink("SAR_Base::SAR_Body");
-        Camera_Link_Ptr = Config_Model_Ptr->GetLink("SAR_Base::Camera");
+        SAR_Body_Ptr = Config_Model_Ptr->GetLink("rrbot::link1");
+        // Camera_Link_Ptr = Config_Model_Ptr->GetLink("SAR_Base::Camera");
         World_Ptr = Config_Model_Ptr->GetWorld();
 
         
@@ -39,12 +39,12 @@ namespace gazebo
         ros::param::get("/Cam_Config/"+Cam_Config+"/FPS",FPS);
 
         // GET POINTER TO CAMERA SENSOR
-        Camera_Joint_Name = _sdf->GetElement("CameraJointName")->Get<std::string>();
-        Sensor_Ptr = sensors::get_sensor("SAR_Base::Camera");
-        Camera_Ptr = dynamic_cast<sensors::CameraSensor*>(Sensor_Ptr.get());
+        // Camera_Joint_Name = _sdf->GetElement("CameraJointName")->Get<std::string>();
+        // Sensor_Ptr = sensors::get_sensor("SAR_Base::Camera");
+        // Camera_Ptr = dynamic_cast<sensors::CameraSensor*>(Sensor_Ptr.get());
 
         // UPDATE CAMERA
-        Update_Camera();
+        // Update_Camera();
 
 
         // =======================
@@ -67,40 +67,40 @@ namespace gazebo
         // =======================
 
         // CHECK IF LEG LINKS ARE PRESENT
-        bool success = ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle", Leg_Angle);
+        // bool success = ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle", Leg_Angle);
 
-        if(success) 
-        {
-            // LOAD INITIAL LEG PARAMETERS
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle",Leg_Angle);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/K_Pitch",K_Pitch);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/DR_Pitch",DR_Pitch);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/PosDir_Pitch_Limit",PosDir_Pitch_Limit);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/NegDir_Pitch_Limit",NegDir_Pitch_Limit);
+        // if(success) 
+        // {
+        //     // LOAD INITIAL LEG PARAMETERS
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle",Leg_Angle);
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/K_Pitch",K_Pitch);
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/DR_Pitch",DR_Pitch);
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/PosDir_Pitch_Limit",PosDir_Pitch_Limit);
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/NegDir_Pitch_Limit",NegDir_Pitch_Limit);
 
 
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/K_Yaw",K_Yaw);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/DR_Yaw",DR_Yaw);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/PosDir_Yaw_Limit",PosDir_Yaw_Limit);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/NegDir_Yaw_Limit",NegDir_Yaw_Limit);
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/K_Yaw",K_Yaw);
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/DR_Yaw",DR_Yaw);
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/PosDir_Yaw_Limit",PosDir_Yaw_Limit);
+        //     ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/NegDir_Yaw_Limit",NegDir_Yaw_Limit);
 
-            // GET LEG LINK AND HINGE POINTERS
-            Leg_1_LinkPtr = Config_Model_Ptr->GetLink("Leg_1");
-            Leg_2_LinkPtr = Config_Model_Ptr->GetLink("Leg_2");
-            Leg_3_LinkPtr = Config_Model_Ptr->GetLink("Leg_3");
-            Leg_4_LinkPtr = Config_Model_Ptr->GetLink("Leg_4");
+        //     // // GET LEG LINK AND HINGE POINTERS
+        //     // Leg_1_LinkPtr = Config_Model_Ptr->GetLink("Leg_1");
+        //     // Leg_2_LinkPtr = Config_Model_Ptr->GetLink("Leg_2");
+        //     // Leg_3_LinkPtr = Config_Model_Ptr->GetLink("Leg_3");
+        //     // Leg_4_LinkPtr = Config_Model_Ptr->GetLink("Leg_4");
 
-            Hinge_1_JointPtr = Config_Model_Ptr->GetJoint("Hinge_1_Joint");
-            Hinge_2_JointPtr = Config_Model_Ptr->GetJoint("Hinge_2_Joint");
-            Hinge_3_JointPtr = Config_Model_Ptr->GetJoint("Hinge_3_Joint");
-            Hinge_4_JointPtr = Config_Model_Ptr->GetJoint("Hinge_4_Joint");
+        //     // Hinge_1_JointPtr = Config_Model_Ptr->GetJoint("Hinge_1_Joint");
+        //     // Hinge_2_JointPtr = Config_Model_Ptr->GetJoint("Hinge_2_Joint");
+        //     // Hinge_3_JointPtr = Config_Model_Ptr->GetJoint("Hinge_3_Joint");
+        //     // Hinge_4_JointPtr = Config_Model_Ptr->GetJoint("Hinge_4_Joint");
 
-            // UPDATE HINGE JOINT
-            Update_Hinge();      
-        } 
-        else {
-            ROS_WARN("Failed to retrieve Leg_Angle parameter.");
-        }
+        //     // // UPDATE HINGE JOINT
+        //     // Update_Hinge();      
+        // } 
+        // else {
+        //     ROS_WARN("Failed to retrieve Leg_Angle parameter.");
+        // }
 
         
 
@@ -111,16 +111,16 @@ namespace gazebo
 
     void SAR_Update_Plugin::Update_Camera()
     {
-        gzmsg << "Updating Camera Pose and FPS\n";
+        // gzmsg << "Updating Camera Pose and FPS\n";
 
-        // UPDATE CAMERA POSE
-        Config_Model_Ptr->RemoveJoint(Camera_Joint_Name);
-        ignition::math::Pose3d relativePose(X_Offset, Y_Offset, Z_Offset, 0.0, (90 - Pitch_Angle)*Deg2Rad, 0.0);
-        Camera_Link_Ptr->SetRelativePose(relativePose);
-        Config_Model_Ptr->CreateJoint(Camera_Joint_Name,"fixed",SAR_Body_Ptr,Camera_Link_Ptr);
+        // // UPDATE CAMERA POSE
+        // Config_Model_Ptr->RemoveJoint(Camera_Joint_Name);
+        // ignition::math::Pose3d relativePose(X_Offset, Y_Offset, Z_Offset, 0.0, (90 - Pitch_Angle)*Deg2Rad, 0.0);
+        // Camera_Link_Ptr->SetRelativePose(relativePose);
+        // Config_Model_Ptr->CreateJoint(Camera_Joint_Name,"fixed",SAR_Body_Ptr,Camera_Link_Ptr);
 
-        // UPDATE FPS
-        Camera_Ptr->SetUpdateRate(FPS);
+        // // UPDATE FPS
+        // Camera_Ptr->SetUpdateRate(FPS);
 
     }
 
