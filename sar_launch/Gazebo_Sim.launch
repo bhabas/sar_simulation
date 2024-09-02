@@ -27,7 +27,7 @@
 
   <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="--lockstep $(find sar_gazebo)/worlds/Basic_World.world"/>
+    <arg name="world_name" value="--lockstep $(find sar_gazebo)/worlds/Test_World.world"/>
     <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
     <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
     <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
@@ -43,11 +43,11 @@
 
   <!-- Load the URDF into the ROS Parameter Server -->
   <param name="robot_description"
-    command="$(find xacro)/xacro --inorder '$(find sar_gazebo)/models/rrbot/urdf/rrbot.xacro'" />
+    command="$(find xacro)/xacro --inorder '$(find sar_gazebo)/models/Source_One/urdf/Source_One.xacro'" />
 
   <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
   <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-    args="-urdf -model rrbot -param robot_description"/>
+    args="-urdf -model Source_One -param robot_description"/>
 
 
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">

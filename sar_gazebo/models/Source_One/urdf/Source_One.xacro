@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- Revolute-Revolute Manipulator -->
-<robot name="rrbot"
+<robot name="Source_One"
   xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- Constants for robot dimensions -->
@@ -15,9 +15,9 @@
 
 
   <!-- Import all Gazebo-customization elements, including Gazebo colors -->
-  <xacro:include filename="$(find sar_gazebo)/models/rrbot/urdf/rrbot.gazebo" />
+  <xacro:include filename="$(find sar_gazebo)/models/Source_One/urdf/Source_One.gazebo" />
   <!-- Import Rviz colors -->
-  <xacro:include filename="$(find sar_gazebo)/models/rrbot/urdf/materials.xacro" />
+  <xacro:include filename="$(find sar_gazebo)/models/Source_One/urdf/materials.xacro" />
 
 
 
@@ -27,14 +27,14 @@
       <origin xyz="0 0 20.5e-3" rpy="0 0 0"/>
       <geometry>
         <!-- <cylinder radius="77.0e-3" length="41.0e-3"/> -->
-        <box size="255.2e-3 299.2e-3 41.0e-3"/>
+        <box size="300e-3 350e-3 41.0e-3"/>
       </geometry>
     </collision>
 
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Base_Assembly.STL"/>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/SO_V5_Base_Assembly.STL"/>
       </geometry>
       <material name="DarkGrey"/>
     </visual>
@@ -42,7 +42,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Prop_Guard_Standoffs.STL"/>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/SO_V5_Prop_Guard_Standoffs.STL"/>
       </geometry>
       <material name="DarkGrey"/>
     </visual>
@@ -58,7 +58,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Prop_Guards.STL"/>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/SO_V5_Prop_Guards.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -88,7 +88,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/SO_V5_Propeller.STL"/>
       </geometry>
       <material name="BlueTransparent"/>
     </visual>
@@ -111,7 +111,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/SO_V5_Propeller.STL"/>
       </geometry>
       <material name="BlueTransparent"/>
     </visual>
@@ -134,7 +134,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/SO_V5_Propeller.STL"/>
       </geometry>
       <material name="BlueTransparent"/>
     </visual>
@@ -157,7 +157,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Propeller.STL"/>
+        <mesh filename="package://sar_gazebo/models/Source_One/meshes/SO_V5_Propeller.STL"/>
       </geometry>
       <material name="BlueTransparent"/>
     </visual>
@@ -217,7 +217,7 @@
 
 
   <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
-  <xacro:VLP-16 parent="SAR_Body" name="velodyne" topic="/velodyne_points" hz="30" samples="440" gpu="true" collision_range="0.3" min_range="0.9" max_range="130.0" noise="0.0">
+  <xacro:VLP-16 parent="SAR_Body" name="velodyne" topic="/velodyne_points" hz="30" lasers="32" gpu="true" collision_range="0.1" min_range="0.1" max_range="130.0" noise="0.0">
     <origin xyz="0.025 0 0.07" rpy="0 0 0" />
   </xacro:VLP-16>
 
