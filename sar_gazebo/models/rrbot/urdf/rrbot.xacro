@@ -5,24 +5,12 @@
 
   <!-- Constants for robot dimensions -->
   <xacro:property name="PI" value="3.1415926535897931"/>
-  <xacro:property name="mass" value="693.0e-3" />
-  <!-- arbitrary value for mass -->
-  <xacro:property name="width" value="0.1" />
-  <!-- Square dimensions (widthxwidth) of beams -->
-  <xacro:property name="height1" value="2" />
-  <!-- Link 1 -->
-  <xacro:property name="height2" value="1" />
-  <!-- Link 2 -->
-  <xacro:property name="height3" value="1" />
-  <!-- Link 3 -->
-  <xacro:property name="camera_link" value="0.05" />
-  <!-- Size of square 'camera' box -->
-  <xacro:property name="axel_offset" value="0.05" />
-  <!-- Space btw top of beam and the each joint -->
 
   <xacro:property name="prop_x_offset" value="72.6e-3" />
   <xacro:property name="prop_y_offset" value="86.6e-3" />
   <xacro:property name="prop_z_offset" value="28.0e-3" />
+  <xacro:property name="camera_link" value="0.05" />
+
 
 
 
@@ -33,9 +21,9 @@
 
   <!-- Used for fixing robot to Gazebo 'base_link' -->
 
-
+<!-- SAR_Base::SAR_Body -->
   <!-- Base Link -->
-  <link name="link1">
+  <link name="SAR_Body">
     <collision name="Body_Collision">
       <origin xyz="0 0 20.5e-3" rpy="0 0 0"/>
       <geometry>
@@ -54,13 +42,13 @@
 
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="${mass}"/>
+      <mass value="693.0e-3"/>
       <inertia ixx="3.17e-3" iyy="2.71e-3" izz="5.27e-3" ixy="0.0" ixz="0.0" iyz="0.0" />
     </inertial>
   </link>
 
   <joint name="Prop_1_Joint" type="continuous">
-    <parent link="link1"/>
+    <parent link="SAR_Body"/>
     <child link="Prop_1"/>
     <origin xyz="${prop_x_offset} -${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
@@ -83,7 +71,7 @@
   </link>
 
   <joint name="Prop_2_Joint" type="continuous">
-    <parent link="link1"/>
+    <parent link="SAR_Body"/>
     <child link="Prop_2"/>
     <origin xyz="-${prop_x_offset} -${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
@@ -106,7 +94,7 @@
   </link>
 
   <joint name="Prop_3_Joint" type="continuous">
-    <parent link="link1"/>
+    <parent link="SAR_Body"/>
     <child link="Prop_3"/>
     <origin xyz="-${prop_x_offset} ${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
@@ -129,7 +117,7 @@
   </link>
 
   <joint name="Prop_4_Joint" type="continuous">
-    <parent link="link1"/>
+    <parent link="SAR_Body"/>
     <child link="Prop_4"/>
     <origin xyz="${prop_x_offset} ${prop_y_offset} ${prop_z_offset}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
@@ -150,6 +138,43 @@
       <inertia ixx="1.0e-6" iyy="1.0e-6" izz="1.0e-6" ixy="0.0" ixz="0.0" iyz="0.0" />
     </inertial>
   </link>
+
+  <!-- Camera -->
+  <link name="camera_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${camera_link} ${camera_link} ${camera_link}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <origin xyz="0.3 0 0" rpy="0 0 0"/>
+    <parent link="SAR_Body"/>
+    <child link="camera_link"/>
+  </joint>
+
+  <!-- generate an optical frame http://www.ros.org/reps/rep-0103.html#suffix-frames
+      so that ros and opencv can operate on the camera frame correctly -->
+  <joint name="camera_optical_joint" type="fixed">
+    <!-- these values have to be these values otherwise the gazebo camera image
+        won't be aligned properly with the frame it is supposedly originating from -->
+    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    <parent link="camera_link"/>
+    <child link="camera_link_optical"/>
+  </joint>
+
+  <link name="camera_link_optical">
+  </link>
+
 
 
   <gazebo>

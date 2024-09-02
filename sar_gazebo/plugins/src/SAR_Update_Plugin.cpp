@@ -9,7 +9,7 @@ namespace gazebo
 
         // LOAD MODEL AND LINK POINTERS
         Config_Model_Ptr = _parent;
-        SAR_Body_Ptr = Config_Model_Ptr->GetLink("rrbot::link1");
+        SAR_Body_Ptr = Config_Model_Ptr->GetLink("rrbot::SAR_Body");
         // Camera_Link_Ptr = Config_Model_Ptr->GetLink("SAR_Base::Camera");
         World_Ptr = Config_Model_Ptr->GetWorld();
 
