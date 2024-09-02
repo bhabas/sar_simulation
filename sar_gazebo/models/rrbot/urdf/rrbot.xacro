@@ -186,6 +186,14 @@
   </gazebo>
 
 
+  <xacro:arg name="gpu" default="true"/>
+  <xacro:property name="gpu" value="$(arg gpu)" />
+  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
+  <xacro:VLP-16 parent="SAR_Body" name="velodyne" topic="/velodyne_points" hz="10" samples="440" gpu="${gpu}">
+    <origin xyz="0 0 0.4" rpy="0 0 0" />
+  </xacro:VLP-16>
+
+
 
 
 </robot>
