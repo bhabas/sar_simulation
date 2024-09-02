@@ -1,0 +1,607 @@
+<sdf version='1.7'>
+  <model name='Source_One'>
+    <link name='SAR_Body'>
+      <inertial>
+        <pose>-0.000295 0.000616 0.000981 0 -0 0</pose>
+        <mass>0.78103</mass>
+        <inertia>
+          <ixx>0.00393436</ixx>
+          <ixy>-0.00013091</ixy>
+          <ixz>-0.00012783</ixz>
+          <iyy>0.00347504</iyy>
+          <iyz>0.000102363</iyz>
+          <izz>0.00607124</izz>
+        </inertia>
+      </inertial>
+      <collision name='SAR_Body_fixed_joint_lump__Body_Collision_collision'>
+        <pose>0 0 0.0205 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.3 0.35 0.041</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name='SAR_Body_fixed_joint_lump__Leg_2_collision_1'>
+        <pose>-0.175639 -0.177598 -0.135882 0 0.524 -2.35</pose>
+        <geometry>
+          <sphere>
+            <radius>0.0139</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='SAR_Body_fixed_joint_lump__Leg_3_collision_2'>
+        <pose>-0.175639 0.177598 -0.135882 0 0.524 2.35</pose>
+        <geometry>
+          <sphere>
+            <radius>0.0139</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='SAR_Body_fixed_joint_lump__Leg_4_collision_3'>
+        <pose>0.176684 0.176558 -0.135882 0 0.524 0.785</pose>
+        <geometry>
+          <sphere>
+            <radius>0.0139</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='SAR_Body_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/SO_V5_Base_Assembly.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='SAR_Body_visual_1'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/SO_V5_Prop_Guard_Standoffs.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='SAR_Body_fixed_joint_lump__Leg_2_visual_2'>
+        <pose>-0.0185 -0.0185 -0.004 0 0.524 -2.35</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='SAR_Body_fixed_joint_lump__Leg_3_visual_3'>
+        <pose>-0.0185 0.0185 -0.004 0 0.524 2.35</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='SAR_Body_fixed_joint_lump__Leg_4_visual_4'>
+        <pose>0.0185 0.0185 -0.004 0 0.524 0.785</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='SAR_Body_fixed_joint_lump__Prop_Guards_visual_5'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/SO_V5_Prop_Guards.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/White</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='SAR_Body_fixed_joint_lump__camera_link_visual_6'>
+        <pose>0.07 0 0.02 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.015 0.015 0.015</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Grey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='SAR_Body_fixed_joint_lump__velodyne_base_link_visual_7'>
+        <pose>0.025 0 0.07 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.35 0.35 0.35</scale>
+            <uri>model://velodyne_description/meshes/VLP16_base_1.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name='SAR_Body_fixed_joint_lump__velodyne_base_link_visual_8'>
+        <pose>0.025 0 0.07 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.35 0.35 0.35</scale>
+            <uri>model://velodyne_description/meshes/VLP16_base_2.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name='SAR_Body_fixed_joint_lump__velodyne_visual_9'>
+        <pose>0.025 0 0.07 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.35 0.35 0.35</scale>
+            <uri>model://velodyne_description/meshes/VLP16_scan.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <sensor name='camera1' type='camera'>
+        <update_rate>30</update_rate>
+        <camera name='head'>
+          <horizontal_fov>1.39626</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>640</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>100</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0</stddev>
+          </noise>
+        </camera>
+        <plugin name='camera_controller' filename='libgazebo_ros_camera.so'>
+          <alwaysOn>1</alwaysOn>
+          <updateRate>0.0</updateRate>
+          <cameraName>SAR_Internal/camera</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>camera_link_optical</frameName>
+          <hackBaseline>0.0</hackBaseline>
+          <distortionK1>0.0</distortionK1>
+          <distortionK2>0.0</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionT1>0.0</distortionT1>
+          <distortionT2>0.0</distortionT2>
+          <CxPrime>0</CxPrime>
+          <Cx>0.0</Cx>
+          <Cy>0.0</Cy>
+          <focalLength>0.0</focalLength>
+        </plugin>
+        <pose>0.07 0 0.02 0 -0 0</pose>
+      </sensor>
+      <sensor name='velodyne-VLP16' type='gpu_ray'>
+        <visualize>0</visualize>
+        <update_rate>30</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>1875</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.14159</min_angle>
+              <max_angle>3.14159</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>32</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.261799</min_angle>
+              <max_angle>0.523599</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>131</max>
+            <resolution>0.001</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0</stddev>
+          </noise>
+        </ray>
+        <plugin name='gazebo_ros_laser_controller' filename='libgazebo_ros_velodyne_gpu_laser.so'>
+          <topicName>/velodyne_points</topicName>
+          <frameName>velodyne</frameName>
+          <min_range>0.1</min_range>
+          <max_range>130.0</max_range>
+          <gaussianNoise>0.0</gaussianNoise>
+        </plugin>
+        <pose>0.025 0 0.1077 0 -0 0</pose>
+      </sensor>
+    </link>
+    <joint name='Hinge_1_Joint' type='fixed'>
+      <pose relative_to='SAR_Body'>0.0185 -0.0185 -0.004 -0 0.524 -0.785</pose>
+      <parent>SAR_Body</parent>
+      <child>Leg_1</child>
+      <axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='Leg_1'>
+      <pose relative_to='Hinge_1_Joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>0.026</mass>
+        <inertia>
+          <ixx>1.53e-06</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000327</iyy>
+          <iyz>0</iyz>
+          <izz>0.000328</izz>
+        </inertia>
+      </inertial>
+      <collision name='Leg_1_collision'>
+        <pose>0.2596 0 -0.0023 0 -0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.0139</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='Leg_1_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <sensor name='Contact_Sensor' type='contact'>
+        <contact>
+          <collision>SAR_Body_fixed_joint_lump__Leg_1_collision_1</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <update_rate>50</update_rate>
+        <alwaysOn>1</alwaysOn>
+      </sensor>
+    </link>
+    <joint name='Prop_1_Joint' type='revolute'>
+      <pose relative_to='SAR_Body'>0.0726 -0.0866 0.028 0 -0 0</pose>
+      <parent>SAR_Body</parent>
+      <child>Prop_1</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='Prop_1'>
+      <pose relative_to='Prop_1_Joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>1e-05</mass>
+        <inertia>
+          <ixx>1e-06</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-06</iyy>
+          <iyz>0</iyz>
+          <izz>1e-06</izz>
+        </inertia>
+      </inertial>
+      <visual name='Prop_1_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/SO_V5_Propeller.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/BlueTransparent</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <joint name='Prop_2_Joint' type='revolute'>
+      <pose relative_to='SAR_Body'>-0.0726 -0.0866 0.028 0 -0 0</pose>
+      <parent>SAR_Body</parent>
+      <child>Prop_2</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='Prop_2'>
+      <pose relative_to='Prop_2_Joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>1e-05</mass>
+        <inertia>
+          <ixx>1e-06</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-06</iyy>
+          <iyz>0</iyz>
+          <izz>1e-06</izz>
+        </inertia>
+      </inertial>
+      <visual name='Prop_2_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/SO_V5_Propeller.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/BlueTransparent</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <joint name='Prop_3_Joint' type='revolute'>
+      <pose relative_to='SAR_Body'>-0.0726 0.0866 0.028 0 -0 0</pose>
+      <parent>SAR_Body</parent>
+      <child>Prop_3</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='Prop_3'>
+      <pose relative_to='Prop_3_Joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>1e-05</mass>
+        <inertia>
+          <ixx>1e-06</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-06</iyy>
+          <iyz>0</iyz>
+          <izz>1e-06</izz>
+        </inertia>
+      </inertial>
+      <visual name='Prop_3_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/SO_V5_Propeller.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/BlueTransparent</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <joint name='Prop_4_Joint' type='revolute'>
+      <pose relative_to='SAR_Body'>0.0726 0.0866 0.028 0 -0 0</pose>
+      <parent>SAR_Body</parent>
+      <child>Prop_4</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='Prop_4'>
+      <pose relative_to='Prop_4_Joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>1e-05</mass>
+        <inertia>
+          <ixx>1e-06</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-06</iyy>
+          <iyz>0</iyz>
+          <izz>1e-06</izz>
+        </inertia>
+      </inertial>
+      <visual name='Prop_4_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/SO_V5_Propeller.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/BlueTransparent</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <plugin name='gazebo_ros_control' filename='libgazebo_ros_control.so'>
+      <robotNamespace>/Source_One</robotNamespace>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+    </plugin>
+    <plugin name='Motor_1_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>1</Motor_Number>
+      <Joint_Name>Prop_1_Joint</Joint_Name>
+      <Link_Name>Prop_1</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+    <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>2</Motor_Number>
+      <Joint_Name>Prop_2_Joint</Joint_Name>
+      <Link_Name>Prop_2</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+    <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>3</Motor_Number>
+      <Joint_Name>Prop_3_Joint</Joint_Name>
+      <Link_Name>Prop_3</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+    <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>4</Motor_Number>
+      <Joint_Name>Prop_4_Joint</Joint_Name>
+      <Link_Name>Prop_4</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+    <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>1</LegNumber>
+      <LinkName>Leg_1</LinkName>
+      <CollisionName>SAR_Body_fixed_joint_lump__Leg_1_collision_1</CollisionName>
+      <JointName>Leg_1_Contact_Joint</JointName>
+    </plugin>
+    <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'/>
+    <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>1</alwaysOn>
+      <updateRate>1000</updateRate>
+      <bodyName>SAR_Body</bodyName>
+      <topicName>SAR_External/ExtPosition</topicName>
+      <frameName>world</frameName>
+      <xyzOffsets>0 0 0</xyzOffsets>
+      <rpyOffsets>0 0 0</rpyOffsets>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+    <plugin name='IMU_plugin' filename='libgazebo_ros_imu.so'>
+      <alwaysOn>1</alwaysOn>
+      <updateRate>1000</updateRate>
+      <bodyName>SAR_Body</bodyName>
+      <topicName>SAR_Internal/IMU</topicName>
+      <serviceName>imu_service</serviceName>
+      <frameName>SAR_Body</frameName>
+    </plugin>
+    <static>0</static>
+    <plugin name='joint_state_publisher' filename='libgazebo_ros_joint_state_publisher.so'>
+      <jointName>Prop_1_Joint,Prop_2_Joint,Prop_3_Joint,Prop_4_Joint</jointName>
+      <updateRate>100.0</updateRate>
+      <alwaysOn>1</alwaysOn>
+    </plugin>
+  </model>
+</sdf>

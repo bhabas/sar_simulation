@@ -199,7 +199,6 @@
       <geometry>
         <sphere radius="13.9e-3"/>
       </geometry>
-    
     </collision>
   </link>
 

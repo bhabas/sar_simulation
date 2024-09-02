@@ -32,7 +32,7 @@ namespace gazebo {
             std::string Link_Name;
             int Leg_Number;
 
-            bool Sticky_Flag = false;
+            bool Sticky_Flag = true;
             bool Attached_Flag = false;
 
             // CONFIG PARAMS

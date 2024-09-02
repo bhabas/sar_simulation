@@ -123,6 +123,32 @@
     <plugin name='Step_World_Plugin' filename='libStep_World_Plugin.so'>
     </plugin>
 
+    <model name='Box'>
+      <link name="Main_Link">
+        <pose>0 0 0.1 0 0 0</pose>
+        <visual name="Visual">
+          <geometry>
+            <box>
+              <size>1 1 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Grey</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+        <collision name="Box_Collision">
+          <geometry>
+            <box>
+              <size>1 1 0.01</size>
+            </box>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
     <!-- ground plane -->
     <model name="ground_plane">
       <static>true</static>
