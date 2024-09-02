@@ -9,7 +9,7 @@
   <xacro:property name="prop_x_offset" value="72.6e-3" />
   <xacro:property name="prop_y_offset" value="86.6e-3" />
   <xacro:property name="prop_z_offset" value="28.0e-3" />
-  <xacro:property name="camera_link" value="0.05" />
+  <xacro:property name="camera_link" value="0.015" />
 
 
 
@@ -19,9 +19,8 @@
   <!-- Import Rviz colors -->
   <xacro:include filename="$(find sar_gazebo)/models/rrbot/urdf/materials.xacro" />
 
-  <!-- Used for fixing robot to Gazebo 'base_link' -->
 
-<!-- SAR_Base::SAR_Body -->
+
   <!-- Base Link -->
   <link name="SAR_Body">
     <collision name="Body_Collision">
@@ -37,7 +36,15 @@
       <geometry>
         <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Base_Assembly.STL"/>
       </geometry>
-      <material name="orange"/>
+      <material name="DarkGrey"/>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Prop_Guard_Standoffs.STL"/>
+      </geometry>
+      <material name="DarkGrey"/>
     </visual>
 
     <inertial>
@@ -46,6 +53,29 @@
       <inertia ixx="3.17e-3" iyy="2.71e-3" izz="5.27e-3" ixy="0.0" ixz="0.0" iyz="0.0" />
     </inertial>
   </link>
+
+  <link name="Prop_Guards">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sar_gazebo/models/rrbot/meshes/SO_V5_Prop_Guards.STL"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.0e-5"/>
+      <inertia ixx="1.0e-6" iyy="1.0e-6" izz="1.0e-6" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+  </link>
+
+  <joint name="Prop_Guard_Joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="SAR_Body"/>
+    <child link="Prop_Guards"/>
+  </joint>
+
 
   <joint name="Prop_1_Joint" type="continuous">
     <parent link="SAR_Body"/>
@@ -146,7 +176,7 @@
       <geometry>
         <box size="${camera_link} ${camera_link} ${camera_link}"/>
       </geometry>
-      <material name="red"/>
+      <material name="grey"/>
     </visual>
 
     <inertial>
@@ -157,7 +187,7 @@
   </link>
 
   <joint name="camera_joint" type="fixed">
-    <origin xyz="0.3 0 0" rpy="0 0 0"/>
+    <origin xyz="0.07 0 0.02" rpy="0 0 0"/>
     <parent link="SAR_Body"/>
     <child link="camera_link"/>
   </joint>
@@ -186,11 +216,9 @@
   </gazebo>
 
 
-  <xacro:arg name="gpu" default="true"/>
-  <xacro:property name="gpu" value="$(arg gpu)" />
   <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
-  <xacro:VLP-16 parent="SAR_Body" name="velodyne" topic="/velodyne_points" hz="10" samples="440" gpu="${gpu}">
-    <origin xyz="0 0 0.4" rpy="0 0 0" />
+  <xacro:VLP-16 parent="SAR_Body" name="velodyne" topic="/velodyne_points" hz="30" samples="440" gpu="true" collision_range="0.3" min_range="0.9" max_range="130.0" noise="0.0">
+    <origin xyz="0.025 0 0.07" rpy="0 0 0" />
   </xacro:VLP-16>
 
 

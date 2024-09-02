@@ -1,5 +1,10 @@
 <launch>
 
+  <rosparam file="$(find sar_config)/Base_Settings.yaml" />
+  <rosparam file="$(find sar_config)/Sim_Settings.yaml" />
+  <rosparam file="$(find sar_config)/Model_Types.yaml" />
+  <rosparam file="$(find sar_config)/Cam_Types.yaml" />
+
   <!-- SAR MODEL ARGS -->
   <arg name="SAR_Type" default="Crazyflie"/>
   <arg name="SAR_Config" default="Camera_Model"/>
@@ -48,7 +53,6 @@
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
     <param name="publish_frequency" type="double" value="30.0" />
   </node>
-
 
 
   <!-- <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Config) -z 1.0" /> -->

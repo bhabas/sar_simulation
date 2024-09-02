@@ -11,7 +11,17 @@
 
   <!-- SAR_Body -->
   <gazebo reference="SAR_Body">
-    <material>Gazebo/Orange</material>
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+
+  <gazebo reference="Prop_Guards">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  
+
+  <gazebo reference="camera_link">
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <gazebo reference="Prop_1">
