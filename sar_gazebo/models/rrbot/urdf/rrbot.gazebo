@@ -40,5 +40,36 @@
     </plugin>
   </gazebo>
 
+  <gazebo>
+    <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>2</Motor_Number>
+      <Joint_Name>Prop_2_Joint</Joint_Name>
+      <Link_Name>Prop_2</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>3</Motor_Number>
+      <Joint_Name>Prop_3_Joint</Joint_Name>
+      <Link_Name>Prop_3</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>4</Motor_Number>
+      <Joint_Name>Prop_4_Joint</Joint_Name>
+      <Link_Name>Prop_4</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>200</Visual_Slowdown>
+    </plugin>
+  </gazebo>
+
+
 
 </robot>

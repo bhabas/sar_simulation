@@ -50,22 +50,22 @@ namespace gazebo {
             int Motor_Number;
             int Turn_Direction;
 
-            double Thrust_Coeff = 0.0f;    // Thrust Coeff [N/rad/s]
-            double Torque_Coeff = 0.0f;    // Torque Coeff [N*m/rad/s]
-            double C_tf = 0.0f;        // Torque-Thrust Coeff [N*m/N]
+            double Thrust_Coeff = 0.0;    // Thrust Coeff [N/rad/s]
+            double Torque_Coeff = 0.0;    // Torque Coeff [N*m/rad/s]
+            double C_tf = 0.0;        // Torque-Thrust Coeff [N*m/N]
 
             // FIRST ORDER FILTER BEHAVIOR
             float Thrust_input = 0.0f;  // Desired Thrust [N]
-            double Tau_up = 0.0f;              // Motor Time Constant (Up) [s]
-            double Tau_down = 0.0f;            // Motor Time Constant (Down) [s]
-            double Sampling_time = 0.0f;
+            double Tau_up = 5.0;              // Motor Time Constant (Up) [s]
+            double Tau_down = 5.0;            // Motor Time Constant (Down) [s]
+            double Sampling_time = 0.0;
             double Prev_Sim_time = 0.0;
             double Prev_Thrust = 0.0;
             
             // CACULATED VALUES
-            double Thrust = 0.0f;              // Calculated Thrust [N]
-            double Torque = 0.0f;              // Calculated Torque [N*m]
-            double Rot_Vel = 0.0f;      // Rotational Velocity [rad/s]
+            double Thrust = 0.0;              // Calculated Thrust [N]
+            double Torque = 0.0;              // Calculated Torque [N*m]
+            double Rot_Vel = 0.0;      // Rotational Velocity [rad/s]
             double Rot_Vel_Slowdown;    // Slowed-down Rotational Velocity [rad/s]
 
             // GAZEBO CONNECTIONS

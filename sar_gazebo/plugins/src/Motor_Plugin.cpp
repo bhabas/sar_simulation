@@ -72,11 +72,10 @@ namespace gazebo
     {
         Sampling_time = World_Ptr->SimTime().Double() - Prev_Sim_time;
         Prev_Sim_time = World_Ptr->SimTime().Double();
-        // UpdateForcesAndMoments();
+        UpdateForcesAndMoments();
 
         // // SET VISUAL VELOCTIY OF ROTOR
         Rot_Vel = sqrt(Thrust/Thrust_Coeff);
-        Rot_Vel = 50.0f;
         Joint_Ptr->SetVelocity(0,Turn_Direction * Rot_Vel / Rot_Vel_Slowdown);
     }
 
