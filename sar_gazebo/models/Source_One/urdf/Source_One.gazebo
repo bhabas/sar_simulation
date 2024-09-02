@@ -100,20 +100,96 @@
   <gazebo reference="Leg_1">
     <sensor name='Contact_Sensor' type='contact'>
       <contact>
-        <collision>SAR_Body_fixed_joint_lump__Leg_1_collision_1</collision>
+        <collision>Leg_1_collision</collision>
       </contact>
-      <update_rate>50</update_rate>
+      <update_rate>1000</update_rate>
       <alwaysOn>true</alwaysOn>
 
     </sensor>
   </gazebo>
 
+  <gazebo reference="Hinge_1_Joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+
   <gazebo>
     <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>1</LegNumber>
-      <LinkName>SAR_Body</LinkName>
-      <CollisionName>SAR_Body_fixed_joint_lump__Leg_1_collision_1</CollisionName>
+      <LinkName>Leg_1</LinkName>
+      <CollisionName>Leg_1_collision</CollisionName>
       <JointName>Leg_1_Contact_Joint</JointName>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="Leg_2">
+    <sensor name='Contact_Sensor' type='contact'>
+      <contact>
+        <collision>Leg_2_collision</collision>
+      </contact>
+      <update_rate>1000</update_rate>
+      <alwaysOn>true</alwaysOn>
+
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="Hinge_2_Joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+
+  <gazebo>
+    <plugin name='Leg_2_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>2</LegNumber>
+      <LinkName>Leg_2</LinkName>
+      <CollisionName>Leg_2_collision</CollisionName>
+      <JointName>Leg_2_Contact_Joint</JointName>
+    </plugin>
+  </gazebo>
+
+
+  <gazebo reference="Leg_3">
+    <sensor name='Contact_Sensor' type='contact'>
+      <contact>
+        <collision>Leg_3_collision</collision>
+      </contact>
+      <update_rate>1000</update_rate>
+      <alwaysOn>true</alwaysOn>
+
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="Hinge_3_Joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+
+  <gazebo>
+    <plugin name='Leg_3_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>3</LegNumber>
+      <LinkName>Leg_3</LinkName>
+      <CollisionName>Leg_3_collision</CollisionName>
+      <JointName>Leg_3_Contact_Joint</JointName>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="Leg_4">
+    <sensor name='Contact_Sensor' type='contact'>
+      <contact>
+        <collision>Leg_4_collision</collision>
+      </contact>
+      <update_rate>1000</update_rate>
+      <alwaysOn>true</alwaysOn>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="Hinge_4_Joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+
+  <gazebo>
+    <plugin name='Leg_4_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>4</LegNumber>
+      <LinkName>Leg_4</LinkName>
+      <CollisionName>Leg_4_collision</CollisionName>
+      <JointName>Leg_4_Contact_Joint</JointName>
     </plugin>
   </gazebo>
 

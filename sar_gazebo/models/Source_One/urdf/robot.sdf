@@ -2,15 +2,15 @@
   <model name='Source_One'>
     <link name='SAR_Body'>
       <inertial>
-        <pose>-0.000295 0.000616 0.000981 0 -0 0</pose>
-        <mass>0.78103</mass>
+        <pose>0.000357 0 0.001533 0 -0 0</pose>
+        <mass>0.70303</mass>
         <inertia>
-          <ixx>0.00393436</ixx>
-          <ixy>-0.00013091</ixy>
-          <ixz>-0.00012783</ixz>
-          <iyy>0.00347504</iyy>
-          <iyz>0.000102363</iyz>
-          <izz>0.00607124</izz>
+          <ixx>0.00328749</ixx>
+          <ixy>0</ixy>
+          <ixz>-2.65717e-05</ixz>
+          <iyy>0.00283371</iyy>
+          <iyz>0</iyz>
+          <izz>0.00527932</izz>
         </inertia>
       </inertial>
       <collision name='SAR_Body_fixed_joint_lump__Body_Collision_collision'>
@@ -20,54 +20,6 @@
             <size>0.3 0.35 0.041</size>
           </box>
         </geometry>
-      </collision>
-      <collision name='SAR_Body_fixed_joint_lump__Leg_2_collision_1'>
-        <pose>-0.175639 -0.177598 -0.135882 0 0.524 -2.35</pose>
-        <geometry>
-          <sphere>
-            <radius>0.0139</radius>
-          </sphere>
-        </geometry>
-        <surface>
-          <contact>
-            <ode/>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
-      </collision>
-      <collision name='SAR_Body_fixed_joint_lump__Leg_3_collision_2'>
-        <pose>-0.175639 0.177598 -0.135882 0 0.524 2.35</pose>
-        <geometry>
-          <sphere>
-            <radius>0.0139</radius>
-          </sphere>
-        </geometry>
-        <surface>
-          <contact>
-            <ode/>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
-      </collision>
-      <collision name='SAR_Body_fixed_joint_lump__Leg_4_collision_3'>
-        <pose>0.176684 0.176558 -0.135882 0 0.524 0.785</pose>
-        <geometry>
-          <sphere>
-            <radius>0.0139</radius>
-          </sphere>
-        </geometry>
-        <surface>
-          <contact>
-            <ode/>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
       </collision>
       <visual name='SAR_Body_visual'>
         <pose>0 0 0 0 -0 0</pose>
@@ -99,52 +51,7 @@
           </script>
         </material>
       </visual>
-      <visual name='SAR_Body_fixed_joint_lump__Leg_2_visual_2'>
-        <pose>-0.0185 -0.0185 -0.004 0 0.524 -2.35</pose>
-        <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-      <visual name='SAR_Body_fixed_joint_lump__Leg_3_visual_3'>
-        <pose>-0.0185 0.0185 -0.004 0 0.524 2.35</pose>
-        <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-      <visual name='SAR_Body_fixed_joint_lump__Leg_4_visual_4'>
-        <pose>0.0185 0.0185 -0.004 0 0.524 0.785</pose>
-        <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Red</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-      <visual name='SAR_Body_fixed_joint_lump__Prop_Guards_visual_5'>
+      <visual name='SAR_Body_fixed_joint_lump__Prop_Guards_visual_2'>
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -159,7 +66,7 @@
           </script>
         </material>
       </visual>
-      <visual name='SAR_Body_fixed_joint_lump__camera_link_visual_6'>
+      <visual name='SAR_Body_fixed_joint_lump__camera_link_visual_3'>
         <pose>0.07 0 0.02 0 -0 0</pose>
         <geometry>
           <box>
@@ -173,7 +80,7 @@
           </script>
         </material>
       </visual>
-      <visual name='SAR_Body_fixed_joint_lump__velodyne_base_link_visual_7'>
+      <visual name='SAR_Body_fixed_joint_lump__velodyne_base_link_visual_4'>
         <pose>0.025 0 0.07 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -182,7 +89,7 @@
           </mesh>
         </geometry>
       </visual>
-      <visual name='SAR_Body_fixed_joint_lump__velodyne_base_link_visual_8'>
+      <visual name='SAR_Body_fixed_joint_lump__velodyne_base_link_visual_5'>
         <pose>0.025 0 0.07 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -191,7 +98,7 @@
           </mesh>
         </geometry>
       </visual>
-      <visual name='SAR_Body_fixed_joint_lump__velodyne_visual_9'>
+      <visual name='SAR_Body_fixed_joint_lump__velodyne_visual_6'>
         <pose>0.025 0 0.07 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -349,10 +256,244 @@
       </visual>
       <sensor name='Contact_Sensor' type='contact'>
         <contact>
-          <collision>SAR_Body_fixed_joint_lump__Leg_1_collision_1</collision>
+          <collision>Leg_1_collision</collision>
           <topic>__default_topic__</topic>
         </contact>
-        <update_rate>50</update_rate>
+        <update_rate>1000</update_rate>
+        <alwaysOn>1</alwaysOn>
+      </sensor>
+    </link>
+    <joint name='Hinge_2_Joint' type='fixed'>
+      <pose relative_to='SAR_Body'>-0.0185 -0.0185 -0.004 0 0.524 -2.35</pose>
+      <parent>SAR_Body</parent>
+      <child>Leg_2</child>
+      <axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='Leg_2'>
+      <pose relative_to='Hinge_2_Joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>0.026</mass>
+        <inertia>
+          <ixx>1.53e-06</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000327</iyy>
+          <iyz>0</iyz>
+          <izz>0.000328</izz>
+        </inertia>
+      </inertial>
+      <collision name='Leg_2_collision'>
+        <pose>0.2596 0 -0.0023 0 -0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.0139</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='Leg_2_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <sensor name='Contact_Sensor' type='contact'>
+        <contact>
+          <collision>Leg_2_collision</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <update_rate>1000</update_rate>
+        <alwaysOn>1</alwaysOn>
+      </sensor>
+    </link>
+    <joint name='Hinge_3_Joint' type='fixed'>
+      <pose relative_to='SAR_Body'>-0.0185 0.0185 -0.004 0 0.524 2.35</pose>
+      <parent>SAR_Body</parent>
+      <child>Leg_3</child>
+      <axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='Leg_3'>
+      <pose relative_to='Hinge_3_Joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>0.026</mass>
+        <inertia>
+          <ixx>1.53e-06</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000327</iyy>
+          <iyz>0</iyz>
+          <izz>0.000328</izz>
+        </inertia>
+      </inertial>
+      <collision name='Leg_3_collision'>
+        <pose>0.2596 0 -0.0023 0 -0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.0139</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='Leg_3_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <sensor name='Contact_Sensor' type='contact'>
+        <contact>
+          <collision>Leg_3_collision</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <update_rate>1000</update_rate>
+        <alwaysOn>1</alwaysOn>
+      </sensor>
+    </link>
+    <joint name='Hinge_4_Joint' type='fixed'>
+      <pose relative_to='SAR_Body'>0.0185 0.0185 -0.004 0 0.524 0.785</pose>
+      <parent>SAR_Body</parent>
+      <child>Leg_4</child>
+      <axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='Leg_4'>
+      <pose relative_to='Hinge_4_Joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>0.026</mass>
+        <inertia>
+          <ixx>1.53e-06</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000327</iyy>
+          <iyz>0</iyz>
+          <izz>0.000328</izz>
+        </inertia>
+      </inertial>
+      <collision name='Leg_4_collision'>
+        <pose>0.2596 0 -0.0023 0 -0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.0139</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='Leg_4_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sar_gazebo/models/Source_One/meshes/Leg_Assembly_60_deg--250mm.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <sensor name='Contact_Sensor' type='contact'>
+        <contact>
+          <collision>Leg_4_collision</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <update_rate>1000</update_rate>
         <alwaysOn>1</alwaysOn>
       </sensor>
     </link>
@@ -575,8 +716,26 @@
     <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>1</LegNumber>
       <LinkName>Leg_1</LinkName>
-      <CollisionName>SAR_Body_fixed_joint_lump__Leg_1_collision_1</CollisionName>
+      <CollisionName>Leg_1_collision</CollisionName>
       <JointName>Leg_1_Contact_Joint</JointName>
+    </plugin>
+    <plugin name='Leg_2_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>1</LegNumber>
+      <LinkName>Leg_2</LinkName>
+      <CollisionName>Leg_2_collision</CollisionName>
+      <JointName>Leg_2_Contact_Joint</JointName>
+    </plugin>
+    <plugin name='Leg_3_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>1</LegNumber>
+      <LinkName>Leg_3</LinkName>
+      <CollisionName>Leg_3_collision</CollisionName>
+      <JointName>Leg_3_Contact_Joint</JointName>
+    </plugin>
+    <plugin name='Leg_4_Plugin' filename='libSticky_Leg_Plugin.so'>
+      <LegNumber>4</LegNumber>
+      <LinkName>Leg_4</LinkName>
+      <CollisionName>Leg_4_collision</CollisionName>
+      <JointName>Leg_4_Contact_Joint</JointName>
     </plugin>
     <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'/>
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
