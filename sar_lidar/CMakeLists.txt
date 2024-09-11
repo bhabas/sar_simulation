@@ -14,11 +14,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   sar_msgs
+  pcl_ros
+  pcl_conversions
 )
 
 catkin_package(
  INCLUDE_DIRS include
- CATKIN_DEPENDS roscpp rospy 
+ CATKIN_DEPENDS roscpp rospy pcl_ros pcl_conversions
 #  DEPENDS system_lib
 )
 
