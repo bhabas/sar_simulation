@@ -4408,24 +4408,24 @@
       </link>
     </model>
     <model name='unit_box'>
-      <pose>-0.378632 -11.4051 0.5 0 -0 0</pose>
+      <pose>-15 -60 5.2 0 0 0</pose>
       <link name='link'>
         <inertial>
-          <mass>1</mass>
+          <mass>1000</mass>
           <inertia>
-            <ixx>0.166667</ixx>
+            <ixx>2</ixx>
             <ixy>0</ixy>
             <ixz>0</ixz>
-            <iyy>0.166667</iyy>
+            <iyy>2</iyy>
             <iyz>0</iyz>
-            <izz>0.166667</izz>
+            <izz>2</izz>
           </inertia>
           <pose>0 0 0 0 -0 0</pose>
         </inertial>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>1 1 1</size>
+              <size>5 11 10.4</size>
             </box>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -4445,7 +4445,7 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>1 1 1</size>
+              <size>5 11 10.4</size>
             </box>
           </geometry>
           <material>
@@ -4460,5 +4460,6 @@
         <kinematic>0</kinematic>
       </link>
     </model>
+
   </world>
 </sdf>
