@@ -34,101 +34,99 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
     pcl::VoxelGrid<pcl::PointXYZ> vg;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
     vg.setInputCloud(cloud);
-    vg.setLeafSize(0.5, 0.5, 0.5);
+    vg.setLeafSize(0.25,0.25,0.25);
     vg.filter(*cloud_filtered);
 
-    // // GROUND REMOVAL
-    // pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-    // pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-    // pcl::SACSegmentation<pcl::PointXYZ> seg;
-    // seg.setOptimizeCoefficients(true);
-    // seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
-    // seg.setMethodType(pcl::SAC_RANSAC);
-    // seg.setMaxIterations(1000);
-    // seg.setAxis(Eigen::Vector3f(0,0,1)); // Z up
-    // seg.setEpsAngle(15.0* (M_PI/180.0)); // 15 degrees
-    // seg.setDistanceThreshold(0.2);
-    // seg.setInputCloud(cloud_filtered);
-    // seg.segment(*inliers, *coefficients);
+    // CREATE SEGMENTATION OBJECTS
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
+    pcl::ExtractIndices<pcl::PointXYZ> extract_indices;
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
 
-    // // EXTRACT NON-GROUND POINTS
-    // pcl::ExtractIndices<pcl::PointXYZ> extract;
-    // extract.setInputCloud(cloud_filtered);
-    // extract.setIndices(inliers);
-    // extract.setNegative(true);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_no_ground(new pcl::PointCloud<pcl::PointXYZ>);
-    // extract.filter(*cloud_no_ground);
-
-    *cloud_no_ground = *cloud_filtered;
+    // Create a point cloud to store the vertical planes
+    pcl::PointCloud<pcl::PointXYZ>::Ptr vertical_planes_accumulated(new pcl::PointCloud<pcl::PointXYZ>);
 
 
-    // VERTICAL PLANE SEGMENTATION
-    pcl::SACSegmentation<pcl::PointXYZ> vertical_seg;
-    vertical_seg.setOptimizeCoefficients(true);
-    vertical_seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
-    vertical_seg.setMethodType(pcl::SAC_RANSAC);
-    vertical_seg.setMaxIterations(1000);
-    vertical_seg.setDistanceThreshold(0.02);
-    vertical_seg.setAxis(Eigen::Vector3f(1,0,0)); 
-    vertical_seg.setEpsAngle(15.0* (M_PI/180.0)); // 15 degrees
+    // Configure RANSAC to find vertical planes
+    seg.setOptimizeCoefficients(true);
+    seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setMaxIterations(500);
+    seg.setDistanceThreshold(0.02);
+    seg.setAxis(Eigen::Vector3f(1,0,0));
+    seg.setEpsAngle(10.0* (M_PI/180.0)); // 10 degrees
 
-    pcl::ModelCoefficients::Ptr vertical_coefficients(new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr vertical_inliers(new pcl::PointIndices);
-    vertical_seg.setInputCloud(cloud_no_ground);
-    vertical_seg.segment(*vertical_inliers, *vertical_coefficients);
-
-    if (vertical_inliers->indices.size() == 0)
+    int i = 0;
+    while (cloud->points.size() > 0)
     {
-        ROS_WARN("No vertical planes foung");
-    }
+        
+        // Perform RANSAC to find vertical planes
+        seg.setInputCloud(cloud_filtered);
+        seg.segment(*inliers, *coefficients);
 
-    // Extract vertical plane
-    pcl::PointCloud<pcl::PointXYZ>::Ptr vertical_plane(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::ExtractIndices<pcl::PointXYZ> extract_vertical;
-    extract_vertical.setInputCloud(cloud_no_ground);
-    extract_vertical.setIndices(vertical_inliers);
-    extract_vertical.setNegative(false);
-    extract_vertical.filter(*vertical_plane);
-
-
-    // Point Clustering
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud(vertical_plane);
-
-    std::vector<pcl::PointIndices> cluster_indices;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance(0.6); // 0.5m
-    ec.setMinClusterSize(100);
-    ec.setMaxClusterSize(25000);
-    ec.setSearchMethod(tree);
-    ec.setInputCloud(vertical_plane);
-    ec.extract(cluster_indices);
-
-    for (auto it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
-    {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
-        for (auto pit = it->indices.begin(); pit != it->indices.end(); ++pit)
+        if (inliers->indices.size() == 0)
         {
-            cluster->points.push_back(vertical_plane->points[*pit]);
+            std::cout << "No more vertical planes found" << std::endl;
+            break;  // Exit loop if no more vertical planes found
+        }
+
+        // Extract the inliers (the vertical surface)
+        pcl::PointCloud<pcl::PointXYZ>::Ptr vertical_plane(new pcl::PointCloud<pcl::PointXYZ>);
+        extract.setInputCloud(cloud_filtered);
+        extract.setIndices(inliers);
+        extract.setNegative(false); // Extract the inliers
+        extract.filter(*vertical_plane);
+
+        // Add the vertical plane to the accumulated point cloud
+        *vertical_planes_accumulated += *vertical_plane;
+
+        // Find points that cluster vertical plane
+        pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+        tree->setInputCloud(vertical_plane);
+
+        std::vector<pcl::PointIndices> cluster_indices;
+        pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+        ec.setClusterTolerance(0.5); // 0.5 meters
+        ec.setMinClusterSize(50);
+        ec.setMaxClusterSize(25000);
+        ec.setSearchMethod(tree);
+        ec.setInputCloud(vertical_plane);
+        ec.extract(cluster_indices);
+
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
+        for(auto it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
+        {
+
+            for(auto pit = it->indices.begin(); pit != it->indices.end(); ++pit){
+                cluster->points.push_back(vertical_plane->points[*pit]);
+            }
         }
         cluster->width = cluster->points.size();
         cluster->height = 1;
         cluster->is_dense = true;
-
-    
+        
+        // Compute and save the bounding box or min/max points
         pcl::PointXYZ min_pt, max_pt;
         pcl::getMinMax3D<pcl::PointXYZ>(*cluster, min_pt, max_pt);
 
+        std::cout << "Vertical Surface " << i << " Bounding Box: ["
+                  << "min: (" << min_pt.x << ", " << min_pt.y << ", " << min_pt.z << "), "
+                  << "max: (" << max_pt.x << ", " << max_pt.y << ", " << max_pt.z << ")]" << std::endl;
 
-        std::cout << "Min_pt:" << min_pt << std::endl;
-        std::cout << "Max_pt:" << max_pt << std::endl;
+        // Remove the inliers from the point cloud
+        extract.setNegative(true); // Extract the outliers
+        extract.filter(*cloud_filtered); // Update the point cloud without the vertical plane
+
+        i++;
     }
-    
+       
 
 
     // Convert to ROS data type and publish
     sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*vertical_plane, output);
+    pcl::toROSMsg(*vertical_planes_accumulated, output);
     output.header.frame_id = msg->header.frame_id;
     output.header.stamp = ros::Time::now();
 
@@ -141,6 +139,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "lidar_processor");
     ros::NodeHandle nh;
     ros::Subscriber sub = nh.subscribe("/SAR_Internal/lidar/raw", 1, cloud_cb);
+
+    pcl::console::setVerbosityLevel(pcl::console::L_ERROR);
 
     pub = nh.advertise<sensor_msgs::PointCloud2>("SAR_Internal/lidar/processed", 1);
     std::cout << "Node Running" << std::endl;
