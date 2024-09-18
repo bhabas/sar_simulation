@@ -13,7 +13,9 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/filters/extract_indices.h>
-
+#include <pcl/search/kdtree.h>
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl/common/common.h>
 // Include PointCloud2 message
 
 
@@ -32,63 +34,101 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
     pcl::VoxelGrid<pcl::PointXYZ> vg;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
     vg.setInputCloud(cloud);
-    vg.setLeafSize(0.5f, 0.5f, 0.5f);
+    vg.setLeafSize(0.5, 0.5, 0.5);
     vg.filter(*cloud_filtered);
 
-    // GROUND REMOVAL
-    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-    pcl::SACSegmentation<pcl::PointXYZ> seg;
-    seg.setOptimizeCoefficients(true);
-    seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
-    seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setMaxIterations(1000);
-    seg.setAxis(Eigen::Vector3f(0,0,1)); // Z up
-    seg.setEpsAngle(15.0* (M_PI/180.0)); // 15 degrees
-    seg.setDistanceThreshold(0.2);
-    seg.setInputCloud(cloud_filtered);
-    seg.segment(*inliers, *coefficients);
+    // // GROUND REMOVAL
+    // pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+    // pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+    // pcl::SACSegmentation<pcl::PointXYZ> seg;
+    // seg.setOptimizeCoefficients(true);
+    // seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+    // seg.setMethodType(pcl::SAC_RANSAC);
+    // seg.setMaxIterations(1000);
+    // seg.setAxis(Eigen::Vector3f(0,0,1)); // Z up
+    // seg.setEpsAngle(15.0* (M_PI/180.0)); // 15 degrees
+    // seg.setDistanceThreshold(0.2);
+    // seg.setInputCloud(cloud_filtered);
+    // seg.segment(*inliers, *coefficients);
 
-    // EXTRACT NON-GROUND POINTS
-    pcl::ExtractIndices<pcl::PointXYZ> extract;
-    extract.setInputCloud(cloud_filtered);
-    extract.setIndices(inliers);
-    extract.setNegative(true);
+    // // EXTRACT NON-GROUND POINTS
+    // pcl::ExtractIndices<pcl::PointXYZ> extract;
+    // extract.setInputCloud(cloud_filtered);
+    // extract.setIndices(inliers);
+    // extract.setNegative(true);
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_no_ground(new pcl::PointCloud<pcl::PointXYZ>);
-    extract.filter(*cloud_no_ground);
+    // extract.filter(*cloud_no_ground);
+
+    *cloud_no_ground = *cloud_filtered;
 
 
-    // // VERTICAL PLANE SEGMENTATION
-    // pcl::SACSegmentation<pcl::PointXYZ> vertical_seg;
-    // vertical_seg.setOptimizeCoefficients(true);
-    // vertical_seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
-    // vertical_seg.setMethodType(pcl::SAC_RANSAC);
-    // vertical_seg.setMaxIterations(1000);
-    // vertical_seg.setDistanceThreshold(0.02);
-    // vertical_seg.setAxis(Eigen::Vector3f(1,0,0)); // Z up
-    // vertical_seg.setEpsAngle(15.0* (M_PI/180.0)); // 15 degrees
+    // VERTICAL PLANE SEGMENTATION
+    pcl::SACSegmentation<pcl::PointXYZ> vertical_seg;
+    vertical_seg.setOptimizeCoefficients(true);
+    vertical_seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+    vertical_seg.setMethodType(pcl::SAC_RANSAC);
+    vertical_seg.setMaxIterations(1000);
+    vertical_seg.setDistanceThreshold(0.02);
+    vertical_seg.setAxis(Eigen::Vector3f(1,0,0)); 
+    vertical_seg.setEpsAngle(15.0* (M_PI/180.0)); // 15 degrees
 
-    // pcl::ModelCoefficients::Ptr vertical_coefficients(new pcl::ModelCoefficients);
-    // pcl::PointIndices::Ptr vertical_inliers(new pcl::PointIndices);
-    // vertical_seg.setInputCloud(cloud_no_ground);
-    // vertical_seg.segment(*vertical_inliers, *vertical_coefficients);
+    pcl::ModelCoefficients::Ptr vertical_coefficients(new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr vertical_inliers(new pcl::PointIndices);
+    vertical_seg.setInputCloud(cloud_no_ground);
+    vertical_seg.segment(*vertical_inliers, *vertical_coefficients);
 
-    // if (vertical_inliers->indices.size() == 0)
-    // {
-    //     ROS_WARN("No vertical planes foung");
-    // }
+    if (vertical_inliers->indices.size() == 0)
+    {
+        ROS_WARN("No vertical planes foung");
+    }
 
-    // // Extract vertical plane
-    // pcl::PointCloud<pcl::PointXYZ>::Ptr vertical_plane(new pcl::PointCloud<pcl::PointXYZ>);
-    // pcl::ExtractIndices<pcl::PointXYZ> extract_vertical;
-    // extract_vertical.setInputCloud(cloud_no_ground);
-    // extract_vertical.setIndices(vertical_inliers);
-    // extract_vertical.setNegative(false);
-    // extract_vertical.filter(*vertical_plane);
+    // Extract vertical plane
+    pcl::PointCloud<pcl::PointXYZ>::Ptr vertical_plane(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::ExtractIndices<pcl::PointXYZ> extract_vertical;
+    extract_vertical.setInputCloud(cloud_no_ground);
+    extract_vertical.setIndices(vertical_inliers);
+    extract_vertical.setNegative(false);
+    extract_vertical.filter(*vertical_plane);
+
+
+    // Point Clustering
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(vertical_plane);
+
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    ec.setClusterTolerance(0.6); // 0.5m
+    ec.setMinClusterSize(100);
+    ec.setMaxClusterSize(25000);
+    ec.setSearchMethod(tree);
+    ec.setInputCloud(vertical_plane);
+    ec.extract(cluster_indices);
+
+    for (auto it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
+        for (auto pit = it->indices.begin(); pit != it->indices.end(); ++pit)
+        {
+            cluster->points.push_back(vertical_plane->points[*pit]);
+        }
+        cluster->width = cluster->points.size();
+        cluster->height = 1;
+        cluster->is_dense = true;
+
+    
+        pcl::PointXYZ min_pt, max_pt;
+        pcl::getMinMax3D<pcl::PointXYZ>(*cluster, min_pt, max_pt);
+
+
+        std::cout << "Min_pt:" << min_pt << std::endl;
+        std::cout << "Max_pt:" << max_pt << std::endl;
+    }
+    
+
 
     // Convert to ROS data type and publish
     sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*cloud_no_ground, output);
+    pcl::toROSMsg(*vertical_plane, output);
     output.header.frame_id = msg->header.frame_id;
     output.header.stamp = ros::Time::now();
 
