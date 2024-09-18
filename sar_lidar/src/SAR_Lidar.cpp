@@ -18,10 +18,15 @@
 #include <pcl/common/common.h>
 // Include PointCloud2 message
 
+// Custom Messages
+#include <sar_msgs/BoundingBox.h>
+#include <sar_msgs/BoundingBoxArray.h>
+
 
 
 // ROS Publisher
 ros::Publisher pub;
+ros::Publisher pub_bounding_boxes;
 
 
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
@@ -57,6 +62,10 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
     seg.setAxis(Eigen::Vector3f(1,0,0));
     seg.setEpsAngle(10.0* (M_PI/180.0)); // 10 degrees
 
+    // Prepare BoundingBoxArray message
+    sar_msgs::BoundingBoxArray bbox_array;
+    bbox_array.header = msg->header;
+
     int i = 0;
     while (cloud->points.size() > 0)
     {
@@ -81,7 +90,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
         // Add the vertical plane to the accumulated point cloud
         *vertical_planes_accumulated += *vertical_plane;
 
-        // Find points that cluster vertical plane
+        // Find points that cluster the vertical plane
         pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
         tree->setInputCloud(vertical_plane);
 
@@ -98,8 +107,8 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
         pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
         for(auto it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
         {
-
-            for(auto pit = it->indices.begin(); pit != it->indices.end(); ++pit){
+            for(auto pit = it->indices.begin(); pit != it->indices.end(); ++pit)
+            {
                 cluster->points.push_back(vertical_plane->points[*pit]);
             }
         }
@@ -111,9 +120,16 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
         pcl::PointXYZ min_pt, max_pt;
         pcl::getMinMax3D<pcl::PointXYZ>(*cluster, min_pt, max_pt);
 
-        std::cout << "Vertical Surface " << i << " Bounding Box: ["
-                  << "min: (" << min_pt.x << ", " << min_pt.y << ", " << min_pt.z << "), "
-                  << "max: (" << max_pt.x << ", " << max_pt.y << ", " << max_pt.z << ")]" << std::endl;
+        // Create a BoundingBox message
+        sar_msgs::BoundingBox bbox;
+        bbox.min_point.x = min_pt.x;
+        bbox.min_point.y = min_pt.y;
+        bbox.min_point.z = min_pt.z;
+        bbox.max_point.x = max_pt.x;
+        bbox.max_point.y = max_pt.y;
+        bbox.max_point.z = max_pt.z;
+
+        bbox_array.boxes.push_back(bbox);
 
         // Remove the inliers from the point cloud
         extract.setNegative(true); // Extract the outliers
@@ -122,6 +138,8 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
         i++;
     }
        
+    // Publish the BoundingBoxArray message
+    pub_bounding_boxes.publish(bbox_array);
 
 
     // Convert to ROS data type and publish
@@ -138,11 +156,12 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "lidar_processor");
     ros::NodeHandle nh;
-    ros::Subscriber sub = nh.subscribe("/SAR_Internal/lidar/raw", 1, cloud_cb);
+    ros::Subscriber sub = nh.subscribe("/SAR_Internal/lidar/raw", 1, cloud_cb, ros::TransportHints().tcpNoDelay());
 
     pcl::console::setVerbosityLevel(pcl::console::L_ERROR);
 
     pub = nh.advertise<sensor_msgs::PointCloud2>("SAR_Internal/lidar/processed", 1);
+    pub_bounding_boxes = nh.advertise<sar_msgs::BoundingBoxArray>("SAR_Internal/lidar/bounding_boxes", 1);
     std::cout << "Node Running" << std::endl;
     ros::spin();
 

@@ -28,6 +28,8 @@ add_message_files(
   Sticky_Pad_Connect.msg
   MS.msg
   GenericLogData.msg
+  BoundingBox.msg
+  BoundingBoxArray.msg
 )
 
 # Generate services in the 'srv' folder
