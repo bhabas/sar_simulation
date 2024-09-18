@@ -31,3 +31,10 @@ add_executable(lidar src/SAR_Lidar.cpp)
 add_dependencies(lidar ${catkin_EXPORTED_TARGETS})
 target_link_libraries(lidar ${catkin_LIBRARIES} ${CURSES_LIBRARIES})
 
+
+add_executable(visualize_bounding_boxes src/visualize_bounding_boxes.cpp)
+add_dependencies(visualize_bounding_boxes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(visualize_bounding_boxes
+  ${catkin_LIBRARIES}
+)
+
