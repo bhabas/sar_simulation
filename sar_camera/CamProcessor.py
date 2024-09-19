@@ -11,14 +11,13 @@ from pathlib import Path
 BASEPATH = Path("/home/bhabas/catkin_ws/src/sar_simulation/sar_camera")
 
 
-class YOLOv8Node:
+class CamProcessor:
     def __init__(self):
         rospy.init_node('camera_detection_node', anonymous=True)
         self.bridge = CvBridge()
 
         # Load custom YOLOv8 model
         self.detector = YOLO(BASEPATH / "runs/detect/train4/weights/last.pt",verbose=False)
-
 
         self.image_sub = rospy.Subscriber("/SAR_Internal/camera/image_raw", Image, self.image_callback)
         self.image_pub = rospy.Publisher("/SAR_Internal/camera/image_processed", Image, queue_size=1)
@@ -83,7 +82,7 @@ class YOLOv8Node:
 
 if __name__ == '__main__':
     try:
-        yolo_node = YOLOv8Node()
+        yolo_node = CamProcessor()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass

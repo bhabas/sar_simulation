@@ -139,6 +139,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
     }
        
     // Publish the BoundingBoxArray message
+    bbox_array.header = msg->header;
     pub_bounding_boxes.publish(bbox_array);
 
 
@@ -161,7 +162,7 @@ int main(int argc, char **argv)
     pcl::console::setVerbosityLevel(pcl::console::L_ERROR);
 
     pub = nh.advertise<sensor_msgs::PointCloud2>("SAR_Internal/lidar/processed", 1);
-    pub_bounding_boxes = nh.advertise<sar_msgs::BoundingBoxArray>("SAR_Internal/lidar/bounding_boxes", 1);
+    pub_bounding_boxes = nh.advertise<sar_msgs::BoundingBoxArray>("SAR_Internal/lidar/bounding_boxes_raw", 1);
     std::cout << "Node Running" << std::endl;
     ros::spin();
 
