@@ -4,9 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /RobotModel1/Status1
         - /PointCloud21
-        - /Camera2
+        - /MarkerArray1
       Splitter Ratio: 0.5
     Tree Height: 461
   - Class: rviz/Selection
@@ -175,9 +174,9 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
-      Topic: /SAR_Internal/lidar/raw
+      Size (m): 0.10000000149011612
+      Style: Boxes
+      Topic: /SAR_Internal/lidar/processed
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -196,6 +195,7 @@ Visualization Manager:
         Camera: true
         Grid: true
         Image: true
+        MarkerArray: true
         PointCloud2: true
         RobotModel: true
         TF: true
@@ -224,6 +224,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         Camera: true
         Grid: true
         Image: true
@@ -232,6 +233,14 @@ Visualization Manager:
         TF: true
         Value: true
       Zoom Factor: 2
+    - Class: rviz/MarkerArray
+      Enabled: false
+      Marker Topic: /bounding_boxes_markers
+      Name: MarkerArray
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -260,7 +269,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 19.202966690063477
+      Distance: 10.4827299118042
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -268,17 +277,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.01657281257212162
-        Y: -0.08119376003742218
-        Z: 0.03831757977604866
+        X: 4.019649028778076
+        Y: -2.992475748062134
+        Z: 3.352837324142456
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.37979769706726074
+      Pitch: 0.5697975754737854
       Target Frame: <Fixed Frame>
-      Yaw: 3.4185545444488525
+      Yaw: 3.9985690116882324
     Saved: ~
 Window Geometry:
   Camera:

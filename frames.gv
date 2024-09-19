@@ -1,0 +1,19 @@
+digraph G {
+"SAR_Body" -> "Leg_1"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"SAR_Body" -> "Leg_2"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"SAR_Body" -> "Leg_3"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"SAR_Body" -> "Leg_4"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"SAR_Body" -> "Prop_Guards"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"SAR_Body" -> "camera_link"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"camera_link" -> "camera_link_optical"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"SAR_Body" -> "velodyne_base_link"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"velodyne_base_link" -> "velodyne"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"SAR_Body" -> "Prop_1"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 25.197\nBuffer length: 4.961\nMost recent transform: 1881.132\nOldest transform: 1876.171\n"];
+"SAR_Body" -> "Prop_2"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 25.197\nBuffer length: 4.961\nMost recent transform: 1881.132\nOldest transform: 1876.171\n"];
+"SAR_Body" -> "Prop_3"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 25.197\nBuffer length: 4.961\nMost recent transform: 1881.132\nOldest transform: 1876.171\n"];
+"SAR_Body" -> "Prop_4"[label=" Broadcaster: /robot_state_publisher\nAverage rate: 25.197\nBuffer length: 4.961\nMost recent transform: 1881.132\nOldest transform: 1876.171\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1881.173"[ shape=plaintext ] ;
+}->"SAR_Body";
+}

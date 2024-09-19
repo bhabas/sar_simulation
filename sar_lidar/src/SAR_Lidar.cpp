@@ -39,7 +39,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
     pcl::VoxelGrid<pcl::PointXYZ> vg;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
     vg.setInputCloud(cloud);
-    vg.setLeafSize(0.25,0.25,0.25);
+    vg.setLeafSize(0.1,0.1,0.1);
     vg.filter(*cloud_filtered);
 
     // CREATE SEGMENTATION OBJECTS
@@ -96,7 +96,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
 
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-        ec.setClusterTolerance(0.5); // 0.5 meters
+        ec.setClusterTolerance(0.3); // 0.5 meters
         ec.setMinClusterSize(50);
         ec.setMaxClusterSize(25000);
         ec.setSearchMethod(tree);

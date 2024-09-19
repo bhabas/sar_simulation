@@ -38,3 +38,11 @@ target_link_libraries(visualize_bounding_boxes
   ${catkin_LIBRARIES}
 )
 
+add_executable(visualize_bounding_boxes_camera src/visualize_bounding_boxes_camera.cpp)
+add_dependencies(visualize_bounding_boxes_camera ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(visualize_bounding_boxes_camera
+  ${catkin_LIBRARIES}
+)
+
+
+

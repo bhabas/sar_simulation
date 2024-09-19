@@ -34,8 +34,8 @@ void bboxCallback(const sar_msgs::BoundingBoxArray::ConstPtr& msg)
         marker.scale.z = bbox.max_point.z - bbox.min_point.z;
 
         marker.color.a = 0.5;  // Transparency
-        marker.color.r = 0.0;
-        marker.color.g = 1.0;
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
         marker.color.b = 0.0;
 
         marker.lifetime = ros::Duration(1.0);
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "visualize_bounding_boxes");
     ros::NodeHandle nh;
 
-    ros::Subscriber bbox_sub = nh.subscribe("/SAR_Internal/lidar/bounding_boxes", 1, bboxCallback);
+    ros::Subscriber bbox_sub = nh.subscribe("/SAR_Internal/camera/bounding_boxes", 1, bboxCallback);
     marker_pub = nh.advertise<visualization_msgs::MarkerArray>("bounding_boxes_markers", 1);
 
     ros::spin();
