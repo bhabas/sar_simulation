@@ -1,2 +1,4 @@
+string class_name
+float64 confidence
 geometry_msgs/Point min_point
 geometry_msgs/Point max_point

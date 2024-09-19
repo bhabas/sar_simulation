@@ -64,7 +64,7 @@ class SAR_Base_Interface():
         print(f"{RESET}")
 
         # Load custom YOLOv8 model
-        self.model = YOLO(f"{self.BASE_PATH}/sar_projects/Targeted_Landing/runs/detect/train4/weights/last.pt",verbose=False)
+        self.model = YOLO(f"{self.BASE_PATH}/sar_camera/runs/detect/train4/weights/last.pt",verbose=False)
         self.bridge = CvBridge()
 
         self.landing_site_locations = {
