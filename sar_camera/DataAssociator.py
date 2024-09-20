@@ -6,6 +6,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import numpy as np
 from sar_msgs.msg import BoundingBoxArray, BoundingBox
+from sar_msgs.msg import LandingSurface, LandingSurfaceArray
 from geometry_msgs.msg import Point, PointStamped, PoseStamped
 import ros_numpy
 
@@ -29,12 +30,13 @@ class DataAssociator:
         # Publishers
         self.image_pub = rospy.Publisher("/SAR_Internal/camera/image_processed_bbox", Image, queue_size=1)
         self.lidar_bbox_pub = rospy.Publisher('/SAR_Internal/lidar/bounding_boxes_processed', BoundingBoxArray, queue_size=1)
+        self.LandingSurface_pub = rospy.Publisher('/LandingSurfaces', LandingSurfaceArray, queue_size=1)
 
 
         queue_size = 10
         max_delay = 0.05
         self.time_sync = ApproximateTimeSynchronizer([self.lidar_bbox_sub, self.camera_bbox_sub],queue_size, max_delay)
-        self.time_sync.registerCallback(self.SyncCallback)
+        self.time_sync.registerCallback(self.AssociateTargets)
 
 
         # TF Buffer and Listener
@@ -49,75 +51,83 @@ class DataAssociator:
         self.cam_bboxes = []
         self.lidar_bboxes = []
         
-    def SyncCallback(self, lidar_bbox_array_msg, camera_bbox_array_msg):
+    def AssociateTargets(self, lidar_bbox_array_msg, camera_bbox_array_msg):
 
-        ## Camera Bounding Boxes
-        self.cam_bboxes = camera_bbox_array_msg.boxes
+        matched_targets = []
 
-
-        ## Lidar Bounding Boxes
-        
         # Get transform from Lidar frame to Camera frame
         transform = self.get_transform(self.tf_buffer, 'camera_link_optical', 'velodyne_base_link')
         if transform is None:
             return
 
-        # Process each bounding box
-        for bbox in lidar_bbox_array_msg.boxes:
-
-            # Transform bounding box to camera frame
-            max_pt_cam = self.transform(bbox.min_point, transform)
-            min_pt_cam = self.transform(bbox.max_point, transform)
-
-            # Transform bounding box to image coordinates
-            min_pt_cam = self.project_to_image(min_pt_cam)
-            max_pt_cam = self.project_to_image(max_pt_cam)
-
-            # Skip if projection failed
-            if min_pt_cam.x is None or max_pt_cam.x is None:
-                continue 
+        self.cam_bboxes = camera_bbox_array_msg.boxes
+        self.lidar_bboxes = lidar_bbox_array_msg.boxes
 
 
-            # Create new bounding box message
-            bbox_lidar = BoundingBox()
-            bbox_lidar.class_name = bbox.class_name
-            bbox_lidar.confidence = bbox.confidence
-            bbox_lidar.min_point = min_pt_cam
-            bbox_lidar.max_point = max_pt_cam
-
-            self.lidar_bboxes.append(bbox_lidar)
-
-
-            
 
         for cam_bbox in self.cam_bboxes:
-
-            cam_bbox = (int(cam_bbox.min_point.x), int(cam_bbox.min_point.y), 
-                        int(cam_bbox.max_point.x), int(cam_bbox.max_point.y))
             
             best_iou = 0
             best_lidar_bbox = None
 
             for lidar_bbox in self.lidar_bboxes:
-                lidar_bbox = (int(lidar_bbox.min_point.x), int(lidar_bbox.min_point.y),
-                              int(lidar_bbox.max_point.x), int(lidar_bbox.max_point.y))
                 
-                iou = self.calculate_iou(cam_bbox, lidar_bbox)
+                lidar_bbox_tf = BoundingBox()
+                lidar_bbox_tf.class_name = lidar_bbox.class_name
+                lidar_bbox_tf.confidence = lidar_bbox.confidence
+
+                # Transform bounding box to camera frame
+            
+                # Transform bounding box to image coordinates
+                lidar_bbox_tf.min_point = self.project_to_image(self.transform(lidar_bbox.max_point, transform))
+                lidar_bbox_tf.max_point = self.project_to_image(self.transform(lidar_bbox.min_point, transform))
+
+                # Skip if projection failed
+                if lidar_bbox_tf.min_point.x is None or lidar_bbox_tf.max_point.x is None:
+                    continue 
+          
+                iou = self.calculate_iou(cam_bbox, lidar_bbox_tf)
 
                 if iou > best_iou:
                     best_iou = iou
+                    best_lidar_bbox_tf = lidar_bbox_tf
                     best_lidar_bbox = lidar_bbox
 
             if best_iou > 0.3: # IoU threshold
-                rospy.loginfo(f"Match Found: {best_lidar_bbox} and {cam_bbox} and IoU: {best_iou}")
+                rospy.loginfo(f"Match Found:  IoU: {best_iou:.3f}")
+                # rospy.loginfo(f"Camera BBox: {cam_bbox.min_point} - {cam_bbox.max_point}")
+                # rospy.loginfo(f"Lidar BBox: {best_lidar_bbox.min_point} - {best_lidar_bbox.max_point}")
 
-            # Draw bounding box on image
-            self.latest_image = cv2.rectangle(img=self.latest_image, 
-                                    pt1=best_lidar_bbox[0:2],
-                                    pt2=best_lidar_bbox[2:4],
-                                    color=(255,0,0),
-                                    thickness=2)
+                matched_target = LandingSurface()
+                matched_target.class_name = cam_bbox.class_name
+                matched_target.confidence = cam_bbox.confidence
+                matched_target.BBox_min_Cam = cam_bbox.min_point
+                matched_target.BBox_min_Cam = cam_bbox.max_point
+                matched_target.BBox_min_Lidar = best_lidar_bbox_tf.min_point
+                matched_target.BBox_max_Lidar = best_lidar_bbox_tf.max_point
+                matched_target.Pose_Centroid.position = self.compute_center(best_lidar_bbox)
+                matched_targets.append(matched_target)
+
+   
+                # Draw bounding box on image
+                min_pt = ros_numpy.numpify(cam_bbox.min_point)[:2].astype(int)
+                max_pt = ros_numpy.numpify(cam_bbox.max_point)[:2].astype(int)
+                self.latest_image = cv2.rectangle(img=self.latest_image, 
+                                        pt1=(min_pt[0], min_pt[1]),
+                                        pt2=(max_pt[0], max_pt[1]),
+                                        color=(255,0,0),
+                                        thickness=2)
             
+                
+
+        # Publish matched targets
+        if matched_targets:
+            matched_targets_msg = LandingSurfaceArray()
+            matched_targets_msg.LandingSurfaces = matched_targets
+            matched_targets_msg.header = camera_bbox_array_msg.header
+            self.LandingSurface_pub.publish(matched_targets_msg)
+
+
             # Publish new bounding lidar box onto image
             image_msg = self.bridge.cv2_to_imgmsg(self.latest_image, "bgr8")
             self.image_pub.publish(image_msg)
@@ -125,21 +135,14 @@ class DataAssociator:
 
 
 
-        print()
 
     def compute_center(self, bbox):
+        x_center = bbox.max_point.x - bbox.min_point.x
+        y_center = bbox.max_point.y - bbox.min_point.y
+        z_center = bbox.max_point.z - bbox.min_point.z
 
-        # x_center = (bbox.points[0].x + bbox.points[2].x) / 2
-        # y_center = (bbox.points[0].y + bbox.points[2].y) / 2
-        # z_center = 0  # Assuming vertical surfaces, z can be set as needed
-        # return PoseStamped(
-        #     header=rospy.Header(),
-        #     pose=geometry_msgs.msg.Pose(
-        #         position=geometry_msgs.msg.Point(x=x_center, y=y_center, z=z_center),
-        #         orientation=geometry_msgs.msg.Quaternion(w=1.0, x=0.0, y=0.0, z=0.0)
-        #     )
-        # )
-        pass
+        return Point(x=x_center, y=y_center, z=z_center)
+
 
 
     def camera_callback(self, img_msg):
@@ -149,24 +152,26 @@ class DataAssociator:
 
     def calculate_iou(self, boxA, boxB):
 
-        # boxA and boxB are in the format [x1, y1, x2, y2]
-        xA = max(boxA[0], boxB[0])
-        yA = max(boxA[1], boxB[1])
-        xB = min(boxA[2], boxB[2])
-        yB = min(boxA[3], boxB[3])
+        boxA_area = abs(boxA.max_point.x - boxA.min_point.x) * abs(boxA.max_point.y - boxA.min_point.y)
+        boxB_area = abs(boxB.max_point.x - boxB.min_point.x) * abs(boxB.max_point.y - boxB.min_point.y)
+
+        # Determine the (x, y)-coordinates of the intersection rectangle
+        xA = max(boxA.min_point.x, boxB.min_point.x)
+        yA = max(boxA.min_point.y, boxB.min_point.y)
+        xB = min(boxA.max_point.x, boxB.max_point.x)
+        yB = min(boxA.max_point.y, boxB.max_point.y)
 
         # Compute the area of intersection rectangle
-        interWidth = max(0, xB - xA + 1)
-        interHeight = max(0, yB - yA + 1)
+        interWidth = abs(xB - xA)
+        interHeight = abs(yB - yA)
+
         interArea = interWidth * interHeight
 
-        # Compute the area of both bounding boxes
-        boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
-        boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
-
         # Compute the IoU
-        iou = interArea / float(boxAArea + boxBArea - interArea)
+        iou = interArea / float(boxA_area + boxB_area - interArea)
         return iou
+
+       
         
     
     def transform(self, point, transform):

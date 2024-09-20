@@ -1,0 +1,10 @@
+string class_name
+float64 confidence
+geometry_msgs/Point BBox_min_Cam
+geometry_msgs/Point BBox_max_Cam
+
+geometry_msgs/Point BBox_min_Lidar
+geometry_msgs/Point BBox_max_Lidar
+
+geometry_msgs/Pose Pose_Centroid
+geometry_msgs/Twist Twist_Centroid

@@ -30,6 +30,8 @@ add_message_files(
   GenericLogData.msg
   BoundingBox.msg
   BoundingBoxArray.msg
+  LandingSurface.msg
+  LandingSurfaceArray.msg
 )
 
 # Generate services in the 'srv' folder
@@ -58,6 +60,7 @@ generate_messages(
   geometry_msgs
   nav_msgs
   std_msgs
+  sar_msgs
 )
 
 catkin_package(
