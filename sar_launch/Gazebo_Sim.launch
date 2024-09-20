@@ -46,7 +46,7 @@
 
   <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
   <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-    args="-urdf -model Source_One -param robot_description -x 0 -y 0 -z 0.5"/>
+    args="-urdf -model Source_One -param robot_description -x 40.0 -y 9.0 -z 0.5"/>
 
 
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
