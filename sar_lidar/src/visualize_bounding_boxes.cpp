@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "visualize_bounding_boxes");
     ros::NodeHandle nh;
 
-    ros::Subscriber bbox_sub = nh.subscribe("/SAR_Internal/lidar/bounding_boxes", 1, bboxCallback);
+    ros::Subscriber bbox_sub = nh.subscribe("/SAR_Internal/lidar/processed", 1, bboxCallback);
     marker_pub = nh.advertise<visualization_msgs::MarkerArray>("bounding_boxes_markers", 1);
 
     ros::spin();

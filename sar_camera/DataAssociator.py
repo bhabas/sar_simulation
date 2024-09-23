@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 import tf2_ros
 import tf2_geometry_msgs
