@@ -8,7 +8,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import numpy as np
 from sar_msgs.msg import BoundingBoxArray, BoundingBox
-from sar_msgs.msg import LandingSurface, LandingSurfaceArray
+from sar_msgs.msg import LandingTarget, LandingTargetArray
 from geometry_msgs.msg import Point, PointStamped, PoseStamped
 import ros_numpy
 
@@ -32,7 +32,7 @@ class DataAssociator:
         # Publishers
         self.image_pub = rospy.Publisher("/SAR_Internal/camera/image_processed_bbox", Image, queue_size=1)
         self.lidar_bbox_pub = rospy.Publisher('/SAR_Internal/lidar/bounding_boxes_processed', BoundingBoxArray, queue_size=1)
-        self.LandingSurface_pub = rospy.Publisher('/LandingSurfaces', LandingSurfaceArray, queue_size=1)
+        self.LandingSurface_pub = rospy.Publisher('/LandingSurfaces', LandingTargetArray, queue_size=1)
 
 
         queue_size = 10
@@ -100,7 +100,7 @@ class DataAssociator:
                 # rospy.loginfo(f"Camera BBox: {cam_bbox.min_point} - {cam_bbox.max_point}")
                 # rospy.loginfo(f"Lidar BBox: {best_lidar_bbox.min_point} - {best_lidar_bbox.max_point}")
 
-                matched_target = LandingSurface()
+                matched_target = LandingTarget()
                 matched_target.class_name = cam_bbox.class_name
                 matched_target.confidence = cam_bbox.confidence
                 matched_target.BBox_min_Cam = cam_bbox.min_point
@@ -124,7 +124,7 @@ class DataAssociator:
 
         # Publish matched targets
         if matched_targets:
-            matched_targets_msg = LandingSurfaceArray()
+            matched_targets_msg = LandingTargetArray()
             matched_targets_msg.LandingSurfaces = matched_targets
             matched_targets_msg.header = camera_bbox_array_msg.header
             self.LandingSurface_pub.publish(matched_targets_msg)

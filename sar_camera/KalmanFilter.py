@@ -5,7 +5,7 @@ from filterpy.kalman import UnscentedKalmanFilter as UKF
 from filterpy.kalman import MerweScaledSigmaPoints
 from filterpy.common import Q_discrete_white_noise
 import numpy as np
-from sar_msgs.msg import LandingSurface, LandingSurfaceArray
+from sar_msgs.msg import LandingTarget, LandingTargetArray
 
 
 class UKFNode:
@@ -36,8 +36,8 @@ class UKFNode:
         self.ukf.R = np.eye(self.n_z) * 0.1
 
         # Subscribers and Publishers
-        self.measurement_sub = rospy.Subscriber("/LandingSurfaces", LandingSurfaceArray, self.update_ukf)
-        self.filtered_pub = rospy.Publisher("/LandingSurfaces_Filtered", LandingSurfaceArray, queue_size=10)
+        self.measurement_sub = rospy.Subscriber("/LandingSurfaces", LandingTargetArray, self.update_ukf)
+        self.filtered_pub = rospy.Publisher("/LandingSurfaces_Filtered", LandingTargetArray, queue_size=10)
 
         
 
@@ -93,7 +93,7 @@ class UKFNode:
         self.ukf.update(z)
 
         # Publish Fused State
-        fused_target = LandingSurface()
+        fused_target = LandingTarget()
         fused_target.Pose_Centroid.position.x = self.ukf.x[0]
         fused_target.Pose_Centroid.position.y = self.ukf.x[1]
         fused_target.Pose_Centroid.position.z = self.ukf.x[2]
@@ -102,7 +102,7 @@ class UKFNode:
         fused_target.Twist_Centroid.linear.y = self.ukf.x[4]
         fused_target.Twist_Centroid.linear.z = self.ukf.x[5]
 
-        LandingSurfaces = LandingSurfaceArray()
+        LandingSurfaces = LandingTargetArray()
         LandingSurfaces.LandingSurfaces = [fused_target]
         LandingSurfaces.header = LandingSurfaces_msg.header
 

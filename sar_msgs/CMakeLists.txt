@@ -30,8 +30,8 @@ add_message_files(
   GenericLogData.msg
   BoundingBox.msg
   BoundingBoxArray.msg
-  LandingSurface.msg
-  LandingSurfaceArray.msg
+  LandingTarget.msg
+  LandingTargetArray.msg
 )
 
 # Generate services in the 'srv' folder
