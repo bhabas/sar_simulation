@@ -85,7 +85,7 @@ class SAR_Base_Interface():
         rospy.Subscriber("/SAR_DC/TriggerData",SAR_TriggerData,self._SAR_TriggerDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/ImpactData",SAR_ImpactData,self._SAR_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self._SAR_MiscDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_Internal/camera/image_raw", Image, self.image_callback,queue_size=500)
+        # rospy.Subscriber("/SAR_Internal/camera/image_raw", Image, self.image_callback,queue_size=500)
 
         ## RL DATA PUBLISHERS
         self.RL_Data_Pub = rospy.Publisher("/RL/Data",RL_Data,queue_size=10)

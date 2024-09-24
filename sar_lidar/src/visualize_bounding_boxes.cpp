@@ -38,7 +38,7 @@ void bboxCallback(const sar_msgs::BoundingBoxArray::ConstPtr& msg)
         marker.color.g = 1.0;
         marker.color.b = 0.0;
 
-        marker.lifetime = ros::Duration(1.0);
+        marker.lifetime = ros::Duration(0.01);
 
         marker_array.markers.push_back(marker);
     }
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "visualize_bounding_boxes");
     ros::NodeHandle nh;
 
-    ros::Subscriber bbox_sub = nh.subscribe("/SAR_Internal/lidar/processed", 1, bboxCallback);
+    ros::Subscriber bbox_sub = nh.subscribe("/SAR_Internal/lidar/bounding_boxes_raw", 1, bboxCallback);
     marker_pub = nh.advertise<visualization_msgs::MarkerArray>("bounding_boxes_markers", 1);
 
     ros::spin();
