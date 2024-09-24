@@ -32,7 +32,7 @@ class DataAssociator:
         # Publishers
         self.image_pub = rospy.Publisher("/SAR_Internal/camera/image_processed_bbox", Image, queue_size=1)
         self.lidar_bbox_pub = rospy.Publisher('/SAR_Internal/lidar/bounding_boxes_processed', BoundingBoxArray, queue_size=1)
-        self.LandingSurface_pub = rospy.Publisher('/LandingSurfaces', LandingTargetArray, queue_size=1)
+        self.LandingTarget_pub = rospy.Publisher('/LandingTargets', LandingTargetArray, queue_size=1)
 
 
         queue_size = 10
@@ -101,12 +101,16 @@ class DataAssociator:
                 # rospy.loginfo(f"Lidar BBox: {best_lidar_bbox.min_point} - {best_lidar_bbox.max_point}")
 
                 matched_target = LandingTarget()
-                matched_target.class_name = cam_bbox.class_name
-                matched_target.confidence = cam_bbox.confidence
-                matched_target.BBox_min_Cam = cam_bbox.min_point
-                matched_target.BBox_min_Cam = cam_bbox.max_point
-                matched_target.BBox_min_Lidar = best_lidar_bbox_tf.min_point
-                matched_target.BBox_max_Lidar = best_lidar_bbox_tf.max_point
+                matched_target.BBox_Cam.class_name = cam_bbox.class_name
+                matched_target.BBox_Cam.confidence = cam_bbox.confidence
+                matched_target.BBox_Cam.min_point = cam_bbox.min_point
+                matched_target.BBox_Cam.max_point = cam_bbox.max_point
+
+
+                matched_target.BBox_Lidar.class_name = best_lidar_bbox.class_name
+                matched_target.BBox_Lidar.min_point = best_lidar_bbox.min_point
+                matched_target.BBox_Lidar.max_point = best_lidar_bbox.max_point
+
                 matched_target.Pose_Centroid.position = self.compute_center(best_lidar_bbox)
                 matched_targets.append(matched_target)
 
@@ -125,9 +129,9 @@ class DataAssociator:
         # Publish matched targets
         if matched_targets:
             matched_targets_msg = LandingTargetArray()
-            matched_targets_msg.LandingSurfaces = matched_targets
+            matched_targets_msg.LandingTargets = matched_targets
             matched_targets_msg.header = camera_bbox_array_msg.header
-            self.LandingSurface_pub.publish(matched_targets_msg)
+            self.LandingTarget_pub.publish(matched_targets_msg)
 
 
             # Publish new bounding lidar box onto image
@@ -139,9 +143,9 @@ class DataAssociator:
 
 
     def compute_center(self, bbox):
-        x_center = bbox.max_point.x - bbox.min_point.x
-        y_center = bbox.max_point.y - bbox.min_point.y
-        z_center = bbox.max_point.z - bbox.min_point.z
+        x_center = bbox.min_point.x
+        y_center = (bbox.max_point.y + bbox.min_point.y)/2
+        z_center = (bbox.max_point.z + bbox.min_point.z)/2
 
         return Point(x=x_center, y=y_center, z=z_center)
 

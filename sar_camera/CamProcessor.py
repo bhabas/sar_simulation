@@ -55,8 +55,8 @@ class CamProcessor:
 
                 ## DRAW BOUNDING BOX
                 cv_image = cv2.rectangle(img=cv_image, 
-                                        pt1=box.xyxy[0][0:2].int().tolist(),
-                                        pt2=box.xyxy[0][2:4].int().tolist(),
+                                        pt1=tuple(map(int, box.xyxy.flatten().tolist()[:2])),
+                                        pt2=tuple(map(int, box.xyxy.flatten().tolist()[2:])),
                                         color=(255,0,0),
                                         thickness=2)
                 

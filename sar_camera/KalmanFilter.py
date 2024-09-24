@@ -36,7 +36,7 @@ class UKFNode:
         self.ukf.R = np.eye(self.n_z) * 0.1
 
         # Subscribers and Publishers
-        self.measurement_sub = rospy.Subscriber("/LandingSurfaces", LandingTargetArray, self.update_ukf)
+        self.measurement_sub = rospy.Subscriber("/LandingTargets", LandingTargetArray, self.update_ukf)
         self.filtered_pub = rospy.Publisher("/LandingSurfaces_Filtered", LandingTargetArray, queue_size=10)
 
         
@@ -70,7 +70,7 @@ class UKFNode:
 
     def update_ukf(self, LandingSurfaces_msg):
 
-        if not LandingSurfaces_msg.LandingSurfaces:
+        if not LandingSurfaces_msg.LandingTargets:
             return
         
         self.dt = LandingSurfaces_msg.header.stamp.to_sec() - self.t_prev
@@ -79,7 +79,7 @@ class UKFNode:
         print("Time Step: ", self.dt)
         
         # Assuming single target for now
-        target = LandingSurfaces_msg.LandingSurfaces[0]
+        target = LandingSurfaces_msg.LandingTargets[0]
 
         # Measurement Vector
         z = np.array([target.Pose_Centroid.position.x, 
@@ -102,12 +102,12 @@ class UKFNode:
         fused_target.Twist_Centroid.linear.y = self.ukf.x[4]
         fused_target.Twist_Centroid.linear.z = self.ukf.x[5]
 
-        LandingSurfaces = LandingTargetArray()
-        LandingSurfaces.LandingSurfaces = [fused_target]
-        LandingSurfaces.header = LandingSurfaces_msg.header
+        LandingTargets = LandingTargetArray()
+        LandingTargets.LandingTargets = [fused_target]
+        LandingTargets.header = LandingSurfaces_msg.header
 
 
-        self.filtered_pub.publish(LandingSurfaces)
+        self.filtered_pub.publish(LandingTargets)
 
 
 if __name__ == '__main__':
