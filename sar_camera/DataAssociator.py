@@ -36,7 +36,7 @@ class DataAssociator:
 
 
         queue_size = 10
-        max_delay = 0.05
+        max_delay = 0.1
         self.time_sync = ApproximateTimeSynchronizer([self.lidar_bbox_sub, self.camera_bbox_sub],queue_size, max_delay)
         self.time_sync.registerCallback(self.AssociateTargets)
 
@@ -143,7 +143,7 @@ class DataAssociator:
 
 
     def compute_center(self, bbox):
-        x_center = bbox.min_point.x
+        x_center = min(bbox.min_point.x,bbox.max_point.x) 
         y_center = (bbox.max_point.y + bbox.min_point.y)/2
         z_center = (bbox.max_point.z + bbox.min_point.z)/2
 

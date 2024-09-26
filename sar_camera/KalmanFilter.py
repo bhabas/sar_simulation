@@ -14,30 +14,31 @@ class UKFNode:
 
         # State dimension and measurement dimension
         self.n_x = 6 # State Dimension
-        self.n_z = 3 # Measurement Dimension
+        self.n_z = 6 # Measurement Dimension
 
         # Define sigma points
         sigmas= MerweScaledSigmaPoints(6, alpha=0.1, beta=2., kappa=1.)
 
         self.dt = 0
         self.t_prev = 0
+        self.prev_position = np.array([0, 0, 0])
 
         # Initialize UKF
         self.ukf = UKF(dim_x=self.n_x, dim_z=self.n_z, fx=self.fx, hx=self.hx, dt=self.dt, points=sigmas)
 
         # Initial State and Covariance
-        self.ukf.x = np.zeros(self.n_x)
+        self.ukf.x = np.array([0, 0, 0, 0.5, 0, 0]) # Initial State
         self.ukf.P *= 10 # Initial Covariance
 
         # Process Noise Covariance
-        self.ukf.Q = np.eye(self.n_x) * 0.1
+        self.ukf.Q = np.diag([0.01, 0.01, 0.01, 0.1, 0.1, 0.1])
 
         # Measurement Noise Covariance
-        self.ukf.R = np.eye(self.n_z) * 0.1
+        self.ukf.R = np.diag([0.1, 0.1, 0.1, 0.05, 0.05, 0.05])
 
         # Subscribers and Publishers
         self.measurement_sub = rospy.Subscriber("/LandingTargets", LandingTargetArray, self.update_ukf)
-        self.filtered_pub = rospy.Publisher("/LandingSurfaces_Filtered", LandingTargetArray, queue_size=10)
+        self.filtered_pub = rospy.Publisher("/LandingTargets_Filtered", LandingTargetArray, queue_size=10)
 
         
 
@@ -59,13 +60,16 @@ class UKFNode:
         # Extract position from state vector
         p_x, p_y, p_z = x[0], x[1], x[2]
 
+        # Extract velocity from state vector
+        v_x, v_y, v_z = x[3], x[4], x[5]
+
         ## Future Details
         #
         #
         #
 
         # Combined measurement vector
-        z = np.array([p_x, p_y, p_z])
+        z = np.array([p_x, p_y, p_z, v_x, v_y, v_z])
         return z
 
     def update_ukf(self, LandingSurfaces_msg):
@@ -81,10 +85,26 @@ class UKFNode:
         # Assuming single target for now
         target = LandingSurfaces_msg.LandingTargets[0]
 
-        # Measurement Vector
-        z = np.array([target.Pose_Centroid.position.x, 
-                      target.Pose_Centroid.position.y, 
-                      target.Pose_Centroid.position.z])
+        # Extract current position
+        p_x = target.Pose_Centroid.position.x
+        p_y = target.Pose_Centroid.position.y
+        p_z = target.Pose_Centroid.position.z
+
+        # Estimate velocity from position change (if not the first frame)
+        if hasattr(self, 'previous_position'):
+            v_x = (p_x - self.previous_position[0]) / self.dt
+            v_y = (p_y - self.previous_position[1]) / self.dt
+            v_z = (p_z - self.previous_position[2]) / self.dt
+        else:
+            v_x, v_y, v_z = 0.0, 0.0, 0.0  # Initialize velocities for the first frame
+
+
+        # Store current position for next iteration
+        self.previous_position = np.array([p_x, p_y, p_z])
+
+        # Create the measurement vector z, including both position and estimated velocity
+        z = np.array([p_x, p_y, p_z, v_x, v_y, v_z])
+
         
         print()
         
