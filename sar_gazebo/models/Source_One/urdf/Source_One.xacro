@@ -20,7 +20,7 @@
 
 
 
-  <xacro:property name="camera_link" value="0.015" />
+  <xacro:property name="camera_link" value="0.01" />
 
 
 
@@ -297,8 +297,8 @@
 
   
 
-  <!-- Camera -->
-  <link name="camera_link">
+  <!-- Stereo Camera Right -->
+  <link name="stereo_camera_link_right">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -314,23 +314,60 @@
     </inertial>
   </link>
 
-  <joint name="camera_joint" type="fixed">
-    <origin xyz="0.07 0 0.02" rpy="0 0 0"/>
+  <joint name="stereo_camera_joint_right" type="fixed">
+    <origin xyz="0.15 -0.1 -0.01" rpy="0 0 0"/>
     <parent link="SAR_Body"/>
-    <child link="camera_link"/>
+    <child link="stereo_camera_link_right"/>
   </joint>
 
   <!-- generate an optical frame http://www.ros.org/reps/rep-0103.html#suffix-frames
       so that ros and opencv can operate on the camera frame correctly -->
-  <joint name="camera_optical_joint" type="fixed">
+  <joint name="stereo_camera_optical_joint_right" type="fixed">
     <!-- these values have to be these values otherwise the gazebo camera image
         won't be aligned properly with the frame it is supposedly originating from -->
     <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
-    <parent link="camera_link"/>
-    <child link="camera_link_optical"/>
+    <parent link="stereo_camera_link_right"/>
+    <child link="stereo_camera_link_optical_right"/>
   </joint>
 
-  <link name="camera_link_optical">
+  <link name="stereo_camera_link_optical_right">
+  </link>
+
+
+  <!-- Stereo Camera Left -->
+  <link name="stereo_camera_link_left">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${camera_link} ${camera_link} ${camera_link}"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+  <joint name="stereo_camera_joint_left" type="fixed">
+    <origin xyz="0.15 0.1 -0.01" rpy="0 0 0"/>
+    <parent link="SAR_Body"/>
+    <child link="stereo_camera_link_left"/>
+  </joint>
+
+  <!-- generate an optical frame http://www.ros.org/reps/rep-0103.html#suffix-frames
+      so that ros and opencv can operate on the camera frame correctly -->
+  <joint name="stereo_camera_optical_joint_left" type="fixed">
+    <!-- these values have to be these values otherwise the gazebo camera image
+        won't be aligned properly with the frame it is supposedly originating from -->
+    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    <parent link="stereo_camera_link_left"/>
+    <child link="stereo_camera_link_optical_left"/>
+  </joint>
+
+  <link name="stereo_camera_link_optical_left">
   </link>
 
 
