@@ -249,14 +249,14 @@
       <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>SAR_Internal/camera_right</cameraName>
+        <cameraName>stereo/right</cameraName>
         <imageTopicName>image_raw</imageTopicName>
-        <cameraInfoTopicName>camera_right_info</cameraInfoTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>stereo_camera_link_optical_right</frameName>
         <!-- setting hackBaseline to anything but 0.0 will cause a misalignment
             between the gazebo sensor image and the frame it is supposed to
             be attached to -->
-        <hackBaseline>0.0</hackBaseline>
+        <hackBaseline>0.2</hackBaseline>
         <distortionK1>0.0</distortionK1>
         <distortionK2>0.0</distortionK2>
         <distortionK3>0.0</distortionK3>
@@ -294,9 +294,9 @@
       <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>SAR_Internal/camera_left</cameraName>
+        <cameraName>stereo/left</cameraName>
         <imageTopicName>image_raw</imageTopicName>
-        <cameraInfoTopicName>camera_left_info</cameraInfoTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>stereo_camera_link_optical_left</frameName>
         <!-- setting hackBaseline to anything but 0.0 will cause a misalignment
             between the gazebo sensor image and the frame it is supposed to
