@@ -1,6 +1,8 @@
-BoundingBox BBox_Cam
-BoundingBox BBox_Lidar
+BoundingBox BBox_Cam_px
+BoundingBox BBox_Cam_m
 
+BoundingBox BBox_Lidar_px
+BoundingBox BBox_Lidar_m
 
-geometry_msgs/Pose Pose_Centroid
-geometry_msgs/Twist Twist_Centroid
+geometry_msgs/Pose Pose_Centroid_Cam_body
+geometry_msgs/Pose Pose_Centroid_Lidar_body

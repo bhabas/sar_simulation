@@ -27,7 +27,7 @@ class DataAssociator:
         # Subscribers 
         self.lidar_bbox_sub = Subscriber('/SAR_Internal/lidar/bounding_boxes_raw', BoundingBoxArray)
         self.camera_bbox_sub = Subscriber('/SAR_Internal/camera/bounding_boxes', BoundingBoxArray)
-        self.image_sub = rospy.Subscriber('/SAR_Internal/camera/image_raw', Image, self.camera_callback,queue_size=1)
+        self.image_sub = rospy.Subscriber('/stereo/left/image_rect_color', Image, self.camera_callback,queue_size=1)
 
         # Publishers
         self.image_pub = rospy.Publisher("/SAR_Internal/camera/image_processed_bbox", Image, queue_size=1)
@@ -50,50 +50,63 @@ class DataAssociator:
                            [0, 381.362, 320.5], 
                            [0, 0, 1]])
         
-        self.cam_bboxes = []
-        self.lidar_bboxes = []
+        self.K_inv = np.linalg.inv(self.K)
+        
+        self.cam_bboxes_px = []
+        self.lidar_bboxes_m = []
         
     def AssociateTargets(self, lidar_bbox_array_msg, camera_bbox_array_msg):
 
         matched_targets = []
 
         # Get transform from Lidar frame to Camera frame
-        transform = self.get_transform(self.tf_buffer, 'camera_link_optical', 'velodyne_base_link')
-        if transform is None:
+        tf_lidar_cam = self.get_transform(self.tf_buffer, 'stereo_camera_link_optical_left', 'velodyne_base_link')
+        if tf_lidar_cam is None:
+            return
+        
+        tf_cam_body = self.get_transform(self.tf_buffer, 'SAR_Body', 'stereo_camera_link_optical_left')
+        if tf_cam_body is None:
+            return
+        
+        tf_lidar_body = self.get_transform(self.tf_buffer, 'SAR_Body', 'velodyne_base_link')
+        if tf_lidar_body is None:
             return
 
-        self.cam_bboxes = camera_bbox_array_msg.boxes
-        self.lidar_bboxes = lidar_bbox_array_msg.boxes
 
 
+        self.cam_bboxes_px = camera_bbox_array_msg.boxes   # Camera Frame
+        self.lidar_bboxes_m = lidar_bbox_array_msg.boxes  # Lidar Frame
 
-        for cam_bbox in self.cam_bboxes:
+        # Find Corresponding Bounding Boxes
+        for cam_bbox_px_CamFrame in self.cam_bboxes_px:
             
             best_iou = 0
-            best_lidar_bbox = None
+            best_lidar_bbox_m = None
 
-            for lidar_bbox in self.lidar_bboxes:
-                
-                lidar_bbox_tf = BoundingBox()
-                lidar_bbox_tf.class_name = lidar_bbox.class_name
-                lidar_bbox_tf.confidence = lidar_bbox.confidence
+            for lidar_bbox_m_LidarFrame in self.lidar_bboxes_m:
 
-                # Transform bounding box to camera frame
-            
-                # Transform bounding box to image coordinates
-                lidar_bbox_tf.min_point = self.project_to_image(self.transform(lidar_bbox.max_point, transform))
-                lidar_bbox_tf.max_point = self.project_to_image(self.transform(lidar_bbox.min_point, transform))
+                # Find IoU between Camera and Lidar Bounding Boxes
+
+                # Transform Lidar Bounding Box to Camera Frame
+                lidar_bbox_m_CamFrame = BoundingBox()
+                lidar_bbox_m_CamFrame.min_point = self.transform(lidar_bbox_m_LidarFrame.max_point, tf_lidar_cam)
+                lidar_bbox_m_CamFrame.max_point = self.transform(lidar_bbox_m_LidarFrame.min_point, tf_lidar_cam)
+
+                # Convert to pixel values
+                lidar_bbox_px_CamFrame = BoundingBox()
+                lidar_bbox_px_CamFrame.min_point = self.project_to_image(lidar_bbox_m_CamFrame.min_point)
+                lidar_bbox_px_CamFrame.max_point = self.project_to_image(lidar_bbox_m_CamFrame.max_point)
 
                 # Skip if projection failed
-                if lidar_bbox_tf.min_point.x is None or lidar_bbox_tf.max_point.x is None:
+                if lidar_bbox_px_CamFrame.min_point.x is None or lidar_bbox_px_CamFrame.max_point.x is None:
                     continue 
           
-                iou = self.calculate_iou(cam_bbox, lidar_bbox_tf)
+                iou = self.calculate_iou(cam_bbox_px_CamFrame, lidar_bbox_px_CamFrame)
 
                 if iou > best_iou:
                     best_iou = iou
-                    best_lidar_bbox_tf = lidar_bbox_tf
-                    best_lidar_bbox = lidar_bbox
+                    best_lidar_bbox_px_CamFrame = lidar_bbox_px_CamFrame
+                    best_lidar_bbox_m_CamFrame = lidar_bbox_m_CamFrame
 
             if best_iou > 0.3: # IoU threshold
                 rospy.loginfo(f"Match Found:  IoU: {best_iou:.3f}")
@@ -101,23 +114,32 @@ class DataAssociator:
                 # rospy.loginfo(f"Lidar BBox: {best_lidar_bbox.min_point} - {best_lidar_bbox.max_point}")
 
                 matched_target = LandingTarget()
-                matched_target.BBox_Cam.class_name = cam_bbox.class_name
-                matched_target.BBox_Cam.confidence = cam_bbox.confidence
-                matched_target.BBox_Cam.min_point = cam_bbox.min_point
-                matched_target.BBox_Cam.max_point = cam_bbox.max_point
+                matched_target.BBox_Cam_px = cam_bbox_px_CamFrame
+                matched_target.BBox_Lidar_px = best_lidar_bbox_px_CamFrame
 
 
-                matched_target.BBox_Lidar.class_name = best_lidar_bbox.class_name
-                matched_target.BBox_Lidar.min_point = best_lidar_bbox.min_point
-                matched_target.BBox_Lidar.max_point = best_lidar_bbox.max_point
+                # Camera Bounding Box in meters
+                matched_target.BBox_Cam_m.class_name = cam_bbox_px_CamFrame.class_name
+                matched_target.BBox_Cam_m.confidence = cam_bbox_px_CamFrame.confidence
 
-                matched_target.Pose_Centroid.position = self.compute_center(best_lidar_bbox)
+                Z_cam_depth_m = cam_bbox_px_CamFrame.min_point.z
+                X_min, Y_min, Z_min = Z_cam_depth_m * self.K_inv @ np.array([cam_bbox_px_CamFrame.min_point.x, cam_bbox_px_CamFrame.min_point.y, 1])
+                X_max, Y_max, Z_max = Z_cam_depth_m * self.K_inv @ np.array([cam_bbox_px_CamFrame.max_point.x, cam_bbox_px_CamFrame.max_point.y, 1])
+                matched_target.BBox_Cam_m.min_point = Point(x=X_min, y=Y_min, z=Z_min)
+                matched_target.BBox_Cam_m.max_point = Point(x=X_max, y=Y_max, z=Z_max)
+                
+                matched_target.Pose_Centroid_Cam_body.position =  self.transform(self.compute_center(matched_target.BBox_Cam_m), tf_cam_body)
+
+                # Lidar Bounding Box in Body Frame
+                matched_target.BBox_Lidar_m = best_lidar_bbox_m_CamFrame
+                matched_target.Pose_Centroid_Lidar_body.position = self.transform(self.compute_center(matched_target.BBox_Lidar_m),tf_cam_body)
+
                 matched_targets.append(matched_target)
 
    
                 # Draw bounding box on image
-                min_pt = ros_numpy.numpify(cam_bbox.min_point)[:2].astype(int)
-                max_pt = ros_numpy.numpify(cam_bbox.max_point)[:2].astype(int)
+                min_pt = ros_numpy.numpify(cam_bbox_px_CamFrame.min_point)[:2].astype(int)
+                max_pt = ros_numpy.numpify(cam_bbox_px_CamFrame.max_point)[:2].astype(int)
                 self.latest_image = cv2.rectangle(img=self.latest_image, 
                                         pt1=(min_pt[0], min_pt[1]),
                                         pt2=(max_pt[0], max_pt[1]),
@@ -130,7 +152,8 @@ class DataAssociator:
         if matched_targets:
             matched_targets_msg = LandingTargetArray()
             matched_targets_msg.LandingTargets = matched_targets
-            matched_targets_msg.header = camera_bbox_array_msg.header
+            matched_targets_msg.header.stamp = camera_bbox_array_msg.header.stamp
+            matched_targets_msg.header.frame_id = 'SAR_Body'
             self.LandingTarget_pub.publish(matched_targets_msg)
 
 
@@ -143,7 +166,7 @@ class DataAssociator:
 
 
     def compute_center(self, bbox):
-        x_center = min(bbox.min_point.x,bbox.max_point.x) 
+        x_center = (bbox.min_point.x + bbox.max_point.x)/2
         y_center = (bbox.max_point.y + bbox.min_point.y)/2
         z_center = (bbox.max_point.z + bbox.min_point.z)/2
 
