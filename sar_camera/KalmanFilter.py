@@ -13,32 +13,37 @@ class UKFNode:
         rospy.init_node('ukf_node', anonymous=True)
 
         # State dimension and measurement dimension
-        self.n_x = 6 # State Dimension
-        self.n_z = 6 # Measurement Dimension
-
-        # Define sigma points
-        sigmas= MerweScaledSigmaPoints(6, alpha=0.1, beta=2., kappa=1.)
+        self.dim_x = 2 # State Dimension
+        self.dim_z = 1 # Measurement Dimension
 
         self.dt = 0
         self.t_prev = 0
-        self.prev_position = np.array([0, 0, 0])
+
+        # Define sigma points
+        points = MerweScaledSigmaPoints(self.dim_x, alpha=0.1, beta=2., kappa=1.)
 
         # Initialize UKF
-        self.ukf = UKF(dim_x=self.n_x, dim_z=self.n_z, fx=self.fx, hx=self.hx, dt=self.dt, points=sigmas)
+        self.ukf = UKF(dim_x=self.dim_x, dim_z=self.dim_z, fx=self.fx, hx=self.hx, dt=self.dt, points=points)
 
-        # Initial State and Covariance
-        self.ukf.x = np.array([0, 0, 0, 0.5, 0, 0]) # Initial State
+        # Initial State Estimate
+        self.ukf.x = np.array([0., 0.]) # Initial State
+
+        # Initial Covariance Estimate
         self.ukf.P *= 10 # Initial Covariance
 
         # Process Noise Covariance
-        self.ukf.Q = np.diag([0.01, 0.01, 0.01, 0.1, 0.1, 0.1])
+        self.ukf.Q = np.diag([0.01, 0.01])
 
         # Measurement Noise Covariance
-        self.ukf.R = np.diag([0.1, 0.1, 0.1, 0.05, 0.05, 0.05])
+        self.ukf.R = np.diag([0.05])
+
+        
 
         # Subscribers and Publishers
         self.measurement_sub = rospy.Subscriber("/LandingTargets", LandingTargetArray, self.update_ukf)
         self.filtered_pub = rospy.Publisher("/LandingTargets_Filtered", LandingTargetArray, queue_size=10)
+
+
 
         
 
@@ -46,31 +51,14 @@ class UKFNode:
 
     def fx(self, x, dt):
         # State transition function
-        F = np.array([[1, 0, 0, dt, 0, 0],
-                      [0, 1, 0, 0, dt, 0],
-                      [0, 0, 1, 0, 0, dt],
-                      [0, 0, 0, 1, 0, 0],
-                      [0, 0, 0, 0, 1, 0],
-                      [0, 0, 0, 0, 0, 1]])
-        return F @ x
-    
+        F = np.array([[1, dt],
+                      [0, 1]])
+        return np.dot(F, x)
+        
     def hx(self,x):
         
         # Measurement function
-        # Extract position from state vector
-        p_x, p_y, p_z = x[0], x[1], x[2]
-
-        # Extract velocity from state vector
-        v_x, v_y, v_z = x[3], x[4], x[5]
-
-        ## Future Details
-        #
-        #
-        #
-
-        # Combined measurement vector
-        z = np.array([p_x, p_y, p_z, v_x, v_y, v_z])
-        return z
+        return np.array([x[0]])
 
     def update_ukf(self, LandingSurfaces_msg):
 
@@ -86,24 +74,19 @@ class UKFNode:
         target = LandingSurfaces_msg.LandingTargets[0]
 
         # Extract current position
-        p_x = target.Pose_Centroid.position.x
-        p_y = target.Pose_Centroid.position.y
-        p_z = target.Pose_Centroid.position.z
+        p_x_cam = target.Pose_Centroid_Cam_body.position.x
+        p_y_cam = target.Pose_Centroid_Cam_body.position.y
+        p_z_cam = target.Pose_Centroid_Cam_body.position.z
 
-        # Estimate velocity from position change (if not the first frame)
-        if hasattr(self, 'previous_position'):
-            v_x = (p_x - self.previous_position[0]) / self.dt
-            v_y = (p_y - self.previous_position[1]) / self.dt
-            v_z = (p_z - self.previous_position[2]) / self.dt
-        else:
-            v_x, v_y, v_z = 0.0, 0.0, 0.0  # Initialize velocities for the first frame
+        # Extract current position from LiDAR
+        p_x_lidar = target.Pose_Centroid_Lidar_body.position.x
+        p_y_lidar = target.Pose_Centroid_Lidar_body.position.y
+        p_z_lidar = target.Pose_Centroid_Lidar_body.position.z
 
-
-        # Store current position for next iteration
-        self.previous_position = np.array([p_x, p_y, p_z])
-
-        # Create the measurement vector z, including both position and estimated velocity
-        z = np.array([p_x, p_y, p_z, v_x, v_y, v_z])
+        # Create the measurement vector z, including both position 
+        z = np.array([
+            p_x_lidar
+            ])
 
         
         print()
@@ -114,13 +97,13 @@ class UKFNode:
 
         # Publish Fused State
         fused_target = LandingTarget()
-        fused_target.Pose_Centroid.position.x = self.ukf.x[0]
-        fused_target.Pose_Centroid.position.y = self.ukf.x[1]
-        fused_target.Pose_Centroid.position.z = self.ukf.x[2]
+        fused_target.Pose_Centroid_Filtered_body.position.x = self.ukf.x[0]
+        # fused_target.Pose_Centroid_Filtered_body.position.y = self.ukf.x[1]
+        # fused_target.Pose_Centroid_Filtered_body.position.z = self.ukf.x[2]
 
-        fused_target.Twist_Centroid.linear.x = self.ukf.x[3]
-        fused_target.Twist_Centroid.linear.y = self.ukf.x[4]
-        fused_target.Twist_Centroid.linear.z = self.ukf.x[5]
+        # fused_target.Twist_Centroid.linear.x = self.ukf.x[3]
+        # fused_target.Twist_Centroid.linear.y = self.ukf.x[4]
+        # fused_target.Twist_Centroid.linear.z = self.ukf.x[5]
 
         LandingTargets = LandingTargetArray()
         LandingTargets.LandingTargets = [fused_target]

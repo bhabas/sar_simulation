@@ -6,3 +6,4 @@ BoundingBox BBox_Lidar_m
 
 geometry_msgs/Pose Pose_Centroid_Cam_body
 geometry_msgs/Pose Pose_Centroid_Lidar_body
+geometry_msgs/Pose Pose_Centroid_Filtered_body

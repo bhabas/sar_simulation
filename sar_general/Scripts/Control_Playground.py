@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import threading,os
+import numpy as np
 import rospy
 import time
-import numpy as np
 
 YELLOW = '\033[93m'
 RED = '\033[91m'

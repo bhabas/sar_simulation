@@ -10,7 +10,7 @@ import numpy as np
 from sar_msgs.msg import BoundingBoxArray, BoundingBox
 from sar_msgs.msg import LandingTarget, LandingTargetArray
 from geometry_msgs.msg import Point, PointStamped, PoseStamped
-import ros_numpy
+# import ros_numpy
 
 from message_filters import Subscriber, ApproximateTimeSynchronizer
 
@@ -138,8 +138,8 @@ class DataAssociator:
 
    
                 # Draw bounding box on image
-                min_pt = ros_numpy.numpify(cam_bbox_px_CamFrame.min_point)[:2].astype(int)
-                max_pt = ros_numpy.numpify(cam_bbox_px_CamFrame.max_point)[:2].astype(int)
+                min_pt = (int(cam_bbox_px_CamFrame.min_point.x), int(cam_bbox_px_CamFrame.min_point.y))
+                max_pt = (int(cam_bbox_px_CamFrame.max_point.x), int(cam_bbox_px_CamFrame.max_point.y))
                 self.latest_image = cv2.rectangle(img=self.latest_image, 
                                         pt1=(min_pt[0], min_pt[1]),
                                         pt2=(max_pt[0], max_pt[1]),
@@ -213,7 +213,7 @@ class DataAssociator:
     
     def project_to_image(self, point_cam):
 
-        point_cam = ros_numpy.numpify(point_cam)
+        point_cam = np.array([point_cam.x, point_cam.y, point_cam.z])
         # Project a 3D point in camera frame to 2D image coordinates
         if point_cam[2] < 0:
             # rospy.logwarn("Point behind camera. Skipping projection.")
