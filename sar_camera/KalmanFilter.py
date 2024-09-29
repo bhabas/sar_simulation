@@ -14,7 +14,7 @@ class UKFNode:
 
         # State dimension and measurement dimension
         self.dim_x = 2 # State Dimension
-        self.dim_z = 1 # Measurement Dimension
+        self.dim_z = 2 # Measurement Dimension
 
         self.dt = 0
         self.t_prev = 0
@@ -32,10 +32,10 @@ class UKFNode:
         self.ukf.P *= 10 # Initial Covariance
 
         # Process Noise Covariance
-        self.ukf.Q = np.diag([0.01, 0.01])
+        self.ukf.Q = np.diag([0.005, 0.05])
 
         # Measurement Noise Covariance
-        self.ukf.R = np.diag([0.05])
+        self.ukf.R = np.diag([0.1,0.05])
 
         
 
@@ -49,16 +49,16 @@ class UKFNode:
 
         
 
+    # State transition function
     def fx(self, x, dt):
-        # State transition function
         F = np.array([[1, dt],
                       [0, 1]])
         return np.dot(F, x)
         
+    # Measurement function (Converts a state into a measurement)
     def hx(self,x):
-        
-        # Measurement function
-        return np.array([x[0]])
+        H = np.array([[1, 0],[1, 0]])
+        return np.dot(H, x)
 
     def update_ukf(self, LandingSurfaces_msg):
 
@@ -85,7 +85,8 @@ class UKFNode:
 
         # Create the measurement vector z, including both position 
         z = np.array([
-            p_x_lidar
+            p_x_lidar,
+            p_x_cam
             ])
 
         

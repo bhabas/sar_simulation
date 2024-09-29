@@ -21,22 +21,26 @@ class DataAssociator:
 
         # Store latest image for projection if needed
         self.latest_image = None
+        self.lidar_processed_image = None
         self.image_received = False
 
 
         # Subscribers 
         self.lidar_bbox_sub = Subscriber('/SAR_Internal/lidar/bounding_boxes_raw', BoundingBoxArray)
         self.camera_bbox_sub = Subscriber('/SAR_Internal/camera/bounding_boxes', BoundingBoxArray)
-        self.image_sub = rospy.Subscriber('/stereo/left/image_rect_color', Image, self.camera_callback,queue_size=1)
+        self.raw_image_sub = rospy.Subscriber('/stereo/left/image_rect_color', Image, self.camera_callback,queue_size=1)
 
         # Publishers
-        self.image_pub = rospy.Publisher("/SAR_Internal/camera/image_processed_bbox", Image, queue_size=1)
+        self.image_pub_cam = rospy.Publisher("/SAR_Internal/camera/image_processed_bbox", Image, queue_size=1)
+        self.image_pub_lidar = rospy.Publisher("/SAR_Internal/lidar/image_processed_bbox", Image, queue_size=1)
+        self.image_pub_lidar_best = rospy.Publisher("/SAR_Internal/lidar/image_processed_bbox", Image, queue_size=1)
+
         self.lidar_bbox_pub = rospy.Publisher('/SAR_Internal/lidar/bounding_boxes_processed', BoundingBoxArray, queue_size=1)
         self.LandingTarget_pub = rospy.Publisher('/LandingTargets', LandingTargetArray, queue_size=1)
 
 
         queue_size = 10
-        max_delay = 0.1
+        max_delay = 0.2
         self.time_sync = ApproximateTimeSynchronizer([self.lidar_bbox_sub, self.camera_bbox_sub],queue_size, max_delay)
         self.time_sync.registerCallback(self.AssociateTargets)
 
@@ -76,6 +80,9 @@ class DataAssociator:
 
         self.cam_bboxes_px = camera_bbox_array_msg.boxes   # Camera Frame
         self.lidar_bboxes_m = lidar_bbox_array_msg.boxes  # Lidar Frame
+        if self.latest_image is None:
+            return
+        self.lidar_processed_image = self.latest_image.copy()
 
         # Find Corresponding Bounding Boxes
         for cam_bbox_px_CamFrame in self.cam_bboxes_px:
@@ -108,7 +115,17 @@ class DataAssociator:
                     best_lidar_bbox_px_CamFrame = lidar_bbox_px_CamFrame
                     best_lidar_bbox_m_CamFrame = lidar_bbox_m_CamFrame
 
-            if best_iou > 0.3: # IoU threshold
+                # Draw bounding box on image
+                min_pt = (lidar_bbox_px_CamFrame.min_point.x, lidar_bbox_px_CamFrame.min_point.y)
+                max_pt = (lidar_bbox_px_CamFrame.max_point.x, lidar_bbox_px_CamFrame.max_point.y)
+                self.lidar_processed_image = cv2.rectangle(img=self.lidar_processed_image, 
+                                        pt1=(min_pt[0], min_pt[1]),
+                                        pt2=(max_pt[0], max_pt[1]),
+                                        color=(0,0,255),
+                                        thickness=2)
+                self.image_pub_lidar.publish(self.bridge.cv2_to_imgmsg(self.lidar_processed_image, "bgr8"))
+
+            if best_iou > 0.25: # IoU threshold
                 rospy.loginfo(f"Match Found:  IoU: {best_iou:.3f}")
                 # rospy.loginfo(f"Camera BBox: {cam_bbox.min_point} - {cam_bbox.max_point}")
                 # rospy.loginfo(f"Lidar BBox: {best_lidar_bbox.min_point} - {best_lidar_bbox.max_point}")
@@ -137,13 +154,22 @@ class DataAssociator:
                 matched_targets.append(matched_target)
 
    
-                # Draw bounding box on image
+                # Draw Camera BBox on image
                 min_pt = (int(cam_bbox_px_CamFrame.min_point.x), int(cam_bbox_px_CamFrame.min_point.y))
                 max_pt = (int(cam_bbox_px_CamFrame.max_point.x), int(cam_bbox_px_CamFrame.max_point.y))
                 self.latest_image = cv2.rectangle(img=self.latest_image, 
                                         pt1=(min_pt[0], min_pt[1]),
                                         pt2=(max_pt[0], max_pt[1]),
                                         color=(255,0,0),
+                                        thickness=2)
+                
+                # Draw Lidar BBox on image
+                min_pt = (int(best_lidar_bbox_px_CamFrame.min_point.x), int(best_lidar_bbox_px_CamFrame.min_point.y))
+                max_pt = (int(best_lidar_bbox_px_CamFrame.max_point.x), int(best_lidar_bbox_px_CamFrame.max_point.y))
+                self.latest_image = cv2.rectangle(img=self.latest_image,
+                                        pt1=(min_pt[0], min_pt[1]),
+                                        pt2=(max_pt[0], max_pt[1]),
+                                        color=(0,255,0),
                                         thickness=2)
             
                 
@@ -159,7 +185,7 @@ class DataAssociator:
 
             # Publish new bounding lidar box onto image
             image_msg = self.bridge.cv2_to_imgmsg(self.latest_image, "bgr8")
-            self.image_pub.publish(image_msg)
+            self.image_pub_cam.publish(image_msg)
 
 
 
