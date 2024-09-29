@@ -17,7 +17,7 @@ class UKFNode:
         self.dim_z = 2 # Measurement Dimension
 
         self.dt = 0
-        self.t_prev = 0
+        self.t_prev = None
 
         # Define sigma points
         points = MerweScaledSigmaPoints(self.dim_x, alpha=0.1, beta=2., kappa=1.)
@@ -26,7 +26,7 @@ class UKFNode:
         self.ukf = UKF(dim_x=self.dim_x, dim_z=self.dim_z, fx=self.fx, hx=self.hx, dt=self.dt, points=points)
 
         # Initial State Estimate
-        self.ukf.x = np.array([0., 0.]) # Initial State
+        self.ukf.x = np.array([0., 2.0,]) # Initial State
 
         # Initial Covariance Estimate
         self.ukf.P *= 10 # Initial Covariance
@@ -65,8 +65,22 @@ class UKFNode:
         if not LandingSurfaces_msg.LandingTargets:
             return
         
-        self.dt = LandingSurfaces_msg.header.stamp.to_sec() - self.t_prev
-        self.t_prev = LandingSurfaces_msg.header.stamp.to_sec()
+        current_time = LandingSurfaces_msg.header.stamp.to_sec()
+
+        if self.t_prev is None:
+            # First measurement; initialize t_prev and skip prediction
+            self.t_prev = current_time
+            rospy.loginfo("Received first measurement. Initializing t_prev.")
+            return
+
+        # Calculate time difference
+        self.dt = current_time - self.t_prev
+        self.t_prev = current_time
+
+        if self.dt <= 0:
+            rospy.logwarn("Non-positive dt encountered. Skipping this measurement.")
+            return
+
 
         print("Time Step: ", self.dt)
         
@@ -93,7 +107,7 @@ class UKFNode:
         print()
         
         # Perform UKF update
-        self.ukf.predict()
+        self.ukf.predict(dt = self.dt)
         self.ukf.update(z)
 
         # Publish Fused State
@@ -102,7 +116,7 @@ class UKFNode:
         # fused_target.Pose_Centroid_Filtered_body.position.y = self.ukf.x[1]
         # fused_target.Pose_Centroid_Filtered_body.position.z = self.ukf.x[2]
 
-        # fused_target.Twist_Centroid.linear.x = self.ukf.x[3]
+        fused_target.Twist_Centroid_Filtered_body.linear.x = self.ukf.x[1]
         # fused_target.Twist_Centroid.linear.y = self.ukf.x[4]
         # fused_target.Twist_Centroid.linear.z = self.ukf.x[5]
 
