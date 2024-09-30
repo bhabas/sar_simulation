@@ -57,8 +57,8 @@ class UKFNode:
         
     # Measurement function (Converts a state into a measurement)
     def hx(self,x):
-        H = np.array([[1, 0],[1, 0]])
-        return np.dot(H, x)
+
+        return [x[0], x[0]]
 
     def update_ukf(self, LandingSurfaces_msg):
 
@@ -82,7 +82,7 @@ class UKFNode:
             return
 
 
-        print("Time Step: ", self.dt)
+        print(f"Time Step: {self.dt:0.3f}")
         
         # Assuming single target for now
         target = LandingSurfaces_msg.LandingTargets[0]
@@ -116,7 +116,7 @@ class UKFNode:
         # fused_target.Pose_Centroid_Filtered_body.position.y = self.ukf.x[1]
         # fused_target.Pose_Centroid_Filtered_body.position.z = self.ukf.x[2]
 
-        fused_target.Twist_Centroid_Filtered_body.linear.x = self.ukf.x[1]
+        fused_target.Twist_Centroid_Filtered_body.linear.x = -self.ukf.x[1]
         # fused_target.Twist_Centroid.linear.y = self.ukf.x[4]
         # fused_target.Twist_Centroid.linear.z = self.ukf.x[5]
 
