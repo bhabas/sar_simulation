@@ -26,7 +26,7 @@ class UKFNode:
         self.ukf = UKF(dim_x=self.dim_x, dim_z=self.dim_z, fx=self.fx, hx=self.hx, dt=self.dt, points=points)
 
         # Initial State Estimate
-        self.ukf.x = np.array([0., 2.0,]) # Initial State
+        self.ukf.x = np.array([0., 0.,]) # Initial State
 
         # Initial Covariance Estimate
         self.ukf.P *= 10 # Initial Covariance
@@ -119,6 +119,13 @@ class UKFNode:
         fused_target.Twist_Centroid_Filtered_body.linear.x = -self.ukf.x[1]
         # fused_target.Twist_Centroid.linear.y = self.ukf.x[4]
         # fused_target.Twist_Centroid.linear.z = self.ukf.x[5]
+
+        tau = np.clip(self.ukf.x[0]/-self.ukf.x[1],0,2)
+
+        fused_target.Tau = tau
+        fused_target.Theta_x = 0.0
+        fused_target.D_perp = self.ukf.x[0]
+        fused_target.Plane_Angle = 90.0
 
         LandingTargets = LandingTargetArray()
         LandingTargets.LandingTargets = [fused_target]

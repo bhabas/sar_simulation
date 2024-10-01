@@ -61,7 +61,7 @@ class CamProcessor:
                     rospy.logwarn("Invalid disparity for bounding box.")
                     continue
                 
-                f = 381.362
+                f = 268.602
                 B = 0.2
                 Z = f * B / disparity
 

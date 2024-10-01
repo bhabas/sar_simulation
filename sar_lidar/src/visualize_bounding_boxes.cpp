@@ -38,7 +38,7 @@ void bboxCallback(const sar_msgs::BoundingBoxArray::ConstPtr& msg)
         marker.color.g = 1.0;
         marker.color.b = 0.0;
 
-        marker.lifetime = ros::Duration(0.01);
+        marker.lifetime = ros::Duration(0.02);
 
         marker_array.markers.push_back(marker);
     }

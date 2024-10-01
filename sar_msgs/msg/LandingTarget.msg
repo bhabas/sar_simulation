@@ -9,3 +9,8 @@ geometry_msgs/Pose Pose_Centroid_Lidar_body
 
 geometry_msgs/Pose Pose_Centroid_Filtered_body
 geometry_msgs/Twist Twist_Centroid_Filtered_body
+
+float64 Tau
+float64 Theta_x
+float64 D_perp
+float64 Plane_Angle

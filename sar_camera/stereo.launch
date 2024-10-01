@@ -4,4 +4,12 @@
     <!-- Launch the stereo_image_proc node -->
     <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" output="screen"/>
   </group>
+
+  <!-- Launch the camera nodes -->
+  <node pkg="sar_camera" name="CamProcessor" type="CamProcessor.py"/>
+  <node pkg="sar_camera" name="DataAssociator" type="DataAssociator.py"/>
+
+  <!-- Launch the lidar node -->
+  <node pkg="sar_lidar" name="lidar" type="lidar"/>
+  <node pkg="sar_lidar" name="visualize_bounding_boxes" type="visualize_bounding_boxes"/>
 </launch>

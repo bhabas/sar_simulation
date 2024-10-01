@@ -50,8 +50,8 @@ class DataAssociator:
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         # Camera Intrinsic Parameters
-        self.K = np.array([[381.362, 0, 320.5], 
-                           [0, 381.362, 320.5], 
+        self.K = np.array([[268.602, 0, 320.5], 
+                           [0, 268.602, 320.5], 
                            [0, 0, 1]])
         
         self.K_inv = np.linalg.inv(self.K)
