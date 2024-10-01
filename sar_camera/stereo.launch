@@ -6,10 +6,10 @@
   </group>
 
   <!-- Launch the camera nodes -->
-  <node pkg="sar_camera" name="CamProcessor" type="CamProcessor.py"/>
-  <node pkg="sar_camera" name="DataAssociator" type="DataAssociator.py"/>
+  <!-- <node pkg="sar_camera" name="CamProcessor" type="CamProcessor.py"/> -->
+  <!-- <node pkg="sar_camera" name="DataAssociator" type="DataAssociator.py"/> -->
 
   <!-- Launch the lidar node -->
-  <node pkg="sar_lidar" name="lidar" type="lidar"/>
-  <node pkg="sar_lidar" name="visualize_bounding_boxes" type="visualize_bounding_boxes"/>
+  <!-- <node pkg="sar_lidar" name="lidar" type="lidar"/> -->
+  <!-- <node pkg="sar_lidar" name="visualize_bounding_boxes" type="visualize_bounding_boxes"/> -->
 </launch>

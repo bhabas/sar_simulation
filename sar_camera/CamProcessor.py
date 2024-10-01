@@ -62,7 +62,7 @@ class CamProcessor:
                     continue
                 
                 f = 268.602
-                B = 0.2
+                B = 0.20
                 Z = f * B / disparity
 
                 ## CREATE BOUDNING BOX MESSAGE

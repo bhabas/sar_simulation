@@ -75,6 +75,11 @@ class DataAssociator:
         tf_lidar_body = self.get_transform(self.tf_buffer, 'SAR_Body', 'velodyne_base_link')
         if tf_lidar_body is None:
             return
+        
+        tf_body_CR = self.get_transform(self.tf_buffer, 'Collision_Radius_Point_Link', 'SAR_Body')
+        if tf_body_CR is None:
+            return
+        
 
 
 
@@ -114,6 +119,7 @@ class DataAssociator:
                     best_iou = iou
                     best_lidar_bbox_px_CamFrame = lidar_bbox_px_CamFrame
                     best_lidar_bbox_m_CamFrame = lidar_bbox_m_CamFrame
+                    best_lidar_bbox_m_LidarFrame = lidar_bbox_m_LidarFrame
 
                 # Draw bounding box on image
                 min_pt = (lidar_bbox_px_CamFrame.min_point.x, lidar_bbox_px_CamFrame.min_point.y)
@@ -145,11 +151,14 @@ class DataAssociator:
                 matched_target.BBox_Cam_m.min_point = Point(x=X_min, y=Y_min, z=Z_min)
                 matched_target.BBox_Cam_m.max_point = Point(x=X_max, y=Y_max, z=Z_max)
                 
-                matched_target.Pose_Centroid_Cam_body.position =  self.transform(self.compute_center(matched_target.BBox_Cam_m), tf_cam_body)
+                temp_point = Point()
+                temp_point = self.transform(self.compute_center(matched_target.BBox_Cam_m), tf_cam_body)
+                matched_target.Pose_Centroid_Cam_body.position =  self.transform(temp_point, tf_body_CR)
 
                 # Lidar Bounding Box in Body Frame
-                matched_target.BBox_Lidar_m = best_lidar_bbox_m_CamFrame
-                matched_target.Pose_Centroid_Lidar_body.position = self.transform(self.compute_center(matched_target.BBox_Lidar_m),tf_cam_body)
+                matched_target.BBox_Lidar_m = best_lidar_bbox_m_LidarFrame
+                temp_point =  self.transform(self.compute_center(matched_target.BBox_Lidar_m), tf_lidar_body)
+                matched_target.Pose_Centroid_Lidar_body.position = self.transform(temp_point,tf_body_CR)
 
                 matched_targets.append(matched_target)
 
@@ -179,7 +188,7 @@ class DataAssociator:
             matched_targets_msg = LandingTargetArray()
             matched_targets_msg.LandingTargets = matched_targets
             matched_targets_msg.header.stamp = camera_bbox_array_msg.header.stamp
-            matched_targets_msg.header.frame_id = 'SAR_Body'
+            matched_targets_msg.header.frame_id = 'Collision_Radius_Point_Link'
             self.LandingTarget_pub.publish(matched_targets_msg)
 
 

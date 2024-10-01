@@ -3,9 +3,9 @@
 import rospy
 from filterpy.kalman import UnscentedKalmanFilter as UKF
 from filterpy.kalman import MerweScaledSigmaPoints
-from filterpy.common import Q_discrete_white_noise
 import numpy as np
 from sar_msgs.msg import LandingTarget, LandingTargetArray
+from scipy.stats import chi2
 
 
 class UKFNode:
@@ -16,14 +16,14 @@ class UKFNode:
         self.dim_x = 2 # State Dimension
         self.dim_z = 2 # Measurement Dimension
 
-        self.dt = 0
+        self.fixed_dt = 20e-3 # Time Step
         self.t_prev = None
 
         # Define sigma points
         points = MerweScaledSigmaPoints(self.dim_x, alpha=0.1, beta=2., kappa=1.)
 
         # Initialize UKF
-        self.ukf = UKF(dim_x=self.dim_x, dim_z=self.dim_z, fx=self.fx, hx=self.hx, dt=self.dt, points=points)
+        self.ukf = UKF(dim_x=self.dim_x, dim_z=self.dim_z, fx=self.fx, hx=self.hx, dt=self.fixed_dt, points=points)
 
         # Initial State Estimate
         self.ukf.x = np.array([0., 0.,]) # Initial State
@@ -35,7 +35,7 @@ class UKFNode:
         self.ukf.Q = np.diag([0.005, 0.05])
 
         # Measurement Noise Covariance
-        self.ukf.R = np.diag([0.1,0.05])
+        self.ukf.R = np.diag([0.01,0.03])
 
         
 
@@ -43,11 +43,10 @@ class UKFNode:
         self.measurement_sub = rospy.Subscriber("/LandingTargets", LandingTargetArray, self.update_ukf)
         self.filtered_pub = rospy.Publisher("/LandingTargets_Filtered", LandingTargetArray, queue_size=10)
 
+        self.predict_timer = rospy.Timer(rospy.Duration(self.fixed_dt), self.predict_callback)
 
+        self.is_initialized = False
 
-        
-
-        
 
     # State transition function
     def fx(self, x, dt):
@@ -59,56 +58,16 @@ class UKFNode:
     def hx(self,x):
 
         return [x[0], x[0]]
+    
 
-    def update_ukf(self, LandingSurfaces_msg):
-
-        if not LandingSurfaces_msg.LandingTargets:
-            return
+    def predict_callback(self, event):
+        if not self.is_initialized:
+            # skip prediction until first measurement arrives
+            return 
         
-        current_time = LandingSurfaces_msg.header.stamp.to_sec()
-
-        if self.t_prev is None:
-            # First measurement; initialize t_prev and skip prediction
-            self.t_prev = current_time
-            rospy.loginfo("Received first measurement. Initializing t_prev.")
-            return
-
-        # Calculate time difference
-        self.dt = current_time - self.t_prev
-        self.t_prev = current_time
-
-        if self.dt <= 0:
-            rospy.logwarn("Non-positive dt encountered. Skipping this measurement.")
-            return
-
-
-        print(f"Time Step: {self.dt:0.3f}")
-        
-        # Assuming single target for now
-        target = LandingSurfaces_msg.LandingTargets[0]
-
-        # Extract current position
-        p_x_cam = target.Pose_Centroid_Cam_body.position.x
-        p_y_cam = target.Pose_Centroid_Cam_body.position.y
-        p_z_cam = target.Pose_Centroid_Cam_body.position.z
-
-        # Extract current position from LiDAR
-        p_x_lidar = target.Pose_Centroid_Lidar_body.position.x
-        p_y_lidar = target.Pose_Centroid_Lidar_body.position.y
-        p_z_lidar = target.Pose_Centroid_Lidar_body.position.z
-
-        # Create the measurement vector z, including both position 
-        z = np.array([
-            p_x_lidar,
-            p_x_cam
-            ])
-
-        
-        print()
-        
-        # Perform UKF update
-        self.ukf.predict(dt = self.dt)
-        self.ukf.update(z)
+        self.ukf.predict(dt=self.fixed_dt)
+        print("Time: ", event.current_real.to_sec())
+        # rospy.logdebug(f"Predicted State: {self.ukf.x}")s
 
         # Publish Fused State
         fused_target = LandingTarget()
@@ -129,10 +88,78 @@ class UKFNode:
 
         LandingTargets = LandingTargetArray()
         LandingTargets.LandingTargets = [fused_target]
-        LandingTargets.header = LandingSurfaces_msg.header
+        LandingTargets.header.stamp = event.current_real
 
 
         self.filtered_pub.publish(LandingTargets)
+
+
+
+    def update_ukf(self, LandingSurfaces_msg):
+
+        if not LandingSurfaces_msg.LandingTargets:
+            return
+        
+
+        # Assuming single target for now
+        target = LandingSurfaces_msg.LandingTargets[0]
+
+        # Extract current position
+        p_x_cam = target.Pose_Centroid_Cam_body.position.x
+        p_y_cam = target.Pose_Centroid_Cam_body.position.y
+        p_z_cam = target.Pose_Centroid_Cam_body.position.z
+
+        # Extract current position from LiDAR
+        p_x_lidar = target.Pose_Centroid_Lidar_body.position.x
+        p_y_lidar = target.Pose_Centroid_Lidar_body.position.y
+        p_z_lidar = target.Pose_Centroid_Lidar_body.position.z
+
+        # Create the measurement vector z, including both position 
+        z = np.array([
+            p_x_lidar,
+            p_x_cam,
+            ])
+        
+        # Compute predicted measurement
+        z_pred = self.ukf.hx(self.ukf.x)
+
+        # Compute the residual
+        residual = z - z_pred
+
+        # Compute the covariance of the residual
+        H = np.array([
+            [1, 0],  # p_x_lidar
+            [1, 0]   # p_x_cam
+        ])
+        S = H @ self.ukf.P @ H.T + self.ukf.R
+
+        # Compute residual for p_x_cam
+        residual_p_x_cam = residual[1]
+        S_p_x_cam = S[1, 1]
+
+        # Compute Mahalanobis distance for p_x_cam
+        md = (residual_p_x_cam ** 2) / S_p_x_cam
+
+        # Define threshold for chi-squared distribution with 1 DOF at 99% confidence
+        threshold = chi2.ppf(0.99, df=1)  # ~6.63
+        
+        if md > threshold:
+            rospy.logwarn(f"p_x_cam measurement is an outlier (D_M={md:.2f} > {threshold}). Ignoring p_x_cam measurement.")
+            # Replace p_x_cam with predicted value to ignore the outlier
+            z_filtered = np.array([z[0], z_pred[1]])
+            self.ukf.update(z_filtered)
+        else:
+            rospy.loginfo(f"p_x_cam measurement is valid (D_M={md:.2f} <= {threshold}).")
+            # Perform regular update
+            self.ukf.update(z)
+
+        
+        if not self.is_initialized:
+            self.is_initialized = True
+            rospy.loginfo("UKF initialized with first measurement.")
+
+
+        
 
 
 if __name__ == '__main__':

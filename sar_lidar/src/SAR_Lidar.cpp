@@ -133,12 +133,14 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
             pcl::PointXYZI min_pt, max_pt;
             pcl::getMinMax3D<pcl::PointXYZI>(*cloud_cluster, min_pt, max_pt);
 
+            auto min_pt_x = std::min(min_pt.x, max_pt.x);
+
             // Create a BoundingBox message
             sar_msgs::BoundingBox bbox;
-            bbox.min_point.x = min_pt.x;
+            bbox.min_point.x = min_pt_x;
             bbox.min_point.y = min_pt.y;
             bbox.min_point.z = min_pt.z;
-            bbox.max_point.x = max_pt.x;
+            bbox.max_point.x = min_pt_x;
             bbox.max_point.y = max_pt.y;
             bbox.max_point.z = max_pt.z;
 
