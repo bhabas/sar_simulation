@@ -3,9 +3,9 @@
 import rospy
 from filterpy.kalman import UnscentedKalmanFilter as UKF
 from filterpy.kalman import MerweScaledSigmaPoints
-from filterpy.common import Q_discrete_white_noise
 import numpy as np
 from sar_msgs.msg import LandingTarget, LandingTargetArray
+from filterpy.stats import mahalanobis
 
 
 class UKFNode:
@@ -14,7 +14,7 @@ class UKFNode:
 
         # State dimension and measurement dimension
         self.dim_x = 2 # State Dimension
-        self.dim_z = 1 # Measurement Dimension
+        self.dim_z = 2 # Measurement Dimension
 
         self.fixed_dt = 20e-3 # Fixed time step for prediction
 
@@ -28,13 +28,13 @@ class UKFNode:
         self.ukf.x = np.array([0., 0.,]) # Initial State
 
         # Initial Covariance Estimate
-        self.ukf.P *= 2 # Initial Covariance
+        self.ukf.P *= 10 # Initial Covariance
 
         # Process Noise Covariance
-        self.ukf.Q = np.diag([0.005, 0.01])
+        self.ukf.Q = np.diag([0.01, 0.05])
 
         # Measurement Noise Covariance
-        self.ukf.R = np.diag([0.01])
+        self.ukf.R = np.diag([0.05, 0.01])
 
         
 
@@ -48,7 +48,6 @@ class UKFNode:
 
         self.is_initialized = False
 
-        
 
     # State transition function
     def fx(self, x, dt):
@@ -59,7 +58,7 @@ class UKFNode:
     # Measurement function (Converts a state into a measurement)
     def hx(self,x):
 
-        return [x[0]]
+        return [x[0], x[0]]
     
     def predict(self, event):
 
@@ -103,16 +102,27 @@ class UKFNode:
         # Extract current position from LiDAR
         p_x_lidar = target.Pose_Centroid_Lidar_body.position.x
 
-        # Create the measurement vector z, including both position 
-        z = np.array([
-            p_x_lidar,
-            ])
+        if not self.is_initialized:
+            self.ukf.x[0] = p_x_lidar
+            self.is_initialized = True
+    
+        z = np.array([p_x_cam, p_x_lidar])
+
+        # Calculate Mahalanobis Distance
+        m1 = mahalanobis(x=z[0], mean=self.ukf.x[0], cov=self.ukf.P[0,0])
+        m2 = mahalanobis(x=z[1], mean=self.ukf.x[0], cov=self.ukf.P[0,0])
+
+        print(f"Mahalanobis Distance (Camera): {m1:.2f}")
+        print(f"Mahalanobis Distance (LiDAR): {m2:.2f}")
+
+        if m1 >= 3:
+            rospy.logwarn("Mahalanobis Distance too high. Skipping Camera measurement.")
+            return
+        if m2 >= 3:
+            rospy.logwarn("Mahalanobis Distance too high. Skipping LiDAR measurement.")
+            return
         
         self.ukf.update(z)
-
-        self.is_initialized = True
-
-
 
 
 if __name__ == '__main__':
