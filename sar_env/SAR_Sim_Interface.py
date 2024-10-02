@@ -194,13 +194,13 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.sendCmd('Tumble_Detect',cmd_flag=0)
         self.sendCmd('Ctrl_Reset')
-        self._setModelState(pos=[45,-8,0.5])
+        self._setModelState(pos=[-15.,-5.,1.0])
         self._iterStep(10)
 
         self.sendCmd('GZ_StickyPads',cmd_flag=0)
         self.sendCmd('Tumble_Detect',cmd_flag=1)
         self.sendCmd('Ctrl_Reset')
-        self._setModelState(pos=[45,-8,0.5])
+        self._setModelState(pos=[-15.,-5.,1.0])
         self._iterStep(100) # Give time for drone to settle
 
         self.sendCmd('GZ_StickyPads',cmd_flag=1)

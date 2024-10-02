@@ -9,6 +9,7 @@ from sar_msgs.msg import BoundingBox, BoundingBoxArray
 from message_filters import Subscriber, ApproximateTimeSynchronizer
 import numpy as np
 from stereo_msgs.msg import DisparityImage   
+import random
 
 from pathlib import Path
 BASEPATH = Path("/home/bhabas/catkin_ws/src/sar_simulation/sar_camera")
@@ -20,7 +21,7 @@ class CamProcessor:
         self.bridge = CvBridge()
 
         # Load custom YOLOv8 model
-        self.detector = YOLO(BASEPATH / "runs/detect/train4/weights/last.pt",verbose=False)
+        self.detector = YOLO(BASEPATH / "runs/segment/train/weights/best.pt",verbose=False)
 
         self.image_sub = Subscriber("/stereo/left/image_rect_color", Image)
         self.disparity_sub = Subscriber("/stereo/disparity", DisparityImage)
@@ -33,6 +34,14 @@ class CamProcessor:
         self.time_sync = ApproximateTimeSynchronizer([self.image_sub, self.disparity_sub],queue_size, max_delay)
         self.time_sync.registerCallback(self.image_callback)
 
+        self.class_colors = {
+            'Brick': (212, 176, 58),
+            'House': (232,93,218),
+            'WhiteWall': (231, 156, 78)
+
+        }
+
+    
     def image_callback(self, img_msg, disparity_msg):
 
         try:
@@ -49,26 +58,30 @@ class CamProcessor:
         bbox_array = BoundingBoxArray()
         bbox_array.header = img_msg.header
        
+        mask_overlay = np.zeros_like(cv_image,dtype=np.uint8)
 
-        for box in detections.boxes:
-            class_name = self.detector.names[int(box.cls)]
-            if class_name in ['Burger_Sign', 'Gas_Sign'] and box.conf > 0.8:
+        for det,seg in zip(detections.boxes,detections.masks):
+            class_id = int(det.cls)
+            class_name = self.detector.names[class_id]
+            confidence = det.conf.item()
 
-                x1, y1, x2, y2 = box.xyxy.flatten().int().tolist()
+            if class_name in ['Brick', 'House', 'WhiteWall'] and confidence > 0.5:
+                x1, y1, x2, y2 = det.xyxy.flatten().int().tolist()
 
                 disparity = self.get_median_disparity(x1, y1, x2, y2)
                 if disparity is None:
                     rospy.logwarn("Invalid disparity for bounding box.")
                     continue
-                
+
                 f = 268.602
                 B = 0.20
                 Z = f * B / disparity
 
+
                 ## CREATE BOUDNING BOX MESSAGE
                 bbox = BoundingBox()
                 bbox.class_name = class_name
-                bbox.confidence = box.conf.item()
+                bbox.confidence = confidence
                 bbox.min_point.x = x1
                 bbox.min_point.y = y1
                 bbox.min_point.z = Z
@@ -78,25 +91,52 @@ class CamProcessor:
 
                 bbox_array.boxes.append(bbox)
 
-                print(f"{class_name}: {box.conf.tolist()[0]:.2f} | Disparity: {disparity:.2f} | Depth: {Z:.2f}")
+                print(f"{class_name}: {confidence:.2f} | Disparity: {disparity:.2f} | Depth: {Z:.2f}")
+
+                ### GET CLASS COLOR 
+                color = self.class_colors.get(class_name, (255,0,0))
 
                 ## DRAW BOUNDING BOX
-                cv_image = cv2.rectangle(img=cv_image, 
-                                        pt1=tuple(map(int, box.xyxy.flatten().tolist()[:2])),
-                                        pt2=tuple(map(int, box.xyxy.flatten().tolist()[2:])),
-                                        color=(255,0,0),
-                                        thickness=2)
-                
-                cv_image = cv2.putText(img=cv_image, 
-                                    text=f"{class_name}: {box.conf.tolist()[0]:.2f}", 
-                                    org=(box.xyxy[0][0].int().item(), box.xyxy[0][1].int().item()-10), 
-                                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
-                                    fontScale=0.5, 
-                                    color=(255,0,0), 
-                                    thickness=2)
+                # cv_image = cv2.rectangle(
+                #     img=cv_image, 
+                #     pt1=(x1, y1),
+                #     pt2=(x2, y2),
+                #     color=color,
+                #     thickness=2
+                # )
 
+                ### PUT LABEL
+                label = f"{class_name}: {confidence:.2f}"
+                (label_width, label_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+                cv2.rectangle(cv_image, (x1, y1 - label_height - baseline), (x1 + label_width, y1), color, -1)
+                cv_image = cv2.putText(
+                    img=cv_image, 
+                    text=label, 
+                    org=(x1, y1 - baseline), 
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+                    fontScale=0.5, 
+                    color=(255,255,255), 
+                    thickness=1
+                )
+
+                ### DRAW MASK
+                if seg is not None:
+                    print()
+                    mask = seg.data.cpu().numpy()[0]
+
+                    # Resize mask to fit the image
+                    mask_resized = cv2.resize(mask, (cv_image.shape[1], cv_image.shape[0]))
+
+                    # Create a colored mask for the class
+                    colored_mask = np.zeros_like(cv_image, dtype=np.uint8)
+                    colored_mask[mask_resized > 0.8] = color  # Apply color where mask is active
+
+                    # Blend the mask with the image
+                    mask_overlay = cv2.addWeighted(mask_overlay, 1.0, colored_mask, 0.5, 0)
+
+        # Combine the mask overlay with the original image
+        cv_image = cv2.addWeighted(cv_image, 1, mask_overlay, 1.0, 0)
         self.bbox_pub.publish(bbox_array)
-
 
 
         try:
