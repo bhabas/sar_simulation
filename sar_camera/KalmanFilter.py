@@ -34,7 +34,7 @@ class UKFNode:
         self.ukf.Q = np.diag([0.01, 0.05])
 
         # Measurement Noise Covariance
-        self.ukf.R = np.diag([0.05, 0.01])
+        self.ukf.R = np.diag([0.07, 0.15])
 
         
 
@@ -106,20 +106,20 @@ class UKFNode:
             self.ukf.x[0] = p_x_lidar
             self.is_initialized = True
     
-        z = np.array([p_x_cam, p_x_lidar])
+        z = np.array([p_x_lidar, p_x_cam])
 
         # Calculate Mahalanobis Distance
-        m1 = mahalanobis(x=z[0], mean=self.ukf.x[0], cov=self.ukf.P[0,0])
-        m2 = mahalanobis(x=z[1], mean=self.ukf.x[0], cov=self.ukf.P[0,0])
+        m1 = mahalanobis(x=p_x_lidar, mean=self.ukf.x[0], cov=self.ukf.P[0,0])
+        m2 = mahalanobis(x=p_x_cam, mean=self.ukf.x[0], cov=self.ukf.P[0,0])
 
-        print(f"Mahalanobis Distance (Camera): {m1:.2f}")
-        print(f"Mahalanobis Distance (LiDAR): {m2:.2f}")
+        print(f"Mahalanobis Distance (LiDAR): {m1:.2f}")
+        print(f"Mahalanobis Distance (Camera): {m2:.2f}")
 
-        if m1 >= 3:
-            rospy.logwarn("Mahalanobis Distance too high. Skipping Camera measurement.")
-            return
-        if m2 >= 3:
+        if m1 > 3:
             rospy.logwarn("Mahalanobis Distance too high. Skipping LiDAR measurement.")
+            return
+        if m2 > 3:
+            rospy.logwarn("Mahalanobis Distance too high. Skipping Camera measurement.")
             return
         
         self.ukf.update(z)
