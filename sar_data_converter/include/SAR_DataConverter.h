@@ -78,7 +78,6 @@ class SAR_DataConverter {
             cf1_Misc_Sub = nh->subscribe("/cf1/Misc", 1, &SAR_DataConverter::cf1_Misc_Callback, this, ros::TransportHints().tcpNoDelay());
 
 
-
             // INITIALIZE CTRL COMMAND PIPELINE
             CMD_Input_Service = nh->advertiseService("/SAR_DC/CMD_Input",&SAR_DataConverter::CMD_SAR_DC_Callback,this); // CTRL COMMAND
             CMD_Output_Service_Sim = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller

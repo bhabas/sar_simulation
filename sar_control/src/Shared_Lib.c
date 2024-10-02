@@ -851,21 +851,21 @@ bool updateOpticalFlowEst()
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors)
 {
     // TODO: ADD CAMERA OFFSETS SO THESE NUMBERS MATCH CAMERA ESTIMATION
-    D_perp = Pos_P_B.z;
-    if (fabsf(D_perp) < 0.02f)
-    {
-        D_perp = 0.0f;
-    }
+    // D_perp = Pos_P_B.z;
+    // if (fabsf(D_perp) < 0.02f)
+    // {
+    //     D_perp = 0.0f;
+    // }
 
-    struct vec r_CR_B = {0.0f,0.0f,Collision_Radius};   // {tx,ty,n_p}
-    D_perp_CR = vsub(Pos_P_B,r_CR_B).z;                 // {tx,ty,n_p}
+    // struct vec r_CR_B = {0.0f,0.0f,Collision_Radius};   // {tx,ty,n_p}
+    // D_perp_CR = vsub(Pos_P_B,r_CR_B).z;                 // {tx,ty,n_p}
     
 
-    // CALC OPTICAL FLOW VALUES
-    Theta_x = clamp(Vel_B_P.x/D_perp,-20.0f,20.0f);
-    Theta_y = clamp(Vel_B_P.y/D_perp,-20.0f,20.0f);
-    Tau = clamp(D_perp/(Vel_B_P.z + 1e-6f),0.0f,5.0f);
-    Tau_CR = clamp(D_perp_CR/(Vel_B_P.z + 1e-6f),-5.0f,5.0f);
+    // // CALC OPTICAL FLOW VALUES
+    // Theta_x = clamp(Vel_B_P.x/D_perp,-20.0f,20.0f);
+    // Theta_y = clamp(Vel_B_P.y/D_perp,-20.0f,20.0f);
+    // Tau = clamp(D_perp/(Vel_B_P.z + 1e-6f),0.0f,5.0f);
+    // Tau_CR = clamp(D_perp_CR/(Vel_B_P.z + 1e-6f),-5.0f,5.0f);
 
     return true;
 }

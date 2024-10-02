@@ -23,6 +23,8 @@
 #include "sar_msgs/CTRL_Data.h"
 #include "sar_msgs/CTRL_Debug.h"
 #include "sar_msgs/SAR_ImpactData.h"
+#include "sar_msgs/LandingTargetArray.h"
+#include "sar_msgs/LandingTarget.h"
 
 
 
@@ -50,6 +52,8 @@ class Controller
             Get_Obs_Service = nh->advertiseService("/CTRL/Get_Obs",&Controller::Get_Obs_Resp,this);
             SAR_DC_Subscriber = nh->subscribe("/SAR_DC/ImpactData",1,&Controller::SAR_DC_ExtImpact_Callback,this,ros::TransportHints().tcpNoDelay());
 
+            // LANDING TARGET PIPELINE
+            Landing_Target_Sub = nh->subscribe("/LandingTargets_Filtered", 1, &Controller::Landing_Target_Callback, this, ros::TransportHints().tcpNoDelay());
 
 
             // Thread main controller loop so other callbacks can work fine
@@ -63,6 +67,7 @@ class Controller
 
         // EXTERNAL SENSOR SUBSCRIBERS
         ros::Subscriber Ext_Pos_Subscriber;
+        ros::Subscriber Landing_Target_Sub;
 
         // SERVICES
         ros::ServiceServer CTRL_CMD_Service;
@@ -111,6 +116,7 @@ class Controller
         bool CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
         bool Get_Obs_Resp(sar_msgs::CTRL_Get_Obs::Request &req, sar_msgs::CTRL_Get_Obs::Response &res);
         void SAR_DC_ExtImpact_Callback(const sar_msgs::SAR_ImpactData::ConstPtr &msg);
+        void Landing_Target_Callback(const sar_msgs::LandingTargetArray &msg);
 
 
         void appLoop();
@@ -123,6 +129,22 @@ class Controller
 
 
 };
+
+
+
+void Controller::Landing_Target_Callback(const sar_msgs::LandingTargetArray &msg)
+{
+    for (auto Landing_Target : msg.LandingTargets)
+    {
+        std::cout << "Landing Target: " << std::endl;
+        Tau_CR = Landing_Target.Tau;
+        D_perp_CR = Landing_Target.D_perp;
+        Theta_x = 0.0f;
+        Plane_Angle_deg = 90.0f;
+    }
+    
+
+}
 
 void Controller::SAR_DC_ExtImpact_Callback(sar_msgs::SAR_ImpactData::ConstPtr const &msg)
 {
