@@ -37,12 +37,57 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
 
     std::cout << "Time: " << msg->header.stamp << std::endl;
 
-    // DOWNSAMPLE
-    // pcl::VoxelGrid<pcl::PointXYZI> vg;
-    // pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZI>);
-    // vg.setInputCloud(cloud);
-    // vg.setLeafSize(0.1,0.1,0.1);
-    // vg.filter(*cloud_filtered);
+    // OPTIONAL: DOWNSAMPLE THE POINT CLOUD FOR EFFICIENCY
+    /*
+    pcl::VoxelGrid<pcl::PointXYZI> vg;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZI>);
+    vg.setInputCloud(cloud);
+    vg.setLeafSize(0.1f, 0.1f, 0.1f);
+    vg.filter(*cloud_filtered);
+    std::cout << "PointCloud after downsampling: " << cloud_filtered->points.size() << " data points." << std::endl;
+    */
+
+    // STEP 1: GROUND REMOVAL USING RANSAC PLANE SEGMENTATION
+    pcl::ModelCoefficients::Ptr ground_coefficients(new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr ground_inliers(new pcl::PointIndices);
+    pcl::SACSegmentation<pcl::PointXYZI> ground_seg;
+
+    // Configure RANSAC for horizontal ground plane
+    ground_seg.setOptimizeCoefficients(true);
+    ground_seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+    ground_seg.setMethodType(pcl::SAC_RANSAC);
+    ground_seg.setMaxIterations(100);
+    ground_seg.setDistanceThreshold(0.2); // Adjust based on sensor noise
+    ground_seg.setAxis(Eigen::Vector3f(0.0, 0.0, 1.0)); // Z-axis
+    ground_seg.setEpsAngle(5.0*(M_PI/180.0)); // 10 degrees tolerance
+
+    // Perform segmentation to find ground plane
+    ground_seg.setInputCloud(cloud);
+    ground_seg.segment(*ground_inliers, *ground_coefficients);
+
+    if (ground_inliers->indices.empty())
+    {
+        std::cerr << "Warning: Could not estimate a ground plane for the given point cloud." << std::endl;
+    }
+    else
+    {
+        std::cout << "Ground plane found with " << ground_inliers->indices.size() << " inliers." << std::endl;
+
+        // Extract ground plane
+        pcl::ExtractIndices<pcl::PointXYZI> extract_ground;
+        extract_ground.setInputCloud(cloud);
+        extract_ground.setIndices(ground_inliers);
+        extract_ground.setNegative(true); // Remove ground
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_no_ground(new pcl::PointCloud<pcl::PointXYZI>);
+        extract_ground.filter(*cloud_no_ground);
+        std::cout << "PointCloud after ground removal: " << cloud_no_ground->points.size() << " data points." << std::endl;
+
+        // Replace original cloud with ground-removed cloud for further processing
+        cloud = cloud_no_ground;
+    }
+
+    /*
+    // STEP 2: VERTICAL PLANE SEGMENTATION USING RANSAC
 
     // CREATE SEGMENTATION OBJECTS
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
@@ -158,15 +203,18 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
 
         i++;
     }
+
+
        
     // // Publish the BoundingBoxArray message
     bbox_array.header = msg->header;
     pub_bounding_boxes.publish(bbox_array);
+    */
 
 
     // Convert to ROS data type and publish
     sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*vertical_planes_accumulated, output);
+    pcl::toROSMsg(*cloud, output);
     output.header.frame_id = msg->header.frame_id;
     output.header.stamp = ros::Time::now();
 
