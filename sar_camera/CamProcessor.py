@@ -35,9 +35,9 @@ class CamProcessor:
         self.time_sync.registerCallback(self.image_callback)
 
         self.class_colors = {
-            'Brick': (212, 176, 58),
-            'House': (232,93,218),
-            'WhiteWall': (231, 156, 78)
+            'Brick Wall': (255, 0, 0),
+            'House Wall': (0, 0,255),
+            'WhiteWall Wall': (231, 156, 78)
 
         }
 
@@ -62,10 +62,10 @@ class CamProcessor:
 
         for det,seg in zip(detections.boxes,detections.masks):
             class_id = int(det.cls)
-            class_name = self.detector.names[class_id]
+            class_name = self.detector.names[class_id] + " Wall"
             confidence = det.conf.item()
 
-            if class_name in ['Brick', 'House', 'WhiteWall'] and confidence > 0.5:
+            if class_name in ['Brick Wall', 'House Wall', 'WhiteWall Wall'] and confidence > 0.8:
                 x1, y1, x2, y2 = det.xyxy.flatten().int().tolist()
 
                 disparity = self.get_median_disparity(x1, y1, x2, y2)

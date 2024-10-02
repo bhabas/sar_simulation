@@ -75,7 +75,7 @@ void controllerOutOfTreeReset() {
     kd_xf = 1.0f;
 
     // RESET SETPOINTS TO HOME POSITION
-    x_d = mkvec(-15.0f,-5.0f, 1.0f);
+    x_d = mkvec(-60.0f, 0.0f, 1.0f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
     b1_d = mkvec(1.0f,0.0f,0.0f);
