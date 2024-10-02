@@ -14,7 +14,7 @@ class UKFNode:
 
         # State dimension and measurement dimension
         self.dim_x = 2 # State Dimension
-        self.dim_z = 2 # Measurement Dimension
+        self.dim_z = 1 # Measurement Dimension
 
         self.fixed_dt = 20e-3 # Fixed time step for prediction
 
@@ -28,13 +28,13 @@ class UKFNode:
         self.ukf.x = np.array([0., 0.,]) # Initial State
 
         # Initial Covariance Estimate
-        self.ukf.P *= 10 # Initial Covariance
+        self.ukf.P *= 2 # Initial Covariance
 
         # Process Noise Covariance
-        self.ukf.Q = np.diag([0.005, 0.05])
+        self.ukf.Q = np.diag([0.005, 0.01])
 
         # Measurement Noise Covariance
-        self.ukf.R = np.diag([0.01, 0.05])
+        self.ukf.R = np.diag([0.01])
 
         
 
@@ -59,7 +59,7 @@ class UKFNode:
     # Measurement function (Converts a state into a measurement)
     def hx(self,x):
 
-        return [x[0], x[0]]
+        return [x[0]]
     
     def predict(self, event):
 
@@ -67,12 +67,8 @@ class UKFNode:
             rospy.logwarn("UKF not initialized. Skipping prediction.")
             return
         
-        try:
-            self.ukf.predict(dt=self.fixed_dt)
-        except Exception as e:
-            rospy.logerr(f"Error in UKF prediction: {e}")
-            return
-        
+        self.ukf.predict(dt=self.fixed_dt)
+
         fused_target = LandingTarget()
         fused_target.Pose_Centroid_Filtered_body.position.x = self.ukf.x[0]
         fused_target.Twist_Centroid_Filtered_body.linear.x = -self.ukf.x[1]
@@ -88,6 +84,8 @@ class UKFNode:
         LandingTargets.header.stamp = event.current_real
 
         self.filtered_pub.publish(LandingTargets)
+
+        pass
 
 
     def update_ukf(self, LandingSurfaces_msg):
@@ -108,15 +106,12 @@ class UKFNode:
         # Create the measurement vector z, including both position 
         z = np.array([
             p_x_lidar,
-            p_x_cam
             ])
         
         self.ukf.update(z)
 
-        if not self.is_initialized:
-            self.is_initialized = True
-            rospy.loginfo("UKF Initialized.")
-            return
+        self.is_initialized = True
+
 
 
 
