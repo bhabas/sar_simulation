@@ -59,7 +59,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
     ground_seg.setMaxIterations(100);
     ground_seg.setDistanceThreshold(0.2); // Adjust based on sensor noise
     ground_seg.setAxis(Eigen::Vector3f(0.0, 0.0, 1.0)); // Z-axis
-    ground_seg.setEpsAngle(5.0*(M_PI/180.0)); // 10 degrees tolerance
+    ground_seg.setEpsAngle(10*(M_PI/180.0)); // 10 degrees tolerance
 
     // Perform segmentation to find ground plane
     ground_seg.setInputCloud(cloud);
@@ -86,7 +86,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
         cloud = cloud_no_ground;
     }
 
-    /*
+    
     // STEP 2: VERTICAL PLANE SEGMENTATION USING RANSAC
 
     // CREATE SEGMENTATION OBJECTS
@@ -99,8 +99,8 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
     seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC);
     seg.setAxis(Eigen::Vector3f(1,0,0));
-    seg.setMaxIterations(100);
-    seg.setDistanceThreshold(0.3);
+    seg.setMaxIterations(300);
+    seg.setDistanceThreshold(0.05);
     seg.setEpsAngle(5.0*(M_PI/180.0)); // 10 degrees
     
 
@@ -155,7 +155,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
         ec.setClusterTolerance(1.0); // 0.5 meters
-        ec.setMinClusterSize(20);
+        ec.setMinClusterSize(50);
         ec.setMaxClusterSize(25000);
         ec.setSearchMethod(tree);
         ec.setInputCloud(vertical_plane);
@@ -209,12 +209,12 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& msg)
     // // Publish the BoundingBoxArray message
     bbox_array.header = msg->header;
     pub_bounding_boxes.publish(bbox_array);
-    */
+    
 
 
     // Convert to ROS data type and publish
     sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*cloud, output);
+    pcl::toROSMsg(*vertical_planes_accumulated, output);
     output.header.frame_id = msg->header.frame_id;
     output.header.stamp = ros::Time::now();
 

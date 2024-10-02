@@ -29,7 +29,7 @@ void bboxCallback(const sar_msgs::BoundingBoxArray::ConstPtr& msg)
         marker.pose.orientation.z = 0.0;
         marker.pose.orientation.w = 1.0;
 
-        marker.scale.x = bbox.max_point.x - bbox.min_point.x;
+        marker.scale.x = bbox.max_point.x - bbox.min_point.x + 0.1;
         marker.scale.y = bbox.max_point.y - bbox.min_point.y;
         marker.scale.z = bbox.max_point.z - bbox.min_point.z;
 
@@ -38,7 +38,7 @@ void bboxCallback(const sar_msgs::BoundingBoxArray::ConstPtr& msg)
         marker.color.g = 1.0;
         marker.color.b = 0.0;
 
-        marker.lifetime = ros::Duration(0.02);
+        marker.lifetime = ros::Duration(0.5);
 
         marker_array.markers.push_back(marker);
     }
